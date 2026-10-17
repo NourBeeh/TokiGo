@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/memory/derived_preference_profile.dart';
-import 'package:wetravellers/core/profile/profile_repository.dart';
-import 'package:wetravellers/features/home/application/recommendation_service.dart';
-import 'package:wetravellers/features/home/domain/home_composer.dart';
-import 'package:wetravellers/features/home/domain/personalization_context.dart';
+import 'package:tokigo/core/memory/derived_preference_profile.dart';
+import 'package:tokigo/core/profile/profile_repository.dart';
+import 'package:tokigo/features/home/application/recommendation_service.dart';
+import 'package:tokigo/features/home/domain/home_composer.dart';
+import 'package:tokigo/features/home/domain/personalization_context.dart';
 
 /// Phase 2B — Behavioral Memory + Derived Preference Profile (Flutter side).
 ///

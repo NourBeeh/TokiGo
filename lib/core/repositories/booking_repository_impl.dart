@@ -1,8 +1,8 @@
-import 'package:wetravellers/core/domain/models/booking/booking.dart';
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/core/network/api_result.dart';
-import 'package:wetravellers/core/repositories/contracts/booking_repository.dart';
-import 'package:wetravellers/features/booking/domain/booking_record.dart';
+import 'package:tokigo/core/domain/models/booking/booking.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/core/network/api_result.dart';
+import 'package:tokigo/core/repositories/contracts/booking_repository.dart';
+import 'package:tokigo/features/booking/domain/booking_record.dart';
 
 class BookingRepositoryImpl implements BookingRepository {
   final ApiClient client;

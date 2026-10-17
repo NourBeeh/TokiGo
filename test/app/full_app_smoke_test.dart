@@ -7,11 +7,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 
-import 'package:wetravellers/app/app.dart';
-import 'package:wetravellers/core/storage/offline_cache.dart';
-import 'package:wetravellers/core/storage/offline_cache_providers.dart';
-import 'package:wetravellers/app/widgets/app_bottom_nav.dart';
-import 'package:wetravellers/app/widgets/home_nav_buttons.dart';
+import 'package:tokigo/app/app.dart';
+import 'package:tokigo/core/storage/offline_cache.dart';
+import 'package:tokigo/core/storage/offline_cache_providers.dart';
+import 'package:tokigo/app/widgets/app_bottom_nav.dart';
+import 'package:tokigo/app/widgets/home_nav_buttons.dart';
 
 void main() {
   setUpAll(() {
@@ -26,7 +26,7 @@ void main() {
         overrides: <Override>[
           offlineCacheProvider.overrideWithValue(MemoryOfflineCache()),
         ],
-        child: const WeTravellersApp(),
+        child: const TokiGoApp(),
       ),
     );
     await tester.pump(const Duration(milliseconds: 500));

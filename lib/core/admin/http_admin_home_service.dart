@@ -1,10 +1,10 @@
-import 'package:wetravellers/core/admin/admin_home_service.dart';
-import 'package:wetravellers/core/admin/http_admin_service_base.dart';
-import 'package:wetravellers/core/domain/models/home/home_item.dart';
-import 'package:wetravellers/core/domain/models/home/home_section.dart';
-import 'package:wetravellers/core/domain/models/home/home_types.dart';
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/core/storage/secure_token_storage.dart';
+import 'package:tokigo/core/admin/admin_home_service.dart';
+import 'package:tokigo/core/admin/http_admin_service_base.dart';
+import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/domain/models/home/home_section.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/core/storage/secure_token_storage.dart';
 
 /// HTTP implementation of the legacy [AdminHomeService] contract over the
 /// backend admin endpoints (`/admin/home/*`, workstream ADM-A1).

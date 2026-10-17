@@ -2,9 +2,9 @@ import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 
-import 'package:wetravellers/core/theme/app_colors.dart';
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
 
 /// Bottom sticky action bar with a soft blur, used to host the primary CTA
 /// of booking-flow pages (price total + continue button).

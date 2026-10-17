@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/storage/offline_cache.dart';
-import 'package:wetravellers/core/storage/offline_cache_serializers.dart';
-import 'package:wetravellers/features/ai/domain/ai_response.dart';
-import 'package:wetravellers/features/ai/domain/ai_section.dart';
-import 'package:wetravellers/features/ai/domain/ai_item.dart';
-import 'package:wetravellers/features/ai/domain/ai_action.dart';
-import 'package:wetravellers/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/storage/offline_cache.dart';
+import 'package:tokigo/core/storage/offline_cache_serializers.dart';
+import 'package:tokigo/features/ai/domain/ai_response.dart';
+import 'package:tokigo/features/ai/domain/ai_section.dart';
+import 'package:tokigo/features/ai/domain/ai_item.dart';
+import 'package:tokigo/features/ai/domain/ai_action.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
 
 void main() {
   group('MemoryOfflineCache - read/write operations', () {

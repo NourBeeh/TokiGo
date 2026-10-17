@@ -1,7 +1,7 @@
-import 'package:wetravellers/core/admin/admin_provider_models.dart';
-import 'package:wetravellers/core/admin/http_admin_service_base.dart';
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/core/storage/secure_token_storage.dart';
+import 'package:tokigo/core/admin/admin_provider_models.dart';
+import 'package:tokigo/core/admin/http_admin_service_base.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/core/storage/secure_token_storage.dart';
 
 /// HTTP implementation of [AdminProviderService] over `/admin/providers/*`
 /// (ADM-B1): runtime switching, prioritisation and health checks.

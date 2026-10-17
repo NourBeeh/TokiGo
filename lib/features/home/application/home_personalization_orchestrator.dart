@@ -1,9 +1,9 @@
-import 'package:wetravellers/core/auth/user_model.dart';
-import 'package:wetravellers/core/geo/geo_client.dart';
-import 'package:wetravellers/core/profile/profile_repository.dart';
-import 'package:wetravellers/features/home/application/local_behavior_store.dart';
-import 'package:wetravellers/features/home/domain/home_composer.dart';
-import 'package:wetravellers/features/home/domain/personalization_context.dart';
+import 'package:tokigo/core/auth/user_model.dart';
+import 'package:tokigo/core/geo/geo_client.dart';
+import 'package:tokigo/core/profile/profile_repository.dart';
+import 'package:tokigo/features/home/application/local_behavior_store.dart';
+import 'package:tokigo/features/home/domain/home_composer.dart';
+import 'package:tokigo/features/home/domain/personalization_context.dart';
 
 /// Builds the [PersonalizationContext] from every source in PARALLEL
 /// (Phase 1C, §15): profile, geo, local behavior, recommendations inputs.

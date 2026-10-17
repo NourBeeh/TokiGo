@@ -5,18 +5,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'package:wetravellers/app/app.dart';
-import 'package:wetravellers/core/domain/models/home/home_section.dart';
-import 'package:wetravellers/features/ai/data/ai_api_service.dart';
-import 'package:wetravellers/features/ai/application/ai_providers.dart';
-import 'package:wetravellers/features/ai/presentation/pages/ai_chat_page.dart';
-import 'package:wetravellers/features/home/presentation/widgets/home_ai_search_field.dart';
-import 'package:wetravellers/features/universal_search/application/universal_search_controller.dart';
-import 'package:wetravellers/features/universal_search/application/voice_search_providers.dart';
-import 'package:wetravellers/features/universal_search/application/voice_search_state.dart';
-import 'package:wetravellers/features/universal_search/presentation/pages/universal_search_page.dart';
-import 'package:wetravellers/core/storage/offline_cache.dart';
-import 'package:wetravellers/core/storage/offline_cache_providers.dart';
+import 'package:tokigo/app/app.dart';
+import 'package:tokigo/core/domain/models/home/home_section.dart';
+import 'package:tokigo/features/ai/data/ai_api_service.dart';
+import 'package:tokigo/features/ai/application/ai_providers.dart';
+import 'package:tokigo/features/ai/presentation/pages/ai_chat_page.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_ai_search_field.dart';
+import 'package:tokigo/features/universal_search/application/universal_search_controller.dart';
+import 'package:tokigo/features/universal_search/application/voice_search_providers.dart';
+import 'package:tokigo/features/universal_search/application/voice_search_state.dart';
+import 'package:tokigo/features/universal_search/presentation/pages/universal_search_page.dart';
+import 'package:tokigo/core/storage/offline_cache.dart';
+import 'package:tokigo/core/storage/offline_cache_providers.dart';
 
 /// Universal Search page coverage (US-1 STEP 26) — migrated from the v1
 /// smart search tests: the Home AI field pushes the full-screen search
@@ -36,7 +36,7 @@ void main() {
         if (suggestions != null)
           aiSuggestionsServiceProvider.overrideWithValue(suggestions),
       ],
-      child: const WeTravellersApp(),
+      child: const TokiGoApp(),
     );
   }
 

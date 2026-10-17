@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/core/domain/models/home/home_item.dart';
-import 'package:wetravellers/core/domain/models/home/home_types.dart';
-import 'package:wetravellers/features/home/presentation/widgets/flight_recommendation_card.dart';
-import 'package:wetravellers/features/home/presentation/widgets/flight_recommendation_list.dart';
+import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/features/home/presentation/widgets/flight_recommendation_card.dart';
+import 'package:tokigo/features/home/presentation/widgets/flight_recommendation_list.dart';
 
 Widget _wrap(Widget child) =>
     MaterialApp(home: Scaffold(body: SizedBox(height: 600, child: child)));

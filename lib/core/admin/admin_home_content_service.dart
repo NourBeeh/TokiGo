@@ -1,6 +1,6 @@
-import 'package:wetravellers/core/admin/http_admin_service_base.dart';
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/core/storage/secure_token_storage.dart';
+import 'package:tokigo/core/admin/http_admin_service_base.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/core/storage/secure_token_storage.dart';
 
 /// Raw admin-shaped section view: drafts, scheduling and full content payload
 /// preserved (unlike the flattened public feed).

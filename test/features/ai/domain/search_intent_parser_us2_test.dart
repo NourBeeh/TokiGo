@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/features/ai/domain/search_intent_parser.dart';
+import 'package:tokigo/features/ai/domain/search_intent_parser.dart';
 
 /// US-2 §9 — extensive Arabic/English parser coverage: happy paths,
 /// incomplete queries, ambiguous queries, invalid dates, invalid passenger

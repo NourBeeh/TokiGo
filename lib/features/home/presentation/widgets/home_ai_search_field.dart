@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wetravellers/core/theme/app_colors.dart';
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/theme/app_typography.dart';
-import 'package:wetravellers/l10n/app_localizations.dart';
+import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
 
 /// Hero tag shared by the closed Home pill and the opened search header.
 const String kAiSmartSearchHeroTag = 'ai-smart-search-pill';

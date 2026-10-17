@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:wetravellers/core/domain/models/home/home_item.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/widgets/cards/card.dart';
-import 'package:wetravellers/core/widgets/cards/card_scrim_overlay.dart';
+import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/widgets/cards/card.dart';
+import 'package:tokigo/core/widgets/cards/card_scrim_overlay.dart';
 
 /// Deal discovery card — image-first, full-bleed.
 ///

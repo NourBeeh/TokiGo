@@ -2,25 +2,25 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wetravellers/core/domain/models/home/home_section.dart';
-import 'package:wetravellers/core/domain/models/search/flight_search_params.dart';
-import 'package:wetravellers/core/domain/models/search/hotel_search_params.dart';
-import 'package:wetravellers/core/domain/models/search/car_search_params.dart';
-import 'package:wetravellers/core/storage/offline_cache.dart';
-import 'package:wetravellers/core/storage/offline_cache_providers.dart';
-import 'package:wetravellers/features/ai/application/ai_providers.dart'
+import 'package:tokigo/core/domain/models/home/home_section.dart';
+import 'package:tokigo/core/domain/models/search/flight_search_params.dart';
+import 'package:tokigo/core/domain/models/search/hotel_search_params.dart';
+import 'package:tokigo/core/domain/models/search/car_search_params.dart';
+import 'package:tokigo/core/storage/offline_cache.dart';
+import 'package:tokigo/core/storage/offline_cache_providers.dart';
+import 'package:tokigo/features/ai/application/ai_providers.dart'
     show aiSuggestionsServiceProvider;
-import 'package:wetravellers/features/ai/domain/search_intent_parser.dart';
-import 'package:wetravellers/features/search/application/providers/search_providers.dart'
+import 'package:tokigo/features/ai/domain/search_intent_parser.dart';
+import 'package:tokigo/features/search/application/providers/search_providers.dart'
     show flightSearchControllerProvider;
-import 'package:wetravellers/features/search/application/providers/hotel_car_providers.dart'
+import 'package:tokigo/features/search/application/providers/hotel_car_providers.dart'
     show hotelSearchControllerProvider, carSearchControllerProvider;
-import 'package:wetravellers/features/search/application/controllers/flight_search_controller.dart';
-import 'package:wetravellers/features/search/application/controllers/hotel_search_controller.dart';
-import 'package:wetravellers/features/search/application/controllers/car_search_controller.dart';
-import 'package:wetravellers/features/universal_search/application/universal_search_state.dart';
-import 'package:wetravellers/features/universal_search/data/offer_to_home_item_adapters.dart';
-import 'package:wetravellers/features/universal_search/domain/structured_travel_intent.dart';
+import 'package:tokigo/features/search/application/controllers/flight_search_controller.dart';
+import 'package:tokigo/features/search/application/controllers/hotel_search_controller.dart';
+import 'package:tokigo/features/search/application/controllers/car_search_controller.dart';
+import 'package:tokigo/features/universal_search/application/universal_search_state.dart';
+import 'package:tokigo/features/universal_search/data/offer_to_home_item_adapters.dart';
+import 'package:tokigo/features/universal_search/domain/structured_travel_intent.dart';
 
 /// Orchestrator of the Universal Search surface — the single source of
 /// truth (US-1 STEP 3). Owns the state machine, query preservation,

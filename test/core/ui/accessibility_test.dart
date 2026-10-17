@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/ui/accessible_button.dart';
-import 'package:wetravellers/app/widgets/app_bottom_nav.dart';
-import 'package:wetravellers/core/ui/adaptive_layout.dart';
-import 'package:wetravellers/features/home/presentation/widgets/home_card.dart';
-import 'package:wetravellers/core/widgets/cards/card_image.dart';
+import 'package:tokigo/core/ui/accessible_button.dart';
+import 'package:tokigo/app/widgets/app_bottom_nav.dart';
+import 'package:tokigo/core/ui/adaptive_layout.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_card.dart';
+import 'package:tokigo/core/widgets/cards/card_image.dart';
 
 void main() {
   group('Accessibility hardening', () {

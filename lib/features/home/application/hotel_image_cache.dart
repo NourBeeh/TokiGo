@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:wetravellers/core/storage/offline_cache.dart';
+import 'package:tokigo/core/storage/offline_cache.dart';
 
 /// H3 — Hive-backed hotel image cache (LRU + TTL).
 ///

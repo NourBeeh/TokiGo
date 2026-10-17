@@ -1,4 +1,4 @@
-# WeTravellers — Project Rules
+# TokiGo — Project Rules
 
 Permanent rules for any agent or developer working in this repository.
 Session history and transient notes do NOT belong here — use Hermes sessions/memory.

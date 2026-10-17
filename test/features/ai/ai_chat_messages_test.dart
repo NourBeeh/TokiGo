@@ -1,15 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/core/ai/ai_assistant_service.dart';
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/core/network/api_error.dart';
-import 'package:wetravellers/features/ai/application/ai_controller.dart';
-import 'package:wetravellers/features/ai/application/ai_state.dart';
-import 'package:wetravellers/features/ai/domain/ai_chat_message.dart';
-import 'package:wetravellers/features/ai/domain/ai_home_mapper.dart';
-import 'package:wetravellers/features/ai/domain/ai_query_context.dart';
-import 'package:wetravellers/features/ai/domain/ai_response.dart';
-import 'package:wetravellers/core/storage/offline_cache.dart';
+import 'package:tokigo/core/ai/ai_assistant_service.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/core/network/api_error.dart';
+import 'package:tokigo/features/ai/application/ai_controller.dart';
+import 'package:tokigo/features/ai/application/ai_state.dart';
+import 'package:tokigo/features/ai/domain/ai_chat_message.dart';
+import 'package:tokigo/features/ai/domain/ai_home_mapper.dart';
+import 'package:tokigo/features/ai/domain/ai_query_context.dart';
+import 'package:tokigo/features/ai/domain/ai_response.dart';
+import 'package:tokigo/core/storage/offline_cache.dart';
 
 /// Chat conversation building — the controller must append the user's
 /// message immediately and the assistant's reply on every terminal state.

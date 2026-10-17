@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/features/search/application/providers/search_view_providers.dart';
-import 'package:wetravellers/features/search/domain/search_view_mode.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/features/search/application/providers/search_view_providers.dart';
+import 'package:tokigo/features/search/domain/search_view_mode.dart';
 
 /// Segmented control for toggling between List and Map view modes.
 class SearchViewToggle extends ConsumerWidget {

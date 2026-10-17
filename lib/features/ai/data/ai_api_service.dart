@@ -1,11 +1,11 @@
-import 'package:wetravellers/core/ai/ai_assistant_service.dart';
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/features/ai/domain/ai_response.dart';
-import 'package:wetravellers/features/ai/domain/ai_query_context.dart';
+import 'package:tokigo/core/ai/ai_assistant_service.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/features/ai/domain/ai_response.dart';
+import 'package:tokigo/features/ai/domain/ai_query_context.dart';
 
 /// Real HTTP implementation of [AiAssistantService].
 ///
-/// Talks to the WeTravellers NestJS BFF endpoint `POST /ai/query` through the
+/// Talks to the TokiGo NestJS BFF endpoint `POST /ai/query` through the
 /// shared [ApiClient] — timeouts, non-2xx, malformed JSON and connectivity
 /// failures are already mapped by the client into [ApiResult] failures, so
 /// this service never crashes; it simply rethrows the failure for the

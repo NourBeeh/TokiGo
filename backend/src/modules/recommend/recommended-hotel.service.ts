@@ -232,7 +232,7 @@ export class RecommendedHotelService {
       reviews: h.reviewCount ?? 0,
     }));
     const prompt = [
-      'You are the WeTravellers hotel-recommendation ranker.',
+      'You are the TokiGo hotel-recommendation ranker.',
       'Given the user profile and a list of REAL hotels, return ONLY a JSON object:',
       '{"ordered": ["<id1>", "<id2>", ...], "reason": "<short reason>"}',
       'Order by personal relevance to the user. NEVER invent hotels or ids.',

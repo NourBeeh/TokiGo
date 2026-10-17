@@ -1,7 +1,7 @@
-import 'package:wetravellers/core/domain/models/offers/flight_offer.dart';
-import 'package:wetravellers/core/domain/models/offers/hotel_offer.dart';
-import 'package:wetravellers/core/domain/models/offers/car_offer.dart';
-import 'package:wetravellers/features/search/domain/sort_option.dart';
+import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
+import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
+import 'package:tokigo/core/domain/models/offers/car_offer.dart';
+import 'package:tokigo/features/search/domain/sort_option.dart';
 
 List<FlightOffer> sortFlights(List<FlightOffer> list, SortOption option) {
   final items = List<FlightOffer>.from(list);

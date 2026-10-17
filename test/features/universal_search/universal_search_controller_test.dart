@@ -2,24 +2,24 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/core/domain/models/offers/car_offer.dart';
-import 'package:wetravellers/core/domain/models/offers/flight_offer.dart';
-import 'package:wetravellers/core/domain/models/offers/hotel_offer.dart';
-import 'package:wetravellers/core/domain/models/search/car_search_params.dart';
-import 'package:wetravellers/core/domain/models/search/flight_search_params.dart';
-import 'package:wetravellers/core/domain/models/search/hotel_search_params.dart';
-import 'package:wetravellers/core/network/http_api_client.dart';
-import 'package:wetravellers/core/repositories/impl/car_repository_impl.dart';
-import 'package:wetravellers/core/repositories/impl/flight_repository_impl.dart';
-import 'package:wetravellers/core/repositories/impl/hotel_repository_impl.dart';
-import 'package:wetravellers/core/storage/offline_cache.dart';
-import 'package:wetravellers/core/usecases/search_flights_usecase.dart';
-import 'package:wetravellers/features/search/application/controllers/car_search_controller.dart';
-import 'package:wetravellers/features/search/application/controllers/flight_search_controller.dart';
-import 'package:wetravellers/features/search/application/controllers/hotel_search_controller.dart';
-import 'package:wetravellers/features/universal_search/application/universal_search_controller.dart';
-import 'package:wetravellers/features/universal_search/application/universal_search_state.dart';
-import 'package:wetravellers/features/universal_search/domain/structured_travel_intent.dart';
+import 'package:tokigo/core/domain/models/offers/car_offer.dart';
+import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
+import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
+import 'package:tokigo/core/domain/models/search/car_search_params.dart';
+import 'package:tokigo/core/domain/models/search/flight_search_params.dart';
+import 'package:tokigo/core/domain/models/search/hotel_search_params.dart';
+import 'package:tokigo/core/network/http_api_client.dart';
+import 'package:tokigo/core/repositories/impl/car_repository_impl.dart';
+import 'package:tokigo/core/repositories/impl/flight_repository_impl.dart';
+import 'package:tokigo/core/repositories/impl/hotel_repository_impl.dart';
+import 'package:tokigo/core/storage/offline_cache.dart';
+import 'package:tokigo/core/usecases/search_flights_usecase.dart';
+import 'package:tokigo/features/search/application/controllers/car_search_controller.dart';
+import 'package:tokigo/features/search/application/controllers/flight_search_controller.dart';
+import 'package:tokigo/features/search/application/controllers/hotel_search_controller.dart';
+import 'package:tokigo/features/universal_search/application/universal_search_controller.dart';
+import 'package:tokigo/features/universal_search/application/universal_search_state.dart';
+import 'package:tokigo/features/universal_search/domain/structured_travel_intent.dart';
 
 /// Controller-level coverage (US-1 STEP 26): the state machine doors,
 /// query preservation across close/reopen, submit-only recents, stale

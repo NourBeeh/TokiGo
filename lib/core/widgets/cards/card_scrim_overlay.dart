@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:wetravellers/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
 
 /// Visual strength of a card scrim overlay.
 enum CardScrimStrength { light, regular, strong }

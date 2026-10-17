@@ -1,4 +1,4 @@
-# WeTravellers — MASTER PROJECT MEMORY
+# TokiGo — MASTER PROJECT MEMORY
 
 > **Purpose:** The authoritative handoff document for any analytical/architectural AI that must understand the project without access to previous chats.
 >
@@ -10,7 +10,7 @@
 
 ## 1. Project Identity
 
-- Project name: **WeTravellers**
+- Project name: **TokiGo**
 - Current product direction/branding: travel application evolving toward **B&GO / BEALDANDGO / B-ANDGO** design language.
 - Primary stack: **Flutter + Dart**, with a **NestJS backend**.
 - Flutter architecture: feature-first + Riverpod + GoRouter + Repository → UseCase → Controller.
@@ -456,7 +456,7 @@ The detailed phase outcomes, external dependencies, consent rules, dynamic produ
 ## 12.5. Wave Workstreams (2026-09-02) — COMPLETE
 
 Executed after Phase 17, driven by the v2.0 provider/market/payment implementation
-spec (`WeTravellers_Travel_Providers_Market_Payment_Implementation_Spec_v2.0.docx`
+spec (`TokiGo_Travel_Providers_Market_Payment_Implementation_Spec_v2.0.docx`
 — kept at repo root; extracted text also referenced during implementation).
 The spec's hard rules remain binding: no provider secrets in Flutter, no direct
 client→supplier calls, market context ≠ provider selector, display currency ≠
@@ -485,7 +485,7 @@ settlement currency, revalidation before payment, cars vendor deferred.
 - Pages added: Search Hub (hosts the hero card moved from Home), Explore
   (destinations/deals/collections), Groups (v1 mock per roadmap Phase 21),
   Notifications, Wishlist, Settings (language+currency only — theme toggle
-  intentionally absent), Onboarding (3 slides, Hive `wetravellers_settings`
+  intentionally absent), Onboarding (3 slides, Hive `tokigo_settings`
   box `onboarding_seen` flag).
 
 ### Wave 1 — Real providers on the backend (COMPLETE)

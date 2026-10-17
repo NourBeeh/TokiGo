@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
 
 /// Semantic availability of an offer.
 enum CardAvailabilityStatus { available, limited, unavailable }

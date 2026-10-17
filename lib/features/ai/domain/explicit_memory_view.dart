@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import 'package:wetravellers/core/memory/memory_model.dart';
+import 'package:tokigo/core/memory/memory_model.dart';
 
 /// 2C-C2 — Explicit conversation memory presentation model.
 ///

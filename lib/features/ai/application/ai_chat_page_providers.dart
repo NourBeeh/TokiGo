@@ -1,17 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wetravellers/core/ai/ai_assistant_service.dart';
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/core/network/http_api_client.dart';
-import 'package:wetravellers/core/storage/secure_token_storage_provider.dart';
-import 'package:wetravellers/features/ai/application/ai_chat_guest_only_cache.dart';
-import 'package:wetravellers/features/ai/application/ai_chat_service_adapter.dart';
-import 'package:wetravellers/features/ai/application/ai_controller.dart';
-import 'package:wetravellers/features/ai/application/ai_state.dart';
-import 'package:wetravellers/features/ai/data/ai_chat_repository.dart';
-import 'package:wetravellers/features/ai/data/ai_chat_repository_impl.dart';
-import 'package:wetravellers/features/ai/domain/ai_home_mapper.dart';
-import 'package:wetravellers/core/storage/offline_cache_providers.dart';
+import 'package:tokigo/core/ai/ai_assistant_service.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/core/network/http_api_client.dart';
+import 'package:tokigo/core/storage/secure_token_storage_provider.dart';
+import 'package:tokigo/features/ai/application/ai_chat_guest_only_cache.dart';
+import 'package:tokigo/features/ai/application/ai_chat_service_adapter.dart';
+import 'package:tokigo/features/ai/application/ai_controller.dart';
+import 'package:tokigo/features/ai/application/ai_state.dart';
+import 'package:tokigo/features/ai/data/ai_chat_repository.dart';
+import 'package:tokigo/features/ai/data/ai_chat_repository_impl.dart';
+import 'package:tokigo/features/ai/domain/ai_home_mapper.dart';
+import 'package:tokigo/core/storage/offline_cache_providers.dart';
 
 /// 2C-C2 — provider wiring for the full-screen AI conversation page.
 ///

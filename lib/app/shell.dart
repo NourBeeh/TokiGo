@@ -13,8 +13,8 @@ import 'package:go_router/go_router.dart';
 /// The historical pill (Home/Search/Groups/Explore) is retired by product
 /// decision — `AppBottomNav` itself is KEPT in the codebase (no-deletion
 /// rule) but has no consumer outside its own tests.
-class WeTravellersShell extends StatelessWidget {
-  const WeTravellersShell({
+class TokiGoShell extends StatelessWidget {
+  const TokiGoShell({
     super.key,
     required this.navigationShell,
     required this.location,

@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/core/network/api_error.dart';
-import 'package:wetravellers/core/network/api_result.dart';
-import 'package:wetravellers/core/repositories/impl/home_repository_impl.dart';
-import 'package:wetravellers/core/storage/offline_cache.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/core/network/api_error.dart';
+import 'package:tokigo/core/network/api_result.dart';
+import 'package:tokigo/core/repositories/impl/home_repository_impl.dart';
+import 'package:tokigo/core/storage/offline_cache.dart';
 
 class _ScriptedHomeApiClient implements ApiClient {
   _ScriptedHomeApiClient(this.payload);

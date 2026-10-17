@@ -6,24 +6,24 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/core/domain/models/home/home_item.dart';
-import 'package:wetravellers/core/domain/models/home/home_section.dart';
-import 'package:wetravellers/core/domain/models/home/home_types.dart';
-import 'package:wetravellers/features/home/presentation/widgets/deal_card.dart';
-import 'package:wetravellers/features/home/presentation/widgets/destination_discovery_card.dart';
-import 'package:wetravellers/features/home/presentation/widgets/flight_recommendation_card.dart';
-import 'package:wetravellers/features/home/presentation/widgets/flight_recommendation_list.dart';
-import 'package:wetravellers/features/home/presentation/widgets/home_card.dart';
-import 'package:wetravellers/features/home/presentation/widgets/home_section.dart';
-import 'package:wetravellers/features/search/presentation/widgets/car_search_card.dart';
-import 'package:wetravellers/features/search/presentation/widgets/flight_search_card.dart';
-import 'package:wetravellers/features/search/presentation/widgets/hotel_search_card.dart';
-import 'package:wetravellers/features/search/presentation/widgets/package_search_card.dart';
-import 'package:wetravellers/core/theme/app_theme.dart';
-import 'package:wetravellers/core/domain/models/offers/car_offer.dart';
-import 'package:wetravellers/core/domain/models/offers/hotel_offer.dart';
-import 'package:wetravellers/core/domain/models/offers/travel_package_offer.dart';
-import 'package:wetravellers/core/domain/models/offers/flight_offer.dart';
+import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/domain/models/home/home_section.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/features/home/presentation/widgets/deal_card.dart';
+import 'package:tokigo/features/home/presentation/widgets/destination_discovery_card.dart';
+import 'package:tokigo/features/home/presentation/widgets/flight_recommendation_card.dart';
+import 'package:tokigo/features/home/presentation/widgets/flight_recommendation_list.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_card.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_section.dart';
+import 'package:tokigo/features/search/presentation/widgets/car_search_card.dart';
+import 'package:tokigo/features/search/presentation/widgets/flight_search_card.dart';
+import 'package:tokigo/features/search/presentation/widgets/hotel_search_card.dart';
+import 'package:tokigo/features/search/presentation/widgets/package_search_card.dart';
+import 'package:tokigo/core/theme/app_theme.dart';
+import 'package:tokigo/core/domain/models/offers/car_offer.dart';
+import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
+import 'package:tokigo/core/domain/models/offers/travel_package_offer.dart';
+import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
 
 /// Visual audit for the Card System.
 ///

@@ -47,7 +47,7 @@ function isRequestTimeout(cause: unknown): boolean {
  * AiResponseDto contract — the exact shape the Flutter app parses.
  */
 const SYSTEM_PROMPT = [
-  'You are the WeTravellers travel assistant.',
+  'You are the TokiGo travel assistant.',
   'Respond with ONLY valid JSON — no markdown, no commentary.',
   'The JSON must match this exact shape:',
   JSON.stringify({

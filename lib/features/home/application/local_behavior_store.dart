@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:wetravellers/core/storage/offline_cache.dart';
-import 'package:wetravellers/features/home/domain/home_composer.dart';
+import 'package:tokigo/core/storage/offline_cache.dart';
+import 'package:tokigo/features/home/domain/home_composer.dart';
 
 /// Read-only scan of the EXISTING local search caches (Phase 1B).
 ///

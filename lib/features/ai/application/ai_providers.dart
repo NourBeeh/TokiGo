@@ -6,7 +6,7 @@ import '../../home/providers/home_providers.dart';
 
 import 'ai_controller.dart';
 import 'ai_state.dart';
-import 'package:wetravellers/core/storage/offline_cache_providers.dart';
+import 'package:tokigo/core/storage/offline_cache_providers.dart';
 
 /// Single shared instance of the boundary mapper.
 final aiHomeMapperProvider = Provider<AiHomeMapper>((ref) {

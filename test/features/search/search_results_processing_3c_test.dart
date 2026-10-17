@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/core/domain/models/offers/car_offer.dart';
-import 'package:wetravellers/core/domain/models/offers/customer_price.dart';
-import 'package:wetravellers/core/domain/models/offers/flight_offer.dart';
-import 'package:wetravellers/core/domain/models/offers/hotel_offer.dart';
-import 'package:wetravellers/features/search/application/search_results_processing.dart';
-import 'package:wetravellers/features/search/domain/search_filters.dart';
-import 'package:wetravellers/features/search/domain/sort_option.dart';
+import 'package:tokigo/core/domain/models/offers/car_offer.dart';
+import 'package:tokigo/core/domain/models/offers/customer_price.dart';
+import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
+import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
+import 'package:tokigo/features/search/application/search_results_processing.dart';
+import 'package:tokigo/features/search/domain/search_filters.dart';
+import 'package:tokigo/features/search/domain/sort_option.dart';
 
 /// Phase 3C — unified results processing contracts: provider-safe filtering,
 /// deterministic sorting, customer-total-aware comparisons (spec point 14),

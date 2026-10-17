@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Central colour palette for WeTravellers — "Pure White Premium".
+/// Central colour palette for TokiGo — "Pure White Premium".
 ///
 /// A crisp, light-only identity: stark white canvas, royal electric indigo
 /// primary, near-black ink text, and two reserved accents — warm gold for

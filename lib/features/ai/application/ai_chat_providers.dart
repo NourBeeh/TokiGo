@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/core/network/http_api_client.dart';
-import 'package:wetravellers/core/storage/secure_token_storage_provider.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/core/network/http_api_client.dart';
+import 'package:tokigo/core/storage/secure_token_storage_provider.dart';
 
 import '../data/ai_chat_repository.dart';
 import '../data/ai_chat_repository_impl.dart';

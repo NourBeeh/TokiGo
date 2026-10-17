@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/core/storage/hive_offline_cache.dart';
+import 'package:tokigo/core/storage/hive_offline_cache.dart';
 
 void main() {
   group('HiveOfflineCache.convertHiveValue', () {

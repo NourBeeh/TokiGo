@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:wetravellers/features/search/domain/search_filters.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
+import 'package:tokigo/features/search/domain/search_filters.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
 
 /// Phase 3C — the shared filter panel. Vertical-agnostic core (price range)
 /// plus optional sections the host page enables (stops/airlines for

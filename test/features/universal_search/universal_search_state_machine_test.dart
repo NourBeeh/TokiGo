@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/features/universal_search/application/universal_search_state.dart';
+import 'package:tokigo/features/universal_search/application/universal_search_state.dart';
 
 /// The US-0 contract's transition table — every allowed move passes and
 /// every forbidden move is rejected by `canGoTo` (US-1 STEP 26).

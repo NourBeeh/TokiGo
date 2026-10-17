@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wetravellers/core/theme/app_colors.dart';
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/theme/app_typography.dart';
-import 'package:wetravellers/core/widgets/step_progress.dart' show StatusChip;
+import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/widgets/step_progress.dart' show StatusChip;
 
 /// Trip details — the deep-dive surface of one trip in the Bag.
 ///

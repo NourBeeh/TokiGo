@@ -1,7 +1,7 @@
-# WeTravellers — DEEPSEEK EXECUTION CONTEXT
+# TokiGo — DEEPSEEK EXECUTION CONTEXT
 
 ## Project
-WeTravellers — Flutter travel application + NestJS backend.
+TokiGo — Flutter travel application + NestJS backend.
 
 ## Current checkpoint (updated 2026-09-02)
 Phases 1–17 are complete, PLUS the Wave workstreams W0–W3 (2026-09-02): light-only "Pure White Premium" UI with attached bottom nav (Home/Search/AI-centre/Groups/Explore) and unified fade-through motion; real providers on the backend (Nuitee hotels LIVE-verified, Duffel revalidation, MarketContext EG/EGP + FX + PricingEngine, cars rich mock, POST /offers/revalidate); search/home UI rebuild (SearchScaffold, picker sheets, rich states, DiscoveryProductCard, Continue-planning strip); booking funnel + mock payment abstraction (MockEgyptGateway, ledger, idempotency). Full record: `01_MASTER_MEMORY.md` §12.5–12.6. Next = **Phase 18 — PROJECT_MEMORY cloud sync + analytics foundation** — only when explicitly requested.

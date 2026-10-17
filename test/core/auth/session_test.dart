@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/auth/session_model.dart';
-import 'package:wetravellers/core/auth/token_model.dart';
-import 'package:wetravellers/core/auth/user_model.dart';
+import 'package:tokigo/core/auth/session_model.dart';
+import 'package:tokigo/core/auth/token_model.dart';
+import 'package:tokigo/core/auth/user_model.dart';
 
 void main() {
   test('Session isExpired works', () {

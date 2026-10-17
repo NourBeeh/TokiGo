@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 
-import 'package:wetravellers/app/router/go_router_config.dart';
+import 'package:tokigo/app/router/go_router_config.dart';
 
 void main() {
   setUpAll(() {

@@ -248,7 +248,7 @@ export class NuiteeService implements HotelProvider {
   }
 
   /**
-   * Book with the ACC_CREDIT_CARD strategy — WeTravellers is merchant of
+   * Book with the ACC_CREDIT_CARD strategy — TokiGo is merchant of
    * record for the customer payment; sandbox keys charge the attached
    * hidden test account card (spec point 27 / O.3).
    */
@@ -272,7 +272,7 @@ export class NuiteeService implements HotelProvider {
         prebookId: input.prebookId,
         transactionId: input.transactionId,
         payment: { method: 'ACC_CREDIT_CARD' },
-        holder: { firstName: first, lastName: last, email: input.holderEmail ?? 'guest@wetravellers.app' },
+        holder: { firstName: first, lastName: last, email: input.holderEmail ?? 'guest@tokigo.app' },
         guests: input.guestNames.map((name, i) => ({
           name: {
             firstName: name.split(' ')[0],

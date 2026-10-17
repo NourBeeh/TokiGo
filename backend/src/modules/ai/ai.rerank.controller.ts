@@ -57,7 +57,7 @@ export class AiRerankController {
     }
 
     const prompt = [
-      'You are the WeTravellers Home reranker.',
+      'You are the TokiGo Home reranker.',
       'Reorder the candidate ids by personal relevance to the user context.',
       'Return ONLY a JSON object, no prose:',
       '{"rankedCandidateIds": ["<id1>", "<id2", ...], "sectionReason": "<one of the allowed reasons>", "confidence": 0.0-1.0}',

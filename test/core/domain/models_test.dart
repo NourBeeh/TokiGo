@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/domain/models/offers/flight_offer.dart';
-import 'package:wetravellers/core/domain/models/home/home_item.dart';
-import 'package:wetravellers/core/domain/models/home/home_section.dart';
-import 'package:wetravellers/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
+import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/domain/models/home/home_section.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
 
 void main() {
   test('FlightOffer creates with required fields', () {

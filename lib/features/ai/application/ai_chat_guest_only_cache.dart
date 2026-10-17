@@ -1,5 +1,5 @@
-import 'package:wetravellers/core/storage/offline_cache.dart';
-import 'package:wetravellers/core/storage/secure_token_storage.dart';
+import 'package:tokigo/core/storage/offline_cache.dart';
+import 'package:tokigo/core/storage/secure_token_storage.dart';
 
 /// 2C-C2 — guest-only offline cache for the conversation page.
 ///

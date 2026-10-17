@@ -1,7 +1,7 @@
 {
-  "name": "wetravellers-backend",
+  "name": "tokigo-backend",
   "version": "1.0.0",
-  "description": "WeTravellers Backend BFF - NestJS",
+  "description": "TokiGo Backend BFF - NestJS",
   "private": true,
   "scripts": {
     "build": "tsc",

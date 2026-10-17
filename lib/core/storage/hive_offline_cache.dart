@@ -24,7 +24,7 @@ class HiveOfflineCache implements OfflineCache {
 
   final Box<Map> _box;
 
-  static const String defaultBoxName = 'wetravellers_offline';
+  static const String defaultBoxName = 'tokigo_offline';
 
   /// Initializes Hive (assigns its on-disk home) and opens the box used by the
   /// offline cache. [homeDir] defaults to a per-app folder in the process
@@ -40,7 +40,7 @@ class HiveOfflineCache implements OfflineCache {
     return HiveOfflineCache(box);
   }
 
-  static const String _defaultHomeDir = 'wetravellers_offline_data';
+  static const String _defaultHomeDir = 'tokigo_offline_data';
 
   @override
   Future<void> clear() async {

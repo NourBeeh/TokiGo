@@ -4,9 +4,9 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/core/network/http_api_client.dart';
-import 'package:wetravellers/core/network/api_error.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/core/network/http_api_client.dart';
+import 'package:tokigo/core/network/api_error.dart';
 
 void main() {
   test('abort() invoked when RequestToken.cancel() called during slow response', () async {

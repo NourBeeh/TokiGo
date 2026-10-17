@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:wetravellers/features/booking/application/services/offer_revalidation_service.dart';
+import 'package:tokigo/features/booking/application/services/offer_revalidation_service.dart';
 
 /// Unit coverage for the revalidation outcome mapping (spec point 8):
 /// the Flutter side must map the backend contract faithfully — OK unlocks

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import 'package:wetravellers/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
 
 import 'ai_item.dart';
 import 'ai_parsing.dart';

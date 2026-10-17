@@ -2,12 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/core/domain/models/home/home_types.dart';
-import 'package:wetravellers/features/ai/domain/ai_home_mapper.dart';
-import 'package:wetravellers/features/ai/domain/ai_item.dart';
-import 'package:wetravellers/features/ai/domain/ai_parsing.dart';
-import 'package:wetravellers/features/ai/domain/ai_response.dart';
-import 'package:wetravellers/features/ai/domain/ai_section.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/features/ai/domain/ai_home_mapper.dart';
+import 'package:tokigo/features/ai/domain/ai_item.dart';
+import 'package:tokigo/features/ai/domain/ai_parsing.dart';
+import 'package:tokigo/features/ai/domain/ai_response.dart';
+import 'package:tokigo/features/ai/domain/ai_section.dart';
 
 /// Phase 10A-F — Flutter-side AI parsing hardening.
 ///

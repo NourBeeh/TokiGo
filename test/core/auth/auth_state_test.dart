@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/auth/auth_repository.dart';
-import 'package:wetravellers/core/auth/auth_state.dart';
-import 'package:wetravellers/core/auth/user_model.dart';
+import 'package:tokigo/core/auth/auth_repository.dart';
+import 'package:tokigo/core/auth/auth_state.dart';
+import 'package:tokigo/core/auth/user_model.dart';
 
 void main() {
   group('AuthState', () {

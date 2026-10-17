@@ -1,4 +1,4 @@
-# WeTravellers — ARCHITECTURE
+# TokiGo — ARCHITECTURE
 
 ## Flutter
 - feature-first organization

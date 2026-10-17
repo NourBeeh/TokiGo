@@ -1,4 +1,4 @@
-# WeTravellers — ARCHITECTURAL DECISIONS
+# TokiGo — ARCHITECTURAL DECISIONS
 
 ## AI-specific models + mapper
 Chosen instead of expanding HomeItem.

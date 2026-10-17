@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:wetravellers/features/home/domain/personalization_context.dart';
+import 'package:tokigo/features/home/domain/personalization_context.dart';
 
 /// Deterministic recommendation ranking (Phase 1C + 2B derived layer).
 ///

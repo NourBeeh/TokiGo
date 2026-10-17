@@ -1,11 +1,11 @@
 library;
 
-import 'package:wetravellers/core/domain/models/offers/base_offer.dart';
-import 'package:wetravellers/core/domain/models/offers/car_offer.dart';
-import 'package:wetravellers/core/domain/models/offers/flight_offer.dart';
-import 'package:wetravellers/core/domain/models/offers/hotel_offer.dart';
-import 'package:wetravellers/features/search/domain/search_filters.dart';
-import 'package:wetravellers/features/search/domain/sort_option.dart';
+import 'package:tokigo/core/domain/models/offers/base_offer.dart';
+import 'package:tokigo/core/domain/models/offers/car_offer.dart';
+import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
+import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
+import 'package:tokigo/features/search/domain/search_filters.dart';
+import 'package:tokigo/features/search/domain/sort_option.dart';
 
 /// Phase 3C — unified, deterministic results processing for all verticals.
 ///

@@ -2,27 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:wetravellers/core/domain/models/search/hotel_search_params.dart';
-import 'package:wetravellers/features/home/providers/home_providers.dart'
+import 'package:tokigo/core/domain/models/search/hotel_search_params.dart';
+import 'package:tokigo/features/home/providers/home_providers.dart'
     show eventsTrackerProvider;
-import 'package:wetravellers/features/search/application/providers/hotel_car_providers.dart';
-import 'package:wetravellers/features/search/application/controllers/hotel_search_controller.dart';
-import 'package:wetravellers/core/theme/app_colors.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_typography.dart';
-import 'package:wetravellers/features/search/presentation/widgets/search_scaffold.dart';
-import 'package:wetravellers/features/search/presentation/widgets/search_states_view.dart';
-import 'package:wetravellers/features/search/presentation/widgets/destination_picker_sheet.dart';
-import 'package:wetravellers/features/search/presentation/widgets/hotel_search_card.dart';
-import 'package:wetravellers/features/search/presentation/widgets/search_view_toggle.dart';
-import 'package:wetravellers/features/search/presentation/widgets/search_map_placeholder.dart';
-import 'package:wetravellers/features/search/application/providers/search_view_providers.dart';
-import 'package:wetravellers/features/search/domain/search_view_mode.dart';
-import 'package:wetravellers/features/search/domain/sort_option.dart';
-import 'package:wetravellers/features/search/application/search_results_processing.dart';
-import 'package:wetravellers/features/search/domain/search_filters.dart';
-import 'package:wetravellers/features/search/presentation/widgets/filter_panel.dart';
+import 'package:tokigo/features/search/application/providers/hotel_car_providers.dart';
+import 'package:tokigo/features/search/application/controllers/hotel_search_controller.dart';
+import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/features/search/presentation/widgets/search_scaffold.dart';
+import 'package:tokigo/features/search/presentation/widgets/search_states_view.dart';
+import 'package:tokigo/features/search/presentation/widgets/destination_picker_sheet.dart';
+import 'package:tokigo/features/search/presentation/widgets/hotel_search_card.dart';
+import 'package:tokigo/features/search/presentation/widgets/search_view_toggle.dart';
+import 'package:tokigo/features/search/presentation/widgets/search_map_placeholder.dart';
+import 'package:tokigo/features/search/application/providers/search_view_providers.dart';
+import 'package:tokigo/features/search/domain/search_view_mode.dart';
+import 'package:tokigo/features/search/domain/sort_option.dart';
+import 'package:tokigo/features/search/application/search_results_processing.dart';
+import 'package:tokigo/features/search/domain/search_filters.dart';
+import 'package:tokigo/features/search/presentation/widgets/filter_panel.dart';
 
 /// Phase 3C — per-vertical sort/filters state (hotels).
 final hotelSortProvider = StateProvider<SortOption>((ref) => SortOption.recommended);

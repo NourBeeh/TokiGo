@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/core/memory/memory_model.dart';
-import 'package:wetravellers/core/memory/memory_repository.dart';
-import 'package:wetravellers/core/network/api_error.dart';
-import 'package:wetravellers/core/network/api_result.dart';
-import 'package:wetravellers/features/ai/application/explicit_memory_controller.dart';
+import 'package:tokigo/core/memory/memory_model.dart';
+import 'package:tokigo/core/memory/memory_repository.dart';
+import 'package:tokigo/core/network/api_error.dart';
+import 'package:tokigo/core/network/api_result.dart';
+import 'package:tokigo/features/ai/application/explicit_memory_controller.dart';
 
 /// 2C-C2 — ExplicitMemoryController tests.
 ///

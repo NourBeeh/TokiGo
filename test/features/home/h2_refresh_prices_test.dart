@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/core/domain/models/home/home_item.dart';
-import 'package:wetravellers/core/domain/models/home/home_section.dart';
-import 'package:wetravellers/core/domain/models/home/home_types.dart';
-import 'package:wetravellers/core/network/api_result.dart';
-import 'package:wetravellers/core/repositories/contracts/home_repository.dart';
-import 'package:wetravellers/features/home/application/home_live_validation_service.dart';
-import 'package:wetravellers/features/home/presentation/home_controller.dart';
+import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/domain/models/home/home_section.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/network/api_result.dart';
+import 'package:tokigo/core/repositories/contracts/home_repository.dart';
+import 'package:tokigo/features/home/application/home_live_validation_service.dart';
+import 'package:tokigo/features/home/presentation/home_controller.dart';
 /// H2 — price/availability-only refresh tests.
 ///
 /// `refreshPrices()` must route EXCLUSIVELY through the live-validation

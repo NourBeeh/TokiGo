@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
-import 'package:wetravellers/core/domain/models/home/home_section.dart';
-import 'package:wetravellers/features/ai/domain/ai_chat_message.dart';
+import 'package:tokigo/core/domain/models/home/home_section.dart';
+import 'package:tokigo/features/ai/domain/ai_chat_message.dart';
 
 /// Lifecycle status of an AI interaction.
 enum AiStatus { idle, loading, success, empty, error }

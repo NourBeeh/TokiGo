@@ -4,7 +4,7 @@
  * Creates (or promotes) one admin user so the /admin/* endpoints are
  * reachable during development. Idempotent: re-runs upsert in place.
  *
- *  - Email:  ADMIN_EMAIL  (default admin@wetravellers.app)
+ *  - Email:  ADMIN_EMAIL  (default admin@tokigo.app)
  *  - Password: ADMIN_PASSWORD (default admin1234 — DEV ONLY, never reuse in
  *    production; production accounts must rotate it on first login).
  *
@@ -27,9 +27,9 @@ const dbConfig = {
   database: process.env.DB_NAME || 'wetravellers',
 };
 
-const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'admin@wetravellers.app').toLowerCase();
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'admin@tokigo.app').toLowerCase();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin1234';
-const ADMIN_NAME = process.env.ADMIN_NAME || 'WeTravellers Admin';
+const ADMIN_NAME = process.env.ADMIN_NAME || 'TokiGo Admin';
 
 async function main() {
   const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);

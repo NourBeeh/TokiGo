@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:wetravellers/core/domain/models/home/home_item.dart';
-import 'package:wetravellers/core/domain/models/home/home_section.dart';
-import 'package:wetravellers/core/domain/models/home/home_types.dart';
-import 'package:wetravellers/core/network/user_facing_message.dart';
-import 'package:wetravellers/core/repositories/contracts/home_repository.dart';
-import 'package:wetravellers/features/home/application/home_live_validation_service.dart';
-import 'package:wetravellers/features/home/domain/home_composer.dart';
-import 'package:wetravellers/features/home/domain/home_greeting.dart';
+import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/domain/models/home/home_section.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/network/user_facing_message.dart';
+import 'package:tokigo/core/repositories/contracts/home_repository.dart';
+import 'package:tokigo/features/home/application/home_live_validation_service.dart';
+import 'package:tokigo/features/home/domain/home_composer.dart';
+import 'package:tokigo/features/home/domain/home_greeting.dart';
 
 
 enum HomeStatus { loading, success, empty, error, partial, developmentPreview }

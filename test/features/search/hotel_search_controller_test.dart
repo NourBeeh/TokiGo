@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/core/domain/models/offers/hotel_offer.dart';
-import 'package:wetravellers/core/domain/models/search/hotel_search_params.dart';
-import 'package:wetravellers/core/network/api_error.dart';
-import 'package:wetravellers/core/network/api_result.dart';
-import 'package:wetravellers/core/repositories/contracts/hotel_repository.dart';
-import 'package:wetravellers/features/search/application/controllers/hotel_search_controller.dart';
-import 'package:wetravellers/core/storage/offline_cache.dart';
+import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
+import 'package:tokigo/core/domain/models/search/hotel_search_params.dart';
+import 'package:tokigo/core/network/api_error.dart';
+import 'package:tokigo/core/network/api_result.dart';
+import 'package:tokigo/core/repositories/contracts/hotel_repository.dart';
+import 'package:tokigo/features/search/application/controllers/hotel_search_controller.dart';
+import 'package:tokigo/core/storage/offline_cache.dart';
 
 /// Phase 11C — `HotelSearchController` error boundary.
 ///

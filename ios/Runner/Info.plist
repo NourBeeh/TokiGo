@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>wetravellers</string>
+	<string>TokiGo</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -23,9 +23,9 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>WeTravellers uses the microphone for voice search — your speech is transcribed to fill the search field.</string>
+	<string>TokiGo uses the microphone for voice search — your speech is transcribed to fill the search field.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>WeTravellers uses speech recognition to turn your voice into a travel search query.</string>
+	<string>TokiGo uses speech recognition to turn your voice into a travel search query.</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>

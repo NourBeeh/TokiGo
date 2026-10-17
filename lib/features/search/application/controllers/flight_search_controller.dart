@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:wetravellers/core/domain/models/search/flight_search_params.dart';
-import 'package:wetravellers/core/domain/models/offers/flight_offer.dart';
-import 'package:wetravellers/core/network/user_facing_message.dart';
-import 'package:wetravellers/core/usecases/search_flights_usecase.dart';
-import 'package:wetravellers/core/storage/offline_cache.dart';
-import 'package:wetravellers/core/storage/offline_cache_serializers.dart';
+import 'package:tokigo/core/domain/models/search/flight_search_params.dart';
+import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
+import 'package:tokigo/core/network/user_facing_message.dart';
+import 'package:tokigo/core/usecases/search_flights_usecase.dart';
+import 'package:tokigo/core/storage/offline_cache.dart';
+import 'package:tokigo/core/storage/offline_cache_serializers.dart';
 
 enum SearchStatus { idle, loading, success, empty, error }
 

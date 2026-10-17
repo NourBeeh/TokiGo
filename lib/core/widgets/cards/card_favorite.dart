@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:wetravellers/core/theme/app_colors.dart';
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/widgets/cards/card_glass.dart';
+import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/widgets/cards/card_glass.dart';
 
 /// Heart toggle for cards. Purely presentational — persistence is wired by a
 /// later phase through [onChanged].

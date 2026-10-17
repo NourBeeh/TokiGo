@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:wetravellers/features/booking/application/booking_state.dart';
-import 'package:wetravellers/features/booking/domain/booking_record.dart';
-import 'package:wetravellers/features/booking/application/prepare_booking_usecase.dart';
-import 'package:wetravellers/features/booking/application/revalidate_booking_usecase.dart';
-import 'package:wetravellers/features/booking/application/confirm_booking_usecase.dart';
-import 'package:wetravellers/features/booking/domain/booking_preparation.dart' as prep;
-import 'package:wetravellers/features/bag/application/bag_controller.dart';
+import 'package:tokigo/features/booking/application/booking_state.dart';
+import 'package:tokigo/features/booking/domain/booking_record.dart';
+import 'package:tokigo/features/booking/application/prepare_booking_usecase.dart';
+import 'package:tokigo/features/booking/application/revalidate_booking_usecase.dart';
+import 'package:tokigo/features/booking/application/confirm_booking_usecase.dart';
+import 'package:tokigo/features/booking/domain/booking_preparation.dart' as prep;
+import 'package:tokigo/features/bag/application/bag_controller.dart';
 
 class BookingController extends StateNotifier<BookingState> {
   final PrepareBookingUseCase prepareUseCase;

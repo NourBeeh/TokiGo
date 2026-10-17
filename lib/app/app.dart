@@ -8,13 +8,13 @@ import 'config/app_config.dart';
 import 'router/go_router_config.dart';
 import '../shared/providers/locale_provider.dart';
 
-/// Root widget for WeTravellers.
+/// Root widget for TokiGo.
 ///
 /// Mounts the light-only "Pure White Premium" theme, the en/ar localization
 /// delegates, and the go-router shell. Riverpod is provided above this widget
 /// in `main.dart`.
-class WeTravellersApp extends ConsumerWidget {
-  const WeTravellersApp({super.key});
+class TokiGoApp extends ConsumerWidget {
+  const TokiGoApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

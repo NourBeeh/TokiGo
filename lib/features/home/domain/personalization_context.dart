@@ -1,6 +1,6 @@
-import 'package:wetravellers/core/memory/derived_preference_profile.dart';
-import 'package:wetravellers/core/profile/profile_repository.dart';
-import 'package:wetravellers/features/home/domain/home_composer.dart';
+import 'package:tokigo/core/memory/derived_preference_profile.dart';
+import 'package:tokigo/core/profile/profile_repository.dart';
+import 'package:tokigo/features/home/domain/home_composer.dart';
 
 /// Unified personalization context (Phase 1C).
 ///

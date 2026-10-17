@@ -4,10 +4,10 @@ project(runner LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
-set(BINARY_NAME "wetravellers")
+set(BINARY_NAME "tokigo")
 # The unique GTK application identifier for this application. See:
 # https://wiki.gnome.org/HowDoI/ChooseApplicationID
-set(APPLICATION_ID "com.wetravellers.wetravellers")
+set(APPLICATION_ID "com.tokigo.tokigo")
 
 # Work around a packaging bug in flutter_secure_storage_linux 1.1.0 (pinned via
 # dependency_overrides): its plugin CMakeLists.txt references the APPLICATION_ID

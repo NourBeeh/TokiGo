@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/features/bag/domain/trip.dart';
+import 'package:tokigo/features/bag/domain/trip.dart';
 
 void main() {
   test('trip summary mapping', () {

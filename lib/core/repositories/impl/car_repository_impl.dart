@@ -1,7 +1,7 @@
-import 'package:wetravellers/core/domain/models/offers/car_offer.dart';
-import 'package:wetravellers/core/repositories/contracts/car_repository.dart';
-import 'package:wetravellers/core/network/http_api_client.dart';
-import 'package:wetravellers/core/network/api_result.dart';
+import 'package:tokigo/core/domain/models/offers/car_offer.dart';
+import 'package:tokigo/core/repositories/contracts/car_repository.dart';
+import 'package:tokigo/core/network/http_api_client.dart';
+import 'package:tokigo/core/network/api_result.dart';
 
 class CarRepositoryImpl implements CarRepository {
   final HttpApiClient client;

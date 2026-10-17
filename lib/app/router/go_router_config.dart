@@ -83,7 +83,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     routes: <RouteBase>[
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
-          return WeTravellersShell(
+          return TokiGoShell(
             navigationShell: navigationShell,
             location: state.uri,
           );

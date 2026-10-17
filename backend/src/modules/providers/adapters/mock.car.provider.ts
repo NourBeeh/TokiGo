@@ -113,7 +113,7 @@ const CATALOGUE = [
 @Injectable()
 export class MockCarProvider implements CarProvider {
   providerId = 'mock-car';
-  providerName = 'WeTravellers Car Catalogue';
+  providerName = 'TokiGo Car Catalogue';
 
   async searchCars(params: {
     pickupLocation: string;

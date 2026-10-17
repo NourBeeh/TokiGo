@@ -1,5 +1,5 @@
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/core/storage/secure_token_storage.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/core/storage/secure_token_storage.dart';
 
 import '../../../features/ai/domain/ai_query_context.dart';
 import '../../../features/ai/domain/ai_response.dart';

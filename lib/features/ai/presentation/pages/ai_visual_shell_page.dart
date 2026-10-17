@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/theme/app_typography.dart';
-import 'package:wetravellers/features/ai/presentation/widgets/ai_ambient_visual.dart';
-import 'package:wetravellers/features/ai/presentation/widgets/ai_mode_indicator.dart';
-import 'package:wetravellers/features/ai/presentation/widgets/ai_prompt_input.dart';
-import 'package:wetravellers/features/ai/presentation/widgets/ai_response_content.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/features/ai/presentation/widgets/ai_ambient_visual.dart';
+import 'package:tokigo/features/ai/presentation/widgets/ai_mode_indicator.dart';
+import 'package:tokigo/features/ai/presentation/widgets/ai_prompt_input.dart';
+import 'package:tokigo/features/ai/presentation/widgets/ai_response_content.dart';
 
 /// The living AI surface shown when the app is in AI mode (AppMode.ai).
 ///

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/widgets/cards/card_glass.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/widgets/cards/card_glass.dart';
 
 /// Row (or wrap) of compact spec chips — the generalized form of CarCard's
 /// transmission/seats chips. Theme-aware; pass [onImage] to render frosted

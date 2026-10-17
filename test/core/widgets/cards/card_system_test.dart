@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/widgets/shimmer.dart';
+import 'package:tokigo/core/widgets/shimmer.dart';
 
-import 'package:wetravellers/core/widgets/cards/card.dart';
+import 'package:tokigo/core/widgets/cards/card.dart';
 
 Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 

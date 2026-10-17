@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/core/memory/memory_model.dart';
-import 'package:wetravellers/features/ai/domain/explicit_memory_view.dart';
+import 'package:tokigo/core/memory/memory_model.dart';
+import 'package:tokigo/features/ai/domain/explicit_memory_view.dart';
 
 /// 2C-C2 — ExplicitMemoryView + ExplicitMemoryInput domain tests.
 ///

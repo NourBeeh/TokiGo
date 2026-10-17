@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import 'package:wetravellers/core/theme/app_motion.dart';
+import 'package:tokigo/core/theme/app_motion.dart';
 
 /// Calm, living ambient background for the AI surface.
 ///

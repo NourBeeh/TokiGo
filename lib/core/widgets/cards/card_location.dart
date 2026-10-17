@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:wetravellers/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
 
 /// One-line location row: pin icon + text, ellipsized.
 class CardLocation extends StatelessWidget {

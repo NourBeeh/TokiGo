@@ -1,6 +1,6 @@
 {
-    "name": "wetravellers",
-    "short_name": "wetravellers",
+    "name": "TokiGo",
+    "short_name": "TokiGo",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -5,15 +5,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wetravellers/features/ai/application/ai_state.dart';
-import 'package:wetravellers/features/ai/domain/ai_query_context.dart';
-import 'package:wetravellers/features/ai/presentation/widgets/ai_bottom_sheet.dart'
+import 'package:tokigo/features/ai/application/ai_state.dart';
+import 'package:tokigo/features/ai/domain/ai_query_context.dart';
+import 'package:tokigo/features/ai/presentation/widgets/ai_bottom_sheet.dart'
     show aiSheetControllerProvider;
-import 'package:wetravellers/features/universal_search/application/universal_search_controller.dart';
-import 'package:wetravellers/features/universal_search/application/universal_search_state.dart';
-import 'package:wetravellers/features/universal_search/application/voice_search_providers.dart';
-import 'package:wetravellers/features/universal_search/application/voice_search_state.dart';
-import 'package:wetravellers/features/universal_search/presentation/widgets/universal_search_widgets.dart';
+import 'package:tokigo/features/universal_search/application/universal_search_controller.dart';
+import 'package:tokigo/features/universal_search/application/universal_search_state.dart';
+import 'package:tokigo/features/universal_search/application/voice_search_providers.dart';
+import 'package:tokigo/features/universal_search/application/voice_search_state.dart';
+import 'package:tokigo/features/universal_search/presentation/widgets/universal_search_widgets.dart';
 
 /// The Universal Search + AI surface (US-1) — evolved from the v1 smart
 /// search page into the full US-0 contract: a state-machine-driven

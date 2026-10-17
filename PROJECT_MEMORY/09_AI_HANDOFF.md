@@ -1,4 +1,4 @@
-# WeTravellers — AI HANDOFF
+# TokiGo — AI HANDOFF
 
 ## For analytical AI
 Read:

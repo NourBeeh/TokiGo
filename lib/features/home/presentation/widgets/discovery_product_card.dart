@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-import 'package:wetravellers/core/domain/models/home/home_item.dart';
-import 'package:wetravellers/core/domain/models/home/home_types.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/theme/app_typography.dart';
-import 'package:wetravellers/core/widgets/cards/card.dart';
-import 'package:wetravellers/core/theme/app_colors.dart';
-import 'package:wetravellers/core/theme/app_elevation.dart';
+import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/widgets/cards/card.dart';
+import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_elevation.dart';
 
 /// Real discovery product card for hotels / cars / packages in the Home
 /// feed (Wave 2): image-first vertical card with rating, highlights chips

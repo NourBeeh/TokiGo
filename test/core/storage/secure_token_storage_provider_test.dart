@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/storage/secure_token_storage.dart';
-import 'package:wetravellers/core/storage/secure_token_storage_provider.dart';
+import 'package:tokigo/core/storage/secure_token_storage.dart';
+import 'package:tokigo/core/storage/secure_token_storage_provider.dart';
 
 void main() {
   group('secureTokenStorageProvider', () {

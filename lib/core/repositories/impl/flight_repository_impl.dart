@@ -1,9 +1,9 @@
-import 'package:wetravellers/core/domain/models/offers/flight_offer.dart';
-import 'package:wetravellers/core/mappers/offer_mapper_fixed.dart';
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/core/network/api_error.dart';
-import 'package:wetravellers/core/network/api_result.dart';
-import 'package:wetravellers/core/repositories/contracts/flight_repository.dart';
+import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
+import 'package:tokigo/core/mappers/offer_mapper_fixed.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/core/network/api_error.dart';
+import 'package:tokigo/core/network/api_result.dart';
+import 'package:tokigo/core/repositories/contracts/flight_repository.dart';
 
 class FlightRepositoryImpl implements FlightRepository {
   final ApiClient apiClient;

@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wetravellers/core/memory/memory_repository.dart';
-import 'package:wetravellers/core/memory/memory_repository_impl.dart';
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/core/network/http_api_client.dart';
-import 'package:wetravellers/core/storage/secure_token_storage_provider.dart';
+import 'package:tokigo/core/memory/memory_repository.dart';
+import 'package:tokigo/core/memory/memory_repository_impl.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/core/network/http_api_client.dart';
+import 'package:tokigo/core/storage/secure_token_storage_provider.dart';
 
 import 'explicit_memory_controller.dart';
 

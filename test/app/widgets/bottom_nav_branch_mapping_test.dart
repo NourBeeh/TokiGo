@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wetravellers/app/shell.dart';
-import 'package:wetravellers/app/widgets/app_bottom_nav.dart';
-import 'package:wetravellers/l10n/app_localizations.dart';
+import 'package:tokigo/app/shell.dart';
+import 'package:tokigo/app/widgets/app_bottom_nav.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
 
 /// NAV regression coverage (2026-09-07): the floating bottom navigation pill
 /// is RETIRED — the shell hosts the navigation stack only. The historical
@@ -22,7 +22,7 @@ void main() {
       initialLocation: '/',
       routes: <RouteBase>[
         StatefulShellRoute.indexedStack(
-          builder: (context, state, navigationShell) => WeTravellersShell(
+          builder: (context, state, navigationShell) => TokiGoShell(
             navigationShell: navigationShell,
             location: state.uri,
           ),
@@ -68,7 +68,7 @@ void main() {
       initialLocation: '/',
       routes: <RouteBase>[
         StatefulShellRoute.indexedStack(
-          builder: (context, state, navigationShell) => WeTravellersShell(
+          builder: (context, state, navigationShell) => TokiGoShell(
             navigationShell: navigationShell,
             location: state.uri,
           ),

@@ -5,14 +5,14 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/core/domain/models/home/home_item.dart';
-import 'package:wetravellers/core/domain/models/home/home_section.dart';
-import 'package:wetravellers/core/network/api_result.dart';
-import 'package:wetravellers/core/repositories/contracts/home_repository.dart';
-import 'package:wetravellers/features/home/presentation/home_controller.dart';
-import 'package:wetravellers/features/home/presentation/pages/home_page.dart';
-import 'package:wetravellers/features/home/providers/home_providers.dart';
-import 'package:wetravellers/l10n/app_localizations.dart';
+import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/domain/models/home/home_section.dart';
+import 'package:tokigo/core/network/api_result.dart';
+import 'package:tokigo/core/repositories/contracts/home_repository.dart';
+import 'package:tokigo/features/home/presentation/home_controller.dart';
+import 'package:tokigo/features/home/presentation/pages/home_page.dart';
+import 'package:tokigo/features/home/providers/home_providers.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
 
 /// H1 — Nuitee-only Home loading rail tests (updated 2026-09-08).
 ///

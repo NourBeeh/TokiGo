@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart' show visibleForTesting;
-import 'package:wetravellers/core/domain/models/offers/hotel_offer.dart';
-import 'package:wetravellers/core/repositories/contracts/hotel_repository.dart';
-import 'package:wetravellers/core/network/http_api_client.dart';
-import 'package:wetravellers/core/network/api_error.dart';
-import 'package:wetravellers/core/network/api_result.dart';
+import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
+import 'package:tokigo/core/repositories/contracts/hotel_repository.dart';
+import 'package:tokigo/core/network/http_api_client.dart';
+import 'package:tokigo/core/network/api_error.dart';
+import 'package:tokigo/core/network/api_result.dart';
 
 /// Phase 3A — the hotel repository honors the FULL search contract.
 ///

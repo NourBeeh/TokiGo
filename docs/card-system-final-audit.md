@@ -1,14 +1,14 @@
 # Card System Final Audit Report
 
 **Date**: 2025-08-28  
-**Project**: WeTravellers Flutter App  
+**Project**: TokiGo Flutter App  
 **Scope**: Complete audit of all Card components across Home and Search features  
 
 ---
 
 ## Executive Summary
 
-The WeTravellers card system is a well-architected, shared design system with strong foundations. The core components (`BaseCard`, `CardImage`, `CardPrice`, `CardPriceBlock`, `CardRating`, `CardBadge`, `CardFavorite`, `CardFeatureList`, `CardCancellation`, `CardLocation`, `CardPrimaryAction`, `CardAvailability`, `CardGlass`, `CardPriceBlock`) form a cohesive, reusable system. Feature cards (Hotel, Flight, Car, Package, Destination, Deal, Experience, Story) are built by composing these primitives.
+The TokiGo card system is a well-architected, shared design system with strong foundations. The core components (`BaseCard`, `CardImage`, `CardPrice`, `CardPriceBlock`, `CardRating`, `CardBadge`, `CardFavorite`, `CardFeatureList`, `CardCancellation`, `CardLocation`, `CardPrimaryAction`, `CardAvailability`, `CardGlass`, `CardPriceBlock`) form a cohesive, reusable system. Feature cards (Hotel, Flight, Car, Package, Destination, Deal, Experience, Story) are built by composing these primitives.
 
 **Overall Health**: **Good** - Strong architecture with room for incremental improvements.
 
@@ -413,7 +413,7 @@ The WeTravellers card system is a well-architected, shared design system with st
 
 ## Conclusion
 
-The WeTravellers card system is **well-architected** with a strong shared primitive foundation. The main issues are:
+The TokiGo card system is **well-architected** with a strong shared primitive foundation. The main issues are:
 
 1. **Duplication** in rating pills, spec chips, savings chips
 2. **Hardcoded colors/values** in several cards

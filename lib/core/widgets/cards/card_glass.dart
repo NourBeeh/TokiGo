@@ -2,7 +2,7 @@ import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 
-import 'package:wetravellers/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
 
 /// A reusable frosted-glass surface used for on-image overlays (favorite
 /// toggle, translucent badge/rating/feature pills placed over a photo).

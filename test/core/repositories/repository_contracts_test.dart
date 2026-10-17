@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/network/api_result.dart';
-import 'package:wetravellers/core/network/api_error.dart';
-import 'package:wetravellers/core/repositories/contracts/flight_repository.dart';
-import 'package:wetravellers/core/domain/models/offers/flight_offer.dart';
+import 'package:tokigo/core/network/api_result.dart';
+import 'package:tokigo/core/network/api_error.dart';
+import 'package:tokigo/core/repositories/contracts/flight_repository.dart';
+import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
 
 class FakeFlightRepository implements FlightRepository {
   @override

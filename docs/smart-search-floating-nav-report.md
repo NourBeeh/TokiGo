@@ -42,7 +42,7 @@
 - **ملاحظة معمارية:** go_router يعيد بناء shell builder مع كل تنقل داخل الشل، لذا `state.uri` دائمًا محدث
 
 ### `lib/app/router/go_router_config.dart`
-- تعديل وحيد: تمرير `location: state.uri` إلى `WeTravellersShell` (سطر ~92)
+- تعديل وحيد: تمرير `location: state.uri` إلى `TokiGoShell` (سطر ~92)
 - **كل الراوتات الأخرى لم تُلمس** — بما فيها `/ai-chat` (بقي كما هو خارج الشل بـ `parentNavigatorKey`)
 
 ### `lib/core/navigation/app_route.dart`

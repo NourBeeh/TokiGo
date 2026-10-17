@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:wetravellers/features/bag/domain/trip.dart';
-import 'package:wetravellers/features/booking/domain/booking_record.dart';
-import 'package:wetravellers/core/domain/models/booking/booking.dart';
+import 'package:tokigo/features/bag/domain/trip.dart';
+import 'package:tokigo/features/booking/domain/booking_record.dart';
+import 'package:tokigo/core/domain/models/booking/booking.dart';
 
 class BagState {
   final List<TripSummary> currentTrips;

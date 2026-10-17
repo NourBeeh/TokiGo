@@ -12,8 +12,8 @@ COMMIT_MESSAGE="$(git log -1 --format=%s)"
 
 echo "Commit: $COMMIT_HASH - $COMMIT_MESSAGE" >> "$LOG_FILE"
 
-echo "[WeTravellers] post-commit: commit completed $COMMIT_HASH"
-echo "[WeTravellers] post-commit: done. Details in .githooks/hooks.log"
+echo "[TokiGo] post-commit: commit completed $COMMIT_HASH"
+echo "[TokiGo] post-commit: done. Details in .githooks/hooks.log"
 echo "=== post-commit hook completed successfully ===" >> "$LOG_FILE"
 
 exit 0

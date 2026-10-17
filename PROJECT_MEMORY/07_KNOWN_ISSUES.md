@@ -1,4 +1,4 @@
-# WeTravellers — KNOWN ISSUES / CAVEATS
+# TokiGo — KNOWN ISSUES / CAVEATS
 
 ## Historical
 - TS2564 strict-property-initialization errors existed in older DTO/entity files outside the AI scope.

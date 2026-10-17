@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'package:wetravellers/core/theme/app_elevation.dart';
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_elevation.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
 
 /// The shared layout container for every card in the system.
 ///

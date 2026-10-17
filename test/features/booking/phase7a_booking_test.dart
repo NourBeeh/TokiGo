@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/features/booking/application/booking_state.dart';
+import 'package:tokigo/features/booking/application/booking_state.dart';
 
-import 'package:wetravellers/core/network/api_result.dart';
-import 'package:wetravellers/core/network/api_error.dart';
-import 'package:wetravellers/features/booking/domain/booking_record.dart';
-import 'package:wetravellers/features/booking/domain/booking_preparation.dart';
-import 'package:wetravellers/core/domain/models/booking/booking.dart';
+import 'package:tokigo/core/network/api_result.dart';
+import 'package:tokigo/core/network/api_error.dart';
+import 'package:tokigo/features/booking/domain/booking_record.dart';
+import 'package:tokigo/features/booking/domain/booking_preparation.dart';
+import 'package:tokigo/core/domain/models/booking/booking.dart';
 
 class FakeBookingRepository {
   BookingRecord? prepared;

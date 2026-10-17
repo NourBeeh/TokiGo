@@ -1,5 +1,5 @@
-import 'package:wetravellers/features/booking/domain/booking_record.dart';
-import 'package:wetravellers/features/booking/domain/booking_preparation.dart';
+import 'package:tokigo/features/booking/domain/booking_record.dart';
+import 'package:tokigo/features/booking/domain/booking_preparation.dart';
 
 enum BookingPhase {
   idle,

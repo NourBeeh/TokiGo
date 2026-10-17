@@ -1,6 +1,6 @@
-import 'package:wetravellers/core/network/api_result.dart';
-import 'package:wetravellers/core/network/api_error.dart';
-import 'package:wetravellers/core/storage/secure_token_storage.dart';
+import 'package:tokigo/core/network/api_result.dart';
+import 'package:tokigo/core/network/api_error.dart';
+import 'package:tokigo/core/storage/secure_token_storage.dart';
 
 /// Shared plumbing for admin HTTP services: bearer-token headers and
 /// failure-to-exception translation so the UI can surface a SnackBar.

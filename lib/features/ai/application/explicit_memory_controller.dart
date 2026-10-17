@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wetravellers/core/memory/memory_model.dart';
-import 'package:wetravellers/core/memory/memory_repository.dart';
-import 'package:wetravellers/core/network/api_error.dart';
-import 'package:wetravellers/features/ai/domain/explicit_memory_view.dart';
+import 'package:tokigo/core/memory/memory_model.dart';
+import 'package:tokigo/core/memory/memory_repository.dart';
+import 'package:tokigo/core/network/api_error.dart';
+import 'package:tokigo/features/ai/domain/explicit_memory_view.dart';
 
 /// 2C-C2 — Controller for the "What I Know About You" memory controls.
 ///

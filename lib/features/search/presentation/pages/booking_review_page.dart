@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wetravellers/core/theme/app_colors.dart';
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/theme/app_typography.dart';
-import 'package:wetravellers/core/ui/app_button.dart';
-import 'package:wetravellers/core/widgets/step_progress.dart';
-import 'package:wetravellers/core/widgets/sticky_cta_bar.dart';
-import 'package:wetravellers/features/booking/application/providers/checkout_flow_providers.dart';
-import 'package:wetravellers/features/booking/application/services/offer_revalidation_service.dart';
-import 'package:wetravellers/features/booking/domain/booking_record.dart';
-import 'package:wetravellers/features/booking/application/booking_state.dart';
-import 'package:wetravellers/features/booking/application/booking_providers.dart';
-import 'package:wetravellers/features/search/application/providers/offer_selection_provider.dart';
-import 'package:wetravellers/features/bag/domain/trip.dart';
-import 'package:wetravellers/l10n/app_localizations.dart';
+import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/ui/app_button.dart';
+import 'package:tokigo/core/widgets/step_progress.dart';
+import 'package:tokigo/core/widgets/sticky_cta_bar.dart';
+import 'package:tokigo/features/booking/application/providers/checkout_flow_providers.dart';
+import 'package:tokigo/features/booking/application/services/offer_revalidation_service.dart';
+import 'package:tokigo/features/booking/domain/booking_record.dart';
+import 'package:tokigo/features/booking/application/booking_state.dart';
+import 'package:tokigo/features/booking/application/booking_providers.dart';
+import 'package:tokigo/features/search/application/providers/offer_selection_provider.dart';
+import 'package:tokigo/features/bag/domain/trip.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
 
 /// Premium booking review — step 1 of the checkout funnel.
 ///

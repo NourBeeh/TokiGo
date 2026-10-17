@@ -1,4 +1,4 @@
-# WeTravellers — CURRENT STATE
+# TokiGo — CURRENT STATE
 
 ## 2026-10-17 — Stabilization checkpoint (AUTHORITATIVE)
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/widgets/cards/card_image.dart';
+import 'package:tokigo/core/widgets/cards/card_image.dart';
 
 void main() {
   group('CardImage unified source resolver', () {

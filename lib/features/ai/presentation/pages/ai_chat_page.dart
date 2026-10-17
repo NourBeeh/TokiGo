@@ -3,13 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wetravellers/core/theme/app_colors.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/features/ai/application/ai_chat_page_providers.dart';
-import 'package:wetravellers/features/ai/application/ai_state.dart';
-import 'package:wetravellers/features/ai/domain/ai_chat_message.dart';
-import 'package:wetravellers/features/ai/presentation/widgets/ai_bubble_icon.dart';
-import 'package:wetravellers/l10n/app_localizations.dart';
+import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/features/ai/application/ai_chat_page_providers.dart';
+import 'package:tokigo/features/ai/application/ai_state.dart';
+import 'package:tokigo/features/ai/domain/ai_chat_message.dart';
+import 'package:tokigo/features/ai/presentation/widgets/ai_bubble_icon.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
 
 /// Full-screen AI chat page.
 ///

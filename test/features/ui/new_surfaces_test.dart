@@ -3,27 +3,27 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/l10n/app_localizations.dart';
-import 'package:wetravellers/core/storage/offline_cache.dart';
-import 'package:wetravellers/core/storage/offline_cache_providers.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
+import 'package:tokigo/core/storage/offline_cache.dart';
+import 'package:tokigo/core/storage/offline_cache_providers.dart';
 
 
 
 
-import 'package:wetravellers/features/booking/presentation/pages/add_ons_page.dart';
-import 'package:wetravellers/features/booking/presentation/pages/booking_confirmation_page.dart';
-import 'package:wetravellers/features/booking/presentation/pages/checkout_page.dart';
-import 'package:wetravellers/features/booking/presentation/pages/passenger_details_page.dart';
-import 'package:wetravellers/features/bag/presentation/pages/bag_page.dart';
-import 'package:wetravellers/features/groups/presentation/pages/groups_page.dart';
-import 'package:wetravellers/features/home/presentation/pages/explore_page.dart';
-import 'package:wetravellers/features/home/presentation/pages/home_page.dart';
-import 'package:wetravellers/features/notifications/presentation/pages/notifications_page.dart';
-import 'package:wetravellers/features/profile/presentation/pages/wishlist_page.dart';
-import 'package:wetravellers/features/profile/presentation/pages/settings_page.dart';
-import 'package:wetravellers/features/search/presentation/pages/search_hub_page.dart';
-import 'package:wetravellers/features/search/presentation/pages/offer_details_page.dart';
-import 'package:wetravellers/core/domain/models/offers/flight_offer.dart';
+import 'package:tokigo/features/booking/presentation/pages/add_ons_page.dart';
+import 'package:tokigo/features/booking/presentation/pages/booking_confirmation_page.dart';
+import 'package:tokigo/features/booking/presentation/pages/checkout_page.dart';
+import 'package:tokigo/features/booking/presentation/pages/passenger_details_page.dart';
+import 'package:tokigo/features/bag/presentation/pages/bag_page.dart';
+import 'package:tokigo/features/groups/presentation/pages/groups_page.dart';
+import 'package:tokigo/features/home/presentation/pages/explore_page.dart';
+import 'package:tokigo/features/home/presentation/pages/home_page.dart';
+import 'package:tokigo/features/notifications/presentation/pages/notifications_page.dart';
+import 'package:tokigo/features/profile/presentation/pages/wishlist_page.dart';
+import 'package:tokigo/features/profile/presentation/pages/settings_page.dart';
+import 'package:tokigo/features/search/presentation/pages/search_hub_page.dart';
+import 'package:tokigo/features/search/presentation/pages/offer_details_page.dart';
+import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
 
 /// Smoke + interaction coverage for the new premium surfaces built in the
 /// full-UI phase: tabs, funnel, bag, groups and detail pages render without

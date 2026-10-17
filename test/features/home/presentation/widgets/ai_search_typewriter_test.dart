@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/features/home/presentation/widgets/home_ai_search_field.dart';
-import 'package:wetravellers/l10n/app_localizations.dart';
-import 'package:wetravellers/l10n/app_localizations_en.dart';
-import 'package:wetravellers/l10n/app_localizations_ar.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_ai_search_field.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
+import 'package:tokigo/l10n/app_localizations_en.dart';
+import 'package:tokigo/l10n/app_localizations_ar.dart';
 
 /// Typewriter hint contract for the Home AI search pill.
 ///

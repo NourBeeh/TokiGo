@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wetravellers/features/search/domain/sort_option.dart';
+import 'package:tokigo/features/search/domain/sort_option.dart';
 
 class SortSelector extends StatelessWidget {
   final SortOption selected;

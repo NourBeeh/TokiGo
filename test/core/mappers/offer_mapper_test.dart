@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/mappers/offer_mapper_fixed.dart';
-import 'package:wetravellers/core/domain/models/offers/flight_offer.dart';
+import 'package:tokigo/core/mappers/offer_mapper_fixed.dart';
+import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
 
 void main() {
   test('mapOffer flight parses dates and fields', () {

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/navigation/app_route.dart';
+import 'package:tokigo/core/navigation/app_route.dart';
 
 void main() {
   test('paths are distinct and start with /', () {

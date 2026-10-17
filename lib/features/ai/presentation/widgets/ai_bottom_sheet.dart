@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wetravellers/core/ai/ai_assistant_service.dart';
-import 'package:wetravellers/core/network/user_facing_message.dart';
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/core/theme/app_colors.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/features/ai/application/ai_providers.dart';
-import 'package:wetravellers/features/ai/application/ai_state.dart';
-import 'package:wetravellers/features/ai/domain/ai_home_mapper.dart';
-import 'package:wetravellers/features/ai/domain/ai_query_context.dart';
-import 'package:wetravellers/features/home/presentation/widgets/home_section.dart';
-import 'package:wetravellers/core/storage/offline_cache.dart';
-import 'package:wetravellers/core/storage/offline_cache_serializers.dart';
-import 'package:wetravellers/core/storage/offline_cache_providers.dart';
+import 'package:tokigo/core/ai/ai_assistant_service.dart';
+import 'package:tokigo/core/network/user_facing_message.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/features/ai/application/ai_providers.dart';
+import 'package:tokigo/features/ai/application/ai_state.dart';
+import 'package:tokigo/features/ai/domain/ai_home_mapper.dart';
+import 'package:tokigo/features/ai/domain/ai_query_context.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_section.dart';
+import 'package:tokigo/core/storage/offline_cache.dart';
+import 'package:tokigo/core/storage/offline_cache_serializers.dart';
+import 'package:tokigo/core/storage/offline_cache_providers.dart';
 
 class AiSheetController extends StateNotifier<AiState> {
   AiSheetController({

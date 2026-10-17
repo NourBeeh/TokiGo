@@ -1,4 +1,4 @@
-package com.wetravellers.wetravellers
+package com.tokigo.tokigo
 
 import io.flutter.embedding.android.FlutterActivity
 

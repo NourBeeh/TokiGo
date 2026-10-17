@@ -1,6 +1,6 @@
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/features/ai/domain/ai_response.dart';
-import 'package:wetravellers/features/ai/domain/ai_query_context.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/features/ai/domain/ai_response.dart';
+import 'package:tokigo/features/ai/domain/ai_query_context.dart';
 
 /// AI assistant service boundary.
 ///

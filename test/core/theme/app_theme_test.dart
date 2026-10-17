@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/theme/app_theme.dart';
-import 'package:wetravellers/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_theme.dart';
+import 'package:tokigo/core/theme/app_colors.dart';
 
 void main() {
   test('Light theme uses pure white surfaces', () {

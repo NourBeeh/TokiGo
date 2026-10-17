@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:wetravellers/core/domain/models/home/home_item.dart';
-import 'package:wetravellers/core/domain/models/home/home_types.dart';
-import 'package:wetravellers/core/domain/models/offers/travel_package_offer.dart';
-import 'package:wetravellers/core/theme/app_colors.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_typography.dart';
-import 'package:wetravellers/features/search/presentation/widgets/search_scaffold.dart';
-import 'package:wetravellers/features/search/presentation/widgets/search_states_view.dart';
-import 'package:wetravellers/features/search/presentation/widgets/package_search_card.dart';
+import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/domain/models/offers/travel_package_offer.dart';
+import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/features/search/presentation/widgets/search_scaffold.dart';
+import 'package:tokigo/features/search/presentation/widgets/search_states_view.dart';
+import 'package:tokigo/features/search/presentation/widgets/package_search_card.dart';
 
 class PackagesSearchPage extends ConsumerStatefulWidget {
   const PackagesSearchPage({super.key});

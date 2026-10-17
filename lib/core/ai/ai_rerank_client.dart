@@ -1,5 +1,5 @@
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/core/storage/secure_token_storage.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/core/storage/secure_token_storage.dart';
 
 /// Client for the Phase 1C `POST /ai/rerank` endpoint.
 ///

@@ -5,10 +5,10 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import 'package:wetravellers/core/theme/app_colors.dart';
-import 'package:wetravellers/core/widgets/shimmer.dart';
-import 'package:wetravellers/features/home/application/hotel_image_cache.dart';
-import 'package:wetravellers/features/home/application/hotel_image_memory_cache.dart';
+import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/widgets/shimmer.dart';
+import 'package:tokigo/features/home/application/hotel_image_cache.dart';
+import 'package:tokigo/features/home/application/hotel_image_memory_cache.dart';
 
 /// H3 — Hive-backed hotel card image.
 ///

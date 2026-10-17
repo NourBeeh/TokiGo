@@ -1,18 +1,18 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/domain/models/home/home_item.dart';
-import 'package:wetravellers/core/domain/models/home/home_section.dart';
-import 'package:wetravellers/core/domain/models/home/home_types.dart';
-import 'package:wetravellers/core/network/api_error.dart';
-import 'package:wetravellers/core/network/api_result.dart';
-import 'package:wetravellers/core/repositories/contracts/home_repository.dart';
-import 'package:wetravellers/core/repositories/impl/home_repository_impl.dart'
+import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/domain/models/home/home_section.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/network/api_error.dart';
+import 'package:tokigo/core/network/api_result.dart';
+import 'package:tokigo/core/repositories/contracts/home_repository.dart';
+import 'package:tokigo/core/repositories/impl/home_repository_impl.dart'
     show homeSectionToMap, homeSectionsFromMap;
-import 'package:wetravellers/features/booking/application/services/offer_revalidation_service.dart';
-import 'package:wetravellers/features/home/application/home_live_validation_service.dart';
-import 'package:wetravellers/features/home/domain/home_composer.dart';
-import 'package:wetravellers/features/home/presentation/home_controller.dart';
+import 'package:tokigo/features/booking/application/services/offer_revalidation_service.dart';
+import 'package:tokigo/features/home/application/home_live_validation_service.dart';
+import 'package:tokigo/features/home/domain/home_composer.dart';
+import 'package:tokigo/features/home/presentation/home_controller.dart';
 
 /// Scripted revalidation behaviour: maps offerId → outcome; unmapped ids
 /// throw (transport failure); `status == error` throws (network failure).

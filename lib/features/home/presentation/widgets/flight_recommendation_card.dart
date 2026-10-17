@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:wetravellers/core/domain/models/home/home_item.dart';
-import 'package:wetravellers/core/domain/models/home/home_types.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/widgets/cards/card.dart';
-import 'package:wetravellers/core/widgets/cards/badge_config.dart';
-import 'package:wetravellers/features/home/presentation/home_card_dimensions.dart';
-import 'package:wetravellers/features/search/presentation/widgets/flight_route_line.dart';
+import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/widgets/cards/card.dart';
+import 'package:tokigo/core/widgets/cards/badge_config.dart';
+import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
+import 'package:tokigo/features/search/presentation/widgets/flight_route_line.dart';
 
 /// Flight recommendation card — Home discovery product card.
 ///

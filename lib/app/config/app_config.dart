@@ -1,4 +1,4 @@
-/// Build-time configuration for WeTravellers.
+/// Build-time configuration for TokiGo.
 ///
 /// Contains only non-secret, environment-agnostic values. Never place API keys,
 /// credentials or secrets here (or anywhere in source).
@@ -15,7 +15,7 @@ class AppConfig {
   const AppConfig._();
 
   static const String appName = 'TokiGo';
-  static const String bundleId = 'com.wetravellers.wetravellers';
+  static const String bundleId = 'com.tokigo.tokigo';
   static const String version = '1.0.0';
   static const AppEnvironment environment = AppEnvironment.dev;
 

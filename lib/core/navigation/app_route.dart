@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Canonical navigation destinations for WeTravellers.
+/// Canonical navigation destinations for TokiGo.
 ///
 /// Used by the floating navigation, router and future drag/reorder controllers
 /// so a single source of truth drives labels, icons and ordering.

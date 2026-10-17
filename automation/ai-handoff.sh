@@ -6,7 +6,7 @@ ROOT="$(git rev-parse --show-toplevel)"
 MEMORY="$ROOT/PROJECT_MEMORY"
 
 echo "======================================"
-echo " WeTravellers AI Handoff"
+echo " TokiGo AI Handoff"
 echo "======================================"
 echo
 

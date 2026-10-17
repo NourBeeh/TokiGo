@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wetravellers/core/theme/app_colors.dart';
-import 'package:wetravellers/core/theme/app_motion.dart';
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/theme/app_typography.dart';
-import 'package:wetravellers/features/universal_search/application/universal_search_state.dart';
-import 'package:wetravellers/features/universal_search/application/voice_search_state.dart';
-import 'package:wetravellers/features/universal_search/domain/structured_travel_intent.dart';
-import 'package:wetravellers/features/home/presentation/widgets/home_ai_search_field.dart'
+import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_motion.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/features/universal_search/application/universal_search_state.dart';
+import 'package:tokigo/features/universal_search/application/voice_search_state.dart';
+import 'package:tokigo/features/universal_search/domain/structured_travel_intent.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_ai_search_field.dart'
     show kAiSmartSearchHeroTag;
-import 'package:wetravellers/features/home/presentation/widgets/home_section.dart';
-import 'package:wetravellers/l10n/app_localizations.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_section.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
 
 // ---------------------------------------------------------------------------
 // Header — the hero destination + mic (US-3 voice search).

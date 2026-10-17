@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 
-import 'package:wetravellers/core/domain/models/home/home_item.dart';
-import 'package:wetravellers/core/domain/models/home/home_section.dart';
-import 'package:wetravellers/core/domain/models/home/home_types.dart';
-import 'package:wetravellers/features/booking/application/services/offer_revalidation_service.dart';
+import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/domain/models/home/home_section.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/features/booking/application/services/offer_revalidation_service.dart';
 
 /// Outcome of one live product validation (Phase 1D).
 enum LiveValidationStatus {

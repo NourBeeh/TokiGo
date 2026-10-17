@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/widgets/cards/badge_config.dart';
-import 'package:wetravellers/core/widgets/cards/card_glass.dart';
-import 'package:wetravellers/core/widgets/cards/card_scrim_overlay.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/widgets/cards/badge_config.dart';
+import 'package:tokigo/core/widgets/cards/card_glass.dart';
+import 'package:tokigo/core/widgets/cards/card_scrim_overlay.dart';
 
 /// Badge variants: a tinted solid chip (default) or a frosted [glass] pill for
 /// placing directly over a photo.

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wetravellers/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
 
 /// Client-side card dimension defaults for Home Discovery carousels.
 ///

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wetravellers/core/admin/admin_home_content_service.dart';
-import 'package:wetravellers/core/theme/app_colors.dart';
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/theme/app_typography.dart';
-import 'package:wetravellers/core/ui/app_button.dart';
-import 'package:wetravellers/l10n/app_localizations.dart';
+import 'package:tokigo/core/admin/admin_home_content_service.dart';
+import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/ui/app_button.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
 import '../admin_services.dart';
 import '../widgets/admin_card_editor_sheet.dart';
 

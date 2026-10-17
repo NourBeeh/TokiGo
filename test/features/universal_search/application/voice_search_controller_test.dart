@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/features/universal_search/application/voice_search_controller.dart';
-import 'package:wetravellers/features/universal_search/application/voice_search_state.dart';
-import 'package:wetravellers/features/universal_search/domain/voice_search_service.dart';
+import 'package:tokigo/features/universal_search/application/voice_search_controller.dart';
+import 'package:tokigo/features/universal_search/application/voice_search_state.dart';
+import 'package:tokigo/features/universal_search/domain/voice_search_service.dart';
 
 /// US-3 — VoiceSearchController tests (spec's test list).
 ///

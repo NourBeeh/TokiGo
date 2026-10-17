@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/domain/models/search/flight_search_params.dart';
-import 'package:wetravellers/core/domain/models/search/hotel_search_params.dart';
-import 'package:wetravellers/core/domain/models/search/car_search_params.dart';
-import 'package:wetravellers/core/domain/models/booking/booking.dart';
+import 'package:tokigo/core/domain/models/search/flight_search_params.dart';
+import 'package:tokigo/core/domain/models/search/hotel_search_params.dart';
+import 'package:tokigo/core/domain/models/search/car_search_params.dart';
+import 'package:tokigo/core/domain/models/booking/booking.dart';
 
 void main() {
   test('FlightSearchParams validation defaults', () {

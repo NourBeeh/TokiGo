@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wetravellers/core/theme/app_typography.dart';
+import 'package:tokigo/core/theme/app_typography.dart';
 
 /// Reactive app-wide locale (English / Arabic).
 ///

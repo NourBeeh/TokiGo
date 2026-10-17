@@ -1,7 +1,7 @@
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/core/network/api_error.dart';
-import 'package:wetravellers/core/network/api_result.dart';
-import 'package:wetravellers/core/storage/secure_token_storage.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/core/network/api_error.dart';
+import 'package:tokigo/core/network/api_result.dart';
+import 'package:tokigo/core/storage/secure_token_storage.dart';
 
 import 'memory_model.dart';
 import 'memory_repository.dart';

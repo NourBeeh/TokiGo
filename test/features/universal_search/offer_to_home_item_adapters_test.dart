@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/core/domain/models/home/home_types.dart';
-import 'package:wetravellers/core/domain/models/offers/car_offer.dart';
-import 'package:wetravellers/core/domain/models/offers/customer_price.dart';
-import 'package:wetravellers/core/domain/models/offers/flight_offer.dart';
-import 'package:wetravellers/core/domain/models/offers/hotel_offer.dart';
-import 'package:wetravellers/core/domain/models/offers/travel_package_offer.dart';
-import 'package:wetravellers/features/universal_search/data/offer_to_home_item_adapters.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/domain/models/offers/car_offer.dart';
+import 'package:tokigo/core/domain/models/offers/customer_price.dart';
+import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
+import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
+import 'package:tokigo/core/domain/models/offers/travel_package_offer.dart';
+import 'package:tokigo/features/universal_search/data/offer_to_home_item_adapters.dart';
 
 /// The four US-1 adapters map every normalized offer into the EXISTING
 /// HomeItem contract — identifiers land in metadata for the booking and

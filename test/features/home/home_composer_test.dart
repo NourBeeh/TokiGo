@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/domain/models/home/home_item.dart';
-import 'package:wetravellers/core/domain/models/home/home_section.dart';
-import 'package:wetravellers/core/domain/models/home/home_types.dart';
-import 'package:wetravellers/core/repositories/impl/home_repository_impl.dart';
-import 'package:wetravellers/core/storage/offline_cache.dart';
-import 'package:wetravellers/features/home/domain/home_composer.dart';
-import 'package:wetravellers/features/home/domain/home_greeting.dart';
+import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/domain/models/home/home_section.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/repositories/impl/home_repository_impl.dart';
+import 'package:tokigo/core/storage/offline_cache.dart';
+import 'package:tokigo/features/home/domain/home_composer.dart';
+import 'package:tokigo/features/home/domain/home_greeting.dart';
 
 HomeItem item(String id, HomeCardType type, String title) =>
     HomeItem(id: id, type: type, title: title);

@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/core/storage/offline_cache.dart';
-import 'package:wetravellers/core/storage/secure_token_storage.dart';
-import 'package:wetravellers/features/ai/application/ai_chat_guest_only_cache.dart';
+import 'package:tokigo/core/storage/offline_cache.dart';
+import 'package:tokigo/core/storage/secure_token_storage.dart';
+import 'package:tokigo/features/ai/application/ai_chat_guest_only_cache.dart';
 
 /// 2C-C2 — the identity-aware conversation cache policy.
 ///

@@ -1,6 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/storage/secure_token_storage.dart';
+import 'package:tokigo/core/storage/secure_token_storage.dart';
 
 /// A fake FlutterSecureStorage that throws on demand to test failure handling.
 /// Uses noSuchMethod to avoid having to implement all members.

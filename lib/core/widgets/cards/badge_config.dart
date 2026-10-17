@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wetravellers/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_colors.dart';
 
 /// Semantic badge categories for consistent UX and theming
 enum BadgeCategory {

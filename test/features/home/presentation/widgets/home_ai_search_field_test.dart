@@ -7,13 +7,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 
-import 'package:wetravellers/app/app.dart';
-import 'package:wetravellers/core/storage/offline_cache.dart';
-import 'package:wetravellers/core/storage/offline_cache_providers.dart';
-import 'package:wetravellers/features/ai/presentation/pages/ai_chat_page.dart';
-import 'package:wetravellers/features/home/presentation/widgets/home_ai_search_field.dart';
-import 'package:wetravellers/features/universal_search/presentation/pages/universal_search_page.dart';
-import 'package:wetravellers/l10n/app_localizations.dart';
+import 'package:tokigo/app/app.dart';
+import 'package:tokigo/core/storage/offline_cache.dart';
+import 'package:tokigo/core/storage/offline_cache_providers.dart';
+import 'package:tokigo/features/ai/presentation/pages/ai_chat_page.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_ai_search_field.dart';
+import 'package:tokigo/features/universal_search/presentation/pages/universal_search_page.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
 
 void main() {
   setUpAll(() {
@@ -27,7 +27,7 @@ void main() {
       overrides: <Override>[
         offlineCacheProvider.overrideWithValue(cache ?? MemoryOfflineCache()),
       ],
-      child: const WeTravellersApp(),
+      child: const TokiGoApp(),
     );
   }
 

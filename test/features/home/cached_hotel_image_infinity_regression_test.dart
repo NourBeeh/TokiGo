@@ -2,9 +2,9 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/storage/offline_cache.dart';
-import 'package:wetravellers/features/home/application/hotel_image_cache.dart';
-import 'package:wetravellers/features/home/presentation/widgets/cached_hotel_image.dart';
+import 'package:tokigo/core/storage/offline_cache.dart';
+import 'package:tokigo/features/home/application/hotel_image_cache.dart';
+import 'package:tokigo/features/home/presentation/widgets/cached_hotel_image.dart';
 
 /// Regression (user bug 2026-09-08): the Home hotel card passes
 /// `width: double.infinity` so the photo fills the 260px card width. Once

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/widgets/shimmer.dart';
+import 'package:tokigo/core/widgets/shimmer.dart';
 
-import 'package:wetravellers/core/domain/models/offers/car_offer.dart';
-import 'package:wetravellers/core/widgets/cards/card.dart';
-import 'package:wetravellers/features/search/presentation/widgets/car_search_card.dart';
+import 'package:tokigo/core/domain/models/offers/car_offer.dart';
+import 'package:tokigo/core/widgets/cards/card.dart';
+import 'package:tokigo/features/search/presentation/widgets/car_search_card.dart';
 
 Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 

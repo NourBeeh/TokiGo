@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 
-import 'package:wetravellers/features/home/application/hotel_image_cache.dart';
+import 'package:tokigo/features/home/application/hotel_image_cache.dart';
 
 /// Phase H3+ (user bug 2026-09-08 — "images reload on every scroll"):
 /// a synchronous in-memory layer in FRONT of the Hive-backed

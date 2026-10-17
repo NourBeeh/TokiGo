@@ -1,4 +1,4 @@
-# WeTravellers — PHASE HISTORY
+# TokiGo — PHASE HISTORY
 
 | Phase | Status | Main result |
 |---|---|---|
@@ -121,7 +121,7 @@ Executed after the Admin workstream, never committed and never documented until 
 
 ### Addendum 2026-10-17 — Stabilization (unnumbered; home-search pill + nav fix)
 Executed 2026-10-16/17 on top of the documented 3D (2026-09-09) state; the memory files had not been updated for this work.
-- **Repo was not under version control** (`.git` absent). Initialized `git` (branch `main`) + root `.gitignore`; first snapshot commit `6c3823e` (651 files). Excluded secrets/generated: `.env`, `backend/node_modules`, `build/`, `.dart_tool/`, `backend/test-nuitee.ts`, `wetravellers_offline_data/`.
+- **Repo was not under version control** (`.git` absent). Initialized `git` (branch `main`) + root `.gitignore`; first snapshot commit `6c3823e` (651 files). Excluded secrets/generated: `.env`, `backend/node_modules`, `build/`, `.dart_tool/`, `backend/test-nuitee.ts`, `tokigo_offline_data/`.
 - **Home smart AI search pill** (`home_ai_search_field.dart`): a genuine editable `TextField` with a rotating typewriter hint and a rotating aura border; trailing search/send icon and Enter share one submission path → pushes `/ai-chat` with the trimmed query via GoRouter `extra`; leading `auto_awesome` icon pushes `/smart-search`. `home_page.dart` also gained the TokiGo wordmark (Toki grey + pulsing red "Go"). Mic stays a disabled placeholder (voice lives in Universal Search, US-3).
 - **Navigation-shell fix** (`go_router_config.dart`, `shell.dart`): removed the custom branch-level `navigatorKey` (a top-level `GlobalKey<NavigatorState>`) that produced "Duplicate GlobalKey detected in widget tree involving `_BranchNavigatorProxy` and `StatefulShellBranch`" during shell rebuilds.
 - **Stabilization fixes:** 4 failing Flutter tests repaired — `test/navigation/go_router_shell_test.dart` (harness used non-absolute route paths → "Page Not Found"; page assertion corrected; back via `tester.pageBack()`), and `test/features/home/presentation/widgets/home_ai_search_field_test.dart` (Enter now tested through `testTextInput.receiveAction(TextInputAction.send)`; duplicate-prevention rewritten to the real contract — offstage pill + cleared field; Arabic test split from the sparkle-navigation test) — plus `backend/test/memory.spec.ts` made deterministic (tied `new Date()` `updatedAt` values).

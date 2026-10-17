@@ -1,4 +1,4 @@
-import 'package:wetravellers/features/ai/domain/ai_response.dart';
+import 'package:tokigo/features/ai/domain/ai_response.dart';
 
 /// Generates an AI response for a submitted prompt.
 ///

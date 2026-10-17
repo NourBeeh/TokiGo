@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/features/payment/domain/payment.dart';
+import 'package:tokigo/features/payment/domain/payment.dart';
 
 void main() {
   test('payment session creation', () {

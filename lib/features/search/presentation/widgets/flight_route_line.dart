@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/widgets/cards/card_badge.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/widgets/cards/card_badge.dart';
 
 /// A visual route line for flights showing departure, stops, and arrival.
 ///

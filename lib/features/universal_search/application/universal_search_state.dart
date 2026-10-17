@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
-import 'package:wetravellers/core/domain/models/home/home_section.dart';
-import 'package:wetravellers/features/universal_search/domain/structured_travel_intent.dart';
+import 'package:tokigo/core/domain/models/home/home_section.dart';
+import 'package:tokigo/features/universal_search/domain/structured_travel_intent.dart';
 
 /// Universal Search state machine (US-1 contract).///
 /// The eight states of the Universal Search + AI experience. Transitions are

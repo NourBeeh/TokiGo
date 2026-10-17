@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:wetravellers/features/booking/application/booking_providers.dart';
-import 'package:wetravellers/features/booking/application/booking_controller.dart';
-import 'package:wetravellers/features/booking/application/booking_state.dart';
-import 'package:wetravellers/features/booking/application/prepare_booking_usecase.dart';
-import 'package:wetravellers/features/booking/application/revalidate_booking_usecase.dart';
-import 'package:wetravellers/core/repositories/booking_repository_impl.dart';
+import 'package:tokigo/features/booking/application/booking_providers.dart';
+import 'package:tokigo/features/booking/application/booking_controller.dart';
+import 'package:tokigo/features/booking/application/booking_state.dart';
+import 'package:tokigo/features/booking/application/prepare_booking_usecase.dart';
+import 'package:tokigo/features/booking/application/revalidate_booking_usecase.dart';
+import 'package:tokigo/core/repositories/booking_repository_impl.dart';
 
 
 void main() {

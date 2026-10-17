@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:wetravellers/core/domain/models/offers/flight_offer.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/widgets/cards/card.dart';
-import 'package:wetravellers/core/widgets/cards/badge_config.dart';
-import 'package:wetravellers/features/search/presentation/widgets/flight_route_line.dart';
+import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/widgets/cards/card.dart';
+import 'package:tokigo/core/widgets/cards/badge_config.dart';
+import 'package:tokigo/features/search/presentation/widgets/flight_route_line.dart';
 
 /// Flight search result card — professional booking-result layout.
 ///

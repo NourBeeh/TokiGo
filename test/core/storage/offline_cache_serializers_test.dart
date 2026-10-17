@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/storage/offline_cache_serializers.dart';
-import 'package:wetravellers/core/domain/models/search/flight_search_params.dart';
-import 'package:wetravellers/core/domain/models/search/hotel_search_params.dart';
-import 'package:wetravellers/core/domain/models/search/car_search_params.dart';
-import 'package:wetravellers/features/ai/domain/ai_query_context.dart';
+import 'package:tokigo/core/storage/offline_cache_serializers.dart';
+import 'package:tokigo/core/domain/models/search/flight_search_params.dart';
+import 'package:tokigo/core/domain/models/search/hotel_search_params.dart';
+import 'package:tokigo/core/domain/models/search/car_search_params.dart';
+import 'package:tokigo/features/ai/domain/ai_query_context.dart';
 
 void main() {
   group('offline_cache_serializers - cache key generation', () {

@@ -1,9 +1,9 @@
-import 'package:wetravellers/core/network/api_client.dart'
+import 'package:tokigo/core/network/api_client.dart'
     show RequestToken;
-import 'package:wetravellers/core/ai/ai_assistant_service.dart';
-import 'package:wetravellers/features/ai/data/ai_chat_repository.dart';
-import 'package:wetravellers/features/ai/domain/ai_query_context.dart';
-import 'package:wetravellers/features/ai/domain/ai_response.dart';
+import 'package:tokigo/core/ai/ai_assistant_service.dart';
+import 'package:tokigo/features/ai/data/ai_chat_repository.dart';
+import 'package:tokigo/features/ai/domain/ai_query_context.dart';
+import 'package:tokigo/features/ai/domain/ai_response.dart';
 
 /// 2C-C2 — bridges the 2C-C1 [AiChatRepository] into the EXISTING
 /// [AiAssistantService] boundary so [AiController] keeps its cache,

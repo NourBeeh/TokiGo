@@ -5,12 +5,12 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:wetravellers/core/domain/models/offers/car_offer.dart';
-import 'package:wetravellers/core/domain/models/offers/flight_offer.dart';
-import 'package:wetravellers/core/domain/models/offers/hotel_offer.dart';
-import 'package:wetravellers/core/domain/models/offers/travel_package_offer.dart';
-import 'package:wetravellers/features/search/presentation/pages/offer_details_page.dart';
-import 'package:wetravellers/l10n/app_localizations.dart';
+import 'package:tokigo/core/domain/models/offers/car_offer.dart';
+import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
+import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
+import 'package:tokigo/core/domain/models/offers/travel_package_offer.dart';
+import 'package:tokigo/features/search/presentation/pages/offer_details_page.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
 
 /// Phase 3D — Product details (regression suite).
 ///
@@ -113,7 +113,7 @@ TravelPackageOffer _package() {
   return TravelPackageOffer(
     id: 'pkg-1',
     providerId: 'packages',
-    providerName: 'WeTravellers Packages',
+    providerName: 'TokiGo Packages',
     title: 'Sharm El Sheikh · 5 days',
     price: 599,
     currency: 'USD',

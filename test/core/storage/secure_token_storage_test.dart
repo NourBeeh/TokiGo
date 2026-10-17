@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/storage/secure_token_storage.dart';
+import 'package:tokigo/core/storage/secure_token_storage.dart';
 
 void main() {
   group('InMemorySecureTokenStorage', () {

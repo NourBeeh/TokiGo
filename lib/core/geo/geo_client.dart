@@ -1,5 +1,5 @@
 import 'package:geolocator/geolocator.dart';
-import 'package:wetravellers/core/network/api_client.dart';
+import 'package:tokigo/core/network/api_client.dart';
 
 /// Country context for personalization (Phase 1C).
 ///

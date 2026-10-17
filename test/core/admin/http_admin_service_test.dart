@@ -1,17 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/core/admin/admin_home_content_service.dart';
-import 'package:wetravellers/core/admin/admin_home_service.dart';
-import 'package:wetravellers/core/admin/admin_provider_models.dart';
-import 'package:wetravellers/core/admin/http_admin_home_service.dart';
-import 'package:wetravellers/core/admin/http_admin_provider_service.dart';
-import 'package:wetravellers/core/admin/http_admin_service_base.dart';
-import 'package:wetravellers/core/domain/models/home/home_section.dart';
-import 'package:wetravellers/core/domain/models/home/home_types.dart';
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/core/network/api_error.dart';
-import 'package:wetravellers/core/network/api_result.dart';
-import 'package:wetravellers/core/storage/secure_token_storage.dart';
+import 'package:tokigo/core/admin/admin_home_content_service.dart';
+import 'package:tokigo/core/admin/admin_home_service.dart';
+import 'package:tokigo/core/admin/admin_provider_models.dart';
+import 'package:tokigo/core/admin/http_admin_home_service.dart';
+import 'package:tokigo/core/admin/http_admin_provider_service.dart';
+import 'package:tokigo/core/admin/http_admin_service_base.dart';
+import 'package:tokigo/core/domain/models/home/home_section.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/core/network/api_error.dart';
+import 'package:tokigo/core/network/api_result.dart';
+import 'package:tokigo/core/storage/secure_token_storage.dart';
 
 class _FakeTokenStorage implements SecureTokenStorage {
   _FakeTokenStorage(this._token);

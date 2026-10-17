@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:wetravellers/core/domain/models/offers/travel_package_offer.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/widgets/cards/card.dart';
+import 'package:tokigo/core/domain/models/offers/travel_package_offer.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/widgets/cards/card.dart';
 
 /// Package search card for search results.
 ///

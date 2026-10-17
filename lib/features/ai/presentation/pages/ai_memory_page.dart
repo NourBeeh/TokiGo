@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wetravellers/core/theme/app_colors.dart';
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/theme/app_typography.dart';
-import 'package:wetravellers/features/ai/application/explicit_memory_controller.dart';
-import 'package:wetravellers/features/ai/application/memory_controls_providers.dart';
-import 'package:wetravellers/features/ai/domain/explicit_memory_view.dart';
-import 'package:wetravellers/l10n/app_localizations.dart';
+import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/features/ai/application/explicit_memory_controller.dart';
+import 'package:tokigo/features/ai/application/memory_controls_providers.dart';
+import 'package:tokigo/features/ai/domain/explicit_memory_view.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
 
 /// 2C-C2 — "What I Know About You": explicit conversation memory controls.
 ///

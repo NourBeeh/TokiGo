@@ -17,7 +17,7 @@ class OnboardingController extends StateNotifier<OnboardingState> {
     _load();
   }
 
-  static const String _boxName = 'wetravellers_settings';
+  static const String _boxName = 'tokigo_settings';
   static const String _seenKey = 'onboarding_seen';
   Box<Map>? _box;
 

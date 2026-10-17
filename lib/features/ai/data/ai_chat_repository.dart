@@ -1,4 +1,4 @@
-import 'package:wetravellers/core/network/api_client.dart';
+import 'package:tokigo/core/network/api_client.dart';
 
 import '../../../features/ai/domain/ai_query_context.dart';
 import '../../../features/ai/domain/ai_response.dart';

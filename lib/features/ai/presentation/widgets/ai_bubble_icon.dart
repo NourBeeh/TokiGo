@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:wetravellers/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_colors.dart';
 
 /// AI assistant icon — Material's built-in robot face.
 ///

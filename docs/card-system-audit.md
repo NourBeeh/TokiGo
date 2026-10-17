@@ -1,4 +1,4 @@
-# Card System Audit — B&GO / WeTravellers
+# Card System Audit — B&GO / TokiGo
 
 **Date:** 2026-08-26
 **Scope:** Home / Search / Hotels / Flights / Cars / Experiences / Deals / Packages cards

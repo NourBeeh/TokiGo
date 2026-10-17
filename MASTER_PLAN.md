@@ -1,4 +1,4 @@
-# WeTravellers — Master Execution Plan (MERGED v2)
+# TokiGo — Master Execution Plan (MERGED v2)
 
 > **نقطة الاستكمال في أي سيزون جديد:** اقرأ الملف ده كامل + AGENTS.md + الملفين الأصليين (`محرك التوصيات.txt`, `UNIVERSAL SEARCH MASTER.txt`) حسب المرحلة اللي هتنفذها + `git status --short`. نفّذ أول مرحلة PENDING حسب "الترتيب المتفق عليه" تحت. الملف ده مصدر الحقيقة الوحيد.
 > **PENDING DECISIONS قسم في الآخر — عشان أي اقتراح جديد محتاج موافقة صريحة قبل التنفيذ.**
@@ -84,7 +84,7 @@ Backend done: Memory Spine 2A (`/memory/me`), 2B DerivedPreferenceProfile + rank
 
 ### NAV — Remove bottom nav; Home-centric navigation — ✅ DONE (2026-09-07)
 - NEW `lib/app/widgets/home_nav_buttons.dart`: `HomeNavButtons` — premium horizontal row of the 4 verticals (طيران/إقامات/سيارات/برامج سياحية, hue-tinted pills, 48px targets) + compact secondary row (Explore + Groups) — pushed routes to the EXISTING pages ('/flights','/hotels','/cars','/packages','/explore','/groups'). No new pages/controllers. l10n keys reused (searchFlights/…/exploreTitle/groupsTitle).
-- `shell.dart`: `WeTravellersShell` simplified — renders the navigation stack only; the floating pill + `_destinationFor`/`_goBranch` retired. `AppBottomNav` widget KEPT (no-deletion rule; its enum asserted intact in tests).
+- `shell.dart`: `TokiGoShell` simplified — renders the navigation stack only; the floating pill + `_destinationFor`/`_goBranch` retired. `AppBottomNav` widget KEPT (no-deletion rule; its enum asserted intact in tests).
 - `go_router_config.dart`: single Home branch — `/search` (+transfers), `/groups`, `/explore` moved from their own `StatefulShellBranch`es onto the Home branch as pushed routes (fade-through preserved). Retired branch keys kept (documented, analyzer-ignored warnings).
 - `home_page.dart`: `HomeNavButtons` mounted under the AI search pill.
 - Tests rewritten: `full_app_smoke_test.dart` (no pill; visits Flights/Explore/Groups via nav buttons + `router.go('/')` back), `bottom_nav_branch_mapping_test.dart` (shell renders no pill on roots; former tab pages pushable on Home branch; retired enum intact). H1 skeleton fake-data assertion updated (nav labels are navigation, not data).
@@ -209,12 +209,12 @@ Backend done: Memory Spine 2A (`/memory/me`), 2B DerivedPreferenceProfile + rank
 - **Tests (`search_results_processing_3c_test.dart`, 16):** customer-total beats provider amount, provider fallback, determinism (id tie-breaker), priceHighLow mirrors priceLowHigh, per-vertical recommended passthrough, duration/stops/rating, every filter matrix per vertical, price filter uses customer total, transmission contract, copyWith merge.
 - **VALIDATION: flutter test = 744 passed / ~6 skipped / 0 failed (728 → 744: +16). dart analyze = 0 errors. Backend untouched, re-validated per AGENTS.md: tsc clean + jest 266 passed / 1 skipped / 0 failed (unchanged).**
 
-### SPEC v2.0 COVERAGE AUDIT — integrated 2026-09-08 (from WeTravellers_Travel_Providers_Market_Payment_Implementation_Spec_v2.0.pdf)
+### SPEC v2.0 COVERAGE AUDIT — integrated 2026-09-08 (from TokiGo_Travel_Providers_Market_Payment_Implementation_Spec_v2.0.pdf)
 Comparison of the full 52-point spec + V2.0 addendum against this plan. Most of the spec is already covered by existing phases (verified in code during 3B: provider interfaces/registry/admin switching/MarketContext/FX/PricingEngine/partial-failure all exist). The REAL gaps and where they are absorbed:
 1. **Capability model (spec point 2)** → absorbed into 4A: before routing a booking/cancel, the provider's capability descriptor must be checked; unsupported operations return a domain capability error, not a 500. Test: provider lacking cancel cannot serve a cancellation workflow.
 2. **Duffel deterministic test-route fixtures (spec point 22)** → absorbed into 4B: PVD→RAI (no flights), JFK→EWR (hold), LHR→DXB (connecting), LTN→STN + SEN→STN (payment scenarios incl. 3DS/insufficient funds); 200/202 async payment treated as recovery cases.
-3. **Duffel Egypt payment path (spec O.2)** → absorbed into 4E: Egypt is NOT on Duffel Payments' supported-country list — checkout must route through the Egyptian PSP, WeTravellers funds Duffel Balance via bank transfer; never wire Egypt checkout to Duffel Payments.
-4. **Nuitee settlement strategy (spec O.3)** → absorbed into 4C: WeTravellers-as-Merchant-of-Record (customer pays our PSP → book via ACC_CREDIT_CARD); Nuitee User Payment stays a config-gated alternative; CREDIT line excluded from MVP.
+3. **Duffel Egypt payment path (spec O.2)** → absorbed into 4E: Egypt is NOT on Duffel Payments' supported-country list — checkout must route through the Egyptian PSP, TokiGo funds Duffel Balance via bank transfer; never wire Egypt checkout to Duffel Payments.
+4. **Nuitee settlement strategy (spec O.3)** → absorbed into 4C: TokiGo-as-Merchant-of-Record (customer pays our PSP → book via ACC_CREDIT_CARD); Nuitee User Payment stays a config-gated alternative; CREDIT line excluded from MVP.
 5. **Recovery matrix (spec O.9)** → absorbed into 4A (idempotency + revalidate cover payment-succeeded/booking-unknown etc.) and 8B (observability/reconciliation jobs).
 6. **OPEN ITEM (needs user decision — NOT silently added):** the spec's Phase 7 depth — full ledger (double-entry, LedgerEntry sides CUSTOMER/PROVIDER/GATEWAY/WALLET/REFUND/FEE/FX), settlement accounts, reconciliation jobs with mismatch states, refund architecture (points 36-39 + O.8) — is BIGGER than 4E's "Payment + confirmation". Options: (a) extend 4E, (b) add a dedicated phase after 4D, (c) defer to 8B. Default if undecided: implement the 4E slice only (payment ledger entries for each booking/payment/refund) and leave settlement/reconciliation jobs as a documented deferral.
 - Cars decision (spec point 30 + user 2026-09-08): mock-car stays behind the CarProvider interface; real vendor integration deferred until sandbox/book/cancel/Egypt/commercial evaluation — no car provider invented.

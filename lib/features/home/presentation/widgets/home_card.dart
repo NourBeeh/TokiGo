@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:wetravellers/core/domain/models/home/home_item.dart';
-import 'package:wetravellers/core/domain/models/home/home_types.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/widgets/cards/card.dart';
-import 'package:wetravellers/features/home/presentation/widgets/deal_card.dart';
-import 'package:wetravellers/features/home/presentation/widgets/destination_discovery_card.dart';
-import 'package:wetravellers/features/home/presentation/widgets/discovery_product_card.dart';
+import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/widgets/cards/card.dart';
+import 'package:tokigo/features/home/presentation/widgets/deal_card.dart';
+import 'package:tokigo/features/home/presentation/widgets/destination_discovery_card.dart';
+import 'package:tokigo/features/home/presentation/widgets/discovery_product_card.dart';
 
 /// Type dispatcher for Home feed items.
 ///

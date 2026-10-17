@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/features/booking/application/booking_state_machine.dart';
+import 'package:tokigo/features/booking/application/booking_state_machine.dart';
 
 void main() {
   test('booking state transitions valid', () {

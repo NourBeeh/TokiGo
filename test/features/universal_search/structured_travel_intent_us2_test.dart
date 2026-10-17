@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/features/universal_search/domain/structured_travel_intent.dart';
+import 'package:tokigo/features/universal_search/domain/structured_travel_intent.dart';
 
 /// US-2 §1 — the extended typed intent: completeness rules per vertical,
 /// effective end dates, immutable patches and the budget band vocabulary.

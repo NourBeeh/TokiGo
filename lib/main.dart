@@ -19,7 +19,7 @@ void main() async {
       overrides: [
         offlineCacheProvider.overrideWithValue(offlineCache),
       ],
-      child: const WeTravellersApp(),
+      child: const TokiGoApp(),
     ),
   );
 }

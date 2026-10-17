@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/domain/models/offers/flight_offer.dart';
-import 'package:wetravellers/features/search/application/sort_utils.dart';
-import 'package:wetravellers/features/search/domain/sort_option.dart';
+import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
+import 'package:tokigo/features/search/application/sort_utils.dart';
+import 'package:tokigo/features/search/domain/sort_option.dart';
 
 void main() {
   test('sort flights by price low high', () {

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import 'package:wetravellers/core/theme/app_colors.dart';
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/widgets/cards/card_glass.dart';
-import 'package:wetravellers/core/widgets/cards/card_scrim_overlay.dart';
+import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/widgets/cards/card_glass.dart';
+import 'package:tokigo/core/widgets/cards/card_scrim_overlay.dart';
 
 /// Star rating row. Inline by default; pass [onImage] to render as a
 /// translucent dark glass pill for placement over a photo (this is the single

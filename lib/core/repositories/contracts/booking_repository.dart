@@ -1,5 +1,5 @@
-import 'package:wetravellers/core/network/api_result.dart';
-import 'package:wetravellers/features/booking/domain/booking_record.dart';
+import 'package:tokigo/core/network/api_result.dart';
+import 'package:tokigo/features/booking/domain/booking_record.dart';
 
 abstract class BookingRepository {
   Future<ApiResult<BookingRecord>> prepareBooking(String offerId, String providerId, String searchId);

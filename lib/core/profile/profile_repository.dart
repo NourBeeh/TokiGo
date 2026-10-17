@@ -1,6 +1,6 @@
-import 'package:wetravellers/core/memory/derived_preference_profile.dart';
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/core/storage/secure_token_storage.dart';
+import 'package:tokigo/core/memory/derived_preference_profile.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/core/storage/secure_token_storage.dart';
 
 /// Read-only user profile for personalization (Phase 1C).
 ///

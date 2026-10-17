@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/features/booking/application/idempotency_store.dart';
+import 'package:tokigo/features/booking/application/idempotency_store.dart';
 
 void main() {
   test('idempotency first and repeat', () {

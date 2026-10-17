@@ -1,15 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/features/booking/application/booking_controller.dart';
-import 'package:wetravellers/features/booking/application/booking_state.dart';
-import 'package:wetravellers/features/booking/application/confirm_booking_usecase.dart';
-import 'package:wetravellers/features/booking/application/prepare_booking_usecase.dart';
-import 'package:wetravellers/features/booking/application/revalidate_booking_usecase.dart';
-import 'package:wetravellers/features/booking/domain/booking_record.dart';
-import 'package:wetravellers/core/domain/models/booking/booking.dart';
-import 'package:wetravellers/core/network/api_result.dart';
-import 'package:wetravellers/core/repositories/contracts/booking_repository.dart';
+import 'package:tokigo/features/booking/application/booking_controller.dart';
+import 'package:tokigo/features/booking/application/booking_state.dart';
+import 'package:tokigo/features/booking/application/confirm_booking_usecase.dart';
+import 'package:tokigo/features/booking/application/prepare_booking_usecase.dart';
+import 'package:tokigo/features/booking/application/revalidate_booking_usecase.dart';
+import 'package:tokigo/features/booking/domain/booking_record.dart';
+import 'package:tokigo/core/domain/models/booking/booking.dart';
+import 'package:tokigo/core/network/api_result.dart';
+import 'package:tokigo/core/repositories/contracts/booking_repository.dart';
 
-import 'package:wetravellers/features/bag/application/bag_controller.dart';
+import 'package:tokigo/features/bag/application/bag_controller.dart';
 
 class FakeRepo implements BookingRepository {
   bool called = false;

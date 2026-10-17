@@ -4,17 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wetravellers/core/theme/app_colors.dart';
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/theme/app_typography.dart';
-import 'package:wetravellers/core/ui/app_button.dart';
-import 'package:wetravellers/features/booking/application/providers/checkout_flow_providers.dart';
-import 'package:wetravellers/features/home/providers/home_providers.dart'
+import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/ui/app_button.dart';
+import 'package:tokigo/features/booking/application/providers/checkout_flow_providers.dart';
+import 'package:tokigo/features/home/providers/home_providers.dart'
     show eventsTrackerProvider;
-import 'package:wetravellers/features/bag/application/bag_controller.dart';
-import 'package:wetravellers/features/bag/domain/trip.dart';
-import 'package:wetravellers/l10n/app_localizations.dart';
+import 'package:tokigo/features/bag/application/bag_controller.dart';
+import 'package:tokigo/features/bag/domain/trip.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
 
 /// Final step of the booking funnel — confirmation.
 ///

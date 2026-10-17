@@ -3,7 +3,7 @@ US-0 — UX & Technical Contract
 
 الحالة: ✅ مكتمل
 
-You are working on the WeTravellers Flutter project.
+You are working on the TokiGo Flutter project.
 
 TASK:
 Create the canonical UX + Technical Contract for the Universal Search feature.
@@ -15,7 +15,7 @@ Do not delete files.
 Do not refactor unrelated code.
 
 OBJECTIVE:
-Define one unified Messenger-like Search + AI entry point for WeTravellers.
+Define one unified Messenger-like Search + AI entry point for TokiGo.
 
 The Universal Search must evolve the existing v1 AiSmartSearchPage rather than creating a second independent search implementation.
 
@@ -353,7 +353,7 @@ US-1 — Universal Search Core
 
 الحالة: ✅ مكتمل — 568 passed / 6 skipped / 0 failed
 
-You are implementing US-1 of WeTravellers Universal Search.
+You are implementing US-1 of TokiGo Universal Search.
 
 READ FIRST:
 docs/universal-search-ux-contract.md
@@ -708,7 +708,7 @@ US-2 — Advanced AI Search & Intent
 
 الحالة: ⏳ التالي
 
-You are implementing US-2 of WeTravellers Universal Search.
+You are implementing US-2 of TokiGo Universal Search.
 
 READ FIRST:
 docs/universal-search-ux-contract.md
@@ -887,7 +887,7 @@ US-3 — Voice Search
 
 الحالة: ⏳
 
-You are implementing US-3 of WeTravellers Universal Search.
+You are implementing US-3 of TokiGo Universal Search.
 
 READ:
 docs/universal-search-ux-contract.md
@@ -981,7 +981,7 @@ US-4 — AI Assistant داخل Universal Search
 
 الحالة: ⏳
 
-You are implementing US-4 of WeTravellers Universal Search.
+You are implementing US-4 of TokiGo Universal Search.
 
 OBJECTIVE:
 Turn Universal Search into a contextual AI travel assistant while preserving the Search-first UX.

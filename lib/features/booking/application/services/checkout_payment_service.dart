@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/core/network/http_api_client.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/core/network/http_api_client.dart';
 
 /// Result of the backend payment orchestration consumed by checkout.
 enum PaymentOutcome { succeeded, pending3ds, failed, unavailable }

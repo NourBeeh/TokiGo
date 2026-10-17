@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/core/providers/contracts/provider_result.dart';
+import 'package:tokigo/core/providers/contracts/provider_result.dart';
 
 void main() {
   test('ProviderResult success', () {

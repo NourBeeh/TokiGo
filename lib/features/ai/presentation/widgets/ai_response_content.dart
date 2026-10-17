@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wetravellers/core/theme/app_colors.dart';
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/theme/app_typography.dart';
-import 'package:wetravellers/features/ai/application/ai_providers.dart';
-import 'package:wetravellers/features/ai/application/ai_state.dart';
-import 'package:wetravellers/features/home/presentation/widgets/home_section.dart';
+import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/features/ai/application/ai_providers.dart';
+import 'package:tokigo/features/ai/application/ai_state.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_section.dart';
 
 import 'ai_empty_state.dart';
 

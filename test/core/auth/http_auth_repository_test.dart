@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/core/auth/auth_repository.dart';
-import 'package:wetravellers/core/auth/http_auth_repository.dart';
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/core/network/api_error.dart';
-import 'package:wetravellers/core/network/api_result.dart';
-import 'package:wetravellers/core/storage/secure_token_storage.dart';
+import 'package:tokigo/core/auth/auth_repository.dart';
+import 'package:tokigo/core/auth/http_auth_repository.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/core/network/api_error.dart';
+import 'package:tokigo/core/network/api_result.dart';
+import 'package:tokigo/core/storage/secure_token_storage.dart';
 
 /// Records requests and replays scripted [ApiResult]s — no real sockets.
 class _FakeApiClient implements ApiClient {

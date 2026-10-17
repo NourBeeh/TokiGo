@@ -3,9 +3,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wetravellers/app/widgets/home_nav_buttons.dart';
-import 'package:wetravellers/l10n/app_localizations.dart';
-import 'package:wetravellers/l10n/app_localizations_en.dart';
+import 'package:tokigo/app/widgets/home_nav_buttons.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
+import 'package:tokigo/l10n/app_localizations_en.dart';
 
 /// Responsive layout contract for the unified Home navigation.
 ///

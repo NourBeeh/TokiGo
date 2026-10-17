@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/widgets/cards/card.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/widgets/cards/card.dart';
 
 /// Placeholder widget shown when Map view is selected but map is not yet implemented.
 class SearchMapPlaceholder extends StatelessWidget {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 
-/// Typography scale for WeTravellers.
+/// Typography scale for TokiGo.
 ///
 /// A premium, travel-magazine type system built on Manrope (Latin) with
 /// Cairo as the Arabic counterpart. Variable fonts are bundled, so every

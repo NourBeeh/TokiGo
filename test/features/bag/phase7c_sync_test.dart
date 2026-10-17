@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wetravellers/features/bag/application/bag_controller.dart';
-import 'package:wetravellers/features/booking/domain/booking_record.dart';
-import 'package:wetravellers/core/domain/models/booking/booking.dart';
-import 'package:wetravellers/core/domain/models/booking/booking.dart' as models;
-import 'package:wetravellers/core/domain/models/booking/booking.dart';
+import 'package:tokigo/features/bag/application/bag_controller.dart';
+import 'package:tokigo/features/booking/domain/booking_record.dart';
+import 'package:tokigo/core/domain/models/booking/booking.dart';
+import 'package:tokigo/core/domain/models/booking/booking.dart' as models;
+import 'package:tokigo/core/domain/models/booking/booking.dart';
 
 
 void main() {

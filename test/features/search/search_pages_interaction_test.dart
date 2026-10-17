@@ -7,13 +7,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 
-import 'package:wetravellers/features/search/presentation/pages/flight_search_page.dart';
-import 'package:wetravellers/features/search/presentation/pages/hotel_search_page.dart';
-import 'package:wetravellers/features/search/presentation/pages/car_search_page.dart';
-import 'package:wetravellers/features/search/presentation/pages/packages_search_page.dart';
-import 'package:wetravellers/core/storage/offline_cache.dart';
-import 'package:wetravellers/core/storage/offline_cache_providers.dart';
-import 'package:wetravellers/l10n/app_localizations.dart';
+import 'package:tokigo/features/search/presentation/pages/flight_search_page.dart';
+import 'package:tokigo/features/search/presentation/pages/hotel_search_page.dart';
+import 'package:tokigo/features/search/presentation/pages/car_search_page.dart';
+import 'package:tokigo/features/search/presentation/pages/packages_search_page.dart';
+import 'package:tokigo/core/storage/offline_cache.dart';
+import 'package:tokigo/core/storage/offline_cache_providers.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
 
 /// Interaction coverage for the rebuilt search pages (Wave 2): forms render,
 /// pickers open, no layout errors — pages are mounted through a real

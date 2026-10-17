@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'package:wetravellers/core/theme/app_radius.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
-import 'package:wetravellers/core/widgets/shimmer.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/widgets/shimmer.dart';
 
 /// Wraps a card skeleton so screen readers announce a single "Loading" label
 /// instead of exposing shimmer placeholder internals as real content.

@@ -7,7 +7,7 @@ import 'app_spacing.dart';
 import 'app_tokens.dart';
 import 'app_typography.dart';
 
-/// Builds the central light-only [ThemeData] for WeTravellers.
+/// Builds the central light-only [ThemeData] for TokiGo.
 ///
 /// "Pure White Premium": stark white canvas, crisp hairline borders, soft
 /// diffused shadows, and a royal indigo primary mapped through the full

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:wetravellers/core/theme/app_colors.dart';
-import 'package:wetravellers/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
 
 /// Cancellation-policy line: check (free cancellation) or info icon + caption.
 class CardCancellation extends StatelessWidget {

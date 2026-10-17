@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wetravellers/core/theme/app_motion.dart';
+import 'package:tokigo/core/theme/app_motion.dart';
 
 /// The unified page-transition language of the app ("fade-through").
 ///

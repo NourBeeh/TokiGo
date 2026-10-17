@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wetravellers/core/network/api_client.dart';
-import 'package:wetravellers/core/network/api_error.dart';
-import 'package:wetravellers/core/network/api_result.dart';
-import 'package:wetravellers/core/storage/secure_token_storage.dart';
-import 'package:wetravellers/features/ai/data/ai_chat_repository.dart';
-import 'package:wetravellers/features/ai/data/ai_chat_repository_impl.dart';
-import 'package:wetravellers/features/ai/domain/ai_query_context.dart';
+import 'package:tokigo/core/network/api_client.dart';
+import 'package:tokigo/core/network/api_error.dart';
+import 'package:tokigo/core/network/api_result.dart';
+import 'package:tokigo/core/storage/secure_token_storage.dart';
+import 'package:tokigo/features/ai/data/ai_chat_repository.dart';
+import 'package:tokigo/features/ai/data/ai_chat_repository_impl.dart';
+import 'package:tokigo/features/ai/domain/ai_query_context.dart';
 
 /// 2C-C1 — AI conversation repository tests.
 ///

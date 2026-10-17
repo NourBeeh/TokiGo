@@ -3,7 +3,7 @@ set -e
 
 PROJECT_ROOT="$(git rev-parse --show-toplevel)"
 MEMORY_DIR="$PROJECT_ROOT/PROJECT_MEMORY"
-MEMORY_ZIP="$PROJECT_ROOT/WeTravellers_PROJECT_MEMORY_SYSTEM.zip"
+MEMORY_ZIP="$PROJECT_ROOT/TokiGo_PROJECT_MEMORY_SYSTEM.zip"
 STATUS_FILE="$MEMORY_DIR/03_CURRENT_STATE.md"
 GIT_STATUS_FILE="$MEMORY_DIR/09_AI_HANDOFF.md"
 LOG_FILE="$PROJECT_ROOT/.githooks/hooks.log"
@@ -15,7 +15,7 @@ touch "$LOG_FILE"
 echo "=== $(date '+%Y-%m-%d %H:%M:%S') - pre-commit hook started ===" >> "$LOG_FILE"
 
 if [ ! -d "$MEMORY_DIR" ]; then
-    echo "[WeTravellers] pre-commit: PROJECT_MEMORY not found. Skipping memory sync."
+    echo "[TokiGo] pre-commit: PROJECT_MEMORY not found. Skipping memory sync."
     echo "PROJECT_MEMORY directory not found, skipping sync" >> "$LOG_FILE"
     exit 0
 fi
@@ -75,8 +75,8 @@ echo "Created memory bundle: $MEMORY_ZIP" >> "$LOG_FILE"
 git add "$MEMORY_DIR" "$MEMORY_ZIP" 2>> "$LOG_FILE"
 echo "Staged memory files for commit" >> "$LOG_FILE"
 
-echo "[WeTravellers] pre-commit: memory sync ok"
-echo "[WeTravellers] pre-commit: done. Details in .githooks/hooks.log"
+echo "[TokiGo] pre-commit: memory sync ok"
+echo "[TokiGo] pre-commit: done. Details in .githooks/hooks.log"
 echo "=== pre-commit hook completed successfully ===" >> "$LOG_FILE"
 
 exit 0

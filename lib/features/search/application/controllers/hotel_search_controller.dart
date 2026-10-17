@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:wetravellers/core/domain/models/search/hotel_search_params.dart';
-import 'package:wetravellers/core/domain/models/offers/hotel_offer.dart';
-import 'package:wetravellers/core/events/events_tracker.dart';
-import 'package:wetravellers/core/network/user_facing_message.dart';
-import 'package:wetravellers/core/repositories/contracts/hotel_repository.dart';
-import 'package:wetravellers/core/repositories/impl/hotel_repository_impl.dart';
-import 'package:wetravellers/core/storage/offline_cache.dart';
-import 'package:wetravellers/core/storage/offline_cache_serializers.dart';
+import 'package:tokigo/core/domain/models/search/hotel_search_params.dart';
+import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
+import 'package:tokigo/core/events/events_tracker.dart';
+import 'package:tokigo/core/network/user_facing_message.dart';
+import 'package:tokigo/core/repositories/contracts/hotel_repository.dart';
+import 'package:tokigo/core/repositories/impl/hotel_repository_impl.dart';
+import 'package:tokigo/core/storage/offline_cache.dart';
+import 'package:tokigo/core/storage/offline_cache_serializers.dart';
 
 enum HotelSearchStatus { idle, loading, success, empty, error }
 

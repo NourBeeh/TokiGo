@@ -1,4 +1,4 @@
-import 'package:wetravellers/core/network/api_result.dart';
+import 'package:tokigo/core/network/api_result.dart';
 
 import 'memory_model.dart';
 
