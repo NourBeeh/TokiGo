@@ -12,8 +12,10 @@
 3. Execute the first PENDING phase in the "Agreed execution order". Confirm with the user first. Per-phase: implement → validate → report → STOP, wait for approval.
 4. Update this file's status markers after each phase (this file IS the progress log).
 
-## Status snapshot (2026-10-17 — stabilization)
+## Status snapshot (2026-10-17 — latest)
 
+- **App identity renamed to TokiGo** (`wetravellers`→`tokigo`; package `tokigo`, bundle `com.tokigo.tokigo`) — commit `1672b5fb` pushed to `origin/main`; re-validated green after the rename.
+- **Local runtime ready:** `backend/.env` (gitignored) holds auto-generated JWT secrets + live keys — Nuitee, **Duffel** (the "second provider"), **OpenRouter AI** (`AI_BASE_URL=https://openrouter.ai/api/v1`, `AI_MODEL=openai/gpt-4o-mini`). Live-verified: `/ai/query`, `/ai/suggest`, `/home/recommended`. Backend + Flutter Linux desktop app running locally.
 - Repo is now under `git` (branch `main`, first snapshot commit `6c3823e`); root `.gitignore` excludes secrets and build artifacts (`.env`, `backend/node_modules`, `build/`, `.dart_tool/`, `backend/test-nuitee.ts`).
 - Verified green: Flutter **777 passed / 6 skipped / 0 failed** + `dart analyze` 0 errors/0 warnings; backend **`tsc --noEmit` clean** + **jest 282 passed / 1 skipped / 0 failed**.
 - Completed through phase **3D** (2026-09-09) per the phase log below. Undocumented 2026-10-16/17 work (Home smart AI search pill, TokiGo wordmark, navigation-shell GlobalKey fix) is now recorded in `PROJECT_MEMORY/`.

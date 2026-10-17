@@ -33,6 +33,13 @@ Do not give an execution agent a giant historical dump when a focused task promp
 - Live AI runs through the OpenAI-compatible provider; `.env` is local-only and must never be committed.
 - Invariants: LIGHT-ONLY theme; provider secrets backend-only; revalidation before payment; branch order Home=0/Search=1/Groups=2/Explore=3 (AI = pushed route).
 
+## Verified handoff — 2026-10-17 (AUTHORITATIVE)
+
+- **Verified state:** everything through **3D** complete and green (`dart analyze` 0 err/0 warn; `flutter test` 777 passed / 6 skipped; backend `tsc` clean; `jest` 282 passed / 1 skipped). App identity renamed to **TokiGo** (`wetravellers`→`tokigo`; package `tokigo`, bundle `com.tokigo.tokigo`) — commit `1672b5fb` on `origin/main`. Local `backend/.env` (gitignored) holds auto JWT secrets + live keys: **Nuitee**, **Duffel** (the "second provider"), **OpenRouter** AI (`AI_BASE_URL=https://openrouter.ai/api/v1`, `AI_MODEL=openai/gpt-4o-mini`). Live-verified: `POST /ai/query`, `POST /ai/suggest`, `GET /home/recommended` (real Nuitee hotels). Backend (`node dist/main`) + Flutter Linux desktop app running locally.
+- **Exact next phase:** **US-5 — search personalization**, then US-6 → PH-7 → 4A–4E (per `MASTER_PLAN.md`). Alternative the user may prioritize: the unimplemented **GO-button / trip-start + VISA INDEX** requirement (`Documents/زرار GO عند الضغط عليه.txt`, no phase yet). Do not start anything else unless explicitly requested.
+- Point new agents to `03_CURRENT_STATE.md` + `08_NEXT_STEPS.md`. `.env` is local-only — never read/print/commit.
+- Invariants: LIGHT-ONLY theme; provider secrets backend-only; revalidation before payment; **never run `npm run seed:home`**; never modify/delete `backend/test-nuitee.ts`.
+
 ## Historical handoff — 2026-08-21 (superseded by the one above)
 
 - **Verified state:** Phase 17 (Auth) complete. Phases 1–17 are done: backend register/login/me (bcryptjs + JwtStrategy/Guard), Flutter secure-storage session with restore, `/auth` page + profile split; Home empty-state fixed via demo+cache fallback; `npm run seed:home` dev seed added. Backend 98 jest tests + tsc clean; Flutter 242 tests pass, analyze 0 errors.

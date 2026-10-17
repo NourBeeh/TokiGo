@@ -1,6 +1,26 @@
 # TokiGo — CURRENT STATE
 
-## 2026-10-17 — Stabilization checkpoint (AUTHORITATIVE)
+## 2026-10-17 (latest) — Identity rename to TokiGo + live providers/OpenRouter (AUTHORITATIVE — supersedes below)
+
+- **App identity renamed `wetravellers` → `tokigo`** (commit `1672b5fb`, pushed to `origin/main`):
+  - Dart package `tokigo` (pubspec + every `package:` import in `lib`/`test`); `WeTravellersApp`→`TokiGoApp`, `WeTravellersShell`→`TokiGoShell`.
+  - Bundle/application IDs → `com.tokigo.tokigo` (Android namespace/applicationId + Kotlin dir, iOS `PRODUCT_BUNDLE_IDENTIFIER`, Linux `APPLICATION_ID`); web/linux/iOS display names → `TokiGo`.
+  - Hive boxes → `tokigo_offline` / `tokigo_settings`; dir → `tokigo_offline_data` (old data dir deleted, user-approved).
+  - Backend brand strings + package `tokigo-backend`; docs/hooks/automation; memory zip → `TokiGo_PROJECT_MEMORY_SYSTEM.zip`.
+  - **Deliberately UNCHANGED (as agreed):** DB creds/`docker-compose.yml`, `.env.example`, generated `backend/dist`, historical patch files, container name `wetravellers-postgres`.
+  - Re-validated after rename: `dart analyze` 148 infos / 0 errors / 0 warnings; `flutter test` 777 passed / 6 skipped; backend `tsc` clean; `jest` 282 passed / 1 skipped.
+- **Local runtime configured (`backend/.env` is gitignored — never committed):**
+  - Auto-generated `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET`.
+  - Live keys filled by the user: `NUITEE_API_KEY`, `DUFFEL_ACCESS_TOKEN` (**Duffel = the "second provider"**), `AI_API_KEY` (**OpenRouter**).
+  - **AI provider = OpenRouter:** `AI_BASE_URL=https://openrouter.ai/api/v1`, `AI_MODEL=openai/gpt-4o-mini` (was pointing at OpenAI — wrong for an OpenRouter key; fixed & verified).
+  - Verified live: `POST /ai/query` ✅, `POST /ai/suggest` ✅ (real OpenRouter output); `POST /ai/chat` is JWT-guarded.
+  - Live data: `GET /home/recommended` now returns real Nuitee hotels; `GET /home/sections` still `[]` (admin/DB content — returns in 7B).
+- **Local dev services on this machine:** backend `node dist/main` on `http://localhost:3000`; Flutter Linux desktop app running (`build/linux/x64/release/bundle/tokigo`). Stop each with `kill <pid>`.
+- **Resume point:** next pending phase is still **US-5** (search personalization) → US-6 → PH-7 → 4A–4E, unless the user prioritizes the **GO-button / VISA INDEX** requirement.
+
+---
+
+## 2026-10-17 — Stabilization checkpoint (superseded by the latest block above)
 
 - **No `git` repo existed** at project start. Initialized `git` (branch `main`) + root `.gitignore`; first snapshot commit `6c3823e` (651 files). Excluded: `.env`, `backend/node_modules`, `build/`, `.dart_tool/`, `backend/test-nuitee.ts`, Hive runtime data.
 - **Verified baseline (2026-10-17):**
