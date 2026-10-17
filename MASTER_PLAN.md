@@ -12,6 +12,14 @@
 3. Execute the first PENDING phase in the "Agreed execution order". Confirm with the user first. Per-phase: implement → validate → report → STOP, wait for approval.
 4. Update this file's status markers after each phase (this file IS the progress log).
 
+## Status snapshot (2026-10-17 — stabilization)
+
+- Repo is now under `git` (branch `main`, first snapshot commit `6c3823e`); root `.gitignore` excludes secrets and build artifacts (`.env`, `backend/node_modules`, `build/`, `.dart_tool/`, `backend/test-nuitee.ts`).
+- Verified green: Flutter **777 passed / 6 skipped / 0 failed** + `dart analyze` 0 errors/0 warnings; backend **`tsc --noEmit` clean** + **jest 282 passed / 1 skipped / 0 failed**.
+- Completed through phase **3D** (2026-09-09) per the phase log below. Undocumented 2026-10-16/17 work (Home smart AI search pill, TokiGo wordmark, navigation-shell GlobalKey fix) is now recorded in `PROJECT_MEMORY/`.
+- **First PENDING phase in the agreed order: US-5** (search personalization).
+- **NEW unimplemented requirement (user 2026-10-17):** GO button / trip-start flow (auto current country via geo → choose destination or AI ideas → resume/continue/navigation-only) + continuously updated travel/visa requirements + **VISA INDEX** — no phase assigned yet, needs a decision before entering the order.
+
 ## Execution protocol (non-negotiable — from both source plans + AGENTS.md)
 
 - Per phase: **implement → test → fix errors → report → STOP**. Never start the next phase without user approval.

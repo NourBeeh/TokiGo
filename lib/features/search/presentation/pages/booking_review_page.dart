@@ -130,9 +130,7 @@ class BookingReviewPage extends ConsumerWidget {
                 children: <Widget>[
                   IconButton(
                     icon: const Icon(Icons.arrow_back_rounded),
-                    onPressed: () => context.canPop()
-                        ? context.pop()
-                        : context.go('/'),
+                    onPressed: () => context.canPop() ? context.pop() : context.go('/'),
                     tooltip: l10n.back,
                   ),
                   const SizedBox(width: AppSpacing.xs),

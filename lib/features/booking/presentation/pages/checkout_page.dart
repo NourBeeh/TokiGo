@@ -146,9 +146,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                     icon: const Icon(Icons.arrow_back_rounded),
                     onPressed: _processing
                         ? null
-                        : () => context.canPop()
-                            ? context.pop()
-                            : context.go('/'),
+                        : () => context.canPop() ? context.pop() : context.go('/booking/review'),
                     tooltip: 'Back',
                   ),
                   const SizedBox(width: AppSpacing.xs),

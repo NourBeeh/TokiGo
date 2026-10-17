@@ -39,7 +39,7 @@ class AdminPage extends StatelessWidget {
                       icon: const Icon(Icons.arrow_back_rounded),
                       onPressed: () => context.canPop()
                           ? context.pop()
-                          : context.go('/'),
+                          : null,
                       tooltip: l10n.back,
                     ),
                     Expanded(

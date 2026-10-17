@@ -48,17 +48,6 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 const bool _authRedirectEnabled = false;
 
 /// Tab branches of the bottom navigation shell.
-final GlobalKey<NavigatorState> _homeTabKey =
-    GlobalKey<NavigatorState>(debugLabel: 'home');
-// NAV: the search/groups/explore branch navigators are retired — their pages
-// moved onto the Home branch as pushed routes (single-branch shell). Keys
-// kept for reference; no branch uses them anymore.
-final GlobalKey<NavigatorState> _searchTabKey =
-    GlobalKey<NavigatorState>(debugLabel: 'search');
-final GlobalKey<NavigatorState> _groupsTabKey =
-    GlobalKey<NavigatorState>(debugLabel: 'groups');
-final GlobalKey<NavigatorState> _exploreTabKey =
-    GlobalKey<NavigatorState>(debugLabel: 'explore');
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   final authUser = ref.watch(authUserProvider);
@@ -102,7 +91,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         branches: <StatefulShellBranch>[
           // ---- Home tab ----
           StatefulShellBranch(
-            navigatorKey: _homeTabKey,
             routes: <RouteBase>[
               GoRoute(
                 path: '/',
@@ -330,7 +318,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (context, state) => fadeThroughPage(
           name: 'ai_chat',
-          child: const AiChatPage(),
+          child: AiChatPage(initialPrompt: state.extra as String?),
         ),
       ),
       // 2C-C2 — "What I Know About You": explicit memory controls, opened

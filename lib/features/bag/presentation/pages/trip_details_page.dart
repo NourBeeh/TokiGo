@@ -38,9 +38,7 @@ class TripDetailsPage extends StatelessWidget {
                 children: <Widget>[
                   IconButton(
                     icon: const Icon(Icons.arrow_back_rounded),
-                    onPressed: () => context.canPop()
-                        ? context.pop()
-                        : context.go('/bag'),
+                    onPressed: () => context.canPop() ? context.pop() : context.go('/bag'),
                     tooltip: 'Back',
                   ),
                   const SizedBox(width: AppSpacing.xs),

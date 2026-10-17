@@ -173,9 +173,9 @@ describe('MemoryService — user-owned memory spine', () => {
 
   it('hides expired memories by default, includes them on demand', async () => {
     const repo = fakeMemoryRepo([
-      { id: 'live', userId: 'u1', type: 'preference', key: 'k1', value: {}, source: 'user_explicit', confidence: 1, updatedAt: new Date(), expiresAt: new Date(Date.now() + 86_400_000) },
-      { id: 'dead', userId: 'u1', type: 'preference', key: 'k2', value: {}, source: 'user_explicit', confidence: 1, updatedAt: new Date(), expiresAt: new Date(Date.now() - 86_400_000) },
-      { id: 'eternal', userId: 'u1', type: 'preference', key: 'k3', value: {}, source: 'user_explicit', confidence: 1, updatedAt: new Date(), expiresAt: null },
+      { id: 'live', userId: 'u1', type: 'preference', key: 'k1', value: {}, source: 'user_explicit', confidence: 1, updatedAt: new Date('2026-06-03'), expiresAt: new Date(Date.now() + 86_400_000) },
+      { id: 'dead', userId: 'u1', type: 'preference', key: 'k2', value: {}, source: 'user_explicit', confidence: 1, updatedAt: new Date('2026-06-02'), expiresAt: new Date(Date.now() - 86_400_000) },
+      { id: 'eternal', userId: 'u1', type: 'preference', key: 'k3', value: {}, source: 'user_explicit', confidence: 1, updatedAt: new Date('2026-06-01'), expiresAt: null },
     ]);
     const service = new MemoryService(repo);
 

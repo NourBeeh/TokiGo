@@ -113,7 +113,14 @@ class _UniversalSearchPageState extends ConsumerState<UniversalSearchPage> {
     _focusNode.unfocus();
     // Recents update ONLY on submit (US-1 STEP 9) — typing never records.
     controller.recordRecent(text);
-    controller.submit();
+
+    // The search box hands the query to the AI chat: the user types here
+    // and presses send, and the same text lands already in the chat field.
+    // Product results are a separate feature for the future.
+    final query = text;
+    if (query.isNotEmpty) {
+      context.push('/ai-chat', extra: query);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.jumpTo(0);

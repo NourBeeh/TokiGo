@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:wetravellers/core/theme/app_colors.dart';
@@ -16,16 +17,16 @@ const String kAiSmartSearchHeroTag = 'ai-smart-search-pill';
 /// Smart AI search field pinned in the Home header.
 ///
 /// A Google-grade premium search bar: a stark-white pill with the AI
-/// sparkle on the leading edge, a soft violet search circle on the trailing
-/// edge, wrapped in a slow rotating light comet — a premium sweep of AI
-/// violet and brand indigo travelling around the pill border with a quiet
-/// breathing glow behind it.
+/// sparkle on the leading edge, a soft violet search circle on the
+/// trailing edge, wrapped in a slow rotating light comet — a premium sweep
+/// of AI violet and brand indigo travelling around the pill border with a
+/// quiet breathing glow behind it.
 ///
-/// The pill itself rides a [Hero] flight to the full-screen search page
-/// (container transform): on tap it stretches to the page header while the
-/// glowing aura stays behind in Home. During the flight a fixed-style
-/// capsule shuttle is shown — a single calm gradient, no rotating comet, no
-/// live hint text — so typography and effects never flicker mid-flight.
+/// The pill is a genuinely editable TextField: the user types directly in
+/// Home and submits with either the trailing search/send icon or Enter.
+/// Both actions share one submission handler and hand the exact trimmed
+/// query to the AI chat page ([AiChatPage]) via the established
+/// GoRouter `extra` mechanism.
 class HomeAiSearchField extends StatefulWidget {
   const HomeAiSearchField({super.key});
 
@@ -35,26 +36,144 @@ class HomeAiSearchField extends StatefulWidget {
 
 class _HomeAiSearchFieldState extends State<HomeAiSearchField>
     with SingleTickerProviderStateMixin {
+  static const Duration _typeTick = Duration(milliseconds: 45);
+  static const Duration _eraseTick = Duration(milliseconds: 25);
+  static const Duration _holdLine = Duration(seconds: 2);
+
+  late final TextEditingController _textCtrl;
+  final FocusNode _focusNode = FocusNode();
   late final AnimationController _auraController;
   late final Animation<double> _aura;
+
+  // Typewriter hint — driven live into the TextField's decoration.
+  List<String> _phrases = const [];
+  int _phraseIndex = 0;
+  int _charCount = 0;
+  bool _erasing = false;
+  Timer? _timer;
+
+  // Duplicate-submission guard.
+  bool _submitting = false;
 
   @override
   void initState() {
     super.initState();
-    // One slow revolution every ~4.5s — the unhurried pace is the premium
-    // feel; the comet fades in/out through the sweep so it reads as a
-    // travelling light, never a spinning ring.
+    _textCtrl = TextEditingController();
     _auraController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 4500),
     )..repeat();
     _aura = CurvedAnimation(parent: _auraController, curve: Curves.linear);
+    _phrases = const <String>[];
+    _scheduleTick(_typeTick);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final l10n = AppLocalizations.of(context)!;
+    final phrases = <String>[
+      l10n.aiHintPhrase1,
+      l10n.aiHintPhrase2,
+      l10n.aiHintPhrase3,
+    ];
+    // Locale changed mid-flight — restart the current line with the new
+    // language's phrases (keeps the index so rotation stays seamless).
+    if (listEquals(_phrases, phrases)) return;
+    final restart = _phrases.isNotEmpty;
+    _phrases = phrases;
+    if (restart) {
+      _charCount = 0;
+      _erasing = false;
+      _scheduleTick(_typeTick);
+    }
   }
 
   @override
   void dispose() {
+    _textCtrl.dispose();
+    _focusNode.dispose();
     _auraController.dispose();
+    _timer?.cancel();
     super.dispose();
+  }
+
+  void _scheduleTick(Duration interval) {
+    _timer?.cancel();
+    _timer = Timer.periodic(interval, (_) => _tick());
+  }
+
+  void _tick() {
+    if (!mounted) return;
+    final phrase = _phrases[_phraseIndex % _phrases.length];
+    if (!_erasing) {
+      if (_charCount < phrase.length) {
+        _charCount++;
+        if (_charCount == 1) {
+          // Typing just began — full typing cadence (in case we were in
+          // hold/erase cadence before).
+          _scheduleTick(_typeTick);
+        }
+        setState(() {});
+      } else {
+        // Line complete — hold it before wiping.
+        _scheduleTick(_holdLine);
+        _erasing = true;
+      }
+    } else {
+      if (_charCount > 0) {
+        _charCount--;
+        if (_charCount == phrase.length - 1) {
+          // Wiping just began — switch to the faster erase cadence.
+          _scheduleTick(_eraseTick);
+        }
+        setState(() {});
+      } else {
+        // Wiped — advance to the next phrase and start typing it.
+        _phraseIndex = (_phraseIndex + 1) % _phrases.length;
+        _erasing = false;
+        _scheduleTick(_typeTick);
+        setState(() {});
+      }
+    }
+  }
+
+  /// The live typewriter phrase shown as the TextField's hint text.
+  String get _hintPhrase {
+    if (_phrases.isEmpty) return '';
+    final phrase = _phrases[_phraseIndex % _phrases.length];
+    return phrase.substring(0, _charCount.clamp(0, phrase.length));
+  }
+
+  /// Submit the user's trimmed query to the AI chat page.
+  ///
+  /// Both the search icon and the Enter key route through this single
+  /// handler. The field is cleared on submit and the duplicate guard is
+  /// reset on the next frame, so the same query can never be submitted
+  /// twice and legitimate follow-up queries are unaffected.
+  void _submit() {
+    if (_submitting) return;
+    final text = _textCtrl.text.trim();
+    if (text.isEmpty) return;
+    _submitting = true;
+    HapticFeedback.mediumImpact();
+    // Dismiss the keyboard so the chat page does not open covered.
+    _focusNode.unfocus();
+    // Clear the field immediately (keeps the same query from being
+    // resubmitted by a repeat tap).
+    _textCtrl.clear();
+    // Allow a brand-new query to be submitted on the next frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _submitting = false;
+    });
+    context.push('/ai-chat', extra: text);
+  }
+
+  /// Open the full smart-search surface (preserves the existing launcher
+  /// entry point for the universal search surface).
+  void _openSmartSearch() {
+    if (!mounted) return;
+    context.push('/smart-search');
   }
 
   @override
@@ -63,7 +182,6 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField>
     final l10n = AppLocalizations.of(context)!;
 
     return Semantics(
-      button: true,
       label: l10n.aiSearchHint,
       child: AnimatedBuilder(
         animation: _aura,
@@ -91,7 +209,7 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField>
               child: Hero(
                 tag: kAiSmartSearchHeroTag,
                 // The closed pill leaves Home entirely while flying.
-                placeholderBuilder: (_, _, _) => const SizedBox.shrink(),
+                placeholderBuilder: (_, __, ___) => const SizedBox.shrink(),
                 flightShuttleBuilder: _pillShuttle,
                 child: Material(
                   color: AppColors.surface,
@@ -105,56 +223,74 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField>
                     child: Row(
                       children: <Widget>[
                         const SizedBox(width: AppSpacing.xs),
-                        // Decorative sparkle — the tap target is the text
-                        // region only, Instagram-style.
-                        const Icon(
-                          Icons.auto_awesome_rounded,
-                          size: 24,
-                          color: AppColors.ai,
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        // The tap region: only the hint-text area opens the
-                        // search page. Its vertical extent is the full pill
-                        // height, so the target stays >= 48px (a11y) while
-                        // the icons remain purely visual.
-                        Expanded(
-                          child: SizedBox(
-                            height: 36,
-                            child: InkWell(
-                              onTap: () => context.push('/smart-search'),
-                              child: Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: _TypewriterHint(
-                                  style: typography.bodyLarge.copyWith(
-                                    color: AppColors.textSecondary.withValues(
-                                      alpha: 0.7,
-                                    ),
-                                  ),
-                                ),
-                              ),
+                        // Leading sparkle — tap to open the full smart
+                        // search surface (the established entry point).
+                        InkWell(
+                          onTap: _openSmartSearch,
+                          customBorder: const CircleBorder(),
+                          child: const Padding(
+                            padding: EdgeInsets.all(AppSpacing.xs),
+                            child: Icon(
+                              Icons.auto_awesome_rounded,
+                              size: 24,
+                              color: AppColors.ai,
                             ),
                           ),
                         ),
                         const SizedBox(width: AppSpacing.md),
-                        // Google-style trailing search affordance — a soft
-                        // violet circle hosting the lens. Decorative.
-                        Container(
-                          width: 36,
-                          height: 36,
-                          alignment: Alignment.center,
-                          decoration: const BoxDecoration(
-                            color: AppColors.aiContainer,
-                            shape: BoxShape.circle,
+                        // The editable field. The typewriter hint is fed into
+                        // the TextField's decoration so the user types
+                        // directly in Home.
+                        Expanded(
+                          child: TextField(
+                            controller: _textCtrl,
+                            focusNode: _focusNode,
+                            decoration: InputDecoration(
+                              hintText: _hintPhrase,
+                              hintStyle: typography.bodyLarge.copyWith(
+                                color: AppColors.textSecondary.withValues(
+                                  alpha: 0.7,
+                                ),
+                              ),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.md,
+                                vertical: AppSpacing.sm,
+                              ),
+                            ),
+                            textInputAction: TextInputAction.send,
+                            onSubmitted: (_) => _submit(),
+                            style: typography.bodyLarge.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
+                            autofocus: false,
                           ),
-                          child: const Icon(
-                            Icons.search_rounded,
-                            size: 20,
-                            color: AppColors.ai,
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        // Search/send affordance — interactive (single shared
+                        // submission path with the Enter key).
+                        GestureDetector(
+                          onTap: _submit,
+                          behavior: HitTestBehavior.opaque,
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            alignment: Alignment.center,
+                            decoration: const BoxDecoration(
+                              color: AppColors.aiContainer,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.search_rounded,
+                              size: 20,
+                              color: AppColors.ai,
+                            ),
                           ),
                         ),
                         const SizedBox(width: AppSpacing.xs),
-                        // Disabled microphone placeholder — US-3+ extension
-                        // point. Never interactive, excluded from taps.
+                        // Voice search placeholder — kept disabled (US-3+
+                        // extension point), never interactive.
                         ExcludeSemantics(
                           child: Semantics(
                             button: true,
@@ -212,14 +348,18 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField>
               borderRadius: AppRadius.pillBorder,
               border: Border.all(color: AppColors.aiContainer),
             ),
-            child: const Row(
-              children: <Widget>[
-                Icon(
-                  Icons.auto_awesome_rounded,
-                  size: 24,
-                  color: AppColors.ai,
-                ),
-              ],
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: const Row(
+                children: <Widget>[
+                  Icon(
+                    Icons.auto_awesome_rounded,
+                    size: 24,
+                    color: AppColors.ai,
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -270,169 +410,40 @@ class _RotatingAuraBorder extends StatelessWidget {
               animation: aura,
               builder: (context, _) {
                 final rotation = aura.value * 2 * 3.141592653589793;
-                 return ShaderMask(
-                   blendMode: BlendMode.srcATop,
-                   shaderCallback: (bounds) {
-                     return SweepGradient(
-                       startAngle: -1.5707963267948966,
-                       endAngle: 4.71238898038469,
-                       colors: const <Color>[
-                         Color(0x00000000),
-                         Color(0x00000000),
-                         AppColors.ai,
-                         AppColors.brand,
-                         AppColors.aiLight,
-                         Color(0x00000000),
-                         Color(0x00000000),
-                       ],
-                       stops: const <double>[0.0, 0.52, 0.62, 0.72, 0.82, 0.92, 1.0],
-                       transform: GradientRotation(rotation),
-                     ).createShader(bounds);
-                   },
-                   child: Container(
-                     decoration: BoxDecoration(
-                       borderRadius: BorderRadius.circular(AppRadius.pill),
-                       border: Border.all(
-                         color: AppColors.ai,
-                         width: _borderWidth,
-                       ),
-                     ),
-                   ),
-                 );
-               },
-             ),
-           ),
-         ),
-       ],
-     );
-   }
-}
-
-/// Self-writing rotating hint for the AI search pill.
-///
-/// Cycles through the locale's `aiHintPhrase1..3` like a patient assistant
-/// typing at a keyboard: types character by character (~45ms), holds the
-/// finished line for two seconds, wipes it back faster, then starts the
-/// next phrase. A block cursor is shown only while typing. Language changes
-/// mid-flight re-seed the phrase list and restart the current line so the
-/// strings always match the active locale.
-class _TypewriterHint extends StatefulWidget {
-  const _TypewriterHint({required this.style});
-
-  final TextStyle style;
-
-  @override
-  State<_TypewriterHint> createState() => _TypewriterHintState();
-}
-
-class _TypewriterHintState extends State<_TypewriterHint> {
-  static const Duration _typeTick = Duration(milliseconds: 45);
-  static const Duration _eraseTick = Duration(milliseconds: 25);
-  static const Duration _holdLine = Duration(seconds: 2);
-
-  late List<String> _phrases;
-  int _phraseIndex = 0;
-  int _charCount = 0;
-  bool _erasing = false;
-  Timer? _timer;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final l10n = AppLocalizations.of(context)!;
-    final phrases = <String>[
-      l10n.aiHintPhrase1,
-      l10n.aiHintPhrase2,
-      l10n.aiHintPhrase3,
-    ];
-    // Locale changed mid-flight — restart the current line with the new
-    // language's phrases (keeps the index so rotation stays seamless).
-    if (listEquals(_phrases, phrases)) return;
-    final restart = _phrases.isNotEmpty;
-    _phrases = phrases;
-    if (restart) {
-      _charCount = 0;
-      _erasing = false;
-      _scheduleTick(_typeTick);
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    // didChangeDependencies runs after initState on the first build and
-    // seeds _phrases; the ticker starts from there.
-    _phrases = const <String>[];
-    _scheduleTick(_typeTick);
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  void _scheduleTick(Duration interval) {
-    _timer?.cancel();
-    _timer = Timer.periodic(interval, (_) => _tick());
-  }
-
-  void _tick() {
-    if (!mounted) return;
-    final phrase = _phrases[_phraseIndex % _phrases.length];
-    if (!_erasing) {
-      if (_charCount < phrase.length) {
-        _charCount++;
-        if (_charCount == 1) {
-          // Typing just began — full typing cadence (in case we were in
-          // hold/erase cadence before).
-          _scheduleTick(_typeTick);
-        }
-        setState(() {});
-      } else {
-        // Line complete — hold it before wiping.
-        _scheduleTick(_holdLine);
-        _erasing = true;
-      }
-    } else {
-      if (_charCount > 0) {
-        _charCount--;
-        if (_charCount == phrase.length - 1) {
-          // Wiping just began — switch to the faster erase cadence.
-          _scheduleTick(_eraseTick);
-        }
-        setState(() {});
-      } else {
-        // Wiped — advance to the next phrase and start typing it.
-        _phraseIndex = (_phraseIndex + 1) % _phrases.length;
-        _erasing = false;
-        _scheduleTick(_typeTick);
-        setState(() {});
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final phrase = _phrases.isEmpty ? '' : _phrases[_phraseIndex];
-    final visible = phrase.substring(
-      0,
-      _charCount.clamp(0, phrase.length),
-    );
-    return RepaintBoundary(
-      child: Text.rich(
-        TextSpan(
-          children: <InlineSpan>[
-            TextSpan(text: visible),
-            // Block cursor while typing/wiping — gone on the full hold.
-            if (_charCount < phrase.length || _erasing)
-              const TextSpan(text: '▌'),
-          ],
+                return ShaderMask(
+                  blendMode: BlendMode.srcATop,
+                  shaderCallback: (bounds) {
+                    return SweepGradient(
+                      startAngle: -1.5707963267948966,
+                      endAngle: 4.71238898038469,
+                      colors: const <Color>[
+                        Color(0x00000000),
+                        Color(0x00000000),
+                        AppColors.ai,
+                        AppColors.brand,
+                        AppColors.aiLight,
+                        Color(0x00000000),
+                        Color(0x00000000),
+                      ],
+                      stops: const <double>[0.0, 0.52, 0.62, 0.72, 0.82, 0.92, 1.0],
+                      transform: GradientRotation(rotation),
+                    ).createShader(bounds);
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(
+                        color: AppColors.ai,
+                        width: _borderWidth,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: widget.style,
-      ),
+      ],
     );
   }
 }

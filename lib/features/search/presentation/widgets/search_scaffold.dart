@@ -78,7 +78,7 @@ class SearchScaffold extends StatelessWidget {
                 tooltip: 'Back',
                 onPressed: () => context.canPop()
                     ? context.pop()
-                    : context.go('/search'),
+                    : context.go('/'),
               ),
             ),
             actions: <Widget>[

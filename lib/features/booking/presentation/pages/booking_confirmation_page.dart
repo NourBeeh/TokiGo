@@ -93,6 +93,18 @@ class _BookingConfirmationPageState extends ConsumerState<BookingConfirmationPag
       body: SafeArea(
         child: Column(
           children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.md),
+              child: Row(
+                children: <Widget>[
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    onPressed: () => context.canPop() ? context.pop() : context.go('/booking/review'),
+                    tooltip: 'Back',
+                  ),
+                ],
+              ),
+            ),
             Expanded(
               child: Center(
                 child: Column(

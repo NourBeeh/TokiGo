@@ -1,6 +1,28 @@
 # WeTravellers — CURRENT STATE
 
-## Last known checkpoint (AUTHORITATIVE — 2026-09-07)
+## 2026-10-17 — Stabilization checkpoint (AUTHORITATIVE)
+
+- **No `git` repo existed** at project start. Initialized `git` (branch `main`) + root `.gitignore`; first snapshot commit `6c3823e` (651 files). Excluded: `.env`, `backend/node_modules`, `build/`, `.dart_tool/`, `backend/test-nuitee.ts`, Hive runtime data.
+- **Verified baseline (2026-10-17):**
+  - `flutter test` → **777 passed / 6 skipped / 0 failed**
+  - `dart analyze lib test` → **0 errors / 0 warnings** (148 infos, pre-existing)
+  - backend `npx tsc --noEmit` → **clean**
+  - backend `npx jest` → **282 passed / 1 skipped / 0 failed**
+- **Undocumented work found in the tree (2026-10-16 → 17, memory had stopped at 2026-09-09):**
+  - Home smart AI search pill became a real editable `TextField` (typewriter hint, rotating aura border, Hero handoff) → submits to `/ai-chat`, leading sparkle opens `/smart-search` (`lib/features/home/presentation/widgets/home_ai_search_field.dart`).
+  - TokiGo wordmark ("Toki" grey + pulsing red "Go") in the Home header (`home_page.dart`).
+  - Navigation-shell fix: removed the custom branch `navigatorKey` that triggered "Duplicate GlobalKey (_BranchNavigatorProxy / StatefulShellBranch)" (`lib/app/router/go_router_config.dart`, `lib/app/shell.dart`).
+  - Edits to `universal_search_page.dart`, `ai_chat_page.dart`; l10n regenerated (127 keys en/ar).
+- **Stabilization fixes applied:**
+  - `test/navigation/go_router_shell_test.dart` — harness routes now absolute (`/flights`, `/booking/review`, `/search`), page assertion `findsWidgets`, back via `tester.pageBack()`.
+  - `test/features/home/presentation/widgets/home_ai_search_field_test.dart` — rewrote the Enter (keyboard send action), duplicate-prevention (offstage pill + cleared field), and Arabic-locale tests; split the sparkle→smart-search navigation into a router-backed test; removed the unused focus harness.
+  - `backend/test/memory.spec.ts` — deterministic `updatedAt` timestamps (tied `new Date()` made the newest-first listing flaky).
+- **New requirement (unimplemented — user 2026-10-17, `Documents/زرار GO عند الضغط عليه.txt`):** **GO button** starts/continues a trip — auto current country via geo → choose destination or ask AI for ideas → resume a saved/external trip, continue an existing hotel, or navigation-only with full service guidance; plus continuously updated travel/visa requirements and **VISA INDEX**. Not part of any phase yet.
+- **Resume point:** per `MASTER_PLAN.md` the next pending phase is **US-5** (search personalization) → US-6 → PH-7 → 4A–4E, unless the user prioritizes the new GO-button / trip-start feature.
+
+---
+
+## Last known checkpoint (superseded — 2026-09-07)
 **Home & Platform workstream M0–H3 complete; Universal Search US-2 in progress by the sibling agent; everything below was validated by direct runs.**
 
 ### Verified baseline (2026-09-07)

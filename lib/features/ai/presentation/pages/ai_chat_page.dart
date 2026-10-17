@@ -17,7 +17,10 @@ import 'package:wetravellers/l10n/app_localizations.dart';
 /// Back button, or Escape (web/desktop). The route uses each platform's
 /// native transition, so iOS edge-swipe-back works as usual.
 class AiChatPage extends ConsumerStatefulWidget {
-  const AiChatPage({super.key});
+  const AiChatPage({super.key, this.initialPrompt});
+
+  /// The query captured by the AI search box before the chat opened.
+  final String? initialPrompt;
 
   @override
   ConsumerState<AiChatPage> createState() => _AiChatPageState();
@@ -31,6 +34,9 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
   @override
   void initState() {
     super.initState();
+    // The AI search box hands its query over as a prefilled prompt; the
+    // user can edit it before sending, or send as-is.
+    _textCtrl.text = widget.initialPrompt ?? '';
     HardwareKeyboard.instance.addHandler(_handleKeyEvent);
   }
 

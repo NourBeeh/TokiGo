@@ -188,9 +188,7 @@ class _FlowHeader extends StatelessWidget {
             children: <Widget>[
               IconButton(
                 icon: const Icon(Icons.arrow_back_rounded),
-                onPressed: () => context.canPop()
-                    ? context.pop()
-                    : context.go('/'),
+                onPressed: () => context.canPop() ? context.pop() : context.go('/booking/review'),
                 tooltip: 'Back',
               ),
               const SizedBox(width: AppSpacing.xs),

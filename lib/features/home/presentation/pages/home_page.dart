@@ -499,6 +499,7 @@ class _HomeTopActionsState extends State<_HomeTopActions>
                   ),
                 ),
               ),
+              const SizedBox(width: AppSpacing.xs),
               // Go — slides in from the right, then heartbeats forever.
               SlideTransition(
                 position: Tween<Offset>(

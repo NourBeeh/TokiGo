@@ -9,6 +9,7 @@ import 'package:wetravellers/app/app.dart';
 import 'package:wetravellers/core/domain/models/home/home_section.dart';
 import 'package:wetravellers/features/ai/data/ai_api_service.dart';
 import 'package:wetravellers/features/ai/application/ai_providers.dart';
+import 'package:wetravellers/features/ai/presentation/pages/ai_chat_page.dart';
 import 'package:wetravellers/features/home/presentation/widgets/home_ai_search_field.dart';
 import 'package:wetravellers/features/universal_search/application/universal_search_controller.dart';
 import 'package:wetravellers/features/universal_search/application/voice_search_providers.dart';
@@ -47,9 +48,11 @@ void main() {
     final field = find.byType(HomeAiSearchField);
     expect(field, findsOneWidget);
 
-    // Tapping it pushes the full-screen search page. The route uses a
-    // custom transition, so the page needs extra frames to mount.
-    await tester.tap(field);
+    // The pill is now an editable input; open US-0 through the sparkle
+    // handle (instagrams-style, preserved from the original pill).
+    await tester.tap(
+      find.descendant(of: find.byType(HomeAiSearchField), matching: find.byIcon(Icons.auto_awesome_rounded)),
+    );
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 600));
     expect(find.byType(UniversalSearchPage), findsOneWidget);
@@ -63,12 +66,14 @@ void main() {
     expect(find.byType(HomeAiSearchField), findsOneWidget);
   });
 
-  testWidgets('submitting persists the prompt as a recent search', (tester) async {
+  testWidgets('submitting opens the AI chat with the query in the field', (tester) async {
     final cache = MemoryOfflineCache();
     await tester.pumpWidget(harness(cache: cache));
     await tester.pump(const Duration(milliseconds: 500));
 
-    await tester.tap(find.byType(HomeAiSearchField));
+    await tester.tap(
+      find.descendant(of: find.byType(HomeAiSearchField), matching: find.byIcon(Icons.auto_awesome_rounded)),
+    );
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 600));
     expect(find.byType(UniversalSearchPage), findsOneWidget);
@@ -78,15 +83,21 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pump(const Duration(milliseconds: 200));
 
-    // Submit via the send button.
+    // Submit — the search box hands the query to the AI chat, which opens
+    // with the same text already in the chat field.
     await tester.tap(find.byIcon(Icons.arrow_upward));
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle(const Duration(milliseconds: 1200));
 
-    // The submit reached SEARCHING (loading) or already rendered results.
-    expect(find.byType(UniversalSearchPage), findsOneWidget);
+    expect(find.byType(AiChatPage), findsOneWidget);
+    final chatTextField = find.descendant(
+      of: find.byType(AiChatPage),
+      matching: find.byType(TextField),
+    );
+    final chatField = tester.widget<TextField>(chatTextField);
+    expect(chatField.controller?.text, 'hotels in dubai');
     expect(tester.takeException(), isNull);
 
-    // The recent was recorded (submit-only, US-1 STEP 9).
+    // The recent was recorded on submit (US-1 STEP 9).
     final stored = await cache.read('ai_search_recent/0');
     expect(stored?['text'], 'hotels in dubai');
   });
@@ -97,7 +108,9 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 500));
 
-    await tester.tap(find.byType(HomeAiSearchField));
+    await tester.tap(
+      find.descendant(of: find.byType(HomeAiSearchField), matching: find.byIcon(Icons.auto_awesome_rounded)),
+    );
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 600));
     expect(find.byType(UniversalSearchPage), findsOneWidget);
@@ -119,12 +132,14 @@ void main() {
   // keyboard up, and the persisted recent entry is visible underneath.
   // -----------------------------------------------------------------------
 
-  testWidgets('edit chip leaves results and surfaces the recent', (tester) async {
+  testWidgets('non-travel query opens the AI chat with the query prefilled', (tester) async {
     final cache = MemoryOfflineCache();
     await tester.pumpWidget(harness(cache: cache));
     await tester.pump(const Duration(milliseconds: 500));
 
-    await tester.tap(find.byType(HomeAiSearchField));
+    await tester.tap(
+      find.descendant(of: find.byType(HomeAiSearchField), matching: find.byIcon(Icons.auto_awesome_rounded)),
+    );
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 600));
     expect(find.byType(UniversalSearchPage), findsOneWidget);
@@ -134,37 +149,32 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pump(const Duration(milliseconds: 200));
 
-    // Submit — a non-travel query parks on SEARCHING (AI flow). Land it
-    // the same way the page does when the shared AI sheet responds.
+    // Submit — a non-travel query opens the AI chat with the query in the
+    // field, ready to be sent.
     await tester.tap(find.byIcon(Icons.arrow_upward));
-    await tester.pump(const Duration(milliseconds: 300));
-    {
-      final ctx = tester.element(find.byType(UniversalSearchPage));
-      final container = ProviderScope.containerOf(ctx);
-      container
-          .read(universalSearchControllerProvider.notifier)
-          .aiResultsReady(const <HomeSection>[], 'Found some options.');
-    }
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('Found some options.'), findsOneWidget);
+    await tester.pumpAndSettle(const Duration(milliseconds: 1200));
+
+    expect(find.byType(AiChatPage), findsOneWidget);
+    final chatTextField = find.descendant(
+      of: find.byType(AiChatPage),
+      matching: find.byType(TextField),
+    );
+    final chatField = tester.widget<TextField>(chatTextField);
+    expect(chatField.controller?.text, 'random words here');
     expect(tester.takeException(), isNull);
 
-    // The recent was recorded on submit.
+    // The recent was recorded on submit (US-1 STEP 9).
     final stored = await cache.read('ai_search_recent/0');
     expect(stored?['text'], 'random words here');
-
-    // Reopen the field for editing from the results header — the surface
-    // returns to the suggestions view without exceptions.
-    await tester.tap(find.text('Edit'));
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(tester.takeException(), isNull);
   });
 
   testWidgets('categories chips show in ACTIVE and hide in TYPING', (tester) async {
     await tester.pumpWidget(harness());
     await tester.pump(const Duration(milliseconds: 500));
 
-    await tester.tap(find.byType(HomeAiSearchField));
+    await tester.tap(
+      find.descendant(of: find.byType(HomeAiSearchField), matching: find.byIcon(Icons.auto_awesome_rounded)),
+    );
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 600));
 
@@ -181,31 +191,40 @@ void main() {
     expect(find.text('Hotels'), findsNothing);
   });
 
-  testWidgets('incomplete intent surfaces question chips instead of searching', (tester) async {
-    await tester.pumpWidget(harness());
+  testWidgets('incomplete intent opens the AI chat with the query prefilled', (tester) async {
+    final cache = MemoryOfflineCache();
+    await tester.pumpWidget(harness(cache: cache));
     await tester.pump(const Duration(milliseconds: 500));
 
-    await tester.tap(find.byType(HomeAiSearchField));
+    await tester.tap(
+      find.descendant(of: find.byType(HomeAiSearchField), matching: find.byIcon(Icons.auto_awesome_rounded)),
+    );
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 600));
     expect(find.byType(UniversalSearchPage), findsOneWidget);
 
-    // "flight to dubai" — valid service + destination, no origin: the
-    // gaps body asks instead of executing a search with an invented
-    // origin (US-2 §3).
     await tester.enterText(find.byType(TextField).first, 'flight to dubai');
-    await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.byIcon(Icons.arrow_upward));
-    await tester.pump(const Duration(milliseconds: 300));
-
-    expect(find.text('منين بتسافر؟'), findsOneWidget);
-    expect(find.text('القاهرة'), findsOneWidget);
-
-    // Answering the question completes the intent and runs the search.
-    await tester.tap(find.text('القاهرة'));
+    await tester.pump(const Duration(milliseconds: 200));
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.byType(UniversalSearchPage), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 200));
+
+    // Submit — a non-travel / incomplete query opens the AI chat with the
+    // query in the field, ready to be sent. No results page is rendered.
+    await tester.tap(find.byIcon(Icons.arrow_upward));
+    await tester.pumpAndSettle(const Duration(milliseconds: 1200));
+
+    expect(find.byType(AiChatPage), findsOneWidget);
+    final chatTextField = find.descendant(
+      of: find.byType(AiChatPage),
+      matching: find.byType(TextField),
+    );
+    final chatField = tester.widget<TextField>(chatTextField);
+    expect(chatField.controller?.text, 'flight to dubai');
     expect(tester.takeException(), isNull);
+
+    // The recent was recorded on submit (US-1 STEP 9).
+    final stored = await cache.read('ai_search_recent/0');
+    expect(stored?['text'], 'flight to dubai');
   });
 
   testWidgets('US-3: the live mic button renders and starts a session on tap', (tester) async {
@@ -214,7 +233,9 @@ void main() {
 
     // The collapsed Home bar still has no mic (voice lives in the expanded
     // header only)…
-    await tester.tap(find.byType(HomeAiSearchField));
+    await tester.tap(
+      find.descendant(of: find.byType(HomeAiSearchField), matching: find.byIcon(Icons.auto_awesome_rounded)),
+    );
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 600));
     expect(find.byType(UniversalSearchPage), findsOneWidget);
@@ -235,7 +256,9 @@ void main() {
   testWidgets('US-3: the listening state renders the stop affordance with pulse', (tester) async {
     await tester.pumpWidget(harness());
     await tester.pump(const Duration(milliseconds: 500));
-    await tester.tap(find.byType(HomeAiSearchField));
+    await tester.tap(
+      find.descendant(of: find.byType(HomeAiSearchField), matching: find.byIcon(Icons.auto_awesome_rounded)),
+    );
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 600));
 
