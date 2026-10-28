@@ -1,0 +1,66 @@
+{
+  "name": "tokigo-backend",
+  "version": "1.0.0",
+  "description": "TokiGo Backend BFF - NestJS",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main",
+    "start:dev": "nest start --watch",
+    "test": "jest",
+    "seed:home": "node scripts/seed-home.js",
+    "seed:admin": "node scripts/seed-admin.js",
+    "seed:home:clean": "node scripts/clean-seed-home.js",
+    "seed:home:real": "node scripts/seed-home-real.js"
+  },
+  "dependencies": {
+    "@duffel/api": "^4.31.0",
+    "@nestjs/common": "^10.3.0",
+    "@nestjs/config": "^3.2.2",
+    "@nestjs/core": "^10.3.0",
+    "@nestjs/jwt": "^10.2.0",
+    "@nestjs/passport": "^10.0.3",
+    "@nestjs/platform-express": "^10.3.0",
+    "@nestjs/throttler": "^6.7.1",
+    "@nestjs/typeorm": "^10.0.2",
+    "bcryptjs": "^2.4.3",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "ioredis": "^5.3.2",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "pg": "^8.23.1",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.20"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^10.2.6",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.14.11",
+    "@types/passport-jwt": "^4.0.1",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.12",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "jest": {
+    "rootDir": ".",
+    "testEnvironment": "node",
+    "testRegex": "test/.*\\.spec\\.ts$",
+    "maxWorkers": 1,
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "transform": {
+      "^.+\\.ts$": [
+        "ts-jest",
+        {
+          "tsconfig": "tsconfig.spec.json"
+        }
+      ]
+    }
+  }
+}

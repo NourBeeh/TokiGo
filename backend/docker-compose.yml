@@ -1,0 +1,47 @@
+# Local development PostgreSQL for the WeTravellers backend.
+#
+# Repeatable provisioning: the service comes back with Docker, keeps its data in
+# a *named* volume that survives container recreation, and reports readiness so
+# dependents can wait on it instead of racing the socket.
+#
+# Credentials default to exactly the values in
+# `backend/src/config/database.config.ts`, so `npm start` connects with no .env
+# changes. Override per environment through DB_USER / DB_PASSWORD / DB_NAME /
+# DB_PORT. The defaults here are local development values only — never put real
+# credentials in this file.
+#
+# Usage (from backend/):
+#   docker-compose up -d          start in the background
+#   docker-compose ps             show state and health
+#   docker-compose logs -f postgres
+#   docker-compose stop           stop the container, keep the data
+#   docker-compose down           remove the container, keep the named volume
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: wetravellers-postgres
+    # Survives a Docker daemon or host restart, unlike a manually started
+    # container with the default `no` policy.
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-wetravellers}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-wetravellers}
+      POSTGRES_DB: ${DB_NAME:-wetravellers}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      # Named, so `down` + `up` keeps the schema TypeORM synchronised.
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U ${DB_USER:-wetravellers} -d ${DB_NAME:-wetravellers}
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  pgdata:
+    name: wetravellers_pgdata

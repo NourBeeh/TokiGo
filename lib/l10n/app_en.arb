@@ -1,0 +1,728 @@
+{
+  "@@locale": "en",
+  "appTitle": "TokiGo",
+  "navHome": "Home",
+  "navSearch": "Search",
+  "navGroups": "Groups",
+  "navExplore": "Explore",
+  "navAi": "AI Assistant",
+  "bag": "My Trips",
+  "notifications": "Notifications",
+  "profile": "Profile",
+  "profileGuestTitle": "You're browsing as a guest",
+  "profileGuestBody": "Sign in to keep your trips, saved places and preferences.",
+  "profileTraveller": "Traveller",
+  "profileErrorTitle": "We couldn't load your account",
+  "back": "Back",
+  "searchHint": "Where to?",
+  "aiSearchHint": "Where do you want to go?",
+  "aiSend": "Send",
+  "aiOpenChat": "Open TokiGo AI",
+  "aiHintPhrase1": "Ask Toki AI — Your Travel Assistant",
+  "aiHintPhrase2": "Where do you want to go?",
+  "aiHintPhrase3": "Hotels in Istanbul? Flights to Cairo?",
+  "aiSearchSheetHint": "Where do you want to go?",
+  "aiSearchNoSuggestions": "No suggestions right now. Try a different prompt.",
+  "aiSearchError": "Something went wrong. Please try again.",
+  "aiSearchSuggestions": "Suggestions",
+  "recentSearches": "Recent searches",
+  "clearAll": "Clear all",
+  "aiSearchEditQuery": "Edit",
+  "aiSearchResultsFor": "Results for \"{query}\"",
+  "@aiSearchResultsFor": {
+    "placeholders": {
+      "query": {}
+    }
+  },
+  "aiSearchPersonalizedHint": "Ordered by your preferences",
+  "aiSearchSort": "Sort",
+  "aiSearchSortRecommended": "Recommended",
+  "aiSearchSortPriceLow": "Price: Low to High",
+  "aiSearchSortPriceHigh": "Price: High to Low",
+  "aiSearchSortRating": "Rating",
+  "aiSearchRefine": "Refine",
+  "aiSearchRefineClear": "Clear filters",
+  "aiSearchRefineTitle": "Refine results",
+  "aiSearchApply": "Apply",
+  "aiSearchFilterPriceMax": "Max price",
+  "aiSearchFilterMinStars": "Min stars",
+  "aiSearchFilterMaxStops": "Max stops",
+  "aiSearchFilterMinSeats": "Min seats",
+  "aiSearchFilterAny": "Any",
+  "aiSearchCompare": "Compare",
+  "aiSearchCompareMode": "Select 2–3 to compare",
+  "aiSearchCompareOpen": "Compare ({count})",
+  "@aiSearchCompareOpen": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "aiSearchCompareTitle": "Comparison",
+  "aiSearchCompareCancel": "Cancel",
+  "aiSearchCompareSameType": "Pick products of the same type to compare.",
+  "aiSearchCompareMissing": "—",
+  "cmpPrice": "Price",
+  "cmpStars": "Stars",
+  "cmpRating": "Rating",
+  "cmpLocation": "Location",
+  "cmpAmenities": "Amenities",
+  "cmpCancellation": "Cancellation",
+  "cmpAirline": "Airline",
+  "cmpDuration": "Duration",
+  "cmpStops": "Stops",
+  "cmpBaggage": "Baggage",
+  "cmpDeparture": "Departure",
+  "cmpArrival": "Arrival",
+  "cmpCategory": "Category",
+  "cmpSeats": "Seats",
+  "cmpBags": "Bags",
+  "cmpTransmission": "Transmission",
+  "cmpMileage": "Mileage",
+  "cmpDestination": "Destination",
+  "cmpInclusions": "Inclusions",
+  "searchPromptTitle": "Where to next?",
+  "searchPromptSubtitle": "Plan a city break, beach escape or weekend getaway.",
+  "searchAllServices": "All services",
+  "homeHelloName": "Hello, {name}",
+  "@homeHelloName": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "homeStaysTitle": "Hotels recommended",
+  "homeContinuePlanning": "Continue planning",
+  "homeWelcome": "Welcome back",
+  "homeWelcomeSub": "Trips and ideas picked for you",
+  "searchFlights": "Flights",
+  "searchHotels": "Hotels",
+  "searchCars": "Cars Rental",
+  "searchPackages": "Holidays",
+  "homeNavActivities": "Activities",
+  "searchTransfers": "Airport transfer",
+  "groupsTitle": "Groups",
+  "groupsSubtitle": "Plan together, travel together",
+  "viewAll": "View all",
+  "continueAsGuest": "Continue as guest",
+  "signIn": "Sign in",
+  "signOut": "Sign out",
+  "settings": "Settings",
+  "language": "Language",
+  "currency": "Currency",
+  "wishlist": "Wishlist",
+  "myTrips": "My trips",
+  "tripDetails": "Trip details",
+  "upcoming": "Upcoming",
+  "cancelled": "Cancelled",
+  "past": "Past",
+  "tripsEmptyUpcomingTitle": "No upcoming trips yet",
+  "tripsEmptyCancelledTitle": "No cancelled bookings",
+  "tripsEmptyPastTitle": "No past trips yet",
+  "tripsEmptyBody": "Your confirmed bookings appear here automatically.",
+  "tripTravellersCount": "{count, plural, =1{1 traveller} other{{count} travellers}}",
+  "@tripTravellersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tripNotFoundTitle": "Trip not found",
+  "tripNotFoundBody": "This trip isn't in My Trips. Trips appear here once a booking is confirmed in the app.",
+  "tripStatusPending": "Pending",
+  "tripStatusCancelled": "Cancelled",
+  "tripStatusFailed": "Failed",
+  "tripStatusDraft": "Draft",
+  "tripTypeHotel": "Hotel",
+  "tripTypeFlight": "Flight",
+  "tripTypeCar": "Car",
+  "tripTypePackage": "Package",
+  "tripTypeBooking": "Booking",
+  "readyToBook": "Ready to book?",
+  "reviewBooking": "Review booking",
+  "passengerDetails": "Passenger details",
+  "addOns": "Add-ons",
+  "bookingStepOf": "Step {current} of {total}",
+  "@bookingStepOf": {"placeholders": {"current": {"type": "String"}, "total": {"type": "String"}}},
+  "checkoutPaymentMethod": "Payment method",
+  "checkoutCard": "Credit / debit card",
+  "checkoutWallet": "Digital wallet",
+  "checkoutCardDetails": "Card details",
+  "checkoutPriceBreakdown": "Price breakdown",
+  "checkoutProcessing": "Processing payment…",
+  "payment": "Payment",
+  "confirmation": "Confirmation",
+  "bookNow": "Book now",
+  "total": "Total",
+  "continueAction": "Continue",
+  "adminPanel": "Admin panel",
+  "adminContent": "Home content",
+  "adminProviders": "API providers",
+  "adminAddSection": "Add section",
+  "adminAddCard": "Add card",
+  "adminEditCard": "Edit card",
+  "adminType": "Card type",
+  "adminTitle": "Title",
+  "adminSubtitle": "Subtitle",
+  "adminImageUrl": "Image URL",
+  "adminPrice": "Price",
+  "adminCurrency": "Currency",
+  "adminRating": "Rating",
+  "adminBadge": "Badge",
+  "adminActionLabel": "Action label",
+  "adminStatus": "Status",
+  "adminDraft": "Draft",
+  "adminPublished": "Published",
+  "adminVisible": "Visible",
+  "adminDelete": "Delete",
+  "adminMoveUp": "Move up",
+  "adminMoveDown": "Move down",
+  "adminSave": "Save",
+  "adminCancel": "Cancel",
+  "adminPreview": "Live preview",
+  "adminHealthCheck": "Health check",
+  "adminLatency": "Latency",
+  "adminActive": "Active",
+  "adminPriority": "Priority",
+  "adminRefreshRegistry": "Apply changes",
+  "adminEmpty": "No content yet. Add your first section.",
+  "adminError": "Something went wrong. Please retry.",
+  "adminRetry": "Retry",
+  "adminLoading": "Loading…",
+  "adminSaved": "Saved",
+  "adminFlight": "Flight",
+  "adminHotel": "Hotel",
+  "adminCar": "Car",
+  "adminPackage": "Package",
+  "adminDestination": "Destination",
+  "adminDeal": "Deal",
+  "adminTabletOnlyTitle": "Open the admin panel on a bigger screen",
+  "adminTabletOnlyBody": "The admin tables need at least 480pt of width. Open TokiGo on a tablet or a desktop browser to manage content and providers.",
+  "adminTableSection": "Section",
+  "adminTableCards": "Cards",
+  "adminTableStatus": "Status",
+  "adminTableProvider": "Provider",
+  "adminTablePriority": "Priority",
+  "adminTableLatency": "Latency",
+  "adminHealthy": "Healthy",
+  "adminUnhealthy": "Unhealthy",
+  "adminUnknown": "Unknown",
+  "adminFallback": "Fallback",
+  "adminLayout": "Layout",
+  "adminPriorityUp": "Raise priority",
+  "adminPriorityDown": "Lower priority",
+  "adminToggleCards": "Show the section's cards",
+  "adminNoProviders": "No provider is configured for this vertical yet.",
+  "settingsAccount": "Account",
+  "settingsAppLanguage": "App language",
+  "settingsPreferences": "Preferences",
+  "settingsAbout": "About",
+  "settingsDangerZone": "Danger zone",
+  "settingsVersion": "Version",
+  "aiMemoryTitle": "What I Know About You",
+  "aiMemorySubtitle": "Facts you shared in AI chats. You can edit or remove them anytime.",
+  "aiMemorySignInPrompt": "Sign in to see and manage what the AI remembers about you.",
+  "aiMemoryEmpty": "Nothing yet. Facts you share with the AI assistant will appear here.",
+  "aiMemoryEdit": "Edit",
+  "aiMemoryDelete": "Delete",
+  "aiMemoryDeleted": "Removed.",
+  "aiMemoryClearAll": "Clear all",
+  "aiMemoryClearAllConfirm": "Remove every fact listed here? Your profile and travel history are not affected.",
+  "aiMemoryClearedAll": "All facts removed.",
+  "aiMemoryFieldDestination": "Destination",
+  "aiMemoryFieldBudgetMin": "Minimum budget",
+  "aiMemoryFieldBudgetMax": "Maximum budget",
+  "aiMemoryFieldBudgetCurrency": "Budget currency",
+  "aiMemoryBudgetCurrencyNone": "No currency",
+  "aiMemoryFieldStyles": "Travel styles",
+  "aiMemoryFieldStylesHelper": "Separate styles with commas",
+  "aiMemoryMemoryButton": "What I Know About You",
+  "voiceSearch": "Voice search",
+  "voiceStarting": "Starting voice search…",
+  "voiceStop": "Stop voice search",
+  "voiceErrorPermission": "Microphone permission is needed for voice search.",
+  "voiceErrorUnavailable": "Voice search is not available on this device.",
+  "voiceErrorEmpty": "Didn't catch that — try speaking again.",
+  "onboardingHeroTitle": "Your Next Adventure Awaits",
+  "onboardingHeroBody": "Book flights, hotels, and more — all in one place.",
+  "onboardingAiTitle": "Your AI travel companion",
+  "onboardingAiBody": "Ask anything: plan a weekend, find cheaper alternatives, compare offers.",
+  "onboardingBagTitle": "All your trips in one bag",
+  "onboardingBagBody": "Every booking lands in one place — with readiness checks and price watches.",
+  "onboardingGetStarted": "Get started",
+  "onboardingNext": "Next",
+  "onboardingStartExploring": "Start exploring",
+  "onboardingSkip": "Skip",
+  "onboardingHaveAccount": "Already have an account?",
+  "onboardingLogIn": "Log in",
+  "packagesUnavailableTitle": "Holidays are coming soon",
+  "packagesUnavailableBody": "We are onboarding package providers. Flights and hotels are live today.",
+  "carsUnavailableTitle": "Cars Rental is coming soon",
+  "carsUnavailableBody": "We are onboarding car-rental providers. Flights and hotels are live today.",
+  "findFlights": "Find flights",
+  "findHotels": "Find hotels",
+  "packagesSubtitle": "Curated multi-day programs",
+  "carsSubtitle": "Self-drive rental cars",
+  "carsLiveSubtitle": "Rental cars at your destination",
+  "aiSomethingWentWrong": "Something went wrong. Please try again.",
+  "aiNoSuggestions": "No suggestions right now. Try a different prompt.",
+  "aiTryAgain": "Try again",
+  "aiSendPrompt": "Send prompt",
+  "aiModeActive": "AI mode active",
+  "aiTravelCopilot": "Your travel co-pilot",
+  "viewList": "List",
+  "viewMap": "Map",
+  "sortResults": "Sort results",
+  "bookingNoSelection": "No booking selected",
+  "bookingStatusTitle": "Status",
+  "bookingStepPreparing": "Preparing booking",
+  "bookingStepValidatingPrice": "Validating price",
+  "bookingStepReady": "Ready to confirm",
+  "bookingPriceChanged": "Price changed",
+  "bookingAcceptNewPrice": "Accept new price",
+  "bookingPrepare": "Prepare booking",
+  "bookingValidating": "Validating…",
+  "bookingValidatePrice": "Validate price",
+  "bookingConfirming": "Confirming…",
+  "bookingViewTrip": "View my trip",
+  "bookingOfferUnavailable": "This offer is no longer available. Please pick another.",
+  "carPickupLocation": "Pickup location",
+  "mapViewComingSoon": "Map view coming soon",
+  "mapIntegrationUnavailable": "Map integration is not yet available. Results are shown in list view.",
+  "carDropoffLocation": "Dropoff location",
+  "carPickupHint": "Pickup location",
+  "carDropoffHint": "Dropoff location",
+  "carPickUpShort": "Pick-up",
+  "carDropOffShort": "Drop-off",
+  "carSearchCta": "Search cars",
+  "carFindYourRide": "Find your ride",
+  "carNoMatchesTitle": "No matches for your filters",
+  "carNoCarsTitle": "No cars found",
+  "carConnectionErrorTitle": "Connection error",
+  "bookingAddTraveller": "Add traveller",
+  "bookingContactInformation": "Contact information",
+  "bookingRemoveTraveller": "Remove traveller",
+  "bookingFirstName": "First name",
+  "bookingLastName": "Last name",
+  "bookingRequiredField": "Required",
+  "bookingEmailLabel": "Email",
+  "bookingPhoneLabel": "Phone",
+  "bookingValidEmail": "Enter a valid email",
+  "bookingValidPhone": "Enter a valid phone",
+  "groupsCreateTrip": "Create a group trip",
+  "groupsPlanTogether": "Plan together, decide together",
+  "carIdleBody": "Compare car rentals at pickup points worldwide",
+  "carNoMatchesBody": "Try widening the price range or clearing filters",
+  "carNoCarsBody": "Try a different location or dates",
+  "offlineShowingCached": "You are offline — showing the last saved data",
+  "homeCompleteYourTrip": "Complete your trip",
+  "homeFinishWhatYouStarted": "Finish what you started",
+  "homeForYourTripTo": "For your trip to {destination}",
+  "homeBecauseYouViewed": "Because you viewed {title}",
+  "homePicksRelatedToWhatYouSaw": "Picks related to what you saw",
+  "homePickedForYou": "Picked for you",
+  "homeBasedOnYourProfile": "Based on your profile",
+  "homeBasedOnRecentSearches": "Based on your recent searches",
+  "homeBasedOnWhatYouViewed": "Based on what you viewed",
+  "homeYourFavoritesFirst": "Your favourites first",
+  "homeMatchedToYourPreferences": "Matched to your preferences",
+  "homeForYourUpcomingTrip": "For your upcoming trip",
+  "homePopularNearYou": "Popular near you",
+  "homeBecauseYouViewedThis": "Because you viewed this",
+  "tripCancelBooking": "Cancel booking",
+  "tripCancelTitle": "Cancel this booking?",
+  "tripCancelBody": "The provider decides whether this booking can be cancelled. If it cannot, it will say why.",
+  "tripCancelConfirm": "Cancel booking",
+  "tripCancelKeep": "Keep booking",
+  "tripCancelled": "Booking cancelled",
+  "profileGuestSavedPlaces": "Saved places",
+  "profileGuestSavedPlacesBody": "The stays you saved with the heart are on this device — no account needed.",
+  "retry": "Retry",
+  "addOnsProviderTitle": "Add-ons are priced by the provider",
+  "addOnsProviderBody": "Extra bags, seats and meals are sold by the airline for your specific fare. They will appear here with the airline's own prices once that feed is connected — we never estimate a price.",
+  "notificationsEmptyTitle": "No notifications yet",
+  "notificationsEmptyBody": "Booking updates, price alerts and check-in reminders will appear here once they really happen. We don't invent them.",
+  "notificationToday": "Today",
+  "notificationEarlier": "Earlier",
+  "notificationUnread": "Unread",
+  "wishlistEmptyTitle": "Nothing saved yet",
+  "wishlistEmptyBody": "Tap the heart on a hotel, flight or package to keep it here. Saved items show the provider's own price.",
+  "wishlistSavedCount": "{count, plural, =1{1 saved} other{{count} saved}}",
+  "@wishlistSavedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "wishlistExploreStays": "Explore stays",
+  "groupsEmptyTitle": "Group trips are coming soon",
+  "groupsEmptyBody": "Creating a trip, inviting friends and splitting the plan will open here once the group trips backend is connected.",
+  "exploreCitiesTitle": "Cities for your mood",
+  "createNewTrip": "Create a new trip",
+  "tripBuilderTitle": "Plan your trip",
+  "tripBuilderCancel": "Cancel trip planning",
+  "tripBuilderStartFromHome": "Start by choosing a city from Home.",
+  "tripBuilderAddProducts": "Add to your trip",
+  "tripBuilderSelected": "Your trip selections",
+  "tripBuilderEmpty": "Choose a hotel, flight, or car to add it here.",
+  "tripBuilderRemove": "Remove from trip",
+  "tripBuilderTotal": "Current total",
+  "tripBuilderTotalNote": "This total adds the selected offers. Providers may use different currencies, and each item is booked and paid through its provider.",
+  "tripBuilderAddToTrip": "Add to trip",
+  "homeEmptyTitle": "No recommendations right now",
+  "homeEmptyBody": "We don't have hotels to suggest yet. Search a destination instead — or try again in a moment.",
+  "homeErrorTitle": "We couldn't reach the travel service",
+  "homeErrorBody": "Your connection or the provider may be having a moment. Nothing is lost — try again.",
+  "checkoutNoBookingTitle": "This booking isn't ready to pay for",
+  "checkoutNoBookingBody": "There is no prepared booking for this trip, so there is nothing to charge. Go back to the booking review and prepare it again.",
+  "checkoutProviderPrice": "Trip price (from the provider)",
+  "paymentFailedBody": "Your payment was not completed, so nothing was booked and nothing was charged.",
+  "paymentUnavailableBody": "Payment is not available right now, so nothing was booked. Please try again later.",
+  "paymentPendingBody": "Your bank is still verifying this payment. The booking will be confirmed as soon as the payment completes.",
+  "bookingConfirmFailedBody": "The payment was not completed, so the booking was not confirmed. Nothing was booked.",
+  "bookingConfirmLabel": "Confirm booking",
+  "payAmount": "Pay {amount}",
+  "@payAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmationNoneTitle": "No confirmed booking to show",
+  "confirmationNoneBody": "This screen shows the booking the provider actually confirmed. Nothing is confirmed for this trip yet.",
+  "bookingConfirmedTitle": "Booking confirmed",
+  "confirmationSubtitle": "Keep this reference to manage your booking with the provider.",
+  "confirmationCopyReference": "Copy booking reference",
+  "confirmationCopied": "Copied",
+  "confirmationDeparture": "Departure",
+  "confirmationArrival": "Arrival",
+  "bookingReferenceLabel": "Booking reference",
+  "bookingStatusConfirmed": "Confirmed",
+  "statusLabel": "Status",
+  "bookingTravellersLabel": "Travellers",
+  "bookingBackHome": "Back to home",
+  "flightSearchSubtitle": "Search flights across providers",
+  "tripTypeOneWay": "One-way",
+  "tripTypeMultiCity": "Multi-city",
+  "flightAddLeg": "Add another leg",
+  "flightRemoveLeg": "Remove leg",
+  "flightLegLabel": "Leg {n}",
+  "@flightLegLabel": {"placeholders": {"n": {"type": "int"}}},
+  "flightLegsIncomplete": "Fill in every leg before searching",
+  "flightLegsMax": "A multi-city trip can have up to 6 legs",
+  "tripTypeRoundTrip": "Round-trip",
+  "fieldFrom": "From",
+  "fieldTo": "To",
+  "fieldDeparture": "Departure",
+  "fieldReturn": "Return",
+  "selectAirport": "Select airport",
+  "selectAction": "Select",
+  "pickDateHint": "Select date",
+  "swapRoute": "Swap origin and destination",
+  "cabinEconomy": "Economy",
+  "passengersCount": "{count, plural, =1{1 passenger} other{{count} passengers}}",
+  "@passengersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sortRecommended": "Recommended",
+  "sortCheapest": "Cheapest",
+  "sortFastest": "Fastest",
+  "sortLongest": "Longest",
+  "filtersAction": "Filters",
+  "filtersReset": "Reset",
+  "filtersApply": "Apply filters",
+  "filterPriceRange": "Price range",
+  "filterHotelClass": "Hotel class",
+  "filterGuestScore": "Guest score",
+  "filterStops": "Stops",
+  "filterDirect": "Direct",
+  "filterAny": "Any",
+  "filterAirlines": "Airlines",
+  "flightIdleTitle": "Find your flight",
+  "flightIdleBody": "Compare fares across airlines for your next trip",
+  "flightEmptyTitle": "No flights found",
+  "flightEmptyBody": "Try different dates or nearby airports",
+  "searchFilteredEmptyTitle": "No matches for your filters",
+  "searchBudgetCap": "Up to {amount} {currency}",
+  "searchBudgetNoCurrency": "Budget {amount} has no currency — not applied",
+  "searchBudgetRemove": "Remove the budget filter",
+  "searchBudgetApply": "Apply the budget filter",
+  "searchBudgetNotApplicable": "Budget not applied — the listed prices are in {currency}",
+  "searchFilteredEmptyBody": "Try widening the price range or clearing filters",
+  "searchErrorTitle": "Connection error",
+  "searchErrorBody": "Something went wrong. Please try again.",
+  "pickerFromTitle": "From where?",
+  "pickerSearchHint": "Search…",
+  "pickerNoMatches": "No matches",
+  "flightRouteRequired": "Choose where you are flying from and to first.",
+  "hotelDestination": "Destination",
+  "hotelIdleTitle": "Find your perfect stay",
+  "hotelIdleBody": "Enter a destination and your dates to see available rooms.",
+  "hotelEmptyTitle": "No hotels found",
+  "hotelEmptyBody": "Try a different destination or dates",
+  "hotelDestinationRequired": "Enter a destination first.",
+  "hotelSortTopRated": "Top rated",
+  "hotelRatingAll": "All",
+  "hotelLoading": "Loading hotel",
+  "hotelFreeCancellation": "Free cancellation",
+  "hotelNightsCount": "{count, plural, =1{1 night} other{{count} nights}}",
+  "@hotelNightsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hotelGuestsCount": "{count, plural, =1{1 guest} other{{count} guests}}",
+  "@hotelGuestsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hotelRoomsCount": "{count, plural, =1{1 room} other{{count} rooms}}",
+  "@hotelRoomsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cityStaysCount": "{count, plural, =1{1 stay} other{{count} stays}}",
+  "discoverTitle": "Discover",
+  "discoverMore": "Discover more",
+  "hotelResultsCount": "{count, plural, =1{1 stay} other{{count} stays}}",
+  "@hotelResultsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "editSearch": "Edit search",
+  "hotelStarClass": "{count} star hotels",
+  "@hotelStarClass": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "sortBy": "Sort by",
+  "hotelRatingSemantics": "{rating} stars, {count} reviews",
+  "@hotelRatingSemantics": {
+    "placeholders": {
+      "rating": {},
+      "count": {}
+    }
+  },
+  "unitNight": "night",
+  "unitDay": "day",
+  "unitPerson": "person",
+  "cardTotalLabel": "total",
+  "cardFromLabel": "from",
+  "cardSaveLabel": "Save {amount}",
+  "@cardSaveLabel": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "cardTaxesIncludedLabel": "Taxes included",
+  "cardTaxesExtraLabel": "Taxes extra",
+  "cardPerUnitSemantics": "Per {unit} {amount} {currency}",
+  "@cardPerUnitSemantics": {
+    "placeholders": {
+      "unit": {},
+      "amount": {},
+      "currency": {}
+    }
+  },
+  "cardPerUnitLabel": "/{unit}",
+  "@cardPerUnitLabel": {
+    "placeholders": {
+      "unit": {}
+    }
+  },
+  "cardTotalSemantics": "Total {amount} {currency}",
+  "@cardTotalSemantics": {
+    "placeholders": {
+      "amount": {},
+      "currency": {}
+    }
+  },
+  "offerAbout": "About",
+  "offerAmenities": "Amenities",
+  "offerAircraft": "Aircraft",
+  "offerBaggage": "Baggage",
+  "offerBoard": "Board",
+  "offerCabin": "Cabin",
+  "offerCancellation": "Cancellation policy",
+  "offerCarType": "Type",
+  "offerCheckIn": "Check-in",
+  "offerCheckOut": "Check-out",
+  "offerDestination": "Destination",
+  "offerDuration": "Duration",
+  "offerFare": "Fare",
+  "offerFeatures": "Features",
+  "offerInclusions": "Inclusions",
+  "offerMileage": "Mileage",
+  "offerNonRefundableRate": "Non-refundable rate",
+  "offerPickup": "Pickup",
+  "offerDropOff": "Drop-off",
+  "offerPrice": "Price",
+  "offerPriceNote": "This is the provider's own total. We add nothing to it.",
+  "offerProvider": "Provider",
+  "offerRating": "Rating",
+  "offerRefundable": "Refundable",
+  "offerRefundableRate": "Refundable rate",
+  "offerRefundableYes": "Yes",
+  "offerRevalidated": "Revalidated at booking",
+  "offerRoom": "Room",
+  "offerSeats": "Seats",
+  "offerStars": "Stars",
+  "offerTaxesFees": "Taxes & fees",
+  "offerTotalFromProvider": "Total (from the provider)",
+  "offerTransmission": "Transmission",
+  "offerBadgeCheapest": "Cheapest",
+  "offerBadgeFastest": "Fastest",
+  "offerBadgeBestValue": "Best value",
+  "offerWarningSelfTransfer": "Self-transfer",
+  "offerWarningAirportChange": "Airport change",
+  "offerWarningRiskyConnection": "Risky connection",
+  "offerWarningOvernight": "Overnight",
+  "offerWarningLongLayover": "Long layover",
+  "offerLoadingFlight": "Loading flight",
+  "offerSaved": "Saved",
+  "offerTaxesIncluded": "(included in price)",
+  "offerReviewsCount": "{count, plural, =1{1 review} other{{count} reviews}}",
+  "@offerReviewsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offerPerNightStated": "the provider's own rate",
+  "offerPerNightDerived": "provider total ÷ {nights}",
+  "@offerPerNightDerived": {
+    "placeholders": {
+      "nights": {}
+    }
+  },
+  "offerCheckAvailability": "Check availability",
+  "offerDays": "{count, plural, =1{1 day} other{{count} days}}",
+  "@offerDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offerStopsCount": "{count, plural, =0{Non-stop} =1{1 stop} other{{count} stops}}",
+  "@offerStopsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offerStopsWithAirport": "1 stop ({airport})",
+  "@offerStopsWithAirport": {
+    "placeholders": {
+      "airport": {}
+    }
+  },
+  "offerLayover": "{duration} layover",
+  "@offerLayover": {
+    "placeholders": {
+      "duration": {}
+    }
+  },
+  "offerSeatsLeft": "{count, plural, =1{Only 1 seat left} other{Only {count} seats left}}",
+  "@offerSeatsLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offerCardTotal": "total {amount}",
+  "@offerCardTotal": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "offerFreeCancellationUntil": "Free cancellation until {date}",
+  "@offerFreeCancellationUntil": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "offerCancellationFeeNote": "Cancellation fee after that: {fee}",
+  "@offerCancellationFeeNote": {
+    "placeholders": {
+      "fee": {}
+    }
+  },
+  "offerSemanticsFlightRoute": "Flight from {origin} to {destination}",
+  "@offerSemanticsFlightRoute": {
+    "placeholders": {
+      "origin": {},
+      "destination": {}
+    }
+  },
+  "offerSemanticsFlightNumber": "Flight {number}",
+  "@offerSemanticsFlightNumber": {
+    "placeholders": {
+      "number": {}
+    }
+  },
+  "offerSemanticsDeparts": "Departs at {time}",
+  "@offerSemanticsDeparts": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "offerSemanticsArrives": "Arrives at {time}",
+  "@offerSemanticsArrives": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "offerSemanticsDuration": "Duration {duration}",
+  "@offerSemanticsDuration": {
+    "placeholders": {
+      "duration": {}
+    }
+  },
+  "offerSemanticsPrice": "Price {amount}",
+  "@offerSemanticsPrice": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "offerSemanticsTotal": "Total {amount}",
+  "@offerSemanticsTotal": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "locationPromptTitle": "Use your location for the right departure airport",
+  "locationPromptBody": "We read your country once to suggest a departure airport. Your precise location is not saved in the app.",
+  "locationPromptAllow": "Allow location",
+  "locationPromptNotNow": "Not now",
+  "locationPromptBlockedTitle": "Location is blocked",
+  "locationPromptBlockedBody": "Allow location for TokiGo in the system settings to suggest your departure airport.",
+  "locationPromptOpenSettings": "Open settings",
+  "locationPromptServiceOffTitle": "Location services are off",
+  "locationPromptServiceOffBody": "Turn on location services to suggest your departure airport.",
+  "locationPromptLocationSettings": "Location settings",
+  "locationChooseCountry": "Choose country manually",
+  "locationCountrySaveFailed": "Couldn't save your country. Please try again.",
+  "settingsCountry": "Country",
+  "settingsCountryNotSet": "Choose a country"
+}

@@ -1,0 +1,720 @@
+{
+  "@@locale": "ar",
+  "appTitle": "TokiGo",
+  "navHome": "الرئيسية",
+  "navSearch": "بحث",
+  "navGroups": "الجروبات",
+  "navExplore": "استكشف",
+  "navAi": "المساعد الذكي",
+  "bag": "رحلاتي",
+  "notifications": "الإشعارات",
+  "profile": "الملف الشخصي",
+  "profileGuestTitle": "أنت تتصفّح كضيف",
+  "profileGuestBody": "سجّل الدخول لحفظ رحلاتك وأماكنك المفضّلة وتفضيلاتك.",
+  "profileTraveller": "مسافر",
+  "profileErrorTitle": "تعذّر تحميل حسابك",
+  "back": "رجوع",
+  "searchHint": "رايح فين؟",
+  "aiSearchHint": "عايز تسافر فين؟",
+  "aiSend": "إرسال",
+  "aiOpenChat": "افتح TokiGo AI",
+  "aiHintPhrase1": "اسأل Toki — مساعدك السياحي",
+  "aiHintPhrase2": "إلى أين تريد السفر؟",
+  "aiHintPhrase3": "فنادق في إستنبول؟ رحلات إلى القاهرة؟",
+  "aiSearchSheetHint": "عايز تسافر فين؟",
+  "aiSearchNoSuggestions": "مفيش اقتراحات دلوقتي. جرب صيغة تانية.",
+  "aiSearchError": "حدث خطأ ما. حاول مرة أخرى.",
+  "aiSearchSuggestions": "اقتراحات",
+  "recentSearches": "آخر عمليات البحث",
+  "clearAll": "مسح الكل",
+  "aiSearchEditQuery": "تعديل",
+  "aiSearchResultsFor": "نتائج عن «{query}»",
+  "@aiSearchResultsFor": {
+    "placeholders": {
+      "query": {}
+    }
+  },
+  "aiSearchPersonalizedHint": "مرتّبة حسب تفضيلاتك",
+  "aiSearchSort": "ترتيب",
+  "aiSearchSortRecommended": "الأنسب",
+  "aiSearchSortPriceLow": "السعر: من الأقل",
+  "aiSearchSortPriceHigh": "السعر: من الأعلى",
+  "aiSearchSortRating": "التقييم",
+  "aiSearchRefine": "تصفية",
+  "aiSearchRefineClear": "مسح الفلاتر",
+  "aiSearchRefineTitle": "تصفية النتائج",
+  "aiSearchApply": "تطبيق",
+  "aiSearchFilterPriceMax": "أقصى سعر",
+  "aiSearchFilterMinStars": "أقل نجوم",
+  "aiSearchFilterMaxStops": "أقصى توقفات",
+  "aiSearchFilterMinSeats": "أقل مقاعد",
+  "aiSearchFilterAny": "الكل",
+  "aiSearchCompare": "قارن",
+  "aiSearchCompareMode": "اختر من 2 لـ3 للمقارنة",
+  "aiSearchCompareOpen": "قارن ({count})",
+  "@aiSearchCompareOpen": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "aiSearchCompareTitle": "المقارنة",
+  "aiSearchCompareCancel": "إلغاء",
+  "aiSearchCompareSameType": "اختر منتجات من نفس النوع للمقارنة.",
+  "aiSearchCompareMissing": "—",
+  "cmpPrice": "السعر",
+  "cmpStars": "النجوم",
+  "cmpRating": "التقييم",
+  "cmpLocation": "الموقع",
+  "cmpAmenities": "المرافق",
+  "cmpCancellation": "الإلغاء",
+  "cmpAirline": "شركة الطيران",
+  "cmpDuration": "المدة",
+  "cmpStops": "التوقفات",
+  "cmpBaggage": "الأمتعة",
+  "cmpDeparture": "المغادرة",
+  "cmpArrival": "الوصول",
+  "cmpCategory": "الفئة",
+  "cmpSeats": "المقاعد",
+  "cmpBags": "الحقائب",
+  "cmpTransmission": "ناقل الحركة",
+  "cmpMileage": "المسافة",
+  "cmpDestination": "الوجهة",
+  "cmpInclusions": "يشمل",
+  "searchPromptTitle": "رايح فين بعد؟",
+  "searchPromptSubtitle": "خطط لرحلة مدينة، هروب للشاطئ أو ويك إند سريع.",
+  "searchAllServices": "كل الخدمات",
+  "homeHelloName": "أهلاً، {name}",
+  "@homeHelloName": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "homeStaysTitle": "فنادق مقترحة",
+  "homeContinuePlanning": "كمّل تخطيطك",
+  "homeWelcome": "أهلاً بعودتك",
+  "homeWelcomeSub": "رحلات وأفكار مختارة لك",
+  "searchFlights": "طيران",
+  "searchHotels": "فنادق",
+  "searchCars": "تأجير سيارات",
+  "searchPackages": "إجازات",
+  "homeNavActivities": "أنشطة",
+  "searchTransfers": " transfére المطار",
+  "groupsTitle": "الجروبات",
+  "groupsSubtitle": "خططوا معًا وسافروا معًا",
+  "viewAll": "عرض الكل",
+  "continueAsGuest": "الاستكشاف كضيف",
+  "signIn": "تسجيل الدخول",
+  "signOut": "تسجيل الخروج",
+  "settings": "الإعدادات",
+  "language": "اللغة",
+  "currency": "العملة",
+  "wishlist": "المفضلة",
+  "myTrips": "رحلاتي",
+  "tripDetails": "تفاصيل الرحلة",
+  "upcoming": "القادمة",
+  "cancelled": "ملغاة",
+  "past": "السابقة",
+  "tripsEmptyUpcomingTitle": "لا رحلات قادمة بعد",
+  "tripsEmptyCancelledTitle": "لا توجد حجوزات ملغاة",
+  "tripsEmptyPastTitle": "لا رحلات سابقة بعد",
+  "tripsEmptyBody": "تظهر حجوزاتك المؤكَّدة هنا تلقائيًا.",
+  "tripTravellersCount": "{count, plural, one{مسافر واحد} two{مسافران} few{{count} مسافرين} many{{count} مسافرًا} other{{count} مسافر}}",
+  "@tripTravellersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tripNotFoundTitle": "الرحلة غير موجودة",
+  "tripNotFoundBody": "هذه الرحلة غير موجودة في رحلاتي. تظهر الرحلات هنا بعد تأكيد الحجز داخل التطبيق.",
+  "tripStatusPending": "قيد الانتظار",
+  "tripStatusCancelled": "ملغاة",
+  "tripStatusFailed": "فشل",
+  "tripStatusDraft": "مسودة",
+  "tripTypeHotel": "فندق",
+  "tripTypeFlight": "طيران",
+  "tripTypeCar": "سيارة",
+  "tripTypePackage": "باقة",
+  "tripTypeBooking": "حجز",
+  "readyToBook": "جاهز للحجز؟",
+  "reviewBooking": "مراجعة الحجز",
+  "passengerDetails": "بيانات المسافرين",
+  "addOns": "إضافات",
+  "bookingStepOf": "الخطوة {current} من {total}",
+  "checkoutPaymentMethod": "طريقة الدفع",
+  "checkoutCard": "بطاقة ائتمان / خصم",
+  "checkoutWallet": "محفظة رقمية",
+  "checkoutCardDetails": "بيانات البطاقة",
+  "checkoutPriceBreakdown": "تفاصيل السعر",
+  "checkoutProcessing": "جاري تنفيذ الدفع…",
+  "payment": "الدفع",
+  "confirmation": "التأكيد",
+  "bookNow": "احجز الآن",
+  "total": "الإجمالي",
+  "continueAction": "متابعة",
+  "adminPanel": "لوحة الأدمن",
+  "adminContent": "محتوى الصفحة الرئيسية",
+  "adminProviders": "مزوّدو الخدمات (API)",
+  "adminAddSection": "إضافة قسم",
+  "adminAddCard": "إضافة كارت",
+  "adminEditCard": "تعديل الكارت",
+  "adminType": "نوع الكارت",
+  "adminTitle": "العنوان",
+  "adminSubtitle": "العنوان الفرعي",
+  "adminImageUrl": "رابط الصورة",
+  "adminPrice": "السعر",
+  "adminCurrency": "العملة",
+  "adminRating": "التقييم",
+  "adminBadge": "الشارة",
+  "adminActionLabel": "نص الزر",
+  "adminStatus": "الحالة",
+  "adminDraft": "مسودة",
+  "adminPublished": "منشور",
+  "adminVisible": "ظاهر",
+  "adminDelete": "حذف",
+  "adminMoveUp": "تحريك لأعلى",
+  "adminMoveDown": "تحريك لأسفل",
+  "adminSave": "حفظ",
+  "adminCancel": "إلغاء",
+  "adminPreview": "معاينة حية",
+  "adminHealthCheck": "فحص الحالة",
+  "adminLatency": "زمن الاستجابة",
+  "adminActive": "نشط",
+  "adminPriority": "الأولوية",
+  "adminRefreshRegistry": "تطبيق التغييرات",
+  "adminEmpty": "لا يوجد محتوى بعد. أضف أول قسم.",
+  "adminError": "حدث خطأ ما. حاول مرة أخرى.",
+  "adminRetry": "إعادة المحاولة",
+  "adminLoading": "جارٍ التحميل…",
+  "adminSaved": "تم الحفظ",
+  "adminFlight": "طيران",
+  "adminHotel": "فنادق",
+  "adminCar": "عربيات",
+  "adminPackage": "برامج",
+  "adminDestination": "وجهات",
+  "adminDeal": "عروض",
+  "adminTabletOnlyTitle": "افتح لوحة الأدمن على شاشة أكبر",
+  "adminTabletOnlyBody": "جداول الأدمن تحتاج عرض 480 نقطة على الأقل. افتح توكيغو على جهاز لوحي أو في متصفح سطح المكتب لإدارة المحتوى والمزوّدين.",
+  "adminTableSection": "القسم",
+  "adminTableCards": "الكروت",
+  "adminTableStatus": "الحالة",
+  "adminTableProvider": "المزوّد",
+  "adminTablePriority": "الأولوية",
+  "adminTableLatency": "زمن الاستجابة",
+  "adminHealthy": "سليم",
+  "adminUnhealthy": "غير سليم",
+  "adminUnknown": "غير معروف",
+  "adminFallback": "احتياطي",
+  "adminLayout": "التخطيط",
+  "adminPriorityUp": "رفع الأولوية",
+  "adminPriorityDown": "خفض الأولوية",
+  "adminToggleCards": "عرض كروت القسم",
+  "adminNoProviders": "لا يوجد مزوّد مُهيّأ لهذا القسم بعد.",
+  "settingsAccount": "الحساب",
+  "settingsAppLanguage": "لغة التطبيق",
+  "settingsPreferences": "التفضيلات",
+  "settingsAbout": "حول التطبيق",
+  "settingsDangerZone": "منطقة الخطر",
+  "settingsVersion": "الإصدار",
+  "aiMemoryTitle": "اللي أعرفه عنك",
+  "aiMemorySubtitle": "حقائق شاركتها في محادثات الذكاء الاصطناعي. تقدر تعدّلها أو تحذفها في أي وقت.",
+  "aiMemorySignInPrompt": "سجّل الدخول لتشاهد وتتحكم في اللي المساعد الذكي يتذكره عنك.",
+  "aiMemoryEmpty": "مفيش حاجة بعد. الحقائق اللي هتشاركها مع المساعد الذكي هتظهر هنا.",
+  "aiMemoryEdit": "تعديل",
+  "aiMemoryDelete": "حذف",
+  "aiMemoryDeleted": "تم الحذف.",
+  "aiMemoryClearAll": "حذف الكل",
+  "aiMemoryClearAllConfirm": "تحذف كل الحقائق المعروضة هنا؟ ملفك الشخصي وسجل سفرك مش هيتأثروا.",
+  "aiMemoryClearedAll": "تم حذف كل الحقائق.",
+  "aiMemoryFieldDestination": "الوجهة",
+  "aiMemoryFieldBudgetMin": "أقل ميزانية",
+  "aiMemoryFieldBudgetMax": "أقصى ميزانية",
+  "aiMemoryFieldBudgetCurrency": "عملة الميزانية",
+  "aiMemoryBudgetCurrencyNone": "بدون عملة",
+  "aiMemoryFieldStyles": "أساليب السفر",
+  "aiMemoryFieldStylesHelper": "افصل بين الأساليب بفواصل",
+  "aiMemoryMemoryButton": "اللي أعرفه عنك",
+  "voiceSearch": "البحث الصوتي",
+  "voiceStarting": "جارٍ بدء البحث الصوتي…",
+  "voiceStop": "إيقاف البحث الصوتي",
+  "voiceErrorPermission": "الوصول للمايك مطلوب للبحث الصوتي.",
+  "voiceErrorUnavailable": "البحث الصوتي غير متاح على هذا الجهاز.",
+  "voiceErrorEmpty": "لم أسمع شيئًا — حاول التحدث مرة أخرى.",
+  "onboardingHeroTitle": "مغامرتك القادمة في انتظارك",
+  "onboardingHeroBody": "احجز الطيران والفنادق والمزيد — كل ذلك في مكان واحد.",
+  "onboardingAiTitle": "رفيق سفرك بالذكاء الاصطناعي",
+  "onboardingAiBody": "اسأل عن أي شيء: خطّط لعطلة نهاية أسبوع، اعثر على بدائل أرخص، وقارن العروض.",
+  "onboardingBagTitle": "كل رحلاتك في مكان واحد",
+  "onboardingBagBody": "كل حجز يُحفظ في مكان واحد — مع فحوصات الجاهزية ومتابعة الأسعار.",
+  "onboardingGetStarted": "ابدأ الآن",
+  "onboardingNext": "التالي",
+  "onboardingStartExploring": "ابدأ الاستكشاف",
+  "onboardingSkip": "تخطّي",
+  "onboardingHaveAccount": "لديك حساب بالفعل؟",
+  "onboardingLogIn": "تسجيل الدخول",
+  "packagesUnavailableTitle": "الإجازات قادمة قريبًا",
+  "packagesUnavailableBody": "نعمل على إضافة مزوّدي الباكدجات. الرحلات والفنادق متاحة الآن.",
+  "carsUnavailableTitle": "تأجير السيارات قادم قريبًا",
+  "carsUnavailableBody": "نعمل على إضافة مزوّدي تأجير السيارات. الرحلات والفنادق متاحة الآن.",
+  "findFlights": "ابحث عن رحلات",
+  "findHotels": "ابحث عن فنادق",
+  "packagesSubtitle": "برامج مُنسّقة متعددة الأيام",
+  "carsSubtitle": "تأجير سيارات بالقيادة الذاتية",
+  "carsLiveSubtitle": "سيارات للإيجار في وجهتك",
+  "aiSomethingWentWrong": "حدث خطأ ما. حاول مرة أخرى.",
+  "aiNoSuggestions": "لا توجد اقتراحات الآن. جرّب طلبًا مختلفًا.",
+  "aiTryAgain": "حاول مرة أخرى",
+  "aiSendPrompt": "إرسال الطلب",
+  "aiModeActive": "وضع الذكاء الاصطناعي مفعّل",
+  "aiTravelCopilot": "رفيقك في السفر",
+  "viewList": "قائمة",
+  "viewMap": "خريطة",
+  "sortResults": "ترتيب النتائج",
+  "bookingNoSelection": "لا يوجد حجز محدد",
+  "bookingStatusTitle": "الحالة",
+  "bookingStepPreparing": "جارٍ تجهيز الحجز",
+  "bookingStepValidatingPrice": "جارٍ التحقق من السعر",
+  "bookingStepReady": "جاهز للتأكيد",
+  "bookingPriceChanged": "تغيّر السعر",
+  "bookingAcceptNewPrice": "قبول السعر الجديد",
+  "bookingPrepare": "تجهيز الحجز",
+  "bookingValidating": "جارٍ التحقق…",
+  "bookingValidatePrice": "تحقق من السعر",
+  "bookingConfirming": "جارٍ التأكيد…",
+  "bookingViewTrip": "اعرض رحلتي",
+  "bookingOfferUnavailable": "هذا العرض لم يعد متاحًا. اختر عرضًا آخر.",
+  "carPickupLocation": "موقع الاستلام",
+  "mapViewComingSoon": "عرض الخريطة قريبًا",
+  "mapIntegrationUnavailable": "تكامل الخريطة غير متاح بعد. تُعرض النتائج في وضع القائمة.",
+  "carDropoffLocation": "موقع التسليم",
+  "carPickupHint": "موقع الاستلام",
+  "carDropoffHint": "موقع التسليم",
+  "carPickUpShort": "الاستلام",
+  "carDropOffShort": "التسليم",
+  "carSearchCta": "ابحث عن سيارة",
+  "carFindYourRide": "اعثر على سيارتك",
+  "carNoMatchesTitle": "لا نتائج لعوامل التصفية",
+  "carNoCarsTitle": "لا توجد سيارات",
+  "carConnectionErrorTitle": "خطأ في الاتصال",
+  "bookingAddTraveller": "أضف مسافرًا",
+  "bookingContactInformation": "معلومات التواصل",
+  "bookingRemoveTraveller": "احذف المسافر",
+  "bookingFirstName": "الاسم الأول",
+  "bookingLastName": "اسم العائلة",
+  "bookingRequiredField": "مطلوب",
+  "bookingEmailLabel": "البريد الإلكتروني",
+  "bookingPhoneLabel": "رقم الهاتف",
+  "bookingValidEmail": "أدخل بريدًا إلكترونيًا صحيحًا",
+  "bookingValidPhone": "أدخل رقم هاتف صحيحًا",
+  "groupsCreateTrip": "أنشئ رحلة جماعية",
+  "groupsPlanTogether": "خططوا معًا، وقرروا معًا",
+  "carIdleBody": "قارن عروض تأجير السيارات في نقاط الاستلام حول العالم",
+  "carNoMatchesBody": "جرّب توسيع نطاق السعر أو مسح عوامل التصفية",
+  "carNoCarsBody": "جرّب مكانًا أو تواريخ أخرى",
+  "offlineShowingCached": "أنت غير متصل بالإنترنت — نعرض آخر بيانات تم حفظها",
+  "homeCompleteYourTrip": "أكمل رحلتك",
+  "homeFinishWhatYouStarted": "أكمل ما بدأته",
+  "homeForYourTripTo": "لرحلة إلى {destination}",
+  "homeBecauseYouViewed": "لأنك شاهدت {title}",
+  "homePicksRelatedToWhatYouSaw": "اختيارات مرتبطة بما شاهدته",
+  "homePickedForYou": "مختارة لك",
+  "homeBasedOnYourProfile": "بناءً على ملفك",
+  "homeBasedOnRecentSearches": "بناءً على عمليات بحثك الأخيرة",
+  "homeBasedOnWhatYouViewed": "بناءً على ما شاهدته",
+  "homeYourFavoritesFirst": "مفضلاتك أولًا",
+  "homeMatchedToYourPreferences": "مطابقة لتفضيلاتك",
+  "homeForYourUpcomingTrip": "لرحلتك القادمة",
+  "homePopularNearYou": "شائع بالقرب منك",
+  "homeBecauseYouViewedThis": "لأنك شاهدت هذا",
+  "tripCancelBooking": "إلغاء الحجز",
+  "tripCancelTitle": "هل تريد إلغاء هذا الحجز؟",
+  "tripCancelBody": "المزوّد هو من يقرر ما إذا كان يمكن إلغاء هذا الحجز. وإن لم يكن، ف سيخبرك بالسبب.",
+  "tripCancelConfirm": "إلغاء الحجز",
+  "tripCancelKeep": "أبقِ الحجز",
+  "tripCancelled": "تم إلغاء الحجز",
+  "profileGuestSavedPlaces": "الأماكن المحفوظة",
+  "profileGuestSavedPlacesBody": "الإقامات التي حفظتها بعلامة القلب موجودة على هذا الجهاز — بدون حساب.",
+  "retry": "إعادة المحاولة",
+  "addOnsProviderTitle": "الإضافات بسعر المزوّد",
+  "addOnsProviderBody": "الشنط الإضافية والمقاعد والوجبات بيبيعها المزوّد لسعرك المحدد. هتظهر هنا بسعر المزوّد نفسه أول ما يتوصل، وإحنا مبنقدّرش سعر من عندنا.",
+  "notificationsEmptyTitle": "مفيش إشعارات لحد الآن",
+  "notificationsEmptyBody": "تحديثات الحجز وتنبيهات الأسعار وتذكيرات التسجيل هتظهر هنا لما تحصل فعلًا. إحنا مش بنختلقها.",
+  "notificationToday": "اليوم",
+  "notificationEarlier": "في وقت سابق",
+  "notificationUnread": "غير مقروء",
+  "wishlistEmptyTitle": "مفيش حاجة محفوظة لحد الآن",
+  "wishlistEmptyBody": "دوس على القلب في أي فندق أو رحلة أو باقة عشان تحفظها هنا. الأسعار المعروضة هي أسعار المزوّد.",
+  "wishlistSavedCount": "{count, plural, =1{محفوظ واحد} other{{count} محفوظ}}",
+  "@wishlistSavedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "wishlistExploreStays": "استكشف الفنادق",
+  "groupsEmptyTitle": "الرحلات الجماعية قادمة قريبًا",
+  "groupsEmptyBody": "إنشاء رحلة ودعوة الأصدقاء وتقسيم الخطة هيتفتحوا هنا أول ما يتم ربط خدمات الرحلات الجماعية.",
+  "exploreCitiesTitle": "مدن تناسب مودك",
+  "createNewTrip": "أنشئ رحلة جديدة",
+  "tripBuilderTitle": "خطط رحلتك",
+  "tripBuilderCancel": "إلغاء التخطيط",
+  "tripBuilderStartFromHome": "ابدأ باختيار مدينة من الرئيسية.",
+  "tripBuilderAddProducts": "أضف إلى رحلتك",
+  "tripBuilderSelected": "اختيارات رحلتك",
+  "tripBuilderEmpty": "اختار فندقًا أو رحلة طيران أو سيارة لإضافتها هنا.",
+  "tripBuilderRemove": "إزالة من الرحلة",
+  "tripBuilderTotal": "الإجمالي الحالي",
+  "tripBuilderTotalNote": "الإجمالي يجمع أسعار الاختيارات الحالية. قد تختلف العملة بين المزودين، والحجز والدفع يتمان لكل اختيار عبر المزود.",
+  "tripBuilderAddToTrip": "أضف إلى الرحلة",
+  "homeEmptyTitle": "لا توجد توصيات الآن",
+  "homeEmptyBody": "لا توجد فنادق متاحة للنصيحة بها حاليًا. ابحث عن وجهة، أو حاول مرة أخرى بعد قليل.",
+  "homeErrorTitle": "تعذّر الوصول إلى خدمة السفر",
+  "homeErrorBody": "قد تكون مشكلة في الاتصال أو عند مزوّد الخدمة. لا شيء ضائع — حاول مرة أخرى.",
+  "checkoutNoBookingTitle": "الحجز ده لسه مش جاهز للدفع",
+  "checkoutNoBookingBody": "مفيش حجز مُجهَّز للرحلة دي، فمفيش حاجة تتحصّل. ارجع لمراجعة الحجز وجهّزه من جديد.",
+  "checkoutProviderPrice": "سعر الرحلة (من المزوّد)",
+  "paymentFailedBody": "الدفع مكتملش، فمفيش حجز اتعمل ومفيش مبلغ اتحصّل.",
+  "paymentUnavailableBody": "الدفع مش متاح دلوقتي، فمفيش حجز اتعمل. جرّب تاني بعد شوية.",
+  "paymentPendingBody": "البنك لسه بيتحقق من الدفع. الحجز هيتأكد أول ما الدفع يكتمل.",
+  "bookingConfirmFailedBody": "الدفع مكتملش، فالحجز متأكّدش. مفيش حجز اتعمل.",
+  "bookingConfirmLabel": "تأكيد الحجز",
+  "payAmount": "ادفع {amount}",
+  "confirmationNoneTitle": "مفيش حجز مؤكَّد لعرضه",
+  "confirmationNoneBody": "الشاشة دي بتعرض الحجز اللي المزوّد أكّده فعلًا. مفيش حاجة متأكّدة للرحلة دي لحد الآن.",
+  "bookingConfirmedTitle": "تم تأكيد الحجز",
+  "confirmationSubtitle": "احتفظ برقم الحجز لإدارة حجزك مع المزوّد.",
+  "confirmationCopyReference": "نسخ رقم الحجز",
+  "confirmationCopied": "تم النسخ",
+  "confirmationDeparture": "المغادرة",
+  "confirmationArrival": "الوصول",
+  "bookingReferenceLabel": "رقم الحجز",
+  "bookingStatusConfirmed": "مؤكَّد",
+  "statusLabel": "الحالة",
+  "bookingTravellersLabel": "المسافرون",
+  "bookingBackHome": "الرجوع للرئيسية",
+  "flightSearchSubtitle": "ابحث عن رحلات من كل المزوّدين",
+  "tripTypeOneWay": "ذهاب فقط",
+  "tripTypeMultiCity": "رحلة متعددة المدن",
+  "flightAddLeg": "أضف رحلة أخرى",
+  "flightRemoveLeg": "احذف الرحلة",
+  "flightLegLabel": "الرحلة {n}",
+  "@flightLegLabel": {"placeholders": {"n": {"type": "int"}}},
+  "flightLegsIncomplete": "أكمل بيانات كل رحلة قبل البحث",
+  "flightLegsMax": "الرحلة متعددة المدن 최대 6 رحلات",
+  "tripTypeRoundTrip": "ذهاب وعودة",
+  "fieldFrom": "من",
+  "fieldTo": "إلى",
+  "fieldDeparture": "المغادرة",
+  "fieldReturn": "العودة",
+  "selectAirport": "اختر المطار",
+  "selectAction": "اختر",
+  "pickDateHint": "اختر التاريخ",
+  "swapRoute": "تبديل نقطة الانطلاق والوصول",
+  "cabinEconomy": "اقتصادية",
+  "passengersCount": "{count, plural, zero{لا مسافرين} one{مسافر واحد} two{مسافران} few{{count} مسافرين} many{{count} مسافرًا} other{{count} مسافر}}",
+  "@passengersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sortRecommended": "المقترح",
+  "sortCheapest": "الأرخص",
+  "sortFastest": "الأسرع",
+  "sortLongest": "الأطول",
+  "filtersAction": "الفلاتر",
+  "filtersReset": "إعادة تعيين",
+  "filtersApply": "تطبيق الفلاتر",
+  "filterPriceRange": "نطاق السعر",
+  "filterHotelClass": "تصنيف الفندق",
+  "filterGuestScore": "تقييم النزلاء",
+  "filterStops": "الوقفات",
+  "filterDirect": "مباشر",
+  "filterAny": "أي",
+  "filterAirlines": "شركات الطيران",
+  "flightIdleTitle": "دوّر على رحلتك",
+  "flightIdleBody": "قارن الأسعار بين شركات الطيران لرحلتك القادمة",
+  "flightEmptyTitle": "مفيش رحلات",
+  "flightEmptyBody": "جرّب تواريخ تانية أو مطارات قريبة",
+  "searchFilteredEmptyTitle": "مفيش نتائج للفلاتر",
+  "searchBudgetCap": "حتى {amount} {currency}",
+  "searchBudgetNoCurrency": "الميزانية {amount} بدون عملة — لم تُطبَّق",
+  "searchBudgetRemove": "إزالة فلتر الميزانية",
+  "searchBudgetApply": "تطبيق فلتر الميزانية",
+  "searchBudgetNotApplicable": "الميزانية غير مطبَّقة — الأسعار المعروضة بـ {currency}",
+  "searchFilteredEmptyBody": "جرّب توسّع نطاق السعر أو شيل الفلاتر",
+  "searchErrorTitle": "خطأ في الاتصال",
+  "searchErrorBody": "حدث خطأ ما. حاول مرة أخرى.",
+  "pickerFromTitle": "من فين؟",
+  "pickerSearchHint": "ابحث…",
+  "pickerNoMatches": "مفيش نتائج",
+  "flightRouteRequired": "اختر نقطة الانطلاق والوصول الأول.",
+  "hotelDestination": "الوجهة",
+  "hotelIdleTitle": "دوّر على إقامتك",
+  "hotelIdleBody": "اكتب الوجهة والتواريخ لعرض الغرف المتاحة.",
+  "hotelEmptyTitle": "مفيش فنادق",
+  "hotelEmptyBody": "جرّب وجهة تانية أو تواريخ تانية",
+  "hotelDestinationRequired": "اكتب الوجهة الأول.",
+  "hotelSortTopRated": "الأعلى تقييمًا",
+  "hotelRatingAll": "الكل",
+  "hotelLoading": "جارٍ تحميل الفندق",
+  "hotelFreeCancellation": "إلغاء مجاني",
+  "hotelNightsCount": "{count, plural, one{ليلة واحدة} two{ليلتان} few{{count} ليالٍ} many{{count} ليلة} other{{count} ليلة}}",
+  "@hotelNightsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hotelGuestsCount": "{count, plural, one{ضيف واحد} two{ضيفان} few{{count} ضيوف} many{{count} ضيفًا} other{{count} ضيف}}",
+  "@hotelGuestsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hotelRoomsCount": "{count, plural, one{غرفة واحدة} two{غرفتان} few{{count} غرف} many{{count} غرفة} other{{count} غرفة}}",
+  "@hotelRoomsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cityStaysCount": "{count, plural, =1{إقامة واحدة} other{{count} إقامة}}",
+  "discoverTitle": "اكتشف",
+  "discoverMore": "اكتشف المزيد",
+  "hotelResultsCount": "{count, plural, one{إقامة واحدة} two{إقامتان} few{{count} إقامات} many{{count} إقامة} other{{count} إقامة}}",
+  "@hotelResultsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "editSearch": "تعديل البحث",
+  "hotelStarClass": "فنادق {count} نجوم",
+  "@hotelStarClass": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "sortBy": "ترتيب حسب",
+  "hotelRatingSemantics": "{rating} نجوم، {count} مراجعة",
+  "@hotelRatingSemantics": {
+    "placeholders": {
+      "rating": {},
+      "count": {}
+    }
+  },
+  "unitNight": "ليلة",
+  "unitDay": "يوم",
+  "unitPerson": "شخص",
+  "cardTotalLabel": "الإجمالي",
+  "cardFromLabel": "من",
+  "cardSaveLabel": "وفّر {amount}",
+  "@cardSaveLabel": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "cardTaxesIncludedLabel": "شامل الضرائب",
+  "cardTaxesExtraLabel": "ضرائب إضافية",
+  "cardPerUnitSemantics": "{amount} {currency} لكل {unit}",
+  "@cardPerUnitSemantics": {
+    "placeholders": {
+      "unit": {},
+      "amount": {},
+      "currency": {}
+    }
+  },
+  "cardPerUnitLabel": "لكل {unit}",
+  "@cardPerUnitLabel": {
+    "placeholders": {
+      "unit": {}
+    }
+  },
+  "cardTotalSemantics": "الإجمالي {amount} {currency}",
+  "@cardTotalSemantics": {
+    "placeholders": {
+      "amount": {},
+      "currency": {}
+    }
+  },
+  "offerAbout": "عن العرض",
+  "offerAmenities": "المرافق",
+  "offerAircraft": "الطائرة",
+  "offerBaggage": "الأمتعة",
+  "offerBoard": "الوجبات",
+  "offerCabin": "الدرجة",
+  "offerCancellation": "سياسة الإلغاء",
+  "offerCarType": "النوع",
+  "offerCheckIn": "تسجيل الدخول",
+  "offerCheckOut": "تسجيل الخروج",
+  "offerDestination": "الوجهة",
+  "offerDuration": "المدة",
+  "offerFare": "نوع التذكرة",
+  "offerFeatures": "المزايا",
+  "offerInclusions": "المشمولات",
+  "offerMileage": "الكيلومترات",
+  "offerNonRefundableRate": "سعر غير قابل للاسترداد",
+  "offerPickup": "الاستلام",
+  "offerDropOff": "التسليم",
+  "offerPrice": "السعر",
+  "offerPriceNote": "هذا إجمالي المزوّد نفسه، ولا نضيف عليه أي مبلغ.",
+  "offerProvider": "المزوّد",
+  "offerRating": "التقييم",
+  "offerRefundable": "قابل للاسترداد",
+  "offerRefundableRate": "سعر قابل للاسترداد",
+  "offerRefundableYes": "نعم",
+  "offerRevalidated": "يُعاد تأكيده عند الحجز",
+  "offerRoom": "الغرفة",
+  "offerSeats": "المقاعد",
+  "offerStars": "النجوم",
+  "offerTaxesFees": "الضرائب والرسوم",
+  "offerTotalFromProvider": "الإجمالي (من المزوّد)",
+  "offerTransmission": "ناقل الحركة",
+  "offerBadgeCheapest": "الأرخص",
+  "offerBadgeFastest": "الأسرع",
+  "offerBadgeBestValue": "أفضل قيمة",
+  "offerWarningSelfTransfer": "ترانزيت ذاتي",
+  "offerWarningAirportChange": "تغيير مطار",
+  "offerWarningRiskyConnection": "ترانزيت ضيق",
+  "offerWarningOvernight": "رحلة ليلية",
+  "offerWarningLongLayover": "انتظار طويل",
+  "offerLoadingFlight": "جارٍ تحميل الرحلة",
+  "offerSaved": "محفوظة",
+  "offerTaxesIncluded": "(مضمنة في السعر)",
+  "offerReviewsCount": "{count, plural, one{مراجعة واحدة} two{مراجعتان} few{{count} مراجعات} many{{count} مراجعة} other{{count} مراجعة}}",
+  "@offerReviewsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offerPerNightStated": "سعر المزوّد المعلن لليلة",
+  "offerPerNightDerived": "إجمالي المزوّد ÷ {nights}",
+  "@offerPerNightDerived": {
+    "placeholders": {
+      "nights": {}
+    }
+  },
+  "offerCheckAvailability": "تحقق من التوفر",
+  "offerDays": "{count, plural, one{يوم واحد} two{يومان} few{{count} أيام} many{{count} يومًا} other{{count} يوم}}",
+  "@offerDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offerStopsCount": "{count, plural, =0{بدون وقفات} =1{وقفة واحدة} two{وقفتان} few{{count} وقفات} many{{count} وقفة} other{{count} وقفة}}",
+  "@offerStopsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offerStopsWithAirport": "وقفة واحدة ({airport})",
+  "@offerStopsWithAirport": {
+    "placeholders": {
+      "airport": {}
+    }
+  },
+  "offerLayover": "انتظار {duration}",
+  "@offerLayover": {
+    "placeholders": {
+      "duration": {}
+    }
+  },
+  "offerSeatsLeft": "{count, plural, one{مقعد واحد فقط} two{مقعدان فقط} few{{count} مقاعد فقط} many{{count} مقعدًا فقط} other{{count} مقعد فقط}}",
+  "@offerSeatsLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offerCardTotal": "الإجمالي {amount}",
+  "@offerCardTotal": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "offerFreeCancellationUntil": "إلغاء مجاني حتى {date}",
+  "@offerFreeCancellationUntil": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "offerCancellationFeeNote": "رسوم الإلغاء بعد ذلك: {fee}",
+  "@offerCancellationFeeNote": {
+    "placeholders": {
+      "fee": {}
+    }
+  },
+  "offerSemanticsFlightRoute": "رحلة من {origin} إلى {destination}",
+  "@offerSemanticsFlightRoute": {
+    "placeholders": {
+      "origin": {},
+      "destination": {}
+    }
+  },
+  "offerSemanticsFlightNumber": "رحلة {number}",
+  "@offerSemanticsFlightNumber": {
+    "placeholders": {
+      "number": {}
+    }
+  },
+  "offerSemanticsDeparts": "المغادرة {time}",
+  "@offerSemanticsDeparts": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "offerSemanticsArrives": "الوصول {time}",
+  "@offerSemanticsArrives": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "offerSemanticsDuration": "المدة {duration}",
+  "@offerSemanticsDuration": {
+    "placeholders": {
+      "duration": {}
+    }
+  },
+  "offerSemanticsPrice": "السعر {amount}",
+  "@offerSemanticsPrice": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "offerSemanticsTotal": "الإجمالي {amount}",
+  "@offerSemanticsTotal": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "locationPromptTitle": "فعّل موقعك لاقتراح مطار الإقلاع الصح",
+  "locationPromptBody": "بنقرأ بلدك مرة واحدة لاقتراح مطار إقلاع. موقعك الدقيق مش بيتخزّن في التطبيق.",
+  "locationPromptAllow": "تفعيل الموقع",
+  "locationPromptNotNow": "مش دلوقتي",
+  "locationPromptBlockedTitle": "صلاحية الموقع مقفولة",
+  "locationPromptBlockedBody": "اسمح بالموقع لتوكي جو من إعدادات النظام عشان نقترح مطار الإقلاع.",
+  "locationPromptOpenSettings": "فتح الإعدادات",
+  "locationPromptServiceOffTitle": "خدمة الموقع مقفولة",
+  "locationPromptServiceOffBody": "فعّل خدمة الموقع عشان نقترح مطار الإقلاع.",
+  "locationPromptLocationSettings": "إعدادات الموقع",
+  "locationChooseCountry": "اختار بلدك يدويًا",
+  "locationCountrySaveFailed": "تعذر حفظ البلد. حاول مرة أخرى.",
+  "settingsCountry": "البلد",
+  "settingsCountryNotSet": "اختار البلد"
+}
