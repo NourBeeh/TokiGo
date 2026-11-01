@@ -5,8 +5,17 @@ on:
 
 jobs:
   build-ios:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
+      - name: Diagnostics - macOS
+        run: sw_vers
+
+      - name: Diagnostics - Xcode
+        run: xcodebuild -version
+
+      - name: Diagnostics - iOS SDKs
+        run: xcodebuild -showsdks
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -16,6 +25,12 @@ jobs:
           flutter-version: '3.47.8'
           channel: stable
           cache: true
+
+      - name: Diagnostics - Flutter version
+        run: flutter --version
+
+      - name: Diagnostics - Flutter doctor
+        run: flutter doctor -v
 
       - name: Install dependencies
         run: flutter pub get
