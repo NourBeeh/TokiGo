@@ -8,7 +8,6 @@ import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_message_state.dart';
 import 'package:tokigo/core/ui/app_wordmark.dart';
-import 'package:tokigo/core/ui/localized_date.dart';
 import 'package:tokigo/core/widgets/cards/card.dart';
 import 'package:tokigo/core/widgets/section_header.dart';
 import 'package:tokigo/core/widgets/shimmer.dart';
@@ -24,8 +23,6 @@ import 'package:tokigo/features/search/domain/country_airport_suggestions.dart';
 import 'package:tokigo/features/search/domain/search_context.dart';
 import 'package:tokigo/features/search/application/providers/offer_selection_provider.dart';
 import 'package:tokigo/features/bag/application/bag_controller.dart';
-import 'package:tokigo/features/bag/domain/trip.dart';
-import 'package:tokigo/features/bag/presentation/trip_labels.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -149,7 +146,6 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(homeControllerProvider);
-    final bag = ref.watch(bagControllerProvider);
     _consumeScrollTarget();
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -159,7 +155,8 @@ class _HomePageState extends ConsumerState<HomePage>
       // unchanged.
       body: SafeArea(
         top: true,
-        bottom: false,
+        // `bottom: false` left the feed's last card under the Android
+        // navigation bar (the pill it was written for is gone).
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
@@ -172,7 +169,7 @@ class _HomePageState extends ConsumerState<HomePage>
               ),
               child: const _HomeTopBar(),
             ),
-            Expanded(child: _buildBody(state, ref, bag)),
+            Expanded(child: _buildBody(state, ref)),
           ],
         ),
       ),
@@ -185,37 +182,55 @@ class _HomePageState extends ConsumerState<HomePage>
       section.items.isNotEmpty &&
       section.items.every((item) => item.type == HomeCardType.destination);
 
-  Widget _buildBody(HomeState state, WidgetRef ref, BagState bag) {
+  Widget _buildBody(HomeState state, WidgetRef ref) {
     // Owner decision (2026-10-24): clean home — only the chrome (pinned
     // search + nav buttons) renders by default. The mood feature was removed;
     // the mood-free feed below stays behind the [_homeFeedEnabled] flag.
     if (_homeFeedEnabled) {
-      return _buildFeed(state, ref, bag);
+      return _buildFeed(state, ref);
     }
     return CustomScrollView(
       controller: _feedController,
-      physics: const _ShorterHomeDragPhysics(),
       slivers: _homeHeaderSlivers(ref),
     );
   }
 
-  Widget _buildFeed(HomeState state, WidgetRef ref, BagState bag) {
+  Widget _buildFeed(HomeState state, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    // The mood feature is gone: the feed shows every published section and the
-    // recommended stays as-is, with no mood rails or mood-matched products.
     final List<HomeSection> visibleSections = state.sections
-        .where((HomeSection section) => section.items.isNotEmpty)
+        .where(_isDiscoverSection)
+        .take(1)
         .toList();
-    final List<HomeItem> visibleHotels = state.recommendedHotels;
-    // The FIRST destination-only section is the Discover anchor.
-    final int discoverIndex = visibleSections.indexWhere(_isDiscoverSection);
+    final HomeSection? pickedForYou = state.sections
+        .where(
+          (HomeSection section) =>
+              section.metadata['semanticId'] == 'picked-for-you' ||
+              section.items.any(
+                (HomeItem item) =>
+                    item.metadata['semanticId'] == 'picked-for-you',
+              ),
+        )
+        .firstOrNull;
+    final HomeSection? hotelSection = state.sections
+        .where(
+          (HomeSection section) => section.items.any(
+            (HomeItem item) => item.type == HomeCardType.hotel,
+          ),
+        )
+        .firstOrNull;
+    final List<HomeItem> visibleHotels = state.recommendedHotels.isNotEmpty
+        ? state.recommendedHotels
+        : ((pickedForYou ?? hotelSection)?.items
+                  .where((HomeItem item) => item.type == HomeCardType.hotel)
+                  .toList() ??
+              const <HomeItem>[]);
     switch (state.status) {
       case HomeStatus.loading:
         return CustomScrollView(
           controller: _feedController,
-          physics: const _ShorterHomeDragPhysics(),
           slivers: <Widget>[
             ..._homeHeaderSlivers(ref),
+            const SliverToBoxAdapter(child: _DiscoverSkeletonList()),
             const SliverToBoxAdapter(child: _StaysSkeletonList()),
           ],
         );
@@ -224,45 +239,17 @@ class _HomePageState extends ConsumerState<HomePage>
       case HomeStatus.developmentPreview:
         return CustomScrollView(
           controller: _feedController,
-          physics: const _ShorterHomeDragPhysics(),
           slivers: [
             ..._homeHeaderSlivers(ref),
-            // Recommended stays (doc 17 §3.5): section header + card A, paged
-            // horizontally — one stay per swipe (owner decision, 2026-10-25).
-            // Phase 1B: the composer renders these as "Picked for You" for
-            // authenticated users — show the standalone rail ONLY when no
-            // composed section carries that semantic id, so stays are never
-            // repeated.
-            if (visibleHotels.isNotEmpty &&
-                !_hasPickedForYou(state)) ...<Widget>[
-              SliverToBoxAdapter(
-                child: SectionHeader(
-                  title: l10n.homeStaysTitle,
-                  // Smaller than a standalone section heading: this one is a
-                  // sentence ("Hotels recommended"), and at the display step it
-                  // wrapped/dominated the cards it introduces.
-                  titleStyle: AppTypography.forLight().titleMedium,
-                  actionLabel: l10n.viewAll,
-                  onAction: () => context.push('/hotels'),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: HomeStaysCarousel(items: visibleHotels),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
-            ],
-            // Doc 17 §2 — the trip row sits under the stays list, above the
-            // composed sections.
-            if (bag.currentTrips.isNotEmpty)
-              SliverToBoxAdapter(
-                child: _ContinuePlanningRow(trips: bag.currentTrips),
-              ),
+            // Owner decision (2026-10-26): Discover leads the feed — the city
+            // rail is the traveller's first "where next?" cue, and Stays
+            // follows it.
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) => HomeSectionWidget(
                   // ONE anchor for the Discover section — a GlobalKey may only
                   // ever sit on a single widget.
-                  key: index == discoverIndex ? _discoverKey : null,
+                  key: index == 0 ? _discoverKey : null,
                   section: visibleSections[index],
                   onFlightTap: (HomeItem flight) =>
                       _selectFlightForBooking(ref, flight),
@@ -274,6 +261,28 @@ class _HomePageState extends ConsumerState<HomePage>
                 childCount: visibleSections.length,
               ),
             ),
+            // Recommended stays (doc 17 §3.5): section header + card A, paged
+            // horizontally — one stay per swipe (owner decision, 2026-10-25).
+            // Phase 1B: the composer renders these as "Picked for You" for
+            // authenticated users — show the standalone rail ONLY when no
+            // composed section carries that semantic id, so stays are never
+            // repeated.
+            if (visibleHotels.isNotEmpty) ...<Widget>[
+              SliverToBoxAdapter(
+                child: SectionHeader(
+                  title: l10n.homeStaysTitle,
+                  // Same step as every other Home section heading so Discover
+                  // and Stays read as one rhythm (owner decision, 2026-10-26).
+                  titleStyle: AppTypography.forLight().titleMedium.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: HomeStaysCarousel(items: visibleHotels),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
+            ],
             // Breathing room under the last card / section.
             const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xl)),
           ],
@@ -281,7 +290,6 @@ class _HomePageState extends ConsumerState<HomePage>
       case HomeStatus.empty:
         return CustomScrollView(
           controller: _feedController,
-          physics: const _ShorterHomeDragPhysics(),
           slivers: <Widget>[
             ..._homeHeaderSlivers(ref),
             SliverToBoxAdapter(
@@ -299,7 +307,6 @@ class _HomePageState extends ConsumerState<HomePage>
       case HomeStatus.error:
         return CustomScrollView(
           controller: _feedController,
-          physics: const _ShorterHomeDragPhysics(),
           slivers: <Widget>[
             ..._homeHeaderSlivers(ref),
             SliverToBoxAdapter(
@@ -387,182 +394,6 @@ class _HomePageState extends ConsumerState<HomePage>
     );
     context.push('/booking/review');
   }
-
-  /// True when a composed section already presents the recommended hotels
-  /// (Phase 1B authenticated "Picked for You").
-  /// Whether a section ALREADY shows the recommended stays.
-  ///
-  /// The composer's own section carries the semantic on the section; a
-  /// section published from the admin carries it on its cards. Either way, the
-  /// standalone list must not repeat the same stays twice.
-  bool _hasPickedForYou(HomeState state) {
-    return state.sections.any((HomeSection section) {
-      if (section.items.isEmpty) return false;
-      if (section.metadata['semanticId'] == 'picked-for-you') return true;
-      return section.items.any(
-        (HomeItem item) => item.metadata['semanticId'] == 'picked-for-you',
-      );
-    });
-  }
-}
-
-class _ShorterHomeDragPhysics extends ScrollPhysics {
-  const _ShorterHomeDragPhysics({super.parent});
-
-  @override
-  _ShorterHomeDragPhysics applyTo(ScrollPhysics? ancestor) {
-    return _ShorterHomeDragPhysics(parent: buildParent(ancestor));
-  }
-
-  @override
-  double applyPhysicsToUserOffset(ScrollMetrics position, double offset) {
-    return super.applyPhysicsToUserOffset(position, offset) * 0.75;
-  }
-}
-
-/// "Continue planning" — the trips that really exist in the Bag, as card F
-/// rows (doc 15 §7): square thumb, title 17/600, a date/status line at 13/400
-/// and a ⌀32 circle chevron. Rendered only when a real trip is present.
-///
-/// Three rows at most, then "View all" — the strip used to hold every trip
-/// horizontally; the feed above it is the point of this screen.
-class _ContinuePlanningRow extends StatelessWidget {
-  const _ContinuePlanningRow({required this.trips});
-
-  final List<TripSummary> trips;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        SectionHeader(
-          title: l10n.homeContinuePlanning,
-          actionLabel: l10n.viewAll,
-          onAction: () => context.push('/bag'),
-        ),
-        for (final TripSummary trip in trips.take(3))
-          _ContinueTripTile(trip: trip),
-      ],
-    );
-  }
-}
-
-class _ContinueTripTile extends StatelessWidget {
-  const _ContinueTripTile({required this.trip});
-
-  final TripSummary trip;
-
-  @override
-  Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
-    final l10n = AppLocalizations.of(context)!;
-    final place = trip.destination.trim();
-    final name = trip.title?.trim();
-    // Name the trip with what the booking really carries (item name, place,
-    // else its vertical); dates appear only when the booking has them.
-    final headline = (name != null && name.isNotEmpty)
-        ? name
-        : (place.isNotEmpty ? place : tripTypeLabel(l10n, trip.type));
-    final meta = <String>[
-      if (trip.startDate != null) localizedMediumDate(context, trip.startDate!),
-      if (trip.endDate != null) localizedMediumDate(context, trip.endDate!),
-      tripStatusLabel(l10n, trip.status),
-    ].join(' · ');
-
-    return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(
-        AppSpacing.lg,
-        0,
-        AppSpacing.lg,
-        AppSpacing.md,
-      ),
-      child: Material(
-        color: AppColors.surface,
-        borderRadius: AppRadius.lgBorder,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () => context.push('/bag'),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Row(
-              children: <Widget>[
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: AppColors.brandContainer,
-                    borderRadius: AppRadius.smBorder,
-                  ),
-                  child: Icon(
-                    _tripIcon(trip.type),
-                    size: 22,
-                    color: AppColors.brand,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        headline,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: typography.bodyLargeMedium.copyWith(
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      if (meta.isNotEmpty) ...<Widget>[
-                        const SizedBox(height: 2),
-                        Text(
-                          meta,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: typography.caption.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                // Card F's trailing circle chevron.
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: const BoxDecoration(
-                    color: AppColors.surfaceSecondary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    // The chevron points the way the page reads.
-                    Directionality.of(context) == TextDirection.rtl
-                        ? Icons.chevron_left
-                        : Icons.chevron_right,
-                    size: 16,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// The booking's own vertical, as a glyph. Unknown verticals get the bag.
-  IconData _tripIcon(String type) => switch (type) {
-    'flight' => Icons.flight_takeoff_rounded,
-    'hotel' => Icons.hotel_rounded,
-    'car' => Icons.directions_car_rounded,
-    'package' => Icons.card_travel_rounded,
-    _ => Icons.luggage_rounded,
-  };
 }
 
 /// The search field scrolls with the hero until it reaches the Home wordmark,
@@ -646,14 +477,7 @@ class _HomeTopBar extends ConsumerWidget {
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     alignment: AlignmentDirectional.centerStart,
-                    child: AppWordmark(
-                      style: typography.title.copyWith(
-                        color: AppColors.wordmarkInk,
-                      ),
-                      goStyle: typography.title.copyWith(
-                        color: AppColors.brandRed,
-                      ),
-                    ),
+                    child: AppWordmark(base: typography.title),
                   ),
                 ),
               ),
@@ -753,6 +577,74 @@ class _HomeAvatar extends StatelessWidget {
   }
 }
 
+// ─── Discover (card D) ────────────────────────────────────────────────────────
+
+/// The loading state of the Discover rail.
+///
+/// Discover leads the feed, so its placeholder leads the loading feed too: the
+/// same page width and rail height [HomeStaysCarousel] computes, with a photo
+/// block and the city-name line under it. One page only — the skeleton never
+/// pretends there are cities to swipe before any has arrived.
+class _DiscoverSkeletonList extends StatelessWidget {
+  const _DiscoverSkeletonList();
+
+  @override
+  Widget build(BuildContext context) {
+    final double railWidth = MediaQuery.sizeOf(context).width;
+    final double cardWidth =
+        railWidth * _StaysSkeletonList._skeletonViewportFraction;
+    final double height = HomeStaysCarousel.railHeight(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        const Padding(
+          padding: EdgeInsetsDirectional.fromSTEB(
+            AppSpacing.lg,
+            AppSpacing.xl,
+            AppSpacing.lg,
+            AppSpacing.md,
+          ),
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: ShimmerBox(height: 24, width: 150),
+          ),
+        ),
+        SizedBox(
+          height: height,
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: SizedBox(
+              width: cardWidth,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Expanded(
+                    child: ShimmerBox(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsetsDirectional.fromSTEB(
+                      AppSpacing.md,
+                      AppSpacing.sm,
+                      AppSpacing.md,
+                      AppSpacing.md,
+                    ),
+                    child: Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: ShimmerBox(height: 20, width: 140),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 // ─── Recommended stays (card A) ───────────────────────────────────────────────
 
 /// The loading state of the recommended-stays rail.
@@ -769,10 +661,8 @@ class _StaysSkeletonList extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final double railWidth = MediaQuery.sizeOf(context).width;
     final double height = HomeStaysCarousel.railHeight(context);
-    // The same page geometry the real rail uses: a 0.9 page plus the 0.1 gap
-    // that shows up as the next card's peek.
+    // Keep skeleton pages at the same width and photo ratio as the loaded rail.
     final double cardWidth = railWidth * _skeletonViewportFraction;
-    final double gap = railWidth * (1 - _skeletonViewportFraction);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -793,13 +683,14 @@ class _StaysSkeletonList extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             physics: const NeverScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            padding: EdgeInsets.zero,
             itemCount: 2,
-            separatorBuilder: (_, _) => SizedBox(width: gap),
+            separatorBuilder: (_, _) => const SizedBox.shrink(),
             itemBuilder: (_, _) => SizedBox(
               width: cardWidth,
               child: OverlapStayCard.skeleton(
                 margin: EdgeInsets.zero,
+                aspectRatio: HomeStaysCarousel.mediaAspectRatio,
                 semanticsLabel: l10n.hotelLoading,
               ),
             ),
@@ -810,5 +701,5 @@ class _StaysSkeletonList extends StatelessWidget {
   }
 
   /// Keep in step with [HomeStaysCarousel.viewportFraction]'s default.
-  static const double _skeletonViewportFraction = 0.9;
+  static const double _skeletonViewportFraction = 0.8;
 }

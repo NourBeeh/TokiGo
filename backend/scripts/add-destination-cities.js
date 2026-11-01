@@ -13,9 +13,14 @@
  * winter stays for all three cities (and for 20+ other ski destinations).
  *
  * Nothing is invented: a city is published only when Nuitee returns real stays
- * for it, and the cover photo + count come from that same response. Duffel
- * Stays is deliberately ignored (its adapter serves a curated fake catalogue;
- * it is disabled in the provider registry).
+ * for it, and the count comes from that same response. Duffel Stays is
+ * deliberately ignored (its adapter serves a curated fake catalogue; it is
+ * disabled in the provider registry).
+ *
+ * The cover is the city's own Wikipedia/Commons photo (with the attribution its
+ * licence requires) — a hotel photo is not a photo of the city the card names.
+ * Country names come from the shared list, so a city already published by
+ * seed-home-real.js ("EG") and this script ("Egypt") cannot appear twice.
  *
  * The rows use fixed ids inside the existing Discover section, so re-running
  * updates them in place. Existing cards are never touched.
@@ -27,6 +32,8 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
 
 const { Client } = require('pg');
+const { countryNameFor } = require('./lib/countries');
+const { cityImageFor } = require('./lib/destination-image');
 
 const API = process.env.PUBLIC_API_URL || 'http://127.0.0.1:3000';
 const DISCOVER_SECTION_ID = '00000000-0000-4000-8000-000000000002';
@@ -166,7 +173,8 @@ async function nuiteeStays(city) {
         console.log(`skip  ${city.name} — Nuitee has no real stays in the window`);
         continue;
       }
-      const imageUrl = stays.find((stay) => stay?.imageUrl)?.imageUrl ?? null;
+      const photo = await cityImageFor(city.name);
+      const country = countryNameFor(city.countryCode) || city.country;
       await client.query(
         `INSERT INTO home_cards (id, "sectionId", "cardType", content, "order", "isVisible", status)
          VALUES ($1,$2,'destination',$3::jsonb,$4,true,'published')
@@ -180,21 +188,29 @@ async function nuiteeStays(city) {
           DISCOVER_SECTION_ID,
           JSON.stringify({
             title: city.name,
-            subtitle: city.country,
-            imageUrl,
+            subtitle: country,
+            imageUrl: photo?.imageUrl ?? null,
             metadata: {
-              country: city.country,
+              country,
               countryCode: city.countryCode,
               staysCount: stays.length,
               moods: city.moods,
               ...(city.seasonal ? { seasonal: 'winter' } : {}),
+              ...(photo
+                ? {
+                    imageCredit: photo.imageCredit,
+                    imageLicense: photo.imageLicense,
+                    imageSource: photo.imageSource,
+                  }
+                : {}),
             },
           }),
           city.order,
         ],
       );
       console.log(
-        `ok    ${city.name} → ${stays.length} stays, moods ${city.moods.join('+')}`,
+        `ok    ${city.name} → ${stays.length} stays, moods ${city.moods.join('+')}, ` +
+          `photo ${photo ? photo.imageUrl : 'none'}`,
       );
     }
   } finally {

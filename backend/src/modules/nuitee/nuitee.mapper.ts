@@ -217,6 +217,22 @@ export function mapRateToOffer(
       boardName: rate?.boardName,
       taxesAndFees,
       cancellationPolicy,
+      // Where the hotel is (verbatim): the Home card offers "open in maps"
+      // and measures the distance to the centre. Coordinates/address the
+      // provider omitted stay absent — the client must never invent them.
+      latitude: numberOrUndefined(
+        meta?.latitude ?? meta?.address?.latitude,
+      ),
+      longitude: numberOrUndefined(
+        meta?.longitude ?? meta?.address?.longitude,
+      ),
+      address:
+        meta?.address?.addressLine1 ??
+        meta?.address?.address ??
+        meta?.address_line_1,
+      distanceToCenter: numberOrUndefined(
+        meta?.distance_to_center ?? meta?.distanceFromCenter,
+      ),
     },
   };
 }

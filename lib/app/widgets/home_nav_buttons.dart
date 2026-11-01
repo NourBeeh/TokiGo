@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tokigo/app/config/app_config.dart';
@@ -98,7 +99,10 @@ class _NavItemData {
 
 /// One service tile: a rounded container holding the vertical's glyph, over a
 /// single-line label. The whole column is the tap target.
-class _NavTile extends StatelessWidget {
+///
+/// "Soft lift": the white card floats on a warm glow and presses down with a
+/// spring scale + shadow settle, so the flat design reads as physical depth.
+class _NavTile extends StatefulWidget {
   const _NavTile({
     required this.item,
     this.compact = false,
@@ -115,9 +119,28 @@ class _NavTile extends StatelessWidget {
   final SearchContext? searchContext;
 
   @override
+  State<_NavTile> createState() => _NavTileState();
+}
+
+class _NavTileState extends State<_NavTile> {
+  bool _pressed = false;
+
+  void _tapDown(TapDownDetails _) => setState(() => _pressed = true);
+  void _tapUp(TapUpDetails _) {
+    setState(() => _pressed = false);
+    HapticFeedback.selectionClick();
+    context.push(
+      widget.item.path,
+      extra: widget.searchContext == null
+          ? null
+          : <String, dynamic>{'context': widget.searchContext!.toMap()},
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
-    final double iconSize = compact ? 22 : 28;
+    final double iconSize = widget.compact ? 22 : 28;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -126,35 +149,70 @@ class _NavTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
           child: SizedBox(
             width: double.infinity,
-            height: compact ? 62 : 72,
+            height: widget.compact ? 62 : 72,
             child: Semantics(
               button: true,
-              label: item.label,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.hairline),
-                  boxShadow: <BoxShadow>[
-                    BoxShadow(
-                      color: AppColors.brand.withValues(alpha: 0.12),
-                      blurRadius: 18,
-                      offset: const Offset(0, 6),
+              label: widget.item.label,
+              child: GestureDetector(
+                onTapDown: _tapDown,
+                onTapUp: _tapUp,
+                onTapCancel: () => setState(() => _pressed = false),
+                behavior: HitTestBehavior.opaque,
+                child: AnimatedScale(
+                  scale: _pressed ? 0.955 : 1.0,
+                  duration: const Duration(milliseconds: 140),
+                  curve: Curves.easeOut,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 160),
+                    curve: Curves.easeOut,
+                    decoration: BoxDecoration(
+                      // Snow-white top face with a hair of shade at the base —
+                      // the card reads as a machined slab, not a flat fill.
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: <Color>[
+                          Colors.white,
+                          Color.lerp(Colors.white, const Color(0xFFB9C2CE),
+                              _pressed ? 0.10 : 0.05)!,
+                        ],
+                        stops: const <double>[0.55, 1.0],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.hairline),
+                      boxShadow: <BoxShadow>[
+                        // Warm lift glow (brand-tinted) — tight when pressed,
+                        // tall and soft when floating.
+                        BoxShadow(
+                          color: AppColors.brand.withValues(
+                            alpha: _pressed ? 0.10 : 0.14,
+                          ),
+                          blurRadius: _pressed ? 10 : 18,
+                          spreadRadius: _pressed ? -2 : 0,
+                          offset: Offset(0, _pressed ? 3 : 6),
+                        ),
+                        // Crisp contact shadow right under the slab.
+                        BoxShadow(
+                          color: AppColors.ink.withValues(
+                            alpha: _pressed ? 0.10 : 0.06,
+                          ),
+                          blurRadius: 2,
+                          offset: Offset(0, _pressed ? 1 : 2),
+                        ),
+                        // Inner top highlight — the lit edge of the slab.
+                        BoxShadow(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          blurRadius: 0,
+                          spreadRadius: 0,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: InkWell(
-                  onTap: () => context.push(
-                    item.path,
-                    extra: searchContext == null
-                        ? null
-                        : <String, dynamic>{'context': searchContext!.toMap()},
-                  ),
-                  child: Column(
+                    child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                      Icon(item.icon, size: iconSize, color: item.hue),
-                      SizedBox(height: compact ? 2 : AppSpacing.xs),
+                      Icon(widget.item.icon, size: iconSize, color: widget.item.hue),
+                      SizedBox(height: widget.compact ? 2 : AppSpacing.xs),
                       Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.xs,
@@ -163,7 +221,7 @@ class _NavTile extends StatelessWidget {
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(
-                              item.label,
+                              widget.item.label,
                               maxLines: 1,
                               textAlign: TextAlign.center,
                               style: typography.captionSemibold.copyWith(
@@ -173,7 +231,8 @@ class _NavTile extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

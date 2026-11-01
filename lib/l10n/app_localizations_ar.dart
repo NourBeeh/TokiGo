@@ -39,8 +39,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get profileGuestTitle => 'أنت تتصفّح كضيف';
 
   @override
-  String get profileGuestBody =>
-      'سجّل الدخول لحفظ رحلاتك وأماكنك المفضّلة وتفضيلاتك.';
+  String get profileGuestBody => 'سجّل دخولك للحفاظ على رحلاتك وتفضيلاتك.';
 
   @override
   String get profileTraveller => 'مسافر';
@@ -227,8 +226,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get searchPromptTitle => 'رايح فين بعد؟';
 
   @override
-  String get searchPromptSubtitle =>
-      'خطط لرحلة مدينة، هروب للشاطئ أو ويك إند سريع.';
+  String get searchPromptSubtitle => 'خطط لرحلة مدينة، هروب للشاطئ أو ويك إند سريع.';
 
   @override
   String get searchAllServices => 'كل الخدمات';
@@ -239,7 +237,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get homeStaysTitle => 'فنادق مقترحة';
+  String get homeStaysTitle => 'إقامات مقترحة';
 
   @override
   String get homeContinuePlanning => 'كمّل تخطيطك';
@@ -254,7 +252,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get searchFlights => 'طيران';
 
   @override
-  String get searchHotels => 'فنادق';
+  String get searchHotels => 'إقامات';
 
   @override
   String get searchCars => 'تأجير سيارات';
@@ -343,8 +341,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tripNotFoundTitle => 'الرحلة غير موجودة';
 
   @override
-  String get tripNotFoundBody =>
-      'هذه الرحلة غير موجودة في رحلاتي. تظهر الرحلات هنا بعد تأكيد الحجز داخل التطبيق.';
+  String get tripNotFoundBody => 'هذه الرحلة غير موجودة في رحلاتي. تظهر الرحلات هنا بعد تأكيد الحجز داخل التطبيق.';
 
   @override
   String get tripStatusPending => 'قيد الانتظار';
@@ -550,8 +547,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get adminTabletOnlyTitle => 'افتح لوحة الأدمن على شاشة أكبر';
 
   @override
-  String get adminTabletOnlyBody =>
-      'جداول الأدمن تحتاج عرض 480 نقطة على الأقل. افتح توكيغو على جهاز لوحي أو في متصفح سطح المكتب لإدارة المحتوى والمزوّدين.';
+  String get adminTabletOnlyBody => 'جداول الأدمن تحتاج عرض 480 نقطة على الأقل. افتح توكيغو على جهاز لوحي أو في متصفح سطح المكتب لإدارة المحتوى والمزوّدين.';
 
   @override
   String get adminTableSection => 'القسم';
@@ -620,16 +616,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aiMemoryTitle => 'اللي أعرفه عنك';
 
   @override
-  String get aiMemorySubtitle =>
-      'حقائق شاركتها في محادثات الذكاء الاصطناعي. تقدر تعدّلها أو تحذفها في أي وقت.';
+  String get aiMemorySubtitle => 'حقائق شاركتها في محادثات الذكاء الاصطناعي. تقدر تعدّلها أو تحذفها في أي وقت.';
 
   @override
-  String get aiMemorySignInPrompt =>
-      'سجّل الدخول لتشاهد وتتحكم في اللي المساعد الذكي يتذكره عنك.';
+  String get aiMemorySignInPrompt => 'سجّل الدخول لتشاهد وتتحكم في اللي المساعد الذكي يتذكره عنك.';
 
   @override
-  String get aiMemoryEmpty =>
-      'مفيش حاجة بعد. الحقائق اللي هتشاركها مع المساعد الذكي هتظهر هنا.';
+  String get aiMemoryEmpty => 'مفيش حاجة بعد. الحقائق اللي هتشاركها مع المساعد الذكي هتظهر هنا.';
 
   @override
   String get aiMemoryEdit => 'تعديل';
@@ -644,8 +637,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aiMemoryClearAll => 'حذف الكل';
 
   @override
-  String get aiMemoryClearAllConfirm =>
-      'تحذف كل الحقائق المعروضة هنا؟ ملفك الشخصي وسجل سفرك مش هيتأثروا.';
+  String get aiMemoryClearAllConfirm => 'تحذف كل الحقائق المعروضة هنا؟ ملفك الشخصي وسجل سفرك مش هيتأثروا.';
 
   @override
   String get aiMemoryClearedAll => 'تم حذف كل الحقائق.';
@@ -696,22 +688,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get onboardingHeroTitle => 'مغامرتك القادمة في انتظارك';
 
   @override
-  String get onboardingHeroBody =>
-      'احجز الطيران والفنادق والمزيد — كل ذلك في مكان واحد.';
+  String get onboardingHeroBody => 'احجز الطيران والفنادق والمزيد — كل ذلك في مكان واحد.';
 
   @override
   String get onboardingAiTitle => 'رفيق سفرك بالذكاء الاصطناعي';
 
   @override
-  String get onboardingAiBody =>
-      'اسأل عن أي شيء: خطّط لعطلة نهاية أسبوع، اعثر على بدائل أرخص، وقارن العروض.';
+  String get onboardingAiBody => 'اسأل عن أي شيء: خطّط لعطلة نهاية أسبوع، اعثر على بدائل أرخص، وقارن العروض.';
 
   @override
   String get onboardingBagTitle => 'كل رحلاتك في مكان واحد';
 
   @override
-  String get onboardingBagBody =>
-      'كل حجز يُحفظ في مكان واحد — مع فحوصات الجاهزية ومتابعة الأسعار.';
+  String get onboardingBagBody => 'كل حجز يُحفظ في مكان واحد — مع فحوصات الجاهزية ومتابعة الأسعار.';
 
   @override
   String get onboardingGetStarted => 'ابدأ الآن';
@@ -735,15 +724,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get packagesUnavailableTitle => 'الإجازات قادمة قريبًا';
 
   @override
-  String get packagesUnavailableBody =>
-      'نعمل على إضافة مزوّدي الباكدجات. الرحلات والفنادق متاحة الآن.';
+  String get packagesUnavailableBody => 'نعمل على إضافة مزوّدي الباكدجات. الرحلات والفنادق متاحة الآن.';
 
   @override
   String get carsUnavailableTitle => 'تأجير السيارات قادم قريبًا';
 
   @override
-  String get carsUnavailableBody =>
-      'نعمل على إضافة مزوّدي تأجير السيارات. الرحلات والفنادق متاحة الآن.';
+  String get carsUnavailableBody => 'نعمل على إضافة مزوّدي تأجير السيارات. الرحلات والفنادق متاحة الآن.';
 
   @override
   String get findFlights => 'ابحث عن رحلات';
@@ -824,8 +811,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get bookingViewTrip => 'اعرض رحلتي';
 
   @override
-  String get bookingOfferUnavailable =>
-      'هذا العرض لم يعد متاحًا. اختر عرضًا آخر.';
+  String get bookingOfferUnavailable => 'هذا العرض لم يعد متاحًا. اختر عرضًا آخر.';
 
   @override
   String get carPickupLocation => 'موقع الاستلام';
@@ -834,8 +820,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get mapViewComingSoon => 'عرض الخريطة قريبًا';
 
   @override
-  String get mapIntegrationUnavailable =>
-      'تكامل الخريطة غير متاح بعد. تُعرض النتائج في وضع القائمة.';
+  String get mapIntegrationUnavailable => 'تكامل الخريطة غير متاح بعد. تُعرض النتائج في وضع القائمة.';
 
   @override
   String get carDropoffLocation => 'موقع التسليم';
@@ -904,8 +889,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get groupsPlanTogether => 'خططوا معًا، وقرروا معًا';
 
   @override
-  String get carIdleBody =>
-      'قارن عروض تأجير السيارات في نقاط الاستلام حول العالم';
+  String get carIdleBody => 'قارن عروض تأجير السيارات في نقاط الاستلام حول العالم';
 
   @override
   String get carNoMatchesBody => 'جرّب توسيع نطاق السعر أو مسح عوامل التصفية';
@@ -914,8 +898,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get carNoCarsBody => 'جرّب مكانًا أو تواريخ أخرى';
 
   @override
-  String get offlineShowingCached =>
-      'أنت غير متصل بالإنترنت — نعرض آخر بيانات تم حفظها';
+  String get offlineShowingCached => 'أنت غير متصل بالإنترنت — نعرض آخر بيانات تم حفظها';
 
   @override
   String get homeCompleteYourTrip => 'أكمل رحلتك';
@@ -970,8 +953,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tripCancelTitle => 'هل تريد إلغاء هذا الحجز؟';
 
   @override
-  String get tripCancelBody =>
-      'المزوّد هو من يقرر ما إذا كان يمكن إلغاء هذا الحجز. وإن لم يكن، ف سيخبرك بالسبب.';
+  String get tripCancelBody => 'المزوّد هو من يقرر ما إذا كان يمكن إلغاء هذا الحجز. وإن لم يكن، ف سيخبرك بالسبب.';
 
   @override
   String get tripCancelConfirm => 'إلغاء الحجز';
@@ -986,8 +968,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get profileGuestSavedPlaces => 'الأماكن المحفوظة';
 
   @override
-  String get profileGuestSavedPlacesBody =>
-      'الإقامات التي حفظتها بعلامة القلب موجودة على هذا الجهاز — بدون حساب.';
+  String get profileGuestSavedPlacesBody => 'الإقامات التي حفظتها بعلامة القلب موجودة على هذا الجهاز — بدون حساب.';
 
   @override
   String get retry => 'إعادة المحاولة';
@@ -996,15 +977,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addOnsProviderTitle => 'الإضافات بسعر المزوّد';
 
   @override
-  String get addOnsProviderBody =>
-      'الشنط الإضافية والمقاعد والوجبات بيبيعها المزوّد لسعرك المحدد. هتظهر هنا بسعر المزوّد نفسه أول ما يتوصل، وإحنا مبنقدّرش سعر من عندنا.';
+  String get addOnsProviderBody => 'الشنط الإضافية والمقاعد والوجبات بيبيعها المزوّد لسعرك المحدد. هتظهر هنا بسعر المزوّد نفسه أول ما يتوصل، وإحنا مبنقدّرش سعر من عندنا.';
 
   @override
   String get notificationsEmptyTitle => 'مفيش إشعارات لحد الآن';
 
   @override
-  String get notificationsEmptyBody =>
-      'تحديثات الحجز وتنبيهات الأسعار وتذكيرات التسجيل هتظهر هنا لما تحصل فعلًا. إحنا مش بنختلقها.';
+  String get notificationsEmptyBody => 'تحديثات الحجز وتنبيهات الأسعار وتذكيرات التسجيل هتظهر هنا لما تحصل فعلًا. إحنا مش بنختلقها.';
 
   @override
   String get notificationToday => 'اليوم';
@@ -1019,8 +998,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get wishlistEmptyTitle => 'مفيش حاجة محفوظة لحد الآن';
 
   @override
-  String get wishlistEmptyBody =>
-      'دوس على القلب في أي فندق أو رحلة أو باقة عشان تحفظها هنا. الأسعار المعروضة هي أسعار المزوّد.';
+  String get wishlistEmptyBody => 'دوس على القلب في أي فندق أو رحلة أو باقة عشان تحفظها هنا. الأسعار المعروضة هي أسعار المزوّد.';
 
   @override
   String wishlistSavedCount(int count) {
@@ -1040,8 +1018,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get groupsEmptyTitle => 'الرحلات الجماعية قادمة قريبًا';
 
   @override
-  String get groupsEmptyBody =>
-      'إنشاء رحلة ودعوة الأصدقاء وتقسيم الخطة هيتفتحوا هنا أول ما يتم ربط خدمات الرحلات الجماعية.';
+  String get groupsEmptyBody => 'إنشاء رحلة ودعوة الأصدقاء وتقسيم الخطة هيتفتحوا هنا أول ما يتم ربط خدمات الرحلات الجماعية.';
 
   @override
   String get exploreCitiesTitle => 'مدن تناسب مودك';
@@ -1065,8 +1042,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tripBuilderSelected => 'اختيارات رحلتك';
 
   @override
-  String get tripBuilderEmpty =>
-      'اختار فندقًا أو رحلة طيران أو سيارة لإضافتها هنا.';
+  String get tripBuilderEmpty => 'اختار فندقًا أو رحلة طيران أو سيارة لإضافتها هنا.';
 
   @override
   String get tripBuilderRemove => 'إزالة من الرحلة';
@@ -1075,8 +1051,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tripBuilderTotal => 'الإجمالي الحالي';
 
   @override
-  String get tripBuilderTotalNote =>
-      'الإجمالي يجمع أسعار الاختيارات الحالية. قد تختلف العملة بين المزودين، والحجز والدفع يتمان لكل اختيار عبر المزود.';
+  String get tripBuilderTotalNote => 'الإجمالي يجمع أسعار الاختيارات الحالية. قد تختلف العملة بين المزودين، والحجز والدفع يتمان لكل اختيار عبر المزود.';
 
   @override
   String get tripBuilderAddToTrip => 'أضف إلى الرحلة';
@@ -1085,41 +1060,34 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeEmptyTitle => 'لا توجد توصيات الآن';
 
   @override
-  String get homeEmptyBody =>
-      'لا توجد فنادق متاحة للنصيحة بها حاليًا. ابحث عن وجهة، أو حاول مرة أخرى بعد قليل.';
+  String get homeEmptyBody => 'لا توجد فنادق متاحة للنصيحة بها حاليًا. ابحث عن وجهة، أو حاول مرة أخرى بعد قليل.';
 
   @override
   String get homeErrorTitle => 'تعذّر الوصول إلى خدمة السفر';
 
   @override
-  String get homeErrorBody =>
-      'قد تكون مشكلة في الاتصال أو عند مزوّد الخدمة. لا شيء ضائع — حاول مرة أخرى.';
+  String get homeErrorBody => 'قد تكون مشكلة في الاتصال أو عند مزوّد الخدمة. لا شيء ضائع — حاول مرة أخرى.';
 
   @override
   String get checkoutNoBookingTitle => 'الحجز ده لسه مش جاهز للدفع';
 
   @override
-  String get checkoutNoBookingBody =>
-      'مفيش حجز مُجهَّز للرحلة دي، فمفيش حاجة تتحصّل. ارجع لمراجعة الحجز وجهّزه من جديد.';
+  String get checkoutNoBookingBody => 'مفيش حجز مُجهَّز للرحلة دي، فمفيش حاجة تتحصّل. ارجع لمراجعة الحجز وجهّزه من جديد.';
 
   @override
   String get checkoutProviderPrice => 'سعر الرحلة (من المزوّد)';
 
   @override
-  String get paymentFailedBody =>
-      'الدفع مكتملش، فمفيش حجز اتعمل ومفيش مبلغ اتحصّل.';
+  String get paymentFailedBody => 'الدفع مكتملش، فمفيش حجز اتعمل ومفيش مبلغ اتحصّل.';
 
   @override
-  String get paymentUnavailableBody =>
-      'الدفع مش متاح دلوقتي، فمفيش حجز اتعمل. جرّب تاني بعد شوية.';
+  String get paymentUnavailableBody => 'الدفع مش متاح دلوقتي، فمفيش حجز اتعمل. جرّب تاني بعد شوية.';
 
   @override
-  String get paymentPendingBody =>
-      'البنك لسه بيتحقق من الدفع. الحجز هيتأكد أول ما الدفع يكتمل.';
+  String get paymentPendingBody => 'البنك لسه بيتحقق من الدفع. الحجز هيتأكد أول ما الدفع يكتمل.';
 
   @override
-  String get bookingConfirmFailedBody =>
-      'الدفع مكتملش، فالحجز متأكّدش. مفيش حجز اتعمل.';
+  String get bookingConfirmFailedBody => 'الدفع مكتملش، فالحجز متأكّدش. مفيش حجز اتعمل.';
 
   @override
   String get bookingConfirmLabel => 'تأكيد الحجز';
@@ -1133,8 +1101,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get confirmationNoneTitle => 'مفيش حجز مؤكَّد لعرضه';
 
   @override
-  String get confirmationNoneBody =>
-      'الشاشة دي بتعرض الحجز اللي المزوّد أكّده فعلًا. مفيش حاجة متأكّدة للرحلة دي لحد الآن.';
+  String get confirmationNoneBody => 'الشاشة دي بتعرض الحجز اللي المزوّد أكّده فعلًا. مفيش حاجة متأكّدة للرحلة دي لحد الآن.';
 
   @override
   String get bookingConfirmedTitle => 'تم تأكيد الحجز';
@@ -1560,8 +1527,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get offerPrice => 'السعر';
 
   @override
-  String get offerPriceNote =>
-      'هذا إجمالي المزوّد نفسه، ولا نضيف عليه أي مبلغ.';
+  String get offerPriceNote => 'هذا إجمالي المزوّد نفسه، ولا نضيف عليه أي مبلغ.';
 
   @override
   String get offerProvider => 'المزوّد';
@@ -1764,8 +1730,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get locationPromptTitle => 'فعّل موقعك لاقتراح مطار الإقلاع الصح';
 
   @override
-  String get locationPromptBody =>
-      'بنقرأ بلدك مرة واحدة لاقتراح مطار إقلاع. موقعك الدقيق مش بيتخزّن في التطبيق.';
+  String get locationPromptBody => 'بنقرأ بلدك مرة واحدة لاقتراح مطار إقلاع. موقعك الدقيق مش بيتخزّن في التطبيق.';
 
   @override
   String get locationPromptAllow => 'تفعيل الموقع';
@@ -1777,8 +1742,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get locationPromptBlockedTitle => 'صلاحية الموقع مقفولة';
 
   @override
-  String get locationPromptBlockedBody =>
-      'اسمح بالموقع لتوكي جو من إعدادات النظام عشان نقترح مطار الإقلاع.';
+  String get locationPromptBlockedBody => 'اسمح بالموقع لتوكي جو من إعدادات النظام عشان نقترح مطار الإقلاع.';
 
   @override
   String get locationPromptOpenSettings => 'فتح الإعدادات';
@@ -1787,8 +1751,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get locationPromptServiceOffTitle => 'خدمة الموقع مقفولة';
 
   @override
-  String get locationPromptServiceOffBody =>
-      'فعّل خدمة الموقع عشان نقترح مطار الإقلاع.';
+  String get locationPromptServiceOffBody => 'فعّل خدمة الموقع عشان نقترح مطار الإقلاع.';
 
   @override
   String get locationPromptLocationSettings => 'إعدادات الموقع';
@@ -1803,5 +1766,83 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsCountry => 'البلد';
 
   @override
+  String get editProfile => 'تعديل البروفايل';
+
+  @override
+  String get firstName => 'الاسم الأول';
+
+  @override
+  String get middleName => 'الاسم الأوسط';
+
+  @override
+  String get lastName => 'اسم العائلة';
+
+  @override
+  String get dateOfBirth => 'تاريخ الميلاد';
+
+  @override
+  String get email => 'البريد الإلكتروني';
+
+  @override
+  String get phoneNumber => 'رقم الهاتف';
+
+  @override
+  String get gender => 'الجنس';
+
+  @override
+  String get genderMale => 'ذكر';
+
+  @override
+  String get genderFemale => 'أنثى';
+
+  @override
+  String get genderOther => 'آخر';
+
+  @override
+  String get genderPreferNotToSay => 'أفضل عدم الإفصاح';
+
+  @override
+  String get nationality => 'الجنسية';
+
+  @override
+  String get avatarUrl => 'رابط الصورة';
+
+  @override
+  String get save => 'حفظ';
+
+  @override
+  String get profileSaved => 'تم حفظ البروفايل';
+
+  @override
   String get settingsCountryNotSet => 'اختار البلد';
+
+  @override
+  String get homeCityExploreStays => 'استكشف الإقامات';
+
+  @override
+  String get homeCityAbout => 'عن المدينة';
+
+  @override
+  String homeCityOverviewFallback(Object city) {
+    return 'لاقي إقامتك في $city واستكشف كل اللي المدينة بتقدمه.';
+  }
+
+  @override
+  String get homeCityNotFoundTitle => 'المدينة مش موجودة';
+
+  @override
+  String get homeCityNotFoundBody => 'ارجع لاكتشاف واختار مدينة.';
+
+  @override
+  String homeCityPhotoCredit(Object credit) {
+    return 'الصورة: $credit';
+  }
+
+  @override
+  String hotelDistanceFromCenter(Object distance) {
+    return '$distance كم من السنتر';
+  }
+
+  @override
+  String get hotelOpenLocationInMaps => 'افتح الموقع في الخرائط';
 }

@@ -246,7 +246,7 @@ class OfferDetailsPage extends ConsumerWidget {
   IconData _verticalGlyph(Object offer) {
     return switch (offer) {
       FlightOffer _ => Icons.flight_takeoff_rounded,
-      HotelOffer _ => Icons.hotel_rounded,
+      HotelOffer _ => Icons.house_rounded,
       CarOffer _ => Icons.directions_car_rounded,
       TravelPackageOffer _ => Icons.card_travel_rounded,
       _ => Icons.travel_explore_rounded,

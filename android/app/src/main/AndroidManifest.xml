@@ -1,4 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Release builds need the network too. The Flutter template only puts
+         this in the debug/profile manifests (for the VM service), which left
+         a release APK unable to reach the API at all. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Location: used once to resolve the traveller's country for the
+         departure-airport suggestion. Prompted only from an explicit tap. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- Push notifications (Android 13+). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="tokigo"
         android:name="${applicationName}"

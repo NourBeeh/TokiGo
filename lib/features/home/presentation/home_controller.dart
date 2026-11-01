@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
@@ -93,6 +95,10 @@ class HomeController extends StateNotifier<HomeState> {
   /// Guards against duplicate validation jobs for the same snapshot (§15).
   bool _validationInFlight = false;
 
+  /// Bumped by every [load]. A background composition that finishes after a
+  /// newer load must not overwrite the newer content.
+  int _loadGeneration = 0;
+
   /// Last context supplied by the builder — reused for greetings/recompose
   /// between network rounds.
   HomeCompositionContext? _lastContext;
@@ -142,6 +148,12 @@ class HomeController extends StateNotifier<HomeState> {
       // behind the UI instead of flipping back to a blocking loading state.
       state = state.copyWith(isRefreshing: true);
     }
+    final int generation = ++_loadGeneration;
+    // The rail and the feed are independent requests. Starting both now means
+    // the slower one (the provider-backed rail) overlaps the feed instead of
+    // waiting for it — one full round trip saved on every cold Home.
+    unawaited(loadRecommendedHotels().catchError((Object _) {}));
+
     final result = await repository.getHomeSections();
     result.when(
       success: (sections) async {
@@ -168,23 +180,22 @@ class HomeController extends StateNotifier<HomeState> {
             state = state.copyWith(status: HomeStatus.empty);
           }
         } else {
-          // Phase 1B: compose the dynamic Home from the network sections +
-          // the current user context, then publish and persist it. Same
-          // snapshot key/envelope as Phase 1A — only the content source grew.
-          final composed = await _compose(sections);
+          // Publish the network sections FIRST: the traveller sees real
+          // content as soon as the feed lands, instead of waiting for the
+          // personalization spine (profile ‖ geo ‖ behavior) to finish.
           state = state.copyWith(
             status: HomeStatus.success,
-            sections: composed,
+            sections: sections,
             isRefreshing: false,
             fromCache: false,
             greeting: _greeting(),
           );
-          // Persist the final network-confirmed sections as this audience's
-          // snapshot so the next cold start renders instantly.
-          await repository.saveHomeSnapshot(composed, audience: audience);
-          // Phase 1D — fresh content just landed; validate its bookable
-          // products against the live providers in the background.
-          _runLiveValidation();
+
+          // Phase 1B: compose the dynamic Home from the network sections +
+          // the current user context in the background, then replace the
+          // uncomposed feed with the composed one and persist it. Same
+          // snapshot key/envelope as Phase 1A — only the content source grew.
+          unawaited(_composeAndPublish(sections, generation: generation));
         }
       },
       failure: (error) async {
@@ -207,8 +218,31 @@ class HomeController extends StateNotifier<HomeState> {
         }
       },
     );
-    // Fetch recommended hotels in parallel — non-blocking
-    loadRecommendedHotels();
+  }
+
+  /// Composes the published network sections in the background.
+  ///
+  /// Personalization is an enhancement, never a gate: if it fails, is slow, or
+  /// a newer load wins the race, the uncomposed sections stay on screen.
+  Future<void> _composeAndPublish(
+    List<HomeSection> networkSections, {
+    required int generation,
+  }) async {
+    try {
+      final composed = await _compose(networkSections);
+      if (!mounted || generation != _loadGeneration) return;
+      if (composed.isEmpty) return;
+
+      state = state.copyWith(sections: composed);
+      // Persist the final network-confirmed sections as this audience's
+      // snapshot so the next cold start renders instantly.
+      await repository.saveHomeSnapshot(composed, audience: audience);
+      // Phase 1D — fresh content just landed; validate its bookable
+      // products against the live providers in the background.
+      _runLiveValidation();
+    } catch (_) {
+      // Keep the already-published uncomposed sections.
+    }
   }
 
   /// Runs the deterministic composer over [networkSections]. Without a

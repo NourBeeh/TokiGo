@@ -73,7 +73,7 @@ class HotelOverlapCard extends StatelessWidget {
     return OverlapStayCard(
       media: CardImage(
         url: data.imageUrl,
-        fallbackIcon: Icons.hotel,
+        fallbackIcon: Icons.house_rounded,
         semanticLabel: data.title,
         fit: BoxFit.cover,
       ),

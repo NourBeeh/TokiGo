@@ -1,10 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { ThrottlerGuard } from '@nestjs/throttler';
 import { AppModule } from './app.module';
+import compression from 'compression';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // Every JSON payload above 1KB is gzipped. A hotel search response is
+  // ~140KB raw and ~15KB compressed — the single cheapest win on mobile data.
+  app.use(compression({ threshold: 1024 }));
   app.enableCors({
     origin: process.env.ALLOWED_ORIGINS
       ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())

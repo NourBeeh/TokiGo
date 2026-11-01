@@ -62,7 +62,8 @@ class LocationPermissionService {
     try {
       if (!await _isServiceEnabled()) return LocationAccess.serviceDisabled;
       var permission = await _checkPermission();
-      if (permission == LocationPermission.denied) {
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.unableToDetermine) {
         permission = await _requestPermission();
       }
       return _map(permission);

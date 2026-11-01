@@ -67,7 +67,7 @@ class TripBuilderPage extends ConsumerWidget {
                   children: [
                     _AddProductButton(
                       label: l10n.searchHotels,
-                      icon: Icons.hotel_rounded,
+                      icon: Icons.house_rounded,
                       onTap: () => context.push('/hotels', extra: extras),
                     ),
                     _AddProductButton(
@@ -123,7 +123,7 @@ class TripBuilderPage extends ConsumerWidget {
                   final item = draft.items[index];
                   return ListTile(
                     leading: Icon(switch (item.offerType) {
-                      'hotel' => Icons.hotel_rounded,
+                      'hotel' => Icons.house_rounded,
                       'flight' => Icons.flight_rounded,
                       'car' => Icons.directions_car_rounded,
                       _ => Icons.luggage_rounded,

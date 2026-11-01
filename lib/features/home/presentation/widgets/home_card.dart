@@ -33,7 +33,7 @@ class HomeCard extends StatelessWidget {
         }
         return DiscoveryProductCard(item: item, onTap: onTap);
       case HomeCardType.destination:
-        return DestinationDiscoveryCard(item: item);
+        return DestinationDiscoveryCard(item: item, onTap: onTap);
       case HomeCardType.deal:
         return DealCard(item: item);
       case HomeCardType.flight:

@@ -39,8 +39,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileGuestTitle => 'You\'re browsing as a guest';
 
   @override
-  String get profileGuestBody =>
-      'Sign in to keep your trips, saved places and preferences.';
+  String get profileGuestBody => 'Sign in to keep your trips and preferences.';
 
   @override
   String get profileTraveller => 'Traveller';
@@ -76,8 +75,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiSearchSheetHint => 'Where do you want to go?';
 
   @override
-  String get aiSearchNoSuggestions =>
-      'No suggestions right now. Try a different prompt.';
+  String get aiSearchNoSuggestions => 'No suggestions right now. Try a different prompt.';
 
   @override
   String get aiSearchError => 'Something went wrong. Please try again.';
@@ -162,8 +160,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiSearchCompareCancel => 'Cancel';
 
   @override
-  String get aiSearchCompareSameType =>
-      'Pick products of the same type to compare.';
+  String get aiSearchCompareSameType => 'Pick products of the same type to compare.';
 
   @override
   String get aiSearchCompareMissing => '—';
@@ -229,8 +226,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchPromptTitle => 'Where to next?';
 
   @override
-  String get searchPromptSubtitle =>
-      'Plan a city break, beach escape or weekend getaway.';
+  String get searchPromptSubtitle => 'Plan a city break, beach escape or weekend getaway.';
 
   @override
   String get searchAllServices => 'All services';
@@ -241,7 +237,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get homeStaysTitle => 'Hotels recommended';
+  String get homeStaysTitle => 'Stays recommended';
 
   @override
   String get homeContinuePlanning => 'Continue planning';
@@ -256,7 +252,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchFlights => 'Flights';
 
   @override
-  String get searchHotels => 'Hotels';
+  String get searchHotels => 'Stays';
 
   @override
   String get searchCars => 'Cars Rental';
@@ -325,8 +321,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tripsEmptyPastTitle => 'No past trips yet';
 
   @override
-  String get tripsEmptyBody =>
-      'Your confirmed bookings appear here automatically.';
+  String get tripsEmptyBody => 'Your confirmed bookings appear here automatically.';
 
   @override
   String tripTravellersCount(int count) {
@@ -343,8 +338,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tripNotFoundTitle => 'Trip not found';
 
   @override
-  String get tripNotFoundBody =>
-      'This trip isn\'t in My Trips. Trips appear here once a booking is confirmed in the app.';
+  String get tripNotFoundBody => 'This trip isn\'t in My Trips. Trips appear here once a booking is confirmed in the app.';
 
   @override
   String get tripStatusPending => 'Pending';
@@ -550,8 +544,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminTabletOnlyTitle => 'Open the admin panel on a bigger screen';
 
   @override
-  String get adminTabletOnlyBody =>
-      'The admin tables need at least 480pt of width. Open TokiGo on a tablet or a desktop browser to manage content and providers.';
+  String get adminTabletOnlyBody => 'The admin tables need at least 480pt of width. Open TokiGo on a tablet or a desktop browser to manage content and providers.';
 
   @override
   String get adminTableSection => 'Section';
@@ -596,8 +589,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminToggleCards => 'Show the section\'s cards';
 
   @override
-  String get adminNoProviders =>
-      'No provider is configured for this vertical yet.';
+  String get adminNoProviders => 'No provider is configured for this vertical yet.';
 
   @override
   String get settingsAccount => 'Account';
@@ -621,16 +613,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiMemoryTitle => 'What I Know About You';
 
   @override
-  String get aiMemorySubtitle =>
-      'Facts you shared in AI chats. You can edit or remove them anytime.';
+  String get aiMemorySubtitle => 'Facts you shared in AI chats. You can edit or remove them anytime.';
 
   @override
-  String get aiMemorySignInPrompt =>
-      'Sign in to see and manage what the AI remembers about you.';
+  String get aiMemorySignInPrompt => 'Sign in to see and manage what the AI remembers about you.';
 
   @override
-  String get aiMemoryEmpty =>
-      'Nothing yet. Facts you share with the AI assistant will appear here.';
+  String get aiMemoryEmpty => 'Nothing yet. Facts you share with the AI assistant will appear here.';
 
   @override
   String get aiMemoryEdit => 'Edit';
@@ -645,8 +634,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiMemoryClearAll => 'Clear all';
 
   @override
-  String get aiMemoryClearAllConfirm =>
-      'Remove every fact listed here? Your profile and travel history are not affected.';
+  String get aiMemoryClearAllConfirm => 'Remove every fact listed here? Your profile and travel history are not affected.';
 
   @override
   String get aiMemoryClearedAll => 'All facts removed.';
@@ -685,12 +673,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voiceStop => 'Stop voice search';
 
   @override
-  String get voiceErrorPermission =>
-      'Microphone permission is needed for voice search.';
+  String get voiceErrorPermission => 'Microphone permission is needed for voice search.';
 
   @override
-  String get voiceErrorUnavailable =>
-      'Voice search is not available on this device.';
+  String get voiceErrorUnavailable => 'Voice search is not available on this device.';
 
   @override
   String get voiceErrorEmpty => 'Didn\'t catch that — try speaking again.';
@@ -699,22 +685,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingHeroTitle => 'Your Next Adventure Awaits';
 
   @override
-  String get onboardingHeroBody =>
-      'Book flights, hotels, and more — all in one place.';
+  String get onboardingHeroBody => 'Book flights, hotels, and more — all in one place.';
 
   @override
   String get onboardingAiTitle => 'Your AI travel companion';
 
   @override
-  String get onboardingAiBody =>
-      'Ask anything: plan a weekend, find cheaper alternatives, compare offers.';
+  String get onboardingAiBody => 'Ask anything: plan a weekend, find cheaper alternatives, compare offers.';
 
   @override
   String get onboardingBagTitle => 'All your trips in one bag';
 
   @override
-  String get onboardingBagBody =>
-      'Every booking lands in one place — with readiness checks and price watches.';
+  String get onboardingBagBody => 'Every booking lands in one place — with readiness checks and price watches.';
 
   @override
   String get onboardingGetStarted => 'Get started';
@@ -738,15 +721,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get packagesUnavailableTitle => 'Holidays are coming soon';
 
   @override
-  String get packagesUnavailableBody =>
-      'We are onboarding package providers. Flights and hotels are live today.';
+  String get packagesUnavailableBody => 'We are onboarding package providers. Flights and hotels are live today.';
 
   @override
   String get carsUnavailableTitle => 'Cars Rental is coming soon';
 
   @override
-  String get carsUnavailableBody =>
-      'We are onboarding car-rental providers. Flights and hotels are live today.';
+  String get carsUnavailableBody => 'We are onboarding car-rental providers. Flights and hotels are live today.';
 
   @override
   String get findFlights => 'Find flights';
@@ -767,8 +748,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiSomethingWentWrong => 'Something went wrong. Please try again.';
 
   @override
-  String get aiNoSuggestions =>
-      'No suggestions right now. Try a different prompt.';
+  String get aiNoSuggestions => 'No suggestions right now. Try a different prompt.';
 
   @override
   String get aiTryAgain => 'Try again';
@@ -828,8 +808,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingViewTrip => 'View my trip';
 
   @override
-  String get bookingOfferUnavailable =>
-      'This offer is no longer available. Please pick another.';
+  String get bookingOfferUnavailable => 'This offer is no longer available. Please pick another.';
 
   @override
   String get carPickupLocation => 'Pickup location';
@@ -838,8 +817,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mapViewComingSoon => 'Map view coming soon';
 
   @override
-  String get mapIntegrationUnavailable =>
-      'Map integration is not yet available. Results are shown in list view.';
+  String get mapIntegrationUnavailable => 'Map integration is not yet available. Results are shown in list view.';
 
   @override
   String get carDropoffLocation => 'Dropoff location';
@@ -911,15 +889,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get carIdleBody => 'Compare car rentals at pickup points worldwide';
 
   @override
-  String get carNoMatchesBody =>
-      'Try widening the price range or clearing filters';
+  String get carNoMatchesBody => 'Try widening the price range or clearing filters';
 
   @override
   String get carNoCarsBody => 'Try a different location or dates';
 
   @override
-  String get offlineShowingCached =>
-      'You are offline — showing the last saved data';
+  String get offlineShowingCached => 'You are offline — showing the last saved data';
 
   @override
   String get homeCompleteYourTrip => 'Complete your trip';
@@ -974,8 +950,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tripCancelTitle => 'Cancel this booking?';
 
   @override
-  String get tripCancelBody =>
-      'The provider decides whether this booking can be cancelled. If it cannot, it will say why.';
+  String get tripCancelBody => 'The provider decides whether this booking can be cancelled. If it cannot, it will say why.';
 
   @override
   String get tripCancelConfirm => 'Cancel booking';
@@ -990,8 +965,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileGuestSavedPlaces => 'Saved places';
 
   @override
-  String get profileGuestSavedPlacesBody =>
-      'The stays you saved with the heart are on this device — no account needed.';
+  String get profileGuestSavedPlacesBody => 'The stays you saved with the heart are on this device — no account needed.';
 
   @override
   String get retry => 'Retry';
@@ -1000,15 +974,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addOnsProviderTitle => 'Add-ons are priced by the provider';
 
   @override
-  String get addOnsProviderBody =>
-      'Extra bags, seats and meals are sold by the airline for your specific fare. They will appear here with the airline\'s own prices once that feed is connected — we never estimate a price.';
+  String get addOnsProviderBody => 'Extra bags, seats and meals are sold by the airline for your specific fare. They will appear here with the airline\'s own prices once that feed is connected — we never estimate a price.';
 
   @override
   String get notificationsEmptyTitle => 'No notifications yet';
 
   @override
-  String get notificationsEmptyBody =>
-      'Booking updates, price alerts and check-in reminders will appear here once they really happen. We don\'t invent them.';
+  String get notificationsEmptyBody => 'Booking updates, price alerts and check-in reminders will appear here once they really happen. We don\'t invent them.';
 
   @override
   String get notificationToday => 'Today';
@@ -1023,8 +995,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wishlistEmptyTitle => 'Nothing saved yet';
 
   @override
-  String get wishlistEmptyBody =>
-      'Tap the heart on a hotel, flight or package to keep it here. Saved items show the provider\'s own price.';
+  String get wishlistEmptyBody => 'Tap the heart on a hotel, flight or package to keep it here. Saved items show the provider\'s own price.';
 
   @override
   String wishlistSavedCount(int count) {
@@ -1044,8 +1015,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupsEmptyTitle => 'Group trips are coming soon';
 
   @override
-  String get groupsEmptyBody =>
-      'Creating a trip, inviting friends and splitting the plan will open here once the group trips backend is connected.';
+  String get groupsEmptyBody => 'Creating a trip, inviting friends and splitting the plan will open here once the group trips backend is connected.';
 
   @override
   String get exploreCitiesTitle => 'Cities for your mood';
@@ -1069,8 +1039,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tripBuilderSelected => 'Your trip selections';
 
   @override
-  String get tripBuilderEmpty =>
-      'Choose a hotel, flight, or car to add it here.';
+  String get tripBuilderEmpty => 'Choose a hotel, flight, or car to add it here.';
 
   @override
   String get tripBuilderRemove => 'Remove from trip';
@@ -1079,8 +1048,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tripBuilderTotal => 'Current total';
 
   @override
-  String get tripBuilderTotalNote =>
-      'This total adds the selected offers. Providers may use different currencies, and each item is booked and paid through its provider.';
+  String get tripBuilderTotalNote => 'This total adds the selected offers. Providers may use different currencies, and each item is booked and paid through its provider.';
 
   @override
   String get tripBuilderAddToTrip => 'Add to trip';
@@ -1089,41 +1057,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeEmptyTitle => 'No recommendations right now';
 
   @override
-  String get homeEmptyBody =>
-      'We don\'t have hotels to suggest yet. Search a destination instead — or try again in a moment.';
+  String get homeEmptyBody => 'We don\'t have hotels to suggest yet. Search a destination instead — or try again in a moment.';
 
   @override
   String get homeErrorTitle => 'We couldn\'t reach the travel service';
 
   @override
-  String get homeErrorBody =>
-      'Your connection or the provider may be having a moment. Nothing is lost — try again.';
+  String get homeErrorBody => 'Your connection or the provider may be having a moment. Nothing is lost — try again.';
 
   @override
   String get checkoutNoBookingTitle => 'This booking isn\'t ready to pay for';
 
   @override
-  String get checkoutNoBookingBody =>
-      'There is no prepared booking for this trip, so there is nothing to charge. Go back to the booking review and prepare it again.';
+  String get checkoutNoBookingBody => 'There is no prepared booking for this trip, so there is nothing to charge. Go back to the booking review and prepare it again.';
 
   @override
   String get checkoutProviderPrice => 'Trip price (from the provider)';
 
   @override
-  String get paymentFailedBody =>
-      'Your payment was not completed, so nothing was booked and nothing was charged.';
+  String get paymentFailedBody => 'Your payment was not completed, so nothing was booked and nothing was charged.';
 
   @override
-  String get paymentUnavailableBody =>
-      'Payment is not available right now, so nothing was booked. Please try again later.';
+  String get paymentUnavailableBody => 'Payment is not available right now, so nothing was booked. Please try again later.';
 
   @override
-  String get paymentPendingBody =>
-      'Your bank is still verifying this payment. The booking will be confirmed as soon as the payment completes.';
+  String get paymentPendingBody => 'Your bank is still verifying this payment. The booking will be confirmed as soon as the payment completes.';
 
   @override
-  String get bookingConfirmFailedBody =>
-      'The payment was not completed, so the booking was not confirmed. Nothing was booked.';
+  String get bookingConfirmFailedBody => 'The payment was not completed, so the booking was not confirmed. Nothing was booked.';
 
   @override
   String get bookingConfirmLabel => 'Confirm booking';
@@ -1137,15 +1098,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmationNoneTitle => 'No confirmed booking to show';
 
   @override
-  String get confirmationNoneBody =>
-      'This screen shows the booking the provider actually confirmed. Nothing is confirmed for this trip yet.';
+  String get confirmationNoneBody => 'This screen shows the booking the provider actually confirmed. Nothing is confirmed for this trip yet.';
 
   @override
   String get bookingConfirmedTitle => 'Booking confirmed';
 
   @override
-  String get confirmationSubtitle =>
-      'Keep this reference to manage your booking with the provider.';
+  String get confirmationSubtitle => 'Keep this reference to manage your booking with the provider.';
 
   @override
   String get confirmationCopyReference => 'Copy booking reference';
@@ -1287,8 +1246,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get flightIdleTitle => 'Find your flight';
 
   @override
-  String get flightIdleBody =>
-      'Compare fares across airlines for your next trip';
+  String get flightIdleBody => 'Compare fares across airlines for your next trip';
 
   @override
   String get flightEmptyTitle => 'No flights found';
@@ -1321,8 +1279,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get searchFilteredEmptyBody =>
-      'Try widening the price range or clearing filters';
+  String get searchFilteredEmptyBody => 'Try widening the price range or clearing filters';
 
   @override
   String get searchErrorTitle => 'Connection error';
@@ -1340,8 +1297,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pickerNoMatches => 'No matches';
 
   @override
-  String get flightRouteRequired =>
-      'Choose where you are flying from and to first.';
+  String get flightRouteRequired => 'Choose where you are flying from and to first.';
 
   @override
   String get hotelDestination => 'Destination';
@@ -1350,8 +1306,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hotelIdleTitle => 'Find your perfect stay';
 
   @override
-  String get hotelIdleBody =>
-      'Enter a destination and your dates to see available rooms.';
+  String get hotelIdleBody => 'Enter a destination and your dates to see available rooms.';
 
   @override
   String get hotelEmptyTitle => 'No hotels found';
@@ -1553,8 +1508,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get offerPrice => 'Price';
 
   @override
-  String get offerPriceNote =>
-      'This is the provider\'s own total. We add nothing to it.';
+  String get offerPriceNote => 'This is the provider\'s own total. We add nothing to it.';
 
   @override
   String get offerProvider => 'Provider';
@@ -1742,12 +1696,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get locationPromptTitle =>
-      'Use your location for the right departure airport';
+  String get locationPromptTitle => 'Use your location for the right departure airport';
 
   @override
-  String get locationPromptBody =>
-      'We read your country once to suggest a departure airport. Your precise location is not saved in the app.';
+  String get locationPromptBody => 'We read your country once to suggest a departure airport. Your precise location is not saved in the app.';
 
   @override
   String get locationPromptAllow => 'Allow location';
@@ -1759,8 +1711,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get locationPromptBlockedTitle => 'Location is blocked';
 
   @override
-  String get locationPromptBlockedBody =>
-      'Allow location for TokiGo in the system settings to suggest your departure airport.';
+  String get locationPromptBlockedBody => 'Allow location for TokiGo in the system settings to suggest your departure airport.';
 
   @override
   String get locationPromptOpenSettings => 'Open settings';
@@ -1769,8 +1720,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get locationPromptServiceOffTitle => 'Location services are off';
 
   @override
-  String get locationPromptServiceOffBody =>
-      'Turn on location services to suggest your departure airport.';
+  String get locationPromptServiceOffBody => 'Turn on location services to suggest your departure airport.';
 
   @override
   String get locationPromptLocationSettings => 'Location settings';
@@ -1779,12 +1729,89 @@ class AppLocalizationsEn extends AppLocalizations {
   String get locationChooseCountry => 'Choose country manually';
 
   @override
-  String get locationCountrySaveFailed =>
-      'Couldn\'t save your country. Please try again.';
+  String get locationCountrySaveFailed => 'Couldn\'t save your country. Please try again.';
 
   @override
   String get settingsCountry => 'Country';
 
   @override
+  String get editProfile => 'Edit profile';
+
+  @override
+  String get firstName => 'First name';
+
+  @override
+  String get middleName => 'Middle name';
+
+  @override
+  String get lastName => 'Last name';
+
+  @override
+  String get dateOfBirth => 'Date of birth';
+
+  @override
+  String get email => 'Email';
+
+  @override
+  String get phoneNumber => 'Phone number';
+
+  @override
+  String get gender => 'Gender';
+
+  @override
+  String get genderMale => 'Male';
+
+  @override
+  String get genderFemale => 'Female';
+
+  @override
+  String get genderOther => 'Other';
+
+  @override
+  String get genderPreferNotToSay => 'Prefer not to say';
+
+  @override
+  String get nationality => 'Nationality';
+
+  @override
+  String get avatarUrl => 'Avatar URL';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get profileSaved => 'Profile saved';
+
+  @override
   String get settingsCountryNotSet => 'Choose a country';
+
+  @override
+  String get homeCityExploreStays => 'Explore stays';
+
+  @override
+  String get homeCityAbout => 'About the city';
+
+  @override
+  String homeCityOverviewFallback(Object city) {
+    return 'Find your stay in $city and explore everything the city has to offer.';
+  }
+
+  @override
+  String get homeCityNotFoundTitle => 'City not found';
+
+  @override
+  String get homeCityNotFoundBody => 'Go back to Discover and choose a city.';
+
+  @override
+  String homeCityPhotoCredit(Object credit) {
+    return 'Photo: $credit';
+  }
+
+  @override
+  String hotelDistanceFromCenter(Object distance) {
+    return '$distance km from the center';
+  }
+
+  @override
+  String get hotelOpenLocationInMaps => 'Open location in maps';
 }

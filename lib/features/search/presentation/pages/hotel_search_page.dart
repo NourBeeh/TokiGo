@@ -722,7 +722,7 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
     switch (state.status) {
       case HotelSearchStatus.idle:
         return SearchStatesView.idle(
-          icon: Icons.hotel_outlined,
+          icon: Icons.house_rounded,
           title: l10n.hotelIdleTitle,
           body: l10n.hotelIdleBody,
         );

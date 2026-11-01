@@ -7,6 +7,7 @@ import { User } from '../../database/entities/user.entity';
 import { Session } from '../../database/entities/session.entity';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { GoogleTokenVerifier } from './google-token.verifier';
 import { JwtStrategy } from './jwt.strategy';
 
 @Module({
@@ -23,7 +24,7 @@ import { JwtStrategy } from './jwt.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, GoogleTokenVerifier, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

@@ -334,7 +334,10 @@ describe('SearchService — 3B aggregation contracts', () => {
     registry.registerFlight(provider('ok', () => ({ success: true, providerId: 'ok', data: [] })));
     await service.searchFlights({ q: 1 });
     expect(sets).toHaveLength(1);
-    expect(sets[0].ttl).toBe(120);
+    // 300s (configurable via SEARCH_CACHE_TTL_SECONDS): 120s was shorter than
+    // a Home → Search → Back round trip, so every return re-queried the
+    // provider. Still "short": booking revalidates the offer before any charge.
+    expect(sets[0].ttl).toBe(300);
     expect(sets[0].key).toContain('search:flight:');
 
     // Partial failure → nothing more written to the cache.

@@ -72,10 +72,11 @@ class SearchScaffold extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        bottom: false,
-        // The header no longer draws the back control: the detaching one does,
-        // and it stays reachable once the header scrolls away.
+        // `bottom: false` left the results' last row under the Android
+        // navigation bar (the pill it was written for is gone).
         child: DetachedBackButton(
+          // The header no longer draws the back control: the detaching one does,
+          // and it stays reachable once the header scrolls away.
           child: AiEntranceAnimation(
             child: CustomScrollView(
               slivers: <Widget>[

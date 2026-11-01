@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Development only.
+
+  The local backend runs on a LAN address over plain HTTP, which Android 9+
+  blocks by default. This config is referenced from the debug and profile
+  manifests only — release builds keep the platform default (cleartext denied)
+  and `HttpApiClient` refuses a plaintext base URL there anyway.
+
+  A blanket `cleartextTrafficPermitted` is deliberate: pinning one developer's
+  IP here is exactly the bug `test/http_api_client_base_url_test.dart` guards.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

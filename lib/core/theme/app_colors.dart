@@ -100,8 +100,9 @@ abstract final class AppColors {
   /// Class stars on the discover card — deliberately grey, not bronze: they
   /// describe the property's class, not the guest score.
   static const Color classStar = Color(0xFF4A4A4A);
-  // Wordmark ink — the neutral near-black of the "Toki" half.
-  static const Color wordmarkInk = Color(0xFF2E2E2E);
+  // Wordmark ink — the "Toki" half. The logotype's neutral half IS the brand
+  // ink, so the splash raster and the in-app mark carry the same #111111.
+  static const Color wordmarkInk = brand;
   // Brand red — the "Go" in the TokiGo wordmark (single source of truth).
   static const Color brandRed = Color(0xFFFF2D2D);
   static const Color info = Color(0xFF0284C7);

@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/auth/auth_failure_message.dart';
 import '../../../../core/auth/auth_provider.dart';
 import '../../../../core/auth/auth_state.dart';
-import '../../../../core/network/user_facing_message.dart';
+import '../../../../core/auth/google_auth_config.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/ai_entrance_animation.dart';
@@ -31,35 +32,19 @@ class _AuthPageState extends ConsumerState<AuthPage> {
   bool _obscurePassword = true;
   bool _submittedOnce = false;
 
+  /// Which control was used last, so a failure is described accurately.
+  AuthAction _lastAction = AuthAction.password;
+
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    _displayNameController.dispose();
     super.dispose();
   }
 
-  Future<void> _submit() async {
-    setState(() => _submittedOnce = true);
-    if (!_formKey.currentState!.validate()) return;
-
-    final controller = ref.read(authControllerProvider.notifier);
-    if (_isRegisterMode) {
-      await controller.register(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        displayName: _displayNameController.text.trim(),
-      );
-    } else {
-      await controller.login(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
-    }
-
+  Future<void> _signInWithGoogle() async {
+    setState(() => _lastAction = AuthAction.google);
+    await ref.read(authControllerProvider.notifier).signInWithGoogle();
     if (!mounted) return;
-    final state = ref.read(authControllerProvider);
-    if (state is AuthAuthenticated) {
+    if (ref.read(authControllerProvider) is AuthAuthenticated) {
       context.go('/profile');
     }
   }
@@ -92,14 +77,15 @@ class _AuthPageState extends ConsumerState<AuthPage> {
 
     // Surface a safe error message; never raw exception text.
     final errorMessage = switch (authState) {
-      AuthError(:final error) => userFacingMessage(error, subject: 'sign in'),
+      AuthError(:final error) => authFailureMessage(error, action: _lastAction),
       _ => null,
     };
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        bottom: false,
+        // `bottom: false` left the form's last field under the Android
+        // navigation bar (the pill it was written for is gone).
         child: AiEntranceAnimation(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,67 +106,24 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Icon(
-                              _isRegisterMode
-                                  ? Icons.person_add_alt_1
-                                  : Icons.lock_outline,
-                              size: 48,
-                              color: theme.colorScheme.primary,
-                            ),
-                            const SizedBox(height: AppSpacing.lg),
-                            if (_isRegisterMode) ...[
-                              TextFormField(
-                                controller: _displayNameController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Display name (optional)',
-                                  prefixIcon: Icon(Icons.badge_outlined),
-                                  border: OutlineInputBorder(),
+                            if (GoogleAuthConfig.isConfigured) ...[
+                              OutlinedButton.icon(
+                                onPressed: isLoading ? null : _signInWithGoogle,
+                                icon: const Icon(Icons.g_mobiledata, size: 28),
+                                label: const Text('Continue with Google'),
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size.fromHeight(48),
+                                  maximumSize: const Size.fromHeight(48),
                                 ),
-                                textInputAction: TextInputAction.next,
-                                enabled: !isLoading,
                               ),
-                              const SizedBox(height: AppSpacing.md),
+                            ] else ...[
+                              const Text(
+                                'Google Sign-In not configured.',
+                                textAlign: TextAlign.center,
+                              ),
                             ],
-                            TextFormField(
-                              controller: _emailController,
-                              decoration: const InputDecoration(
-                                labelText: 'Email',
-                                prefixIcon: Icon(Icons.email_outlined),
-                                border: OutlineInputBorder(),
-                              ),
-                              keyboardType: TextInputType.emailAddress,
-                              autofillHints: const [AutofillHints.email],
-                              textInputAction: TextInputAction.next,
-                              validator: _validateEmail,
-                              enabled: !isLoading,
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-                            TextFormField(
-                              controller: _passwordController,
-                              decoration: InputDecoration(
-                                labelText: 'Password',
-                                prefixIcon: const Icon(Icons.password_outlined),
-                                border: const OutlineInputBorder(),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility_off_outlined
-                                        : Icons.visibility_outlined,
-                                  ),
-                                  onPressed: () => setState(
-                                    () => _obscurePassword = !_obscurePassword,
-                                  ),
-                                ),
-                              ),
-                              obscureText: _obscurePassword,
-                              autofillHints: const [AutofillHints.password],
-                              textInputAction: TextInputAction.done,
-                              onFieldSubmitted: (_) => _submit(),
-                              validator: _validatePassword,
-                              enabled: !isLoading,
-                            ),
-                            const SizedBox(height: AppSpacing.lg),
                             if (errorMessage != null) ...[
+                              const SizedBox(height: AppSpacing.md),
                               Text(
                                 errorMessage,
                                 style: TextStyle(
@@ -188,41 +131,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                                 ),
                                 textAlign: TextAlign.center,
                               ),
-                              const SizedBox(height: AppSpacing.md),
                             ],
-                            FilledButton(
-                              onPressed: isLoading ? null : _submit,
-                              style: FilledButton.styleFrom(
-                                minimumSize: const Size.fromHeight(48),
-                                maximumSize: const Size.fromHeight(48),
-                              ),
-                              child: isLoading
-                                  ? const SizedBox(
-                                      width: 22,
-                                      height: 22,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : Text(
-                                      _isRegisterMode
-                                          ? 'Create account'
-                                          : 'Sign in',
-                                    ),
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-                            TextButton(
-                              onPressed: isLoading
-                                  ? null
-                                  : () => setState(
-                                      () => _isRegisterMode = !_isRegisterMode,
-                                    ),
-                              child: Text(
-                                _isRegisterMode
-                                    ? 'Already have an account? Sign in'
-                                    : 'New here? Create an account',
-                              ),
-                            ),
                           ],
                         ),
                       ),

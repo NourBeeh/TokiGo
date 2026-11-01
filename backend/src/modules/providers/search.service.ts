@@ -3,6 +3,7 @@ import { ProviderRegistryImpl } from '../../common/providers/provider.registry.i
 import { CacheService } from '../cache/cache.service';
 import { PricingService } from '../../common/market/pricing.service';
 import { DEFAULT_MARKET } from '../../common/market/market-context';
+import { countryFor } from '../nuitee/nuitee.cities';
 
 /** Per-provider search budget (spec points 12/15) — one slow provider never
  *  hangs the whole fan-out; the rest of the results still return. */
@@ -10,8 +11,16 @@ const PROVIDER_TIMEOUT_MS = 20_000;
 
 /** Live search results cache (spec point 44): short TTL only. Cached prices
  *  are presentation snapshots — never booking truth (enforced by expiry +
- *  the offers/revalidate path before any booking flow). */
-const SEARCH_CACHE_TTL_SECONDS = 120;
+ *  the offers/revalidate path before any booking flow).
+ *
+ *  120s was shorter than a normal Home → Search → Back round trip, so the same
+ *  city re-queried the provider every time. Booking revalidates the offer
+ *  before any charge, so a longer presentation TTL is safe. Override with
+ *  SEARCH_CACHE_TTL_SECONDS. */
+function searchCacheTtlSeconds(): number {
+  const configured = Number(process.env.SEARCH_CACHE_TTL_SECONDS);
+  return Number.isFinite(configured) && configured > 0 ? configured : 300;
+}
 
 /**
  * Phase 3B — Search orchestration (spec point 12 + 13):
@@ -60,7 +69,7 @@ export class SearchService {
     params: any,
     market?: string,
   ) {
-    const cacheKey = `search:${vertical}:${JSON.stringify(params)}:${market ?? DEFAULT_MARKET.marketCountry}`;
+    const cacheKey = canonicalSearchCacheKey(vertical, params, market);
     const cached = await this.cache.get(cacheKey);
     if (cached) return cached;
 
@@ -97,7 +106,7 @@ export class SearchService {
     // Only fully-successful aggregations are cached; a partial-failure
     // response is re-fetched next time (the failing provider may recover).
     if (aggregated.failures.length === 0) {
-      await this.cache.set(cacheKey, aggregated, SEARCH_CACHE_TTL_SECONDS);
+      await this.cache.set(cacheKey, aggregated, searchCacheTtlSeconds());
     }
     return aggregated;
   }
@@ -181,6 +190,106 @@ export class SearchService {
       duplicatesDropped,
     };
   }
+}
+
+/**
+ * Stable cache key for a search.
+ *
+ * `JSON.stringify(params)` used to be the key, which meant `{city, country}`
+ * and `{country, city}` — the same search — were two cache entries, and a
+ * pre-warmed entry never matched the request a real traveller sent. Keys are
+ * now canonical: object keys sorted, strings trimmed/lowercased, ISO dates
+ * reduced to their day, null/undefined dropped and primitive arrays sorted.
+ *
+ * Only the KEY is normalised; the provider still receives the caller's params
+ * verbatim.
+ */
+export function canonicalSearchCacheKey(
+  vertical: 'flight' | 'hotel' | 'car',
+  params: any,
+  market?: string,
+): string {
+  const canonical = canonicalize(normalizeForKey(vertical, params));
+  const marketKey = String(market ?? DEFAULT_MARKET.marketCountry)
+    .trim()
+    .toUpperCase();
+  return `search:${vertical}:${JSON.stringify(canonical)}:${marketKey}`;
+}
+
+/**
+ * Applies the defaults the provider itself would apply, so "the same search
+ * expressed differently" produces one key.
+ *
+ * The Flutter client sends `rooms: null` / omits `country`; the warmer sends
+ * `rooms: 1` / an explicit country. Without this, a warmed entry would never be
+ * hit by real traffic — the exact failure the canonical key exists to prevent.
+ */
+function normalizeForKey(vertical: 'flight' | 'hotel' | 'car', params: any): any {
+  if (!params || typeof params !== 'object') return params;
+  const out: Record<string, any> = { ...params };
+
+  // `market` is already the key suffix; leaving it in the params would make an
+  // explicit `market: 'EG'` and an omitted one two different entries.
+  delete out.market;
+
+  if (vertical === 'hotel') {
+    // Nuitee searches 2 guests in 1 room, and resolves the country from the
+    // city when it is absent (falling back to the launch market).
+    out.guests = out.guests ?? 2;
+    out.rooms = out.rooms ?? 1;
+    if (
+      typeof out.city === 'string' &&
+      (out.country === undefined || out.country === null || out.country === '')
+    ) {
+      out.country = countryFor(out.city) ?? DEFAULT_MARKET.marketCountry;
+    }
+  }
+
+  return out;
+}
+
+function canonicalize(value: any): any {
+  if (value === null || value === undefined) return undefined;
+
+  if (value instanceof Date) return isoDay(value);
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    // A date-time and a date-only string describe the same stay; collapse both
+    // so a client sending `2026-11-10T00:00:00.000Z` hits the same entry as the
+    // warmer's `2026-11-10`.
+    if (/^\d{4}-\d{2}-\d{2}([T ].*)?$/.test(trimmed)) {
+      return trimmed.slice(0, 10);
+    }
+    return trimmed.replace(/\s+/g, ' ').toLowerCase();
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') return value;
+
+  if (Array.isArray(value)) {
+    const items = value
+      .map((item) => canonicalize(item))
+      .filter((item) => item !== undefined);
+    // Filters (amenities, airlines) are sets, not sequences.
+    return items.every((item) => typeof item !== 'object')
+      ? [...items].sort()
+      : items;
+  }
+
+  if (typeof value === 'object') {
+    const out: Record<string, any> = {};
+    for (const key of Object.keys(value).sort()) {
+      const normalized = canonicalize(value[key]);
+      if (normalized !== undefined) out[key] = normalized;
+    }
+    return out;
+  }
+
+  return value;
+}
+
+function isoDay(date: Date): string {
+  return date.toISOString().slice(0, 10);
 }
 
 /** Wraps a provider promise with a timeout budget; the timeout error carries

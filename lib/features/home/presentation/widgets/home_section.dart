@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 import 'package:tokigo/features/home/presentation/widgets/deal_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/destination_discovery_card.dart';
@@ -12,6 +14,8 @@ import 'package:tokigo/features/home/presentation/widgets/flight_recommendation_
 import 'package:tokigo/features/home/presentation/widgets/flight_recommendation_list.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_section_titles.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stay_card.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_stays_carousel.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_discovery_stay_card.dart';
 import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
 
 typedef FlightTapCallback = void Function(HomeItem flight);
@@ -67,10 +71,18 @@ class HomeSectionWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Text(
               HomeSectionTitles.title(l10n, section.metadata, section.title),
-              style: Theme.of(context).textTheme.titleLarge,
+              // Every Home section heading shares the stay rail's step so
+              // Discover and Stays read as one rhythm instead of two sizes.
+              // The gutter matches [SectionHeader]'s, so the two headings
+              // start on the same vertical line.
+              style: AppTypography.forLight().titleMedium.copyWith(
+                color: AppColors.textPrimary,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -156,19 +168,19 @@ class HomeSectionWidget extends StatelessWidget {
           onFavorite: onFavorite,
         );
       case HomeCardType.destination:
-        // Card D — the small city tile (doc 15 §5). The owner asked for the
-        // smaller card for the cities: card B is a wide stay card, not a city.
+        // Card D — the image-first city tile. Its tap opens the city's own
+        // information page, not a pre-filtered search.
         return DestinationDiscoveryCard(
           item: item,
-          onTap: () {
-            final String city = (item.metadata['city'] ?? item.title)
-                .toString()
-                .trim();
-            if (city.isEmpty) return;
-            context.push('/hotels', extra: <String, dynamic>{'city': city});
-          },
+          onTap: () => _openCity(context, item),
         );
     }
+  }
+
+  void _openCity(BuildContext context, HomeItem item) {
+    final String city = (item.metadata['city'] ?? item.title).toString().trim();
+    if (city.isEmpty) return;
+    context.push('/city', extra: item);
   }
 
   Widget _buildItems(BuildContext context) {
@@ -191,15 +203,15 @@ class HomeSectionWidget extends StatelessWidget {
           ),
         );
       case HomeSectionLayout.horizontal:
-        return _buildHorizontalCarousel(context, items, peek: false);
+        return _buildHorizontalCarousel(context, items);
       case HomeSectionLayout.horizontalPeek:
-        return _buildHorizontalCarousel(context, items, peek: true);
+        return _buildHorizontalCarousel(context, items);
       case HomeSectionLayout.grid:
         // OWNER DECISION (2026-10-21): Discover SWIPES. A destination-only
         // section is a city rail — one full card D per swipe — never a
         // two-column grid that stalls the feed and shrinks every tile.
         if (_isDestinationOnlySection) {
-          return _buildHorizontalCarousel(context, items, peek: false);
+          return _buildHorizontalCarousel(context, items);
         }
         return _buildResponsiveGrid(context, items);
       case HomeSectionLayout.flightRecommendationList:
@@ -231,35 +243,47 @@ class HomeSectionWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildHorizontalCarousel(
-    BuildContext context,
-    List<HomeItem> items, {
-    required bool peek,
-  }) {
+  Widget _buildHorizontalCarousel(BuildContext context, List<HomeItem> items) {
     final primaryType = items.isNotEmpty
         ? items.first.type
         : HomeCardType.hotel;
+    if (primaryType == HomeCardType.hotel ||
+        primaryType == HomeCardType.destination) {
+      return HomeStaysCarousel(
+        items: items,
+        viewportFraction: 0.8,
+        onItemTap: onItemTap,
+        itemBuilder: primaryType == HomeCardType.destination
+            ? (BuildContext context, HomeItem item) => HomeDiscoveryStayCard(
+                item: item,
+                onTap: () => _openCity(context, item),
+              )
+            : null,
+      );
+    }
+
     final cardHeight = HomeCardDimensions.cardHeightForType(primaryType);
     final cardWidth = HomeCardDimensions.cardWidthForType(primaryType);
 
-    final carouselHeight = cardHeight + 8;
-    final itemWidth = cardWidth;
-    final peekExtent = peek ? 48.0 : 0.0;
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double itemWidth = (constraints.maxWidth - AppSpacing.lg * 2)
+            .clamp(1.0, cardWidth)
+            .toDouble();
 
-    return SizedBox(
-      height: carouselHeight,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: items.length,
-        padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
-        itemBuilder: (_, i) => SizedBox(
-          width: itemWidth + peekExtent,
-          child: Padding(
-            padding: EdgeInsets.only(right: AppSpacing.md),
-            child: _buildHorizontalItemCard(context, items[i]),
+        return SizedBox(
+          height: cardHeight + 8,
+          child: PageView.builder(
+            itemCount: items.length,
+            itemBuilder: (BuildContext context, int index) => Center(
+              child: SizedBox(
+                width: itemWidth,
+                child: _buildHorizontalItemCard(context, items[index]),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

@@ -33,6 +33,7 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+.cache/
 
 # Symbolication related
 app.*.symbols
@@ -40,7 +41,35 @@ app.*.symbols
 # Obfuscation related
 app.*.map.json
 
+# Node.js / NestJS backend
+backend/node_modules/
+backend/dist/
+backend/build/
+backend/.env
+backend/.env.local
+backend/.env.*.local
+
+# iOS build artifacts
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/ephemeral/
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+
+# Flutter tooling
+.dart_tool/
+.flutter-plugins-dependencies
+.cache/
+
 # Android Studio will place build artifacts here
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Secrets / keys
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+*.mobileprovision

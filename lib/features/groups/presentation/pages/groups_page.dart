@@ -29,7 +29,6 @@ class GroupsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        bottom: false,
         child: AiEntranceAnimation(
           child: CustomScrollView(
             slivers: <Widget>[

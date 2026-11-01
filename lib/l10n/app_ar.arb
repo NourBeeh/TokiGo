@@ -10,7 +10,7 @@
   "notifications": "الإشعارات",
   "profile": "الملف الشخصي",
   "profileGuestTitle": "أنت تتصفّح كضيف",
-  "profileGuestBody": "سجّل الدخول لحفظ رحلاتك وأماكنك المفضّلة وتفضيلاتك.",
+  "profileGuestBody": "سجّل دخولك للحفاظ على رحلاتك وتفضيلاتك.",
   "profileTraveller": "مسافر",
   "profileErrorTitle": "تعذّر تحميل حسابك",
   "back": "رجوع",
@@ -89,12 +89,12 @@
       "name": {}
     }
   },
-  "homeStaysTitle": "فنادق مقترحة",
+  "homeStaysTitle": "إقامات مقترحة",
   "homeContinuePlanning": "كمّل تخطيطك",
   "homeWelcome": "أهلاً بعودتك",
   "homeWelcomeSub": "رحلات وأفكار مختارة لك",
   "searchFlights": "طيران",
-  "searchHotels": "فنادق",
+  "searchHotels": "إقامات",
   "searchCars": "تأجير سيارات",
   "searchPackages": "إجازات",
   "homeNavActivities": "أنشطة",
@@ -716,5 +716,44 @@
   "locationChooseCountry": "اختار بلدك يدويًا",
   "locationCountrySaveFailed": "تعذر حفظ البلد. حاول مرة أخرى.",
   "settingsCountry": "البلد",
-  "settingsCountryNotSet": "اختار البلد"
+  "editProfile": "تعديل البروفايل",
+  "firstName": "الاسم الأول",
+  "middleName": "الاسم الأوسط",
+  "lastName": "اسم العائلة",
+  "dateOfBirth": "تاريخ الميلاد",
+  "email": "البريد الإلكتروني",
+  "phoneNumber": "رقم الهاتف",
+  "gender": "الجنس",
+  "genderMale": "ذكر",
+  "genderFemale": "أنثى",
+  "genderOther": "آخر",
+  "genderPreferNotToSay": "أفضل عدم الإفصاح",
+  "nationality": "الجنسية",
+  "avatarUrl": "رابط الصورة",
+  "save": "حفظ",
+  "profileSaved": "تم حفظ البروفايل",
+  "settingsCountryNotSet": "اختار البلد",
+  "homeCityExploreStays": "استكشف الإقامات",
+  "homeCityAbout": "عن المدينة",
+  "homeCityOverviewFallback": "لاقي إقامتك في {city} واستكشف كل اللي المدينة بتقدمه.",
+  "@homeCityOverviewFallback": {
+    "placeholders": {
+      "city": {}
+    }
+  },
+  "homeCityNotFoundTitle": "المدينة مش موجودة",
+  "homeCityNotFoundBody": "ارجع لاكتشاف واختار مدينة.",
+  "homeCityPhotoCredit": "الصورة: {credit}",
+  "@homeCityPhotoCredit": {
+    "placeholders": {
+      "credit": {}
+    }
+  },
+  "hotelDistanceFromCenter": "{distance} كم من السنتر",
+  "@hotelDistanceFromCenter": {
+    "placeholders": {
+      "distance": {}
+    }
+  },
+  "hotelOpenLocationInMaps": "افتح الموقع في الخرائط"
 }

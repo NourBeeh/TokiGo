@@ -11,7 +11,13 @@
     "seed:home": "node scripts/seed-home.js",
     "seed:admin": "node scripts/seed-admin.js",
     "seed:home:clean": "node scripts/clean-seed-home.js",
-    "seed:home:real": "node scripts/seed-home-real.js"
+    "seed:home:real": "node scripts/seed-home-real.js",
+    "destinations:add": "node scripts/add-destination-cities.js",
+        "destinations:fix": "node scripts/fix-destination-cards.js",
+        "destinations:world": "node scripts/seed-world-cities.js",
+    "prewarm:home": "node scripts/prewarm-home.js",
+    "prewarm:search": "node scripts/prewarm-search.js",
+    "perf:probe": "node scripts/perf-probe.js"
   },
   "dependencies": {
     "@duffel/api": "^4.31.0",
@@ -26,16 +32,20 @@
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "compression": "^1.8.2",
+    "google-auth-library": "^11.3.2",
     "ioredis": "^5.3.2",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.23.1",
     "reflect-metadata": "^0.2.2",
+    "sharp": "^0.35.5",
     "typeorm": "^0.3.20"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.2.6",
     "@types/bcryptjs": "^2.4.6",
+    "@types/compression": "^1.8.1",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.14.11",
     "@types/passport-jwt": "^4.0.1",

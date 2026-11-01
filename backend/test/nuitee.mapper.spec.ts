@@ -146,6 +146,9 @@ describe('nuitee mapper — offer shape', () => {
           city_name: 'Cairo',
           main_photo: 'https://x/h1.jpg',
           review_count: 1200,
+          latitude: 30.0444,
+          longitude: 31.2357,
+          address: { addressLine1: '12 Nile Street' },
         },
       ],
     });
@@ -180,6 +183,13 @@ describe('nuitee mapper — offer shape', () => {
     expect(offer!.metadata.providerRateId).toBe('r-1');
     expect(offer!.metadata.providerHotelId).toBe('H1');
     expect(offer!.metadata.refundable).toBe(true);
+    // Position travels verbatim: the Home card opens maps with it and states
+    // the distance to the centre only when it can be measured.
+    expect(offer!.metadata.latitude).toBe(30.0444);
+    expect(offer!.metadata.longitude).toBe(31.2357);
+    expect(offer!.metadata.address).toBe('12 Nile Street');
+    // The provider stated no distance, so none is invented.
+    expect(offer!.metadata.distanceToCenter).toBeUndefined();
     // LAST cancellation window, verbatim.
     expect(offer!.metadata.cancellationPolicy.refundableUntil).toBe(
       '2026-10-13 07:00:00',
@@ -215,6 +225,10 @@ describe('nuitee mapper — offer shape', () => {
     expect(offer!.metadata.boardName).toBeUndefined();
     expect(offer!.metadata.taxesAndFees).toBeUndefined();
     expect(offer!.metadata.cancellationPolicy).toBeUndefined();
+    expect(offer!.metadata.latitude).toBeUndefined();
+    expect(offer!.metadata.longitude).toBeUndefined();
+    expect(offer!.metadata.address).toBeUndefined();
+    expect(offer!.metadata.distanceToCenter).toBeUndefined();
     expect(offer!.metadata.refundable).toBe(false);
   });
 });

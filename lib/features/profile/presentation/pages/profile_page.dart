@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tokigo/core/auth/auth_provider.dart';
+import 'package:tokigo/core/auth/google_auth_config.dart';
 import 'package:tokigo/core/auth/auth_state.dart';
 import 'package:tokigo/core/auth/user_model.dart';
 import 'package:tokigo/core/network/user_facing_message.dart';
@@ -10,13 +11,17 @@ import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
-import 'package:tokigo/core/ui/app_button.dart';
 import 'package:tokigo/core/ui/app_message_state.dart';
+import 'package:tokigo/core/geo/country_options.dart';
+import 'package:tokigo/core/geo/location_permission_providers.dart';
+import 'package:tokigo/core/geo/location_permission_service.dart';
+import 'package:tokigo/core/geo/country_selection_sheet.dart';
 import 'package:tokigo/core/ui/language_sheet.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/cards/card_image.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
+import 'package:tokigo/features/home/providers/home_providers.dart';
 import 'package:tokigo/shared/providers/locale_provider.dart';
 
 /// Profile — the account surface.
@@ -46,7 +51,8 @@ class ProfilePage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        bottom: false,
+        // `bottom: false` left the menu's last row (sign out) under the
+        // Android navigation bar (the pill it was written for is gone).
         child: AiEntranceAnimation(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,29 +82,19 @@ class ProfilePage extends ConsumerWidget {
                       children: <Widget>[
                         AppMessageState(
                           icon: Icons.person_outline_rounded,
+                          hue: AppColors.brand,
                           title: l10n.profileGuestTitle,
                           body: l10n.profileGuestBody,
-                          actionLabel: l10n.signIn,
-                          onAction: () => context.go('/auth'),
                         ),
                         const SizedBox(height: AppSpacing.lg),
-                        // The wishlist lives on THIS device, so a guest can
-                        // reach the stays they saved — the heart is a local
-                        // action, not an account one.
-                        AppButton(
-                          label: l10n.profileGuestSavedPlaces,
-                          type: AppButtonType.ghost,
-                          leadingIcon: Icons.favorite_border_rounded,
-                          onPressed: () => context.push('/bag?section=likes'),
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          l10n.profileGuestSavedPlacesBody,
-                          textAlign: TextAlign.center,
-                          style: AppTypography.forLight().caption.copyWith(
-                            color: AppColors.textTertiary,
+                        if (GoogleAuthConfig.isConfigured)
+                          OutlinedButton.icon(
+                            onPressed: () => ref
+                                .read(authControllerProvider.notifier)
+                                .signInWithGoogle(),
+                            icon: const Icon(Icons.g_mobiledata, size: 28),
+                            label: const Text('Continue with Google'),
                           ),
-                        ),
                         const SizedBox(height: AppSpacing.xl),
                         const _AppPreferencesSection(),
                       ],
@@ -183,6 +179,21 @@ class _ProfileContent extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.md),
+        // Edit profile — at top of the page.
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: AppColors.outline),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: _MenuRow(
+            icon: Icons.edit_outlined,
+            label: l10n.editProfile,
+            onTap: () => context.push('/edit-profile'),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
         const _AppPreferencesSection(),
         const SizedBox(height: AppSpacing.md),
         Container(
@@ -194,33 +205,14 @@ class _ProfileContent extends ConsumerWidget {
           clipBehavior: Clip.antiAlias,
           child: Column(
             children: <Widget>[
-              // Only surfaces that exist: each of these opens a real page.
-              _MenuRow(
-                icon: Icons.luggage_rounded,
-                label: l10n.myTrips,
-                onTap: () => context.push('/bag'),
-              ),
-              const _MenuDivider(),
-              _MenuRow(
-                icon: Icons.notifications_none_rounded,
-                label: l10n.notifications,
-                onTap: () => context.push('/notifications'),
-              ),
-              const _MenuDivider(),
-              _MenuRow(
-                icon: Icons.settings_outlined,
-                label: l10n.settings,
-                onTap: () => context.push('/settings'),
-              ),
               if (user.isAdmin) ...<Widget>[
-                const _MenuDivider(),
                 _MenuRow(
                   icon: Icons.admin_panel_settings_outlined,
                   label: l10n.adminPanel,
                   onTap: () => context.push('/admin'),
                 ),
+                const _MenuDivider(),
               ],
-              const _MenuDivider(),
               // Doc 22 §2.2 — sign out is the only `danger` element here, it
               // carries no chevron, and it is centred.
               _DangerRow(
@@ -256,6 +248,10 @@ class _AppPreferencesSection extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final locale = ref.watch(localeProvider);
     final currency = ref.watch(currencyProvider);
+    final country =
+        ref.watch(manualCountryCodeProvider) ??
+        ref.watch(geoCountryProvider).asData?.value?.countryCode;
+    final countryName = countryNameForCode(country, locale) ?? l10n.settingsCountryNotSet;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,6 +277,20 @@ class _AppPreferencesSection extends ConsumerWidget {
           clipBehavior: Clip.antiAlias,
           child: Column(
             children: <Widget>[
+              _PreferenceRow(
+                icon: Icons.public_rounded,
+                label: l10n.settingsCountry,
+                value: countryName,
+                onTap: () async {
+                  final svc = ref.read(locationPermissionServiceProvider);
+                  final access = await svc.request();
+                  if (access == LocationAccess.granted) {
+                    ref.read(geoRefreshProvider.notifier).state++;
+                  }
+                  if (context.mounted) showCountrySelectionSheet(context, ref);
+                },
+              ),
+              const _MenuDivider(),
               _PreferenceRow(
                 icon: Icons.translate_rounded,
                 label: l10n.settingsAppLanguage,

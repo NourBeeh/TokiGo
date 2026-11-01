@@ -8,8 +8,9 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
-import { LoginDto, RegisterDto } from '../../common/dto/auth.dto';
+import { GoogleLoginDto, LoginDto, RegisterDto, UpdateProfileDto } from '../../common/dto/auth.dto';
 import { User } from '../../database/entities/user.entity';
+import { GoogleProfile, GoogleTokenVerifier } from './google-token.verifier';
 
 const BCRYPT_COST = 10;
 
@@ -20,6 +21,7 @@ export class AuthService {
     private config: ConfigService,
     @InjectRepository(User)
     private readonly users: Repository<User>,
+    private readonly googleVerifier: GoogleTokenVerifier,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -69,12 +71,116 @@ export class AuthService {
     return this.issueTokens(user);
   }
 
+  /// Sign in with a Google ID token.
+  ///
+  /// The token is verified server-side (signature, issuer, audience, expiry)
+  /// before anything is trusted — the client sends proof of identity, never a
+  /// profile, and the claims are read from the verified token.
+  async loginWithGoogle(dto: GoogleLoginDto) {
+    const profile = await this.googleVerifier.verify(dto.idToken);
+
+    if (!profile.emailVerified) {
+      throw new UnauthorizedException(
+        'This Google account has no verified email.',
+      );
+    }
+
+    const user = await this.findForGoogle(profile);
+    if (!user) {
+      return this.createGoogleUser(profile);
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('This account is not active.');
+    }
+
+    if (user.passwordHash) {
+      // Refuse to attach Google to a password account: without verified
+      // passwords/emails, merging the two would let whoever registered that
+      // address first keep a working credential on the account.
+      throw new ConflictException(
+        'An account with this email already uses a password.',
+      );
+    }
+
+    if (user.email !== profile.email) {
+      // Google changed its primary address; keep the local copy in step.
+      user.email = profile.email;
+      await this.users.save(user);
+    }
+
+    return this.issueTokens(user);
+  }
+
+  /// Finds an account for a Google identity by linked Google id or by email
+  /// (case-insensitive). `passwordHash` is selected explicitly so the caller
+  /// can tell a Google-only account from a password one; it is never returned.
+  private findForGoogle(profile: GoogleProfile): Promise<User | null> {
+    return this.users
+      .createQueryBuilder('user')
+      .addSelect('user.passwordHash')
+      .where('user.googleId = :subject', { subject: profile.subject })
+      .orWhere('LOWER(user.email) = :email', { email: profile.email })
+      .getOne();
+  }
+
+  private async createGoogleUser(profile: GoogleProfile) {
+    const user = this.users.create({
+      email: profile.email,
+      displayName: profile.displayName ?? profile.email.split('@')[0],
+      googleId: profile.subject,
+      isActive: true,
+    });
+
+    try {
+      const saved = await this.users.save(user);
+      return this.issueTokens(saved);
+    } catch (error) {
+      // Concurrent first sign-ins can race on the unique email index; the
+      // loser reuses the row the winner created instead of failing.
+      const raced = await this.findForGoogle(profile);
+      if (raced?.isActive) {
+        return this.issueTokens(raced);
+      }
+      throw error;
+    }
+  }
+
   async me(userId: string) {
     const user = await this.users.findOne({ where: { id: userId } });
     if (!user || !user.isActive) {
       throw new UnauthorizedException('Authentication required.');
     }
     return this.toPublicUser(user);
+  }
+
+  async updateProfile(userId: string, dto: UpdateProfileDto) {
+    const user = await this.users.findOne({ where: { id: userId } });
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('Authentication required.');
+    }
+    if (dto.displayName !== undefined) user.displayName = dto.displayName ?? undefined;
+    if (dto.title !== undefined) user.title = dto.title ?? undefined;
+    if (dto.firstName !== undefined) user.firstName = dto.firstName ?? undefined;
+    if (dto.middleName !== undefined) user.middleName = dto.middleName ?? undefined;
+    if (dto.lastName !== undefined) user.lastName = dto.lastName ?? undefined;
+    if (dto.dateOfBirth !== undefined) {
+      user.dateOfBirth = dto.dateOfBirth
+        ? (new Date(dto.dateOfBirth) as any)
+        : undefined;
+    }
+    if (dto.gender !== undefined) user.gender = dto.gender ?? undefined;
+    if (dto.nationality !== undefined) user.nationality = dto.nationality ?? undefined;
+    if (dto.avatarUrl !== undefined) user.avatarUrl = dto.avatarUrl ?? undefined;
+    if (dto.phoneNumber !== undefined) user.phoneNumber = dto.phoneNumber ?? undefined;
+    // Keep displayName in sync when first/last provided and displayName empty.
+    if (!user.displayName && (user.firstName || user.lastName)) {
+      user.displayName = [user.firstName, user.middleName, user.lastName]
+        .filter(Boolean)
+        .join(' ');
+    }
+    const saved = await this.users.save(user);
+    return this.toPublicUser(saved);
   }
 
   async refresh(refreshToken: string) {
@@ -129,6 +235,15 @@ export class AuthService {
       id: user.id,
       email: user.email,
       displayName: user.displayName ?? null,
+      title: user.title ?? null,
+      firstName: user.firstName ?? null,
+      middleName: user.middleName ?? null,
+      lastName: user.lastName ?? null,
+      dateOfBirth: user.dateOfBirth ?? null,
+      gender: user.gender ?? null,
+      nationality: user.nationality ?? null,
+      avatarUrl: user.avatarUrl ?? null,
+      phoneNumber: user.phoneNumber ?? null,
       role: user.role ?? 'user',
     };
   }

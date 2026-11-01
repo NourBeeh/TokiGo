@@ -32,6 +32,13 @@ class RegistrationData {
 abstract interface class AuthRepository {
   Future<ApiResult<AuthUser>> login(AuthCredentials credentials);
   Future<ApiResult<AuthUser>> register(RegistrationData data);
+
+  /// Exchanges a Google ID token (proof of identity, gathered by the platform
+  /// SDK) for a TokiGo session. The backend verifies the token itself.
+  Future<ApiResult<AuthUser>> signInWithGoogle(String idToken);
+
+  Future<ApiResult<AuthUser>> updateProfile(AuthUser user);
+
   Future<ApiResult<void>> logout();
   Future<ApiResult<AuthUser?>> currentSession();
 }
@@ -55,6 +62,18 @@ class LocalAuthRepository implements AuthRepository {
     return const ApiResult.failure(
       ApiUnknownError(message: 'Auth backend is not yet connected (Phase 1).'),
     );
+  }
+
+  @override
+  Future<ApiResult<AuthUser>> signInWithGoogle(String idToken) async {
+    return const ApiResult.failure(
+      ApiUnknownError(message: 'Auth backend is not yet connected (Phase 1).'),
+    );
+  }
+
+  @override
+  Future<ApiResult<AuthUser>> updateProfile(AuthUser user) async {
+    return ApiResult.success(user);
   }
 
   @override

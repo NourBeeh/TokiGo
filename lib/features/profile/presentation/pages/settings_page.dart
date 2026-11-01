@@ -6,6 +6,8 @@ import 'package:tokigo/app/config/app_config.dart';
 import 'package:tokigo/core/auth/auth_provider.dart';
 import 'package:tokigo/core/geo/country_options.dart';
 import 'package:tokigo/core/geo/country_selection_sheet.dart';
+import 'package:tokigo/core/geo/location_permission_providers.dart';
+import 'package:tokigo/core/geo/location_permission_service.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
@@ -68,7 +70,8 @@ class SettingsPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        bottom: false,
+        // `bottom: false` left the list's last row under the Android
+        // navigation bar (the pill it was written for is gone).
         child: AiEntranceAnimation(
           child: CustomScrollView(
             slivers: <Widget>[
@@ -129,8 +132,16 @@ class SettingsPage extends ConsumerWidget {
                                 const _Chevron(),
                               ],
                             ),
-                            onTap: () =>
-                                showCountrySelectionSheet(context, ref),
+                            onTap: () async {
+                              final svc = ref.read(locationPermissionServiceProvider);
+                              final access = await svc.request();
+                              if (access == LocationAccess.granted) {
+                                ref.read(geoRefreshProvider.notifier).state++;
+                              }
+                              if (context.mounted) {
+                                showCountrySelectionSheet(context, ref);
+                              }
+                            },
                           ),
                           const _GroupDivider(),
                           _SettingsRow(

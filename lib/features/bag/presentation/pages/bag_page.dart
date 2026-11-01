@@ -95,7 +95,6 @@ class _BagPageState extends ConsumerState<BagPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        bottom: false,
         child: AiEntranceAnimation(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

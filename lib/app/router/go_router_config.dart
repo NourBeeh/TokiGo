@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_provider.dart';
+import '../../core/domain/models/home/home_item.dart';
 import '../../core/domain/models/offers/car_offer.dart';
 import '../../core/domain/models/offers/flight_offer.dart';
 import '../../core/domain/models/offers/hotel_offer.dart';
@@ -21,11 +22,13 @@ import '../../features/booking/presentation/pages/booking_confirmation_page.dart
 import '../../features/booking/presentation/pages/checkout_page.dart';
 import '../../features/booking/presentation/pages/passenger_details_page.dart';
 import '../../features/groups/presentation/pages/groups_page.dart';
+import '../../features/home/presentation/pages/city_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/home/presentation/pages/trip_builder_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/profile/presentation/pages/auth_page.dart';
 import '../../features/profile/presentation/pages/onboarding_page.dart';
+import '../../features/profile/presentation/pages/edit_profile_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/settings_page.dart';
 import '../../features/profile/presentation/pages/wishlist_page.dart';
@@ -150,6 +153,23 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                       ),
                     ),
                   ),
+                  // Discover tile → the city's own information page. The
+                  // tapped HomeItem rides as `extra`; a missing/typed-wrong
+                  // extra renders the page's honest "city not found" state.
+                  GoRoute(
+                    path: 'city',
+                    name: 'city',
+                    pageBuilder: (context, state) => slideFromRightPage(
+                      name: 'city',
+                      child: SwipeFromRightToPop(
+                        child: CityPage(
+                          city: state.extra is HomeItem
+                              ? state.extra as HomeItem
+                              : null,
+                        ),
+                      ),
+                    ),
+                  ),
                   GoRoute(
                     path: 'bag',
                     name: 'bag',
@@ -201,6 +221,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     pageBuilder: (context, state) => slideFromRightPage(
                       name: 'profile',
                       child: const SwipeFromRightToPop(child: ProfilePage()),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'edit-profile',
+                    name: 'edit_profile',
+                    pageBuilder: (context, state) => slideFromRightPage(
+                      name: 'edit_profile',
+                      child: const SwipeFromRightToPop(child: EditProfilePage()),
                     ),
                   ),
                   GoRoute(

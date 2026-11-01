@@ -4,30 +4,39 @@ import { AI_PROVIDER, AiProvider } from '../ai/ai.provider';
 import { NuiteeService } from '../nuitee/nuitee.service';
 import { ProfileService } from '../profile/profile.service';
 import { CacheService } from '../cache/cache.service';
-
-/** Popular cities per country for candidate scans. */
-const COUNTRY_CITIES: Record<string, string[]> = {
-  EG: ['Cairo', 'Hurghada', 'Sharm El Sheikh', 'Luxor'],
-  AE: ['Dubai', 'Abu Dhabi'],
-  SA: ['Riyadh', 'Jeddah'],
-  TR: ['Istanbul', 'Antalya'],
-  QA: ['Doha'],
-  KW: ['Kuwait City'],
-  JO: ['Amman'],
-  GB: ['London'],
-  FR: ['Paris', 'Nice'],
-  IT: ['Rome', 'Milan'],
-  ES: ['Madrid', 'Barcelona'],
-  DE: ['Berlin', 'Munich'],
-  GR: ['Athens'],
-  US: ['New York', 'Miami'],
-  TH: ['Bangkok'],
-  SG: ['Singapore'],
-  MY: ['Kuala Lumpur'],
-  JP: ['Tokyo'],
-};
+import { ProviderResult } from '../../common/providers/provider.result';
+import { COUNTRY_CITIES } from '../../common/market/popular-cities';
 
 const DEFAULT_GUESTS = 2;
+
+/**
+ * How many provider searches may be in flight at once.
+ *
+ * A market with several cities × the month's scanned nights is a burst of
+ * requests, and Nuitee answers a burst with HTTP 429 and an empty rail.
+ */
+function providerConcurrency(): number {
+  const configured = Number(process.env.RECOMMEND_CONCURRENCY);
+  return Number.isFinite(configured) && configured > 0
+    ? Math.min(Math.floor(configured), 8)
+    : 4;
+}
+
+/**
+ * How many of the month's nights are searched.
+ *
+ * Every scanned night is one search per city, so this is provider budget as
+ * much as coverage: the cheapest night is usually within a few percent of the
+ * month's floor, and a 31-night scan per city would cost 31× the budget for
+ * the privilege of seeing the same number.
+ */
+function scanNightCount(): number {
+  const configured = Number(process.env.RECOMMEND_SCAN_NIGHTS);
+  if (Number.isFinite(configured) && configured > 0) {
+    return Math.min(Math.floor(configured), 31);
+  }
+  return 6;
+}
 
 /**
  * Guest / unknown-market default. Every provider call must carry the city's
@@ -38,7 +47,10 @@ const DEFAULT_GUESTS = 2;
 const DEFAULT_COUNTRY = 'EG';
 
 /** Home rail cache: short TTL; the Home opens constantly. */
-const RECOMMENDED_TTL_SECONDS = 5 * 60;
+function recommendedTtlSeconds(): number {
+  const configured = Number(process.env.RECOMMENDED_CACHE_TTL_SECONDS);
+  return Number.isFinite(configured) && configured > 0 ? configured : 5 * 60;
+}
 
 /** Cards per response (the DTO enforces the same upper bound). */
 const HOTEL_LIMIT_MAX = 12;
@@ -49,6 +61,16 @@ export interface HotelCandidate {
   title: string;
   city: string;
   price?: number;
+  /**
+   * The price of ONE night — the cheapest night the current month still offers
+   * for this hotel.
+   *
+   * [price] is that same night's total: the rate is quoted for a SINGLE-night
+   * window (see [scannedNights]), so the two numbers agree and the card can
+   * label the amount "/ night" without dividing a stay total by a window the
+   * traveller never chose (user report, 2026-10-30).
+   */
+  pricePerNight?: number;
   currency?: string;
   rating?: number;
   reviewCount?: number;
@@ -81,6 +103,13 @@ export interface HotelCandidate {
     refundable?: boolean;
     stars?: number;
     boardName?: string;
+    /** The single night's rate, for every per-night label on screen. */
+    pricePerNight?: number;
+    /** Provider-verbatim position, for "open in maps" + distance to centre. */
+    latitude?: number;
+    longitude?: number;
+    address?: string;
+    distanceToCenter?: number;
   };
 }
 
@@ -138,18 +167,20 @@ export class RecommendedHotelService {
       params.countryConfidence ??
       (explicit ? 'explicit' : fromProfile ? 'profile' : 'default');
 
-    // The stay window is part of the cache identity: prices are presentation
-    // snapshots tied to those dates, never durable booking truth.
-    const checkIn = daysFromNow(3);
-    const checkOut = daysFromNow(5);
+    // The card prices ONE NIGHT, and that number must be the LOWEST night the
+    // current month still sells (user report, 2026-10-30): a stay total divided
+    // by a window the traveller never chose said nothing about what a night
+    // here costs. The scanned nights belong to the cache identity — prices are
+    // presentation snapshots tied to those dates, never durable booking truth.
+    const nights = scannedNights();
     const cacheKey =
       `home:recommended:${country}:${limit}:` +
-      `${isoDay(checkIn)}:${isoDay(checkOut)}`;
+      nights.map((night) => isoDay(night.checkIn)).join(',');
 
     const cached = await this.cache.get<RecommendedHotelsResult>(cacheKey);
     if (cached) return cached;
 
-    const candidates = await this.candidatesFor(country, checkIn, checkOut);
+    const candidates = await this.candidatesFor(country, nights);
     if (candidates.length === 0) {
       // Provider down, no inventory, or an unserved market: honest empty.
       return { source: 'fallback', countryCode: country, confidence, hotels: [] };
@@ -178,7 +209,7 @@ export class RecommendedHotelService {
 
     // Cache only a non-empty provider snapshot; an empty answer may recover.
     if (result.hotels.length > 0) {
-      await this.cache.set(cacheKey, result, RECOMMENDED_TTL_SECONDS);
+      await this.cache.set(cacheKey, result, recommendedTtlSeconds());
     }
     return result;
   }
@@ -193,43 +224,63 @@ export class RecommendedHotelService {
     return country && COUNTRY_CITIES[country] ? country : DEFAULT_COUNTRY;
   }
 
-  /** Scans popular cities in the country via Nuitee real search. */
+  /**
+   * Scans popular cities in the country via Nuitee real search — one search per
+   * (city, scanned night) — and keeps each hotel's CHEAPEST night.
+   *
+   * The searches run through a small concurrency gate: a market's cities × the
+   * month's nights is a burst, and a provider that answers a burst with HTTP
+   * 429 returns an empty rail to the traveller.
+   */
   private async candidatesFor(
     country: string,
-    checkIn: Date,
-    checkOut: Date,
+    nights: StayNight[],
   ): Promise<HotelCandidate[]> {
     const cities = COUNTRY_CITIES[country] ?? [];
     if (cities.length === 0) return [];
 
-    const results = await Promise.allSettled(
-      cities.map((city) =>
-        this.nuitee.searchHotels({
-          city,
-          country,
-          checkIn,
-          checkOut,
-          guests: DEFAULT_GUESTS,
-          rooms: 1,
-        }),
-      ),
+    const jobs: Array<{ city: string; night: StayNight }> = [];
+    for (const city of cities) {
+      for (const night of nights) jobs.push({ city, night });
+    }
+
+    const results = await mapLimit(
+      jobs,
+      providerConcurrency(),
+      async (job): Promise<{ job: typeof job; value?: ProviderResult<any[]>; error?: unknown }> => {
+        try {
+          const value = await this.nuitee.searchHotels({
+            city: job.city,
+            country,
+            checkIn: job.night.checkIn,
+            checkOut: job.night.checkOut,
+            guests: DEFAULT_GUESTS,
+            rooms: 1,
+          });
+          return { job, value };
+        } catch (error) {
+          return { job, error };
+        }
+      },
     );
 
     const out = new Map<string, HotelCandidate>();
     for (const r of results) {
-      if (r.status === 'rejected') {
+      if (r.error !== undefined) {
         // Never swallow a dead provider: an empty rail must be explainable.
         this.logger.warn(
-          `Nuitee search rejected for ${country}: ${
-            (r.reason as Error)?.message ?? String(r.reason)
-          }`,
+          `Nuitee search rejected for ${r.job.city} on ${isoDay(
+            r.job.night.checkIn,
+          )}: ${(r.error as Error)?.message ?? String(r.error)}`,
         );
         continue;
       }
       const value = r.value;
       if (value && value.success === false) {
         this.logger.warn(
-          `Nuitee returned no rates for ${country}: ${value.error ?? 'unknown'}`,
+          `Nuitee returned no rates for ${r.job.city} on ${isoDay(
+            r.job.night.checkIn,
+          )}: ${value.error ?? 'unknown'}`,
         );
         continue;
       }
@@ -237,14 +288,24 @@ export class RecommendedHotelService {
       if (!Array.isArray(data)) continue;
       for (const offer of data) {
         if (!offer?.id) continue;
-        // Deduplicate by hotelId to avoid showing same hotel multiple times
+        // Deduplicate by hotelId across cities AND nights; the cheapest night
+        // wins, because that is the number the card states.
         const hotelId = offer.metadata?.providerHotelId ?? offer.id;
-        if (out.has(hotelId)) continue;
+        const price =
+          typeof offer.price === 'number' ? offer.price : undefined;
+        const existing = out.get(hotelId);
+        const cheaper =
+          price !== undefined &&
+          (existing?.price === undefined || price < existing.price);
+        if (existing && !cheaper) continue;
         out.set(hotelId, {
           id: hotelId,
           title: offer.title ?? 'Hotel',
           city: offer.city ?? '',
-          price: typeof offer.price === 'number' ? offer.price : undefined,
+          price,
+          // The window is ONE night, so this is the same number as `price` —
+          // stated explicitly so no surface has to divide a total to get it.
+          pricePerNight: price,
           currency: offer.currency,
           rating: typeof offer.rating === 'number' ? offer.rating : undefined,
           reviewCount:
@@ -273,6 +334,15 @@ export class RecommendedHotelService {
             // (the class line and the board row) and must not have to guess.
             stars: offer.metadata?.stars,
             boardName: offer.metadata?.boardName,
+            // The nightly rate, spelled out for the card's price label and for
+            // the details page's per-night line.
+            pricePerNight: price,
+            // Position travels with the card so it can open maps and state a
+            // real distance to the centre (undefined stays undefined).
+            latitude: offer.metadata?.latitude,
+            longitude: offer.metadata?.longitude,
+            address: offer.metadata?.address,
+            distanceToCenter: offer.metadata?.distanceToCenter,
           },
         });
       }
@@ -379,12 +449,94 @@ function normalizeCountry(value?: string | null): string | undefined {
 }
 
 /**
- * A stay date `days` ahead. The provider adapter formats dates in UTC
- * (`toISOString().split('T')[0]`), so zeroing the clock to local midnight
- * would shift the check-in by a day in UTC+ timezones — keep the wall clock.
+ * A one-night stay window. Every window this service prices is exactly one
+ * night long, so the provider's quoted total IS the nightly rate.
  */
-function daysFromNow(days: number): Date {
-  return new Date(Date.now() + days * 86_400_000);
+interface StayNight {
+  checkIn: Date;
+  checkOut: Date;
+}
+
+/** The nights of [year]/[month] a card may price, starting at [fromDay]. */
+function nightsOfMonth(year: number, month: number, fromDay: number): StayNight[] {
+  // Day 0 of the NEXT month is the last day of this one (Date.UTC normalises).
+  const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  const nights: StayNight[] = [];
+  for (let day = fromDay; day <= lastDay; day++) nights.push(nightAt(year, month, day));
+  return nights;
+}
+
+/** One night's window; UTC because the provider adapter formats dates in UTC. */
+function nightAt(year: number, month: number, day: number): StayNight {
+  return {
+    checkIn: new Date(Date.UTC(year, month, day)),
+    // `day + 1` rolls into the next month on the month's last day.
+    checkOut: new Date(Date.UTC(year, month, day + 1)),
+  };
+}
+
+/**
+ * The nights the recommended rail may price: every remaining night of the
+ * CURRENT calendar month, thinned to [scanNightCount] of them.
+ *
+ * A one-night window means the card's amount is a nightly rate the provider
+ * actually quoted for ONE night — not a stay total divided by a window the
+ * traveller never chose. When the month has no night left (its last day), the
+ * scan starts on the next month's first nights instead of leaving the rail
+ * without a price at all.
+ */
+function scannedNights(now: Date = new Date()): StayNight[] {
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth();
+  const remaining = nightsOfMonth(year, month, now.getUTCDate());
+  const nights =
+    remaining.length > 0
+      ? remaining
+      : nightsOfMonth(
+          month === 11 ? year + 1 : year,
+          (month + 1) % 12,
+          1,
+        );
+  return thinNights(nights, scanNightCount());
+}
+
+/**
+ * Evenly spread a month's nights down to [count] of them. Even spacing samples
+ * the whole month (a weekday/weekend rhythm shows up as a real difference)
+ * instead of pricing the first `count` nights, which are often the priciest.
+ */
+function thinNights(nights: StayNight[], count: number): StayNight[] {
+  if (nights.length <= count) return nights;
+  const step = nights.length / count;
+  const out: StayNight[] = [];
+  for (let i = 0; i < count; i++) out.push(nights[Math.floor(i * step)]);
+  return out;
+}
+
+/**
+ * Bounded parallelism — at most [limit] workers in flight.
+ *
+ * Results keep their input order, so logs and scores stay deterministic no
+ * matter how the network interleaves.
+ */
+async function mapLimit<T, R>(
+  items: T[],
+  limit: number,
+  worker: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  const runners = Array.from(
+    { length: Math.max(1, Math.min(limit, items.length)) },
+    async () => {
+      while (next < items.length) {
+        const index = next++;
+        results[index] = await worker(items[index]);
+      }
+    },
+  );
+  await Promise.all(runners);
+  return results;
 }
 
 /** YYYY-MM-DD (UTC) — the provider window in a cache-key-safe form. */

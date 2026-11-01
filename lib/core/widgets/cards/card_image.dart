@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:tokigo/core/network/image_proxy.dart';
+
 class CardImage extends StatelessWidget {
   final String? url;
   final double? height;
@@ -46,7 +48,13 @@ class CardImage extends StatelessWidget {
     if (url == null || url.isEmpty) return null;
     final ImageProvider provider = isAssetSource(url)
         ? AssetImage(url)
-        : NetworkImage(url);
+        : NetworkImage(
+            ImageProxy.proxied(
+                  url,
+                  width: cacheWidth ?? ImageProxy.logoWidth,
+                ) ??
+                url,
+          );
     return ResizeImage.resizeIfNeeded(cacheWidth, cacheHeight, provider);
   }
 
@@ -106,8 +114,15 @@ class CardImage extends StatelessWidget {
             errorBuilder: (context, error, stackTrace) => buildFallback(),
           );
         } else {
+          final String original = url!;
+          final String source =
+              ImageProxy.proxied(
+                original,
+                width: decodeWidth > 0 ? decodeWidth : ImageProxy.cardWidth,
+              ) ??
+              original;
           image = Image.network(
-            url!,
+            source,
             fit: fit,
             semanticLabel: semanticLabel,
             cacheWidth: decodeWidth > 0 ? decodeWidth : null,
@@ -115,7 +130,18 @@ class CardImage extends StatelessWidget {
               if (progress == null) return child;
               return _SkeletonImage();
             },
-            errorBuilder: (context, error, stackTrace) => buildFallback(),
+            // If the resizer is unreachable, load the provider's original so a
+            // backend outage never blanks the card.
+            errorBuilder: (context, error, stackTrace) {
+              if (source == original) return buildFallback();
+              return Image.network(
+                original,
+                fit: fit,
+                semanticLabel: semanticLabel,
+                cacheWidth: decodeWidth > 0 ? decodeWidth : null,
+                errorBuilder: (context, error, stackTrace) => buildFallback(),
+              );
+            },
           );
         }
 

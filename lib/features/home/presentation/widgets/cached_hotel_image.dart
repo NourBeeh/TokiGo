@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'package:tokigo/core/network/image_proxy.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/widgets/shimmer.dart';
 import 'package:tokigo/features/home/application/hotel_image_cache.dart';
@@ -113,10 +114,20 @@ class _CachedHotelImageState extends State<CachedHotelImage> {
     }
 
     // 2) Network fetch — shared per URL so a rail never double-loads.
-    final fetched = await _sharedFetch(url);
+    //    The disk cache stays keyed by the ORIGINAL url (existing entries keep
+    //    working); only the wire request goes through the resizer.
+    final String fetchUrl =
+        ImageProxy.proxied(url, width: ImageProxy.cardWidth) ?? url;
+    var fetched = await _sharedFetch(fetchUrl);
+    if (fetched == null && fetchUrl != url) {
+      // Resizer unreachable → load the provider's original.
+      fetched = await _sharedFetch(url);
+    }
     if (fetched != null) {
-      await cache?.write(url, fetched); // Best-effort store.
       widget.memoryCache?.write(url, fetched);
+      // The visible card should not wait for a disk write to finish; cache
+      // persistence is best-effort and must not delay the first paint.
+      unawaited(cache?.write(url, fetched));
     }
     if (!mounted || widget.url != url) return;
     setState(() => _bytes = fetched);

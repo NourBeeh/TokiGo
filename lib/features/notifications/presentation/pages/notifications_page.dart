@@ -51,7 +51,8 @@ class NotificationsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        bottom: false,
+        // `bottom: false` left the list's last row under the Android
+        // navigation bar (the pill it was written for is gone).
         child: AiEntranceAnimation(
           child: CustomScrollView(
             slivers: <Widget>[

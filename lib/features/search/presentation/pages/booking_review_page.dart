@@ -256,7 +256,7 @@ class _OfferSummaryCard extends StatelessWidget {
             child: Icon(
               switch (offerType) {
                 'flight' => Icons.flight_rounded,
-                'hotel' => Icons.hotel_rounded,
+                'hotel' => Icons.house_rounded,
                 'car' => Icons.directions_car_rounded,
                 'package' => Icons.card_travel_rounded,
                 _ => Icons.receipt_long_rounded,

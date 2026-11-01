@@ -24,7 +24,8 @@ class SearchHubPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        bottom: false,
+        // `bottom: false` left the list's last row under the Android
+        // navigation bar (the pill it was written for is gone).
         child: AiEntranceAnimation(
           child: CustomScrollView(
             slivers: <Widget>[
@@ -96,7 +97,7 @@ class _SearchHero extends StatelessWidget {
                 onTap: () => context.go(AppRoute.flights.path),
               ),
               _HeroQuickLink(
-                icon: Icons.hotel_rounded,
+                icon: Icons.house_rounded,
                 label: l10n.searchHotels,
                 onTap: () => context.go(AppRoute.hotels.path),
               ),
@@ -259,7 +260,7 @@ class _ServiceGrid extends StatelessWidget {
             ),
             _ServiceTile(
               label: l10n.searchHotels,
-              icon: Icons.hotel_rounded,
+              icon: Icons.house_rounded,
               color: AppColors.hotelHue,
               colorContainer: AppColors.hotelContainer,
               onTap: () => context.go(AppRoute.hotels.path),

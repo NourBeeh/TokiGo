@@ -19,7 +19,7 @@ class HomeCardDimensions {
       case HomeCardType.package:
         return 220.0;
       case HomeCardType.destination:
-        return 280.0;
+        return 220.0;
       case HomeCardType.deal:
         return 280.0;
     }
@@ -49,8 +49,8 @@ class HomeCardDimensions {
       case HomeCardType.hotel:
       case HomeCardType.flight:
       case HomeCardType.car:
-        return 16 / 9;
       case HomeCardType.destination:
+        return 16 / 9;
       case HomeCardType.deal:
         return 7 / 6;
       case HomeCardType.package:

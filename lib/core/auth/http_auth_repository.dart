@@ -21,6 +21,7 @@ class HttpAuthRepository implements AuthRepository {
 
   static const String _loginPath = '/auth/login';
   static const String _registerPath = '/auth/register';
+  static const String _googlePath = '/auth/google';
   static const String _mePath = '/auth/me';
 
   @override
@@ -39,6 +40,47 @@ class HttpAuthRepository implements AuthRepository {
       if (data.displayName != null && data.displayName!.trim().isNotEmpty)
         'displayName': data.displayName,
     });
+  }
+
+  @override
+  Future<ApiResult<AuthUser>> signInWithGoogle(String idToken) async {
+    // Only the proof of identity travels: the backend reads the profile from
+    // the Google-signed token, so a client cannot assert who it is.
+    return _authenticate(_googlePath, <String, dynamic>{'idToken': idToken});
+  }
+
+  @override
+  Future<ApiResult<AuthUser>> updateProfile(AuthUser user) async {
+    final token = await _safeReadAccessToken();
+    if (token == null || token.isEmpty) {
+      return const ApiResult.failure(ApiUnauthorizedError());
+    }
+    final body = <String, dynamic>{
+      if (user.displayName != null) 'displayName': user.displayName,
+      if (user.title != null) 'title': user.title,
+      if (user.firstName != null) 'firstName': user.firstName,
+      if (user.middleName != null) 'middleName': user.middleName,
+      if (user.lastName != null) 'lastName': user.lastName,
+      if (user.dateOfBirth != null)
+        'dateOfBirth': user.dateOfBirth!.toIso8601String().split('T').first,
+      if (user.gender != null) 'gender': user.gender,
+      if (user.nationality != null) 'nationality': user.nationality,
+      if (user.avatarUrl != null) 'avatarUrl': user.avatarUrl,
+      if (user.phoneNumber != null) 'phoneNumber': user.phoneNumber,
+    };
+    final result = await _apiClient.patch<Map<String, dynamic>>(
+      _mePath,
+      headers: <String, String>{'Authorization': 'Bearer $token'},
+      body: body,
+    );
+    return result.when(
+      success: (data) {
+        final updated = _userFromMePayload(data);
+        if (updated == null) return ApiResult.success(user);
+        return ApiResult.success(updated);
+      },
+      failure: (error) => ApiResult.failure(error),
+    );
   }
 
   @override

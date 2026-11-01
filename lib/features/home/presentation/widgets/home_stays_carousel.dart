@@ -15,8 +15,9 @@ import 'package:tokigo/features/home/presentation/widgets/home_stay_card.dart';
 /// at the edge (the only affordance that says "swipe me" without a tutorial)
 /// and page dots underneath so the position is readable at a glance.
 ///
-/// Every card is the SAME [HomeStayCard] the results page and the AI answer
-/// use: the rail changes how the stays are navigated, never what a stay is.
+/// Every card is the same [HomeStayCard] used by the results page and AI
+/// answer, with a wider photo in this rail so the sheet has room for the
+/// stay's facts (name, class, score, location, distance, nightly price).
 ///
 /// The pager is a fixed-height box by nature, so the height is derived from the
 /// card's own geometry (4:3 photo + the sheet that rides 48px up over it) and
@@ -26,33 +27,45 @@ class HomeStaysCarousel extends StatefulWidget {
   const HomeStaysCarousel({
     super.key,
     required this.items,
-    this.viewportFraction = 0.9,
+    this.viewportFraction = 0.8,
+    this.onItemTap,
+    this.itemBuilder,
   });
 
   /// The stays to page through. The caller guarantees this is not empty.
   final List<HomeItem> items;
 
-  /// Width of one page as a fraction of the rail's width. Below 1 the next
-  /// card peeks; 0.9 leaves a ~16pt gutter on both ends (the page gutter the
-  /// rest of the Home uses).
+  /// Width of one page as a fraction of the rail's width. A little under the
+  /// full width so the next stay peeks — the only affordance that says
+  /// "swipe me" without a tutorial.
   final double viewportFraction;
 
-  /// Card A's media ratio — the same shape every stay card has.
-  static const double _mediaAspectRatio = 4 / 3;
+  /// Optional surface-specific action; null opens the stay's normal details.
+  final ValueChanged<HomeItem>? onItemTap;
+
+  /// Alternate card presentation for Discover destinations.
+  final Widget Function(BuildContext context, HomeItem item)? itemBuilder;
+
+  /// Card A's media ratio in this rail. A wider (shorter) photo leaves more of
+  /// the card's height for the facts the stay card now carries — name, class,
+  /// score, location, distance and nightly price — while making the card a
+  /// little smaller overall than the old portrait photo.
+  static const double mediaAspectRatio = 1.3;
 
   /// The sheet's own vertical padding (top + bottom).
   static const double _sheetPadding = AppSpacing.md * 2;
 
-  /// Title line + rating line + price line with their gaps, at the default
-  /// text scale (see [OverlapStayCard]).
-  static const double _sheetText = 76;
+  /// The sheet content (name + class/score + location + distance + price and
+  /// their gaps) at the default text scale. Kept in step with
+  /// [OverlapStayCard] and grown with the traveller's text scale.
+  static const double _sheetText = 112;
 
   /// Breathing room so rounding never turns into a clipped price.
   static const double _sheetSlack = 8;
 
   /// The rail's card height for a page of [pageWidth] at [textScale].
   static double cardHeightFor(double pageWidth, double textScale) {
-    final double media = pageWidth / _mediaAspectRatio;
+    final double media = pageWidth / mediaAspectRatio;
     return media -
         AppOverlap.card +
         _sheetPadding +
@@ -64,7 +77,7 @@ class HomeStaysCarousel extends StatefulWidget {
   /// skeleton so the feed does not jump when the real stays land.
   static double railHeight(
     BuildContext context, {
-    double viewportFraction = 0.9,
+    double viewportFraction = 0.8,
   }) {
     final double width = MediaQuery.sizeOf(context).width;
     return cardHeightFor(width * viewportFraction, _textScaleOf(context));
@@ -119,6 +132,7 @@ class _HomeStaysCarouselState extends State<HomeStaysCarousel> {
               child: PageView.builder(
                 controller: _controller,
                 itemCount: widget.items.length,
+                padEnds: false,
                 onPageChanged: (int index) {
                   if (!mounted) return;
                   setState(() => _page = index);
@@ -127,11 +141,19 @@ class _HomeStaysCarouselState extends State<HomeStaysCarousel> {
                   // The page box is already the card's exact width, and the
                   // card fills it; the height is the rail height, so every
                   // card in the rail ends on the same line.
-                  return HomeStayCard(
-                    // Index-keyed: a stay that moves page keeps its photo.
-                    key: ValueKey<String>(widget.items[index].id),
-                    item: widget.items[index],
-                    margin: EdgeInsets.zero,
+                  final HomeItem item = widget.items[index];
+                  return KeyedSubtree(
+                    key: ValueKey<String>(item.id),
+                    child:
+                        widget.itemBuilder?.call(context, item) ??
+                        HomeStayCard(
+                          item: item,
+                          margin: EdgeInsets.zero,
+                          aspectRatio: HomeStaysCarousel.mediaAspectRatio,
+                          onTap: widget.onItemTap == null
+                              ? null
+                              : () => widget.onItemTap!(item),
+                        ),
                   );
                 },
               ),

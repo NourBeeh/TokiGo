@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
-import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:flutter/foundation.dart' show compute, kReleaseMode;
 import 'api_client.dart';
 import 'api_error.dart';
 import 'api_result.dart';
@@ -93,15 +93,32 @@ class HttpApiClient implements ApiClient {
   @override
   String get baseUrl {
     final String? override = baseUrlOverride;
-    String resolved;
     if (override != null) {
-      resolved = override;
-    } else if (_configuredBaseUrl.isNotEmpty) {
-      resolved = _configuredBaseUrl;
-    } else {
-      resolved = 'http://localhost:$_devPort';
+      _assertSecureBaseUrl(override);
+      return override;
     }
-    // Release builds must never send tokens/data over plaintext HTTP.
+    return defaultBaseUrl;
+  }
+
+  /// The build-time / default backend URL, without a per-instance override.
+  ///
+  /// Exposed statically because surfaces that are not `ApiClient` consumers
+  /// (the image proxy helper) must resolve the same host the API talks to.
+  ///
+  /// The default is `localhost` and stays that way: a LAN address typed into
+  /// source only exists on the machine it was typed on. A device reaches the
+  /// backend through `adb reverse tcp:3000 tcp:3000` (which makes localhost
+  /// work) or through `--dart-define=API_BASE_URL=http://<host>:3000`.
+  static String get defaultBaseUrl {
+    final String resolved = _configuredBaseUrl.isNotEmpty
+        ? _configuredBaseUrl
+        : 'http://localhost:$_devPort';
+    _assertSecureBaseUrl(resolved);
+    return resolved;
+  }
+
+  /// Release builds must never send tokens/data over plaintext HTTP.
+  static void _assertSecureBaseUrl(String resolved) {
     assert(
       !kReleaseMode || resolved.startsWith('https://'),
       'HTTPS is required for API_BASE_URL in release builds.',
@@ -109,7 +126,6 @@ class HttpApiClient implements ApiClient {
     if (kReleaseMode && resolved.startsWith('http://')) {
       throw StateError('HTTPS is required for API_BASE_URL in release builds.');
     }
-    return resolved;
   }
 
   @override
@@ -324,7 +340,7 @@ class HttpApiClient implements ApiClient {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         dynamic data;
         try {
-          data = jsonDecode(responseBody);
+          data = await compute((String bodyStr) => jsonDecode(bodyStr), responseBody);
         } catch (_) {
           return ApiResult.failure(
             ApiParseError(

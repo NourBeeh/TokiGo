@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:tokigo/l10n/app_localizations.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/widgets/cards/card.dart';
 
-/// Destination discovery card for Home discovery carousels.
+/// Destination discovery card for Home discovery surfaces.
 ///
-/// Vertical, image-first card. Image is the dominant visual element; a shared
-/// bottom scrim overlay (never an inline gradient) carries the destination
-/// name and country.
-///
-/// The card sizes itself from its parent constraints (carousel/grid decides
-/// the target size); no hardcoded dimensions inside.
-///
-/// NO price, rating, duration, CTA or favorite — tap is handled by the parent.
+/// The photo is the whole visual; the city's name sits underneath it on the
+/// leading edge. There is no price, rating, duration, CTA or favourite — the
+/// tile itself opens the city's information page.
 class DestinationDiscoveryCard extends StatelessWidget {
   const DestinationDiscoveryCard({
     super.key,
@@ -26,13 +24,10 @@ class DestinationDiscoveryCard extends StatelessWidget {
   final HomeItem item;
   final VoidCallback? onTap;
 
-  /// Saving a destination is optional: the heart renders only when a caller
-  /// can actually persist the choice — never as decoration.
+  /// Kept for callers that still offer saving a destination; the card remains
+  /// image-first and does not draw a heart over the photo.
   final ValueChanged<bool>? onFavorite;
   final bool isFavorite;
-
-  /// Card D's heart diameter (card A uses 32, the hero 32).
-  static const double heartSize = 28;
 
   /// Skeleton state — renders the same image-first geometry with no data.
   final bool loading;
@@ -43,21 +38,8 @@ class DestinationDiscoveryCard extends StatelessWidget {
     return count is num ? count.toInt() : null;
   }
 
-  String? _getCountry() {
-    final country = item.metadata['country']?.toString();
-    if (country != null && country.isNotEmpty) return country;
-    final region = item.metadata['region']?.toString();
-    if (region != null && region.isNotEmpty) return region;
-    if (item.subtitle != null && item.subtitle!.isNotEmpty) {
-      return item.subtitle;
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
-    // A local, so the null check promotes it inside the footer.
-    final int? count = staysCount;
     if (loading) {
       return BaseCard(
         onTap: null,
@@ -69,93 +51,102 @@ class DestinationDiscoveryCard extends StatelessWidget {
       );
     }
 
-    final country = _getCountry();
-
-    final semanticParts = <String>['Destination', item.title, ?country];
-    final semanticLabel = semanticParts.join(', ');
-
     return BaseCard(
       onTap: onTap,
-      semanticsLabel: semanticLabel,
+      enabled: onTap != null,
+      semanticsLabel: item.title,
       padding: EdgeInsets.zero,
-      child: AspectRatio(
-        aspectRatio: 280 / 240,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Full-bleed image - dominant element
-            CardImage(
-              url: item.imageUrl,
-              fallbackIcon: Icons.photo_camera_outlined,
-              semanticLabel: item.title,
-              fit: BoxFit.cover,
-            ),
-            // Save affordance — only when the caller can persist it.
-            if (onFavorite != null)
-              PositionedDirectional(
-                top: 8,
-                end: 8,
-                child: CardFavorite(
-                  value: isFavorite,
-                  onChanged: onFavorite,
-                  size: heartSize,
-                  onImage: true,
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+      showShadow: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Stack(
+              fit: StackFit.expand,
+              children: <Widget>[
+                ClipRRect(
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(AppRadius.xl),
+                  ),
+                  child: CardImage(
+                    url: item.imageUrl,
+                    fallbackIcon: Icons.photo_camera_outlined,
+                    semanticLabel: item.title,
+                    fit: BoxFit.cover,
+                  ),
                 ),
-              ),
-            // Bottom scrim overlay with content (shared overlay primitive)
-            CardScrimFooter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Destination name — two lines, because a city like
-                  // "Sharm El Sheikh" does not fit on one in a narrow tile.
-                  Text(
-                    item.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: CardScrimColors.onScrim,
-                      fontWeight: FontWeight.w700,
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(AppRadius.xl),
+                      ),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: <Color>[
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.65),
+                        ],
+                        stops: const <double>[0.45, 1.0],
+                      ),
                     ),
                   ),
-                  // Country + how many real stays the provider has there.
-                  if (country != null || count != null) ...[
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.location_on_outlined,
-                          size: 14,
-                          color: CardScrimColors.onScrimVariant,
+                ),
+                PositionedDirectional(
+                  start: AppSpacing.md,
+                  end: AppSpacing.md,
+                  bottom: AppSpacing.md,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(
+                        item.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.forLight().titleMedium.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          shadows: <Shadow>[
+                            Shadow(
+                              color: Colors.black.withValues(alpha: 0.4),
+                              blurRadius: 6,
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 4),
-                        Expanded(
+                      ),
+                      if (staysCount != null) ...<Widget>[
+                        const SizedBox(height: AppSpacing.xxs),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: AppSpacing.xxs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ),
                           child: Text(
-                            [
-                              ?country,
-                              if (count != null)
-                                AppLocalizations.of(
-                                      context,
-                                    )?.cityStaysCount(count) ??
-                                    '$count stays',
-                            ].join(' · '),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: CardScrimColors.onScrimVariant,
-                                ),
+                            '$staysCount stays',
+                            style: AppTypography.forLight().caption.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ],
-                    ),
-                  ],
-                ],
-              ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -168,25 +159,24 @@ class _LoadingSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 280 / 240,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          CardSkeleton.image(),
-          CardScrimFooter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CardSkeleton.title(width: 140, height: 20),
-                const SizedBox(height: 4),
-                CardSkeleton.text(width: 100),
-              ],
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        AspectRatio(aspectRatio: 4 / 3, child: CardSkeleton.image()),
+        Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(
+            AppSpacing.md,
+            AppSpacing.sm,
+            AppSpacing.md,
+            AppSpacing.md,
           ),
-        ],
-      ),
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: CardSkeleton.title(width: 140, height: 20),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -9,6 +9,7 @@ import { MockHotelProvider } from './adapters/mock.hotel.provider';
 import { MockCarProvider } from './adapters/mock.car.provider';
 import { SearchController } from './search.controller';
 import { SearchService } from './search.service';
+import { SearchWarmupService } from './search.warmup';
 import { DuffelService } from '../duffel/duffel.service';
 import { DuffelHotelService } from '../duffel/duffel.hotel.service';
 import { NuiteeService } from '../nuitee/nuitee.service';
@@ -24,6 +25,7 @@ import { PricingService } from '../../common/market/pricing.service';
     ProviderInstances,
     RegistrySyncService,
     SearchService,
+    SearchWarmupService,
     MockFlightProvider,
     MockHotelProvider,
     MockCarProvider,

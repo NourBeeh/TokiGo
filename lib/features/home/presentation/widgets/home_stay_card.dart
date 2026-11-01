@@ -7,8 +7,12 @@ import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/widgets/cards/overlap_stay_card.dart';
 import 'package:tokigo/features/home/presentation/home_stay_offer.dart';
+import 'package:tokigo/features/home/presentation/open_stay_map.dart';
+import 'package:tokigo/features/home/presentation/stay_distance.dart';
 import 'package:tokigo/features/home/presentation/widgets/cached_hotel_image.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart';
+import 'package:tokigo/features/search/domain/stay_price.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
 
 /// A stay on **card A** — the reference-A overlap card (4:3 photo, the white
 /// sheet biting 48px over it).
@@ -16,7 +20,13 @@ import 'package:tokigo/features/home/providers/home_providers.dart';
 /// This is the one card the Home uses for a hotel, so the stays in the feed
 /// and the stays in the results are the same object on screen.
 class HomeStayCard extends ConsumerWidget {
-  const HomeStayCard({super.key, required this.item, this.margin, this.onTap});
+  const HomeStayCard({
+    super.key,
+    required this.item,
+    this.margin,
+    this.onTap,
+    this.aspectRatio = 4 / 3,
+  });
 
   final HomeItem item;
 
@@ -28,24 +38,78 @@ class HomeStayCard extends ConsumerWidget {
   /// passes its own action.
   final VoidCallback? onTap;
 
+  /// The Home rail uses a taller image while other stay surfaces keep 4:3.
+  final double aspectRatio;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final String city = (item.metadata['city'] ?? '').toString().trim();
+    final String country = (item.metadata['country'] ?? '').toString().trim();
+    final String location = <String>[
+      city,
+      country,
+    ].where((String part) => part.isNotEmpty).join(', ');
     final HotelOffer? offer = hotelOfferFromHomeStay(item);
-    final double? price = item.price;
-    final String amount = price == null ? '' : _wholeAmount(price);
+
+    // The provider quotes a stay total. The card labels a per-night figure
+    // only when it can be derived from the offer's own window — never by
+    // assuming a nightly rate for a total that has no dates.
+    final StayPrice? stayPrice = offer == null ? null : StayPrice.of(offer);
+    final double? amount = stayPrice?.perNight ?? item.price;
+    final String amountText = amount == null ? '' : _wholeAmount(amount);
+    final String? unit = stayPrice?.perNight != null
+        ? (l10n?.unitNight ?? 'night')
+        : null;
+
+    final int? starClass =
+        offer?.starClass ??
+        (item.metadata['stars'] is num
+            ? (item.metadata['stars'] as num).toInt()
+            : null);
+
+    final double? distanceKm = stayDistanceToCenterKm(
+      metadata: item.metadata,
+      city: city,
+    );
+    final String? distanceText = distanceKm == null
+        ? null
+        : (l10n?.hotelDistanceFromCenter(formatStayDistance(distanceKm)) ??
+              '${formatStayDistance(distanceKm)} km from the center');
+
+    final double? latitude = _number(
+      item.metadata['latitude'] ?? item.metadata['lat'],
+    );
+    final double? longitude = _number(
+      item.metadata['longitude'] ??
+          item.metadata['lng'] ??
+          item.metadata['long'],
+    );
 
     return OverlapStayCard(
       media: StayPhoto(item: item),
       title: item.title,
+      starClass: starClass,
       rating: item.rating,
       reviewCount: item.reviewCount,
-      amountText: amount,
+      location: location.isEmpty ? null : location,
+      onLocationTap: location.isEmpty
+          ? null
+          : () => openStayInMaps(
+              name: item.title,
+              location: location,
+              latitude: latitude,
+              longitude: longitude,
+            ),
+      distanceText: distanceText,
+      amountText: amountText,
       currency: item.currency ?? '',
+      unit: unit,
       // The card is tappable when it has an action: its own details, or the
       // surface's (the AI answer hands the offer to the booking flow).
       enabled: onTap != null || offer != null || city.isNotEmpty,
       margin: margin,
+      aspectRatio: aspectRatio,
       // Owner decision (2026-10-25): the stay opens ITSELF. Sending the
       // traveller to a city search hid the hotel they had just tapped.
       onTap: onTap ?? _openStay(context, offer: offer, city: city),
@@ -72,6 +136,12 @@ class HomeStayCard extends ConsumerWidget {
   /// total keeps its cents.
   static String _wholeAmount(double amount) =>
       amount % 1 == 0 ? amount.toStringAsFixed(0) : amount.toStringAsFixed(2);
+
+  static double? _number(Object? value) {
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value.trim());
+    return null;
+  }
 }
 
 /// The provider's real photo through [CachedHotelImage], sized from the card's
@@ -89,7 +159,7 @@ class StayPhoto extends ConsumerWidget {
         color: AppColors.surfaceTertiary,
         alignment: Alignment.center,
         child: const Icon(
-          Icons.hotel_outlined,
+          Icons.house_rounded,
           size: 40,
           color: AppColors.textTertiary,
         ),

@@ -4,12 +4,15 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import databaseConfig from './config/database.config';
+import jwtConfig from './config/jwt.config';
+import googleConfig from './config/google.config';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ProvidersModule } from './modules/providers/providers.module';
 import { OffersModule } from './modules/offers/offers.module';
 import { HomeModule } from './modules/home/home.module';
 import { CacheModule } from './modules/cache/cache.module';
+import { ImagesModule } from './modules/images/images.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { AiModule } from './modules/ai/ai.module';
 import { AiConversationModule } from './modules/ai/ai.conversation.module';
@@ -28,7 +31,7 @@ import { BookingsModule } from './modules/bookings/bookings.module';
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 30 }]),
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig],
+      load: [databaseConfig, jwtConfig, googleConfig],
       envFilePath: ['.env', '../.env'],
     }),
     TypeOrmModule.forRootAsync({
@@ -41,7 +44,12 @@ import { BookingsModule } from './modules/bookings/bookings.module';
         password: config.get('database.password'),
         database: config.get('database.database'),
         autoLoadEntities: true,
-        synchronize: process.env.NODE_ENV !== 'production',
+        // Auto-schema-sync is a development-only convenience. Fail closed when
+        // NODE_ENV is missing/unrecognised instead of silently rewriting the
+        // production schema.
+        synchronize:
+          config.get<string>('NODE_ENV') === 'development' ||
+          config.get<string>('DB_SYNCHRONIZE') === 'true',
       }),
       inject: [ConfigService],
     }),
@@ -51,6 +59,7 @@ import { BookingsModule } from './modules/bookings/bookings.module';
     OffersModule,
     HomeModule,
     CacheModule,
+    ImagesModule,
     AdminModule,
     AiModule,
     AiConversationModule,

@@ -28,8 +28,12 @@ class OverlapStayCard extends StatelessWidget {
     required this.amountText,
     this.currency = '',
     this.unit,
+    this.starClass,
     this.rating,
     this.reviewCount,
+    this.location,
+    this.onLocationTap,
+    this.distanceText,
     this.onTap,
     this.onFavorite,
     this.isFavorite = false,
@@ -53,8 +57,20 @@ class OverlapStayCard extends StatelessWidget {
   /// "/ night" when the amount really is a nightly rate. Null hides it.
   final String? unit;
 
+  /// The hotel's own class (1–5), drawn as an outlined star. Distinct from
+  /// [rating], which is the guest review score (filled star).
+  final int? starClass;
+
   final double? rating;
   final int? reviewCount;
+
+  /// The stay's location line ("Cairo, EG"). When [onLocationTap] is set the
+  /// line is a real control that opens the place in the platform's maps.
+  final String? location;
+  final VoidCallback? onLocationTap;
+
+  /// An honest distance line ("1.2 km from the center") — null hides it.
+  final String? distanceText;
 
   final VoidCallback? onTap;
   final ValueChanged<bool>? onFavorite;
@@ -75,18 +91,22 @@ class OverlapStayCard extends StatelessWidget {
     super.key,
     this.margin,
     this.semanticsLabel = 'Loading',
+    this.aspectRatio = 4 / 3,
   }) : media = const SizedBox.shrink(),
        title = '',
        amountText = '',
        currency = '',
        unit = null,
+       starClass = null,
        rating = null,
        reviewCount = null,
+       location = null,
+       onLocationTap = null,
+       distanceText = null,
        onTap = null,
        onFavorite = null,
        isFavorite = false,
        enabled = false,
-       aspectRatio = 4 / 3,
        heartSize = 32;
 
   bool get _isSkeleton => title.isEmpty && amountText.isEmpty;
@@ -165,12 +185,24 @@ class OverlapStayCard extends StatelessWidget {
                 color: AppColors.textPrimary,
               ),
             ),
-            if (rating != null) ...<Widget>[
+            if (starClass != null || rating != null) ...<Widget>[
               const SizedBox(height: AppSpacing.xs),
-              _RatingLine(rating: rating!, reviewCount: reviewCount),
+              _RatingLine(
+                starClass: starClass,
+                rating: rating,
+                reviewCount: reviewCount,
+              ),
+            ],
+            if (location case final String place) ...<Widget>[
+              const SizedBox(height: AppSpacing.xxs),
+              _LocationLine(text: place, onTap: onLocationTap),
+            ],
+            if (distanceText case final String distance) ...<Widget>[
+              const SizedBox(height: AppSpacing.xxs),
+              _DistanceLine(text: distance),
             ],
             if (amountText.isNotEmpty) ...<Widget>[
-              SizedBox(height: rating != null ? AppSpacing.sm : AppSpacing.xs),
+              const SizedBox(height: AppSpacing.sm),
               Align(
                 alignment: AlignmentDirectional.centerEnd,
                 child: _PriceLine(
@@ -188,41 +220,153 @@ class OverlapStayCard extends StatelessWidget {
 
   String get _autoSemantics {
     final List<String> parts = <String>[title];
+    if (starClass != null) parts.add('$starClass-star hotel');
     if (rating != null) parts.add(rating!.toStringAsFixed(1));
     if (reviewCount != null) parts.add('($reviewCount)');
+    if (location case final String place) parts.add(place);
+    if (distanceText case final String distance) parts.add(distance);
     parts.add('$amountText $currency${unit == null ? '' : ' / $unit'}');
     return parts.join(', ');
   }
 }
 
 class _RatingLine extends StatelessWidget {
-  const _RatingLine({required this.rating, this.reviewCount});
+  const _RatingLine({
+    required this.starClass,
+    required this.rating,
+    this.reviewCount,
+  });
 
-  final double rating;
+  final int? starClass;
+  final double? rating;
   final int? reviewCount;
 
   @override
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
+    final int? stars = starClass;
+    final double? score = rating;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        const Icon(Icons.star_rounded, size: 14, color: AppColors.starFill),
-        const SizedBox(width: AppSpacing.xxs),
-        Text(
-          rating.toStringAsFixed(1),
-          style: typography.caption.copyWith(
+        if (stars != null) ...<Widget>[
+          const Icon(
+            Icons.star_outline_rounded,
+            size: 14,
             color: AppColors.textSecondary,
-            fontWeight: FontWeight.w600,
           ),
-        ),
-        if (reviewCount != null) ...<Widget>[
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: AppSpacing.xxs),
           Text(
-            '($reviewCount)',
-            style: typography.caption.copyWith(color: AppColors.textSecondary),
+            '$stars',
+            style: typography.caption.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
+        if (stars != null && score != null) ...<Widget>[
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            '·',
+            style: typography.caption.copyWith(color: AppColors.textTertiary),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+        ],
+        if (score != null) ...<Widget>[
+          const Icon(Icons.star_rounded, size: 14, color: AppColors.starFill),
+          const SizedBox(width: AppSpacing.xxs),
+          Text(
+            score.toStringAsFixed(1),
+            style: typography.caption.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (reviewCount != null) ...<Widget>[
+            const SizedBox(width: AppSpacing.xs),
+            Text(
+              '($reviewCount)',
+              style: typography.caption.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ],
+      ],
+    );
+  }
+}
+
+class _LocationLine extends StatelessWidget {
+  const _LocationLine({required this.text, this.onTap});
+
+  final String text;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final typography = AppTypography.forLight();
+    final Widget row = Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+      child: Row(
+        children: <Widget>[
+          const Icon(
+            Icons.place_outlined,
+            size: 14,
+            color: AppColors.textSecondary,
+          ),
+          const SizedBox(width: AppSpacing.xxs),
+          Expanded(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: typography.caption.copyWith(
+                color: AppColors.textSecondary,
+                decoration: onTap == null ? null : TextDecoration.underline,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (onTap == null) return row;
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: row,
+      ),
+    );
+  }
+}
+
+class _DistanceLine extends StatelessWidget {
+  const _DistanceLine({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        const Icon(
+          Icons.near_me_outlined,
+          size: 14,
+          color: AppColors.textTertiary,
+        ),
+        const SizedBox(width: AppSpacing.xxs),
+        Expanded(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.forLight().caption.copyWith(
+              color: AppColors.textTertiary,
+            ),
+          ),
+        ),
       ],
     );
   }

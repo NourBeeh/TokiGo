@@ -12,7 +12,7 @@ import 'package:tokigo/l10n/app_localizations.dart';
 /// The icon that stands for a vertical (also the card's photo fallback).
 IconData tripTypeIcon(String type) {
   return switch (type) {
-    'hotel' => Icons.hotel_rounded,
+    'hotel' => Icons.house_rounded,
     'flight' => Icons.flight_takeoff_rounded,
     'car' => Icons.directions_car_rounded,
     'package' => Icons.card_travel_rounded,

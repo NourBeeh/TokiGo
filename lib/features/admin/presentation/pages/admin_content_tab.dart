@@ -622,7 +622,7 @@ class _CardRow extends StatelessWidget {
       case 'flight':
         return Icons.flight_rounded;
       case 'hotel':
-        return Icons.hotel_rounded;
+        return Icons.house_rounded;
       case 'car':
         return Icons.directions_car_rounded;
       case 'package':

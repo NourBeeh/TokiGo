@@ -412,14 +412,12 @@ class _BookingRecapCard extends StatelessWidget {
               value: localizedMediumDate(context, endsAt),
               typography: typography,
             ),
-            // Sandbox simulated booking (4B/4E — no real Stripe/PSP yet)
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              'Sandbox simulated booking — no real charge',
-              style: typography.caption.copyWith(
-                color: AppColors.info,
-              ),
-            ),
+          // Sandbox simulated booking (4B/4E — no real Stripe/PSP yet)
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Sandbox simulated booking — no real charge',
+            style: typography.caption.copyWith(color: AppColors.info),
+          ),
           // Simplified sandbox passenger info (4D — simplified passenger data)
           const SizedBox(height: AppSpacing.sm),
           Text(
@@ -491,7 +489,7 @@ class _BookingRecapCard extends StatelessWidget {
 
   IconData _typeIcon(String type) {
     return switch (type) {
-      'hotel' => Icons.hotel_rounded,
+      'hotel' => Icons.house_rounded,
       'car' => Icons.directions_car_rounded,
       'package' => Icons.card_travel_rounded,
       _ => Icons.flight_takeoff_rounded,

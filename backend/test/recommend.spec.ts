@@ -232,8 +232,17 @@ describe('RecommendedHotelService — ISO-2 country is always sent', () => {
 
     expect(result.countryCode).toBe('EG');
     expect(result.confidence).toBe('default');
-    // EG has 4 cities in the curated map — one search each, never a world scan.
-    expect(nuitee.searchHotels).toHaveBeenCalledTimes(4);
+    // EG has 4 cities in the curated map — one search per city per scanned
+    // night, and never a world scan.
+    const cities = new Set(
+      nuitee.searchHotels.mock.calls.map((c: any[]) => c[0].city),
+    );
+    expect([...cities].sort()).toEqual([
+      'Cairo',
+      'Hurghada',
+      'Luxor',
+      'Sharm El Sheikh',
+    ]);
     expect(nuitee.searchHotels.mock.calls.every((c: any[]) => c[0].country === 'EG')).toBe(true);
   });
 
@@ -267,8 +276,10 @@ describe('RecommendedHotelService — snapshot cache', () => {
 
     expect(sets).toHaveLength(1);
     expect(sets[0].ttl).toBe(5 * 60);
+    // One date per scanned night, comma separated: the window IS the cache
+    // identity, so a snapshot can never be served for a night it did not price.
     expect(sets[0].key).toMatch(
-      /^home:recommended:FR:6:\d{4}-\d{2}-\d{2}:\d{4}-\d{2}-\d{2}$/,
+      /^home:recommended:FR:6:\d{4}-\d{2}-\d{2}(,\d{4}-\d{2}-\d{2})*$/,
     );
   });
 
@@ -336,6 +347,9 @@ describe('RecommendedHotelService — provenance survives ranking', () => {
       providerOfferId: 'offer-paris-1',
       providerHotelId: 'hotel-paris-1',
       refundable: true,
+      // The card labels this amount "/ night": the rate was quoted for ONE
+      // night, so the number the traveller reads is a nightly price.
+      pricePerNight: 220,
     });
   });
 });
@@ -412,5 +426,86 @@ describe('RecommendedHotelService — AI re-ranking is opt-in', () => {
     await service.recommend({ countryCode: 'FR', limit: 6 });
 
     expect(ai.generate).not.toHaveBeenCalled();
+  });
+});
+
+describe('RecommendedHotelService — the card prices ONE night', () => {
+  it('asks the provider for a single-night window every time', async () => {
+    const nuitee = fakeNuitee();
+    const service = makeService(nuitee, fakeAi(null), fakeProfiles());
+
+    await service.recommend({ countryCode: 'FR', limit: 6 });
+
+    expect(nuitee.searchHotels.mock.calls.length).toBeGreaterThan(0);
+    for (const call of nuitee.searchHotels.mock.calls) {
+      const nights =
+        (Date.parse(call[0].checkOut) - Date.parse(call[0].checkIn)) /
+        86_400_000;
+      expect(nights).toBe(1);
+    }
+  });
+
+  it('scans the nights of ONE calendar month, starting today or later', async () => {
+    const nuitee = fakeNuitee();
+    const service = makeService(nuitee, fakeAi(null), fakeProfiles());
+
+    await service.recommend({ countryCode: 'FR', limit: 6 });
+
+    const today = new Date().toISOString().slice(0, 10);
+    const months = new Set<string>();
+    for (const call of nuitee.searchHotels.mock.calls) {
+      // The adapter sends Dates; compare the calendar days they name.
+      const day = new Date(call[0].checkIn).toISOString().slice(0, 10);
+      // Never a night in the past.
+      expect(day >= today).toBe(true);
+      months.add(day.slice(0, 7));
+    }
+    // ONE month's nights: the current one — or the next one when the current
+    // month has no night left to sell (its last day).
+    expect(months.size).toBe(1);
+  });
+
+  it('keeps the CHEAPEST night and states it as the nightly price', async () => {
+    // The same hotel, a different rate per scanned night: 300, then 120.
+    let call = 0;
+    const nuitee = {
+      searchHotels: jest.fn().mockImplementation(async (params: any) => {
+        call += 1;
+        const price = call === 1 ? 300 : 120;
+        return {
+          success: true,
+          data: [
+            {
+              id: `rate-${params.checkIn}`,
+              title: 'Same Hotel',
+              city: 'Paris',
+              price,
+              currency: 'USD',
+              checkIn: params.checkIn,
+              checkOut: params.checkOut,
+              metadata: {
+                providerRateId: `rate-${params.checkIn}`,
+                providerHotelId: 'h1',
+              },
+            },
+          ],
+        };
+      }),
+    } as any;
+
+    const service = makeService(nuitee, fakeAi(null), fakeProfiles());
+    const result = await service.recommend({ countryCode: 'FR', limit: 6 });
+
+    expect(result.hotels).toHaveLength(1);
+    const hotel = result.hotels[0];
+    expect(hotel.price).toBe(120);
+    expect(hotel.pricePerNight).toBe(120);
+    expect(hotel.metadata?.pricePerNight).toBe(120);
+    // The stated window is the night that price belongs to, never the first
+    // night scanned.
+    const asked = nuitee.searchHotels.mock.calls.map((c: any[]) => c[0].checkIn);
+    expect(asked.length).toBeGreaterThan(1);
+    expect(asked).toContain(hotel.checkIn);
+    expect(hotel.checkIn).not.toBe(asked[0]);
   });
 });

@@ -11,11 +11,6 @@ import 'config/app_config.dart';
 import 'router/go_router_config.dart';
 import '../shared/providers/locale_provider.dart';
 
-/// Root widget for TokiGo.
-///
-/// Mounts the light-only "Pure White Premium" theme, the en/ar localization
-/// delegates, and the go-router shell. Riverpod is provided above this widget
-/// in `main.dart`.
 class TokiGoApp extends ConsumerWidget {
   const TokiGoApp({super.key});
 
@@ -25,7 +20,10 @@ class TokiGoApp extends ConsumerWidget {
     final locale = ref.watch(localeProvider);
 
     return MaterialApp.router(
-      title: AppConfig.appName,
+      onGenerateTitle: (BuildContext context) {
+        final AppLocalizations? l10n = AppLocalizations.of(context);
+        return l10n?.appTitle ?? AppConfig.appName;
+      },
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       locale: locale,
@@ -36,19 +34,11 @@ class TokiGoApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      // Edge-to-edge (enforced from targetSdk 35): the only place the system
-      // bars' contrast is decided for the whole app, since every page draws its
-      // own header instead of an AppBar.
       builder: (BuildContext context, Widget? child) {
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: AppTheme.systemOverlay,
-          // The offline strip lives ABOVE the router, so every page shows it —
-          // and only when the backend really could not be reached.
           child: ListenableBuilder(
             listenable: NetworkStatus.instance,
-            // NOTE: the inner parameter is NOT named `child` — that would
-            // shadow the router's child and leave the app with nothing to
-            // draw.
             builder: (BuildContext context, Widget? _) {
               final MediaQueryData media = MediaQuery.of(context);
               final bool offline = !NetworkStatus.instance.online;
@@ -58,14 +48,15 @@ class TokiGoApp extends ConsumerWidget {
                     const SafeArea(bottom: false, child: OfflineBanner()),
                   Expanded(
                     child: MediaQuery(
-                      // The banner already cleared the status bar, so the
-                      // pages must not pad for it a second time.
                       data: media.copyWith(
                         padding: media.padding.copyWith(
                           top: offline ? 0 : media.padding.top,
                         ),
                       ),
-                      child: child ?? const SizedBox.shrink(),
+                      child: ScrollConfiguration(
+                        behavior: const _SmoothScrollBehavior(),
+                        child: child ?? const SizedBox.shrink(),
+                      ),
                     ),
                   ),
                 ],
@@ -77,4 +68,20 @@ class TokiGoApp extends ConsumerWidget {
       routerConfig: router,
     );
   }
+}
+
+class _SmoothScrollBehavior extends ScrollBehavior {
+  const _SmoothScrollBehavior();
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) =>
+      const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) =>
+      child;
 }

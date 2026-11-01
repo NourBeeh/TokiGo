@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
+import 'package:tokigo/core/network/image_proxy.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -51,12 +52,23 @@ class OfferDetailsHeroBand extends StatelessWidget {
                   if (url != null) ...<Widget>[
                     ClipOval(
                       child: Image.network(
-                        url,
+                        ImageProxy.proxied(
+                              url,
+                              width: ImageProxy.logoWidth,
+                            ) ??
+                            url,
                         width: 40,
                         height: 40,
                         fit: BoxFit.cover,
                         cacheWidth: logoDecodeWidth,
-                        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                        errorBuilder: (_, _, _) => Image.network(
+                          url,
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.cover,
+                          cacheWidth: logoDecodeWidth,
+                          errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                        ),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
@@ -85,10 +97,15 @@ class OfferDetailsHeroBand extends StatelessWidget {
       fit: StackFit.expand,
       children: <Widget>[
         Image.network(
-          url,
+          ImageProxy.proxied(url, width: ImageProxy.heroWidth) ?? url,
           fit: BoxFit.cover,
           cacheWidth: heroDecodeWidth,
-          errorBuilder: (_, _, _) => _HueFallback(hue: hue),
+          errorBuilder: (_, _, _) => Image.network(
+            url,
+            fit: BoxFit.cover,
+            cacheWidth: heroDecodeWidth,
+            errorBuilder: (_, _, _) => _HueFallback(hue: hue),
+          ),
         ),
         const DecoratedBox(
           decoration: BoxDecoration(

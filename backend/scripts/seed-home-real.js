@@ -4,10 +4,13 @@
  *   1. "Hotels recommended for you" — the stays `/home/recommended` really
  *      returns (card A: photo, rating, price, all the provider's own numbers).
  *   2. "Discover" — the cities those stays are in (card D: the small city
- *      tile), with the photo of a real stay in that city.
+ *      tile), with the city's own Wikipedia/Commons photo (a hotel room photo
+ *      is not a photo of the place the card names).
  *
- * Nothing here is invented: every title, price, rating, count and photo comes
- * from the provider's response. A city with no stays is simply not published.
+ * Nothing here is invented: every title, price, rating and count comes from the
+ * provider's response; the city photo comes from the city's own Wikidata image
+ * with the attribution its licence requires. A city with no stays is simply not
+ * published.
  *
  * The rows are written with FIXED ids, so re-running replaces them in place
  * and never duplicates. `npm run seed:home:clean` removes them again.
@@ -18,6 +21,8 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
 
 const { Client } = require('pg');
+const { countryCodeFor, countryNameFor } = require('./lib/countries');
+const { cityImageFor } = require('./lib/destination-image');
 
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
@@ -129,15 +134,32 @@ async function fetchStays() {
   // The cities the provider really has stays in: the recommended feed first,
   // then the app's own destination list (a city with no stays is not
   // published — the tile would be an empty promise).
+  //
+  // The feed answers with ISO codes ("EG") and the list above with names
+  // ("Egypt"); both resolve to ONE key, otherwise the same city would be
+  // published twice under two country spellings.
   const cities = new Map();
-  const remember = (city, country, stay) => {
-    const key = `${city}|${country}`;
-    if (!cities.has(key)) {
-      cities.set(key, { city, country, photo: stay?.imageUrl || null, count: 0 });
+  const cityKey = (city, country) => {
+    const code = countryCodeFor(country) ?? String(country ?? '').trim().toUpperCase();
+    return {
+      key: `${String(city ?? '').trim().toLowerCase()}|${code}`,
+      code: code || null,
+      country: countryNameFor(country) || null,
+    };
+  };
+  const remember = (city, country) => {
+    const resolved = cityKey(city, country);
+    if (!cities.has(resolved.key)) {
+      cities.set(resolved.key, {
+        city: String(city).trim(),
+        country: resolved.country,
+        code: resolved.code,
+        count: 0,
+      });
     }
-    const entry = cities.get(key);
+    const entry = cities.get(resolved.key);
     entry.count += 1;
-    if (!entry.photo && stay?.imageUrl) entry.photo = stay.imageUrl;
+    return entry;
   };
 
   for (const stay of stays) {
@@ -151,19 +173,22 @@ async function fetchStays() {
     // does — so the two never publish the same city twice.
     const known = CITIES.find((c) => c.name.toLowerCase() === city.toLowerCase());
     const country = (stay.country || '').trim() || (known ? known.country : '');
-    remember(city, country, stay);
+    remember(city, country);
   }
 
   for (const candidate of CITIES) {
-    if (cities.has(`${candidate.name}|${candidate.country}`)) continue;
+    const key = cityKey(candidate.name, candidate.country).key;
+    if (cities.has(key)) continue;
     const offers = await searchCity(candidate);
     if (offers.length === 0) continue;
-    const first = offers[0];
-    remember(candidate.name, candidate.country, {
-      imageUrl: first?.imageUrl || null,
-    });
     // The real count of stays the provider returned for that city.
-    cities.get(`${candidate.name}|${candidate.country}`).count = offers.length;
+    remember(candidate.name, candidate.code).count = offers.length;
+  }
+
+  // Real city photography (not a hotel photo): resolved once per published
+  // city, with the attribution Commons requires. Null → honest placeholder.
+  for (const entry of cities.values()) {
+    entry.photo = await cityImageFor(entry.city);
   }
 
   const client = new Client(dbConfig);
@@ -171,11 +196,19 @@ async function fetchStays() {
   try {
     await client.query('BEGIN');
 
-    // Start from a clean slate for the two sections we own, so a shorter
-    // list never leaves a stale card behind.
+    // Start from a clean slate for the rows this script owns, so a shorter
+    // list never leaves a stale card behind. The authored destination cities
+    // (20000000-…-011…017, owned by add-destination-cities.js) are NOT ours to
+    // delete — re-seeding the recommended stays must not unpublish them.
     await client.query(
-      'DELETE FROM home_cards WHERE "sectionId" IN ($1, $2)',
-      [SECTIONS.stays.id, SECTIONS.discover.id],
+      'DELETE FROM home_cards WHERE "sectionId" = $1',
+      [SECTIONS.stays.id],
+    );
+    await client.query(
+      `DELETE FROM home_cards
+        WHERE "sectionId" = $1
+          AND id::text LIKE '20000000-0000-4000-8000-0000000001%'`,
+      [SECTIONS.discover.id],
     );
 
     await client.query(
@@ -241,7 +274,21 @@ async function fetchStays() {
             metadata: {
               city: stay.city || null,
               country: stay.country || null,
-              providerId: stay.providerId || null,
+              // `/home/recommended` nests the provider provenance under
+              // `metadata`; the card needs it to open the rate it shows.
+              providerId: stay.metadata?.providerId ?? null,
+              providerName: stay.metadata?.providerName ?? null,
+              // The rate's own window and nightly figure. `/home/recommended`
+              // prices ONE night (the cheapest the current month still sells),
+              // so `price` and `pricePerNight` agree — and the card opens the
+              // details page for the exact night it shows instead of guessing
+              // dates or falling back to a fresh city search.
+              checkIn: stay.checkIn || null,
+              checkOut: stay.checkOut || null,
+              pricePerNight: stay.pricePerNight ?? stay.price ?? null,
+              providerRateId: stay.metadata?.providerRateId ?? null,
+              providerOfferId: stay.metadata?.providerOfferId ?? null,
+              providerHotelId: stay.metadata?.providerHotelId ?? null,
               // These ARE the recommended stays, so the Home must not also
               // render its standalone list of the same stays.
               semanticId: 'picked-for-you',
@@ -255,8 +302,29 @@ async function fetchStays() {
 
     // The cities (card D) — a city tile carries no price of its own: the
     // card shows the city, its country and how many real stays are in it.
+    //
+    // A city another script already published (add-destination-cities.js owns
+    // Dahab…Rovaniemi) must not be inserted a second time just because the
+    // recommended feed now happens to include it: one city, one card.
+    const existing = await client.query(
+      `select content->>'title' as title, content->'metadata' as metadata
+         from home_cards
+        where "sectionId" = $1 and "cardType" = 'destination'`,
+      [SECTIONS.discover.id],
+    );
+    const alreadyPublished = new Set(
+      existing.rows.map((row) =>
+        cityKey(row.title, row.metadata?.country ?? row.metadata?.countryCode).key,
+      ),
+    );
+
     index = 1;
+    let publishedCities = 0;
     for (const entry of cities.values()) {
+      if (alreadyPublished.has(cityKey(entry.city, entry.code).key)) {
+        console.log(`skip  ${entry.city} — already published by another script`);
+        continue;
+      }
       await client.query(
         `INSERT INTO home_cards (id, "sectionId", "cardType", content, "order", "isVisible", status)
          VALUES ($1,$2,'destination',$3::jsonb,$4,true,'published')
@@ -271,21 +339,30 @@ async function fetchStays() {
           JSON.stringify({
             title: entry.city,
             subtitle: entry.country || null,
-            imageUrl: entry.photo,
+            imageUrl: entry.photo?.imageUrl ?? null,
             metadata: {
               country: entry.country || null,
+              countryCode: entry.code || null,
               staysCount: entry.count,
+              ...(entry.photo
+                ? {
+                    imageCredit: entry.photo.imageCredit,
+                    imageLicense: entry.photo.imageLicense,
+                    imageSource: entry.photo.imageSource,
+                  }
+                : {}),
             },
           }),
           index,
         ],
       );
       index += 1;
+      publishedCities += 1;
     }
 
     await client.query('COMMIT');
     console.log(
-      `Published 2 real sections: ${stays.length} stays and ${cities.size} cities.`,
+      `Published 2 real sections: ${stays.length} stays and ${publishedCities} cities.`,
     );
   } catch (error) {
     await client.query('ROLLBACK');

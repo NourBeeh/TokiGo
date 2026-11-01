@@ -127,7 +127,7 @@ class WishlistPage extends ConsumerWidget {
     if (embedded) return content;
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(bottom: false, child: content),
+      body: SafeArea(child: content),
     );
   }
 

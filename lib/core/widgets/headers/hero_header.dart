@@ -3,6 +3,7 @@ import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/ui/app_wordmark.dart';
 import 'package:tokigo/core/widgets/cards/card.dart';
 import 'package:tokigo/core/widgets/cards/card_image.dart';
 import 'package:go_router/go_router.dart';
@@ -179,9 +180,12 @@ class _PlaceholderGradient extends StatelessWidget {
     height: height,
     width: double.infinity,
     child: Center(
-      child: Text(
-        'TokiGo',
-        style: AppTypography.forLight().priceHero,
+      // The placeholder is a brand surface too: it draws the real logotype
+      // through [AppWordmark] instead of a one-colour "TokiGo" string, so the
+      // mark can never drift from the splash asset.
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: AppWordmark(base: AppTypography.forLight().priceHero),
       ),
     ),
   );

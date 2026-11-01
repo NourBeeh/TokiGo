@@ -42,6 +42,33 @@ services:
       retries: 10
       start_period: 10s
 
+  # Shared cache. Optional: the backend runs on its in-memory map when
+  # REDIS_HOST is unset, so this service only matters for multi-instance or
+  # restart-surviving caches. Enable it by setting REDIS_HOST=localhost in
+  # backend/.env — the Redis provider falls back to memory on any error.
+  redis:
+    image: redis:7-alpine
+    container_name: wetravellers-redis
+    restart: unless-stopped
+    # A cache, not a database: cap memory and evict least-recently-used keys
+    # instead of letting Redis grow until the host OOMs.
+    command:
+      - redis-server
+      - --maxmemory
+      - ${REDIS_MAXMEMORY:-256mb}
+      - --maxmemory-policy
+      - allkeys-lru
+      - --appendonly
+      - "no"
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
 volumes:
   pgdata:
     name: wetravellers_pgdata

@@ -8,7 +8,7 @@ enum AppRoute {
   home('Home', Icons.home_outlined, Icons.home),
   search('Search', Icons.search_outlined, Icons.search),
   flights('Flights', Icons.flight, Icons.flight),
-  hotels('Hotels', Icons.hotel_outlined, Icons.hotel),
+  hotels('Stays', Icons.house_rounded, Icons.house_rounded),
   cars('Cars', Icons.directions_car_outlined, Icons.directions_car),
   packages('Tour programs', Icons.beach_access_outlined, Icons.beach_access),
   transfers(

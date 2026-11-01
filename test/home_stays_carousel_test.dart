@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/widgets/cards/overlap_stay_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stay_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stays_carousel.dart';
 
@@ -14,6 +15,7 @@ import 'package:tokigo/features/home/presentation/widgets/home_stays_carousel.da
 /// * one page per stay, and the pager is horizontal (not a vertical stack);
 /// * a swipe advances exactly ONE card and the pager lands on it — no free
 ///   scrolling that leaves two halves of two stays on screen;
+/// * the current card takes 80% of the rail and the next card peeks by 20%;
 /// * the same gesture works in Arabic (RTL), where "next" is a drag the other
 ///   way;
 /// * a large text scale still renders the price (the rail grows with it).
@@ -92,25 +94,30 @@ void main() {
     await tester.pumpWidget(_host(_threeStays()));
     await tester.pumpAndSettle();
 
-    final double viewportCenter =
-        tester.view.physicalSize.width / tester.view.devicePixelRatio / 2;
-
-    // The first stay starts centred.
+    final Rect viewport = tester.getRect(find.byType(PageView));
+    final Rect firstCard = tester.getRect(_card('stay-a'));
+    final Rect nextCard = tester.getRect(_card('stay-b'));
+    expect(firstCard.left, closeTo(viewport.left, 1));
+    expect(firstCard.width, closeTo(viewport.width * 0.8, 1));
     expect(
-      tester.getRect(_card('stay-a')).center.dx,
-      closeTo(viewportCenter, 1),
+      tester
+          .widget<OverlapStayCard>(find.byType(OverlapStayCard).first)
+          .aspectRatio,
+      HomeStaysCarousel.mediaAspectRatio,
+    );
+    expect(
+      nextCard.intersect(viewport).width,
+      closeTo(viewport.width * 0.2, 1),
     );
 
     await tester.drag(find.byType(PageView), const Offset(-400, 0));
     await tester.pumpAndSettle();
 
-    // The SECOND stay is now the one that owns the centre: one swipe, one
-    // card — no half-card resting position.
-    expect(
-      tester.getRect(_card('stay-b')).center.dx,
-      closeTo(viewportCenter, 1),
-    );
-    expect(tester.getRect(_card('stay-a')).center.dx, lessThan(viewportCenter));
+    // One gesture advances the controller exactly one page.
+    final PageController controller = tester
+        .widget<PageView>(find.byType(PageView))
+        .controller!;
+    expect(controller.page, closeTo(1, 0.001));
   });
 
   testWidgets('a swipe in Arabic moves the same way physically', (
@@ -124,12 +131,10 @@ void main() {
     await tester.drag(find.byType(PageView), const Offset(400, 0));
     await tester.pumpAndSettle();
 
-    final double viewportCenter =
-        tester.view.physicalSize.width / tester.view.devicePixelRatio / 2;
-    expect(
-      tester.getRect(_card('stay-b')).center.dx,
-      closeTo(viewportCenter, 1),
-    );
+    final PageController controller = tester
+        .widget<PageView>(find.byType(PageView))
+        .controller!;
+    expect(controller.page, closeTo(1, 0.001));
   });
 
   testWidgets('a large text scale keeps the price on screen', (

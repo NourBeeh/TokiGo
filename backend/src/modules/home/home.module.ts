@@ -5,6 +5,7 @@ import { HomeCard } from '../../database/entities/home_card.entity';
 import { NuiteeModule } from '../nuitee/nuitee.module';
 import { CacheModule } from '../cache/cache.module';
 import { DuffelModule } from '../duffel/duffel.module';
+import { AiModule } from '../ai/ai.module';
 import { HomeController } from './home.controller';
 import { HomeService } from './home.service';
 import { HomeFlightsService } from './home.flights.service';
@@ -17,6 +18,7 @@ import { HomeFlightsService } from './home.flights.service';
     NuiteeModule,
     DuffelModule,
     CacheModule,
+    AiModule,
   ],
   controllers: [HomeController],
   providers: [HomeService, HomeFlightsService],

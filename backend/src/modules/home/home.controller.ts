@@ -14,6 +14,8 @@ export class HomeController {
     return this.homeService.getSections();
   }
 
+
+
   /**
    * NOTE: `GET /home/recommended` is NOT served here. The single owner is
    * `RecommendedHotelsController` (modules/recommend), which is country-aware,

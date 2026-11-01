@@ -10,7 +10,7 @@
   "notifications": "Notifications",
   "profile": "Profile",
   "profileGuestTitle": "You're browsing as a guest",
-  "profileGuestBody": "Sign in to keep your trips, saved places and preferences.",
+  "profileGuestBody": "Sign in to keep your trips and preferences.",
   "profileTraveller": "Traveller",
   "profileErrorTitle": "We couldn't load your account",
   "back": "Back",
@@ -89,12 +89,12 @@
       "name": {}
     }
   },
-  "homeStaysTitle": "Hotels recommended",
+  "homeStaysTitle": "Stays recommended",
   "homeContinuePlanning": "Continue planning",
   "homeWelcome": "Welcome back",
   "homeWelcomeSub": "Trips and ideas picked for you",
   "searchFlights": "Flights",
-  "searchHotels": "Hotels",
+  "searchHotels": "Stays",
   "searchCars": "Cars Rental",
   "searchPackages": "Holidays",
   "homeNavActivities": "Activities",
@@ -724,5 +724,44 @@
   "locationChooseCountry": "Choose country manually",
   "locationCountrySaveFailed": "Couldn't save your country. Please try again.",
   "settingsCountry": "Country",
-  "settingsCountryNotSet": "Choose a country"
+  "editProfile": "Edit profile",
+  "firstName": "First name",
+  "middleName": "Middle name",
+  "lastName": "Last name",
+  "dateOfBirth": "Date of birth",
+  "email": "Email",
+  "phoneNumber": "Phone number",
+  "gender": "Gender",
+  "genderMale": "Male",
+  "genderFemale": "Female",
+  "genderOther": "Other",
+  "genderPreferNotToSay": "Prefer not to say",
+  "nationality": "Nationality",
+  "avatarUrl": "Avatar URL",
+  "save": "Save",
+  "profileSaved": "Profile saved",
+  "settingsCountryNotSet": "Choose a country",
+  "homeCityExploreStays": "Explore stays",
+  "homeCityAbout": "About the city",
+  "homeCityOverviewFallback": "Find your stay in {city} and explore everything the city has to offer.",
+  "@homeCityOverviewFallback": {
+    "placeholders": {
+      "city": {}
+    }
+  },
+  "homeCityNotFoundTitle": "City not found",
+  "homeCityNotFoundBody": "Go back to Discover and choose a city.",
+  "homeCityPhotoCredit": "Photo: {credit}",
+  "@homeCityPhotoCredit": {
+    "placeholders": {
+      "credit": {}
+    }
+  },
+  "hotelDistanceFromCenter": "{distance} km from the center",
+  "@hotelDistanceFromCenter": {
+    "placeholders": {
+      "distance": {}
+    }
+  },
+  "hotelOpenLocationInMaps": "Open location in maps"
 }

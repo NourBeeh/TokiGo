@@ -62,8 +62,7 @@ import 'app_localizations_en.dart';
 /// be consistent with the languages listed in the AppLocalizations.supportedLocales
 /// property.
 abstract class AppLocalizations {
-  AppLocalizations(String locale)
-    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  AppLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -71,8 +70,7 @@ abstract class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate =
-      _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
 
   /// A list of this localizations delegate along with the default localizations
   /// delegates.
@@ -84,18 +82,17 @@ abstract class AppLocalizations {
   /// Additional delegates can be added by appending to this list in
   /// MaterialApp. This list does not have to be used at all if a custom list
   /// of delegates is preferred or required.
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
-      <LocalizationsDelegate<dynamic>>[
-        delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ];
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
+    delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+  ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('ar'),
-    Locale('en'),
+    Locale('en')
   ];
 
   /// No description provided for @appTitle.
@@ -161,7 +158,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileGuestBody.
   ///
   /// In en, this message translates to:
-  /// **'Sign in to keep your trips, saved places and preferences.'**
+  /// **'Sign in to keep your trips and preferences.'**
   String get profileGuestBody;
 
   /// No description provided for @profileTraveller.
@@ -545,7 +542,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeStaysTitle.
   ///
   /// In en, this message translates to:
-  /// **'Hotels recommended'**
+  /// **'Stays recommended'**
   String get homeStaysTitle;
 
   /// No description provided for @homeContinuePlanning.
@@ -575,7 +572,7 @@ abstract class AppLocalizations {
   /// No description provided for @searchHotels.
   ///
   /// In en, this message translates to:
-  /// **'Hotels'**
+  /// **'Stays'**
   String get searchHotels;
 
   /// No description provided for @searchCars.
@@ -3236,15 +3233,158 @@ abstract class AppLocalizations {
   /// **'Country'**
   String get settingsCountry;
 
+  /// No description provided for @editProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit profile'**
+  String get editProfile;
+
+  /// No description provided for @firstName.
+  ///
+  /// In en, this message translates to:
+  /// **'First name'**
+  String get firstName;
+
+  /// No description provided for @middleName.
+  ///
+  /// In en, this message translates to:
+  /// **'Middle name'**
+  String get middleName;
+
+  /// No description provided for @lastName.
+  ///
+  /// In en, this message translates to:
+  /// **'Last name'**
+  String get lastName;
+
+  /// No description provided for @dateOfBirth.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of birth'**
+  String get dateOfBirth;
+
+  /// No description provided for @email.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get email;
+
+  /// No description provided for @phoneNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number'**
+  String get phoneNumber;
+
+  /// No description provided for @gender.
+  ///
+  /// In en, this message translates to:
+  /// **'Gender'**
+  String get gender;
+
+  /// No description provided for @genderMale.
+  ///
+  /// In en, this message translates to:
+  /// **'Male'**
+  String get genderMale;
+
+  /// No description provided for @genderFemale.
+  ///
+  /// In en, this message translates to:
+  /// **'Female'**
+  String get genderFemale;
+
+  /// No description provided for @genderOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get genderOther;
+
+  /// No description provided for @genderPreferNotToSay.
+  ///
+  /// In en, this message translates to:
+  /// **'Prefer not to say'**
+  String get genderPreferNotToSay;
+
+  /// No description provided for @nationality.
+  ///
+  /// In en, this message translates to:
+  /// **'Nationality'**
+  String get nationality;
+
+  /// No description provided for @avatarUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Avatar URL'**
+  String get avatarUrl;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @profileSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile saved'**
+  String get profileSaved;
+
   /// No description provided for @settingsCountryNotSet.
   ///
   /// In en, this message translates to:
   /// **'Choose a country'**
   String get settingsCountryNotSet;
+
+  /// No description provided for @homeCityExploreStays.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore stays'**
+  String get homeCityExploreStays;
+
+  /// No description provided for @homeCityAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About the city'**
+  String get homeCityAbout;
+
+  /// No description provided for @homeCityOverviewFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Find your stay in {city} and explore everything the city has to offer.'**
+  String homeCityOverviewFallback(Object city);
+
+  /// No description provided for @homeCityNotFoundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'City not found'**
+  String get homeCityNotFoundTitle;
+
+  /// No description provided for @homeCityNotFoundBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Go back to Discover and choose a city.'**
+  String get homeCityNotFoundBody;
+
+  /// No description provided for @homeCityPhotoCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo: {credit}'**
+  String homeCityPhotoCredit(Object credit);
+
+  /// No description provided for @hotelDistanceFromCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'{distance} km from the center'**
+  String hotelDistanceFromCenter(Object distance);
+
+  /// No description provided for @hotelOpenLocationInMaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Open location in maps'**
+  String get hotelOpenLocationInMaps;
 }
 
-class _AppLocalizationsDelegate
-    extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -3253,26 +3393,25 @@ class _AppLocalizationsDelegate
   }
 
   @override
-  bool isSupported(Locale locale) =>
-      <String>['ar', 'en'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>['ar', 'en'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {
+
+
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
-    case 'ar':
-      return AppLocalizationsAr();
-    case 'en':
-      return AppLocalizationsEn();
+    case 'ar': return AppLocalizationsAr();
+    case 'en': return AppLocalizationsEn();
   }
 
   throw FlutterError(
     'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
     'an issue with the localizations generation tool. Please file an issue '
     'on GitHub with a reproducible sample app and the gen-l10n configuration '
-    'that was used.',
+    'that was used.'
   );
 }

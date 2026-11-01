@@ -7,6 +7,8 @@ import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_button.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:tokigo/core/geo/location_permission_providers.dart';
 import 'package:tokigo/core/ui/app_wordmark.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
@@ -52,7 +54,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       body: l10n.onboardingHeroBody,
       icons: const <IconData>[
         Icons.flight_takeoff_rounded,
-        Icons.hotel_rounded,
+        Icons.house_rounded,
         Icons.directions_car_rounded,
         Icons.card_travel_rounded,
       ],
@@ -67,17 +69,37 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       body: l10n.onboardingBagBody,
       icons: const <IconData>[Icons.luggage_rounded],
     ),
+    _Slide(
+      title: l10n.localeName == 'ar' ? 'الأذونات' : 'Permissions',
+      body: l10n.localeName == 'ar'
+          ? 'نستخدم موقعك لاقتراح مطار المغادرة، والإشعارات لتذكيرك برحلاتك.'
+          : 'We use your location to suggest a departure airport, and notifications to remind you of trips.',
+      icons: const <IconData>[Icons.location_on_rounded, Icons.notifications_rounded],
+    ),
   ];
 
-  void _next(List<_Slide> slides) {
+  Future<void> _next(List<_Slide> slides) async {
     if (_page < slides.length - 1) {
       _controller.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOutCubic,
       );
     } else {
+      await _requestPermissions();
       _finish();
     }
+  }
+
+  Future<void> _requestPermissions() async {
+    // Location
+    try {
+      final svc = ref.read(locationPermissionServiceProvider);
+      await svc.request();
+    } catch (_) {}
+    // Notifications (Android 13+)
+    try {
+      await Permission.notification.request();
+    } catch (_) {}
   }
 
   /// Leaves the intro for Home and remembers it, so the first-launch gate never
@@ -97,7 +119,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 
   String _primaryLabel(AppLocalizations l10n, List<_Slide> slides) {
     if (_page == 0) return l10n.onboardingGetStarted;
-    if (_page == slides.length - 1) return l10n.onboardingStartExploring;
+    if (_page == slides.length - 1) return l10n.localeName == 'ar' ? 'السماح' : 'Grant permissions';
     return l10n.onboardingNext;
   }
 
@@ -313,14 +335,7 @@ class _BrandComposition extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.xl),
-        AppWordmark(
-          style: AppTypography.forLight().display.copyWith(
-            color: AppColors.wordmarkInk,
-          ),
-          goStyle: AppTypography.forLight().display.copyWith(
-            color: AppColors.brandRed,
-          ),
-        ),
+        AppWordmark(base: AppTypography.forLight().display),
       ],
     );
   }

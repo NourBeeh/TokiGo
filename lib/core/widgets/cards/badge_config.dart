@@ -229,7 +229,7 @@ class BadgeRegistry {
       type: BadgeType.limitedRooms,
       category: BadgeCategory.hotel,
       label: 'Limited Rooms',
-      icon: Icons.hotel,
+      icon: Icons.house_rounded,
       emphasis: BadgeEmphasis.error,
       priority: 2,
     ),

@@ -7,6 +7,7 @@ import * as bcrypt from 'bcryptjs';
 
 import { LoginDto, RegisterDto } from '../src/common/dto/auth.dto';
 import { AuthService } from '../src/modules/auth/auth.service';
+import { GoogleTokenVerifier } from '../src/modules/auth/google-token.verifier';
 import { User } from '../src/database/entities/user.entity';
 
 describe('Auth DTO validation', () => {
@@ -86,6 +87,7 @@ const makeDeps = () => {
       jwtService as unknown as JwtService,
       config as unknown as ConfigService,
       users as unknown as Repository<User>,
+      { verify: jest.fn() } as unknown as GoogleTokenVerifier,
     ),
     users,
     jwtService,

@@ -97,35 +97,44 @@ class FlightRecommendationList extends StatelessWidget {
           ),
         ),
         // Horizontal carousel of FlightRecommendationCards
-        SizedBox(
-          height: cardHeight,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: tileCount,
-            padding: const EdgeInsetsDirectional.symmetric(
-              horizontal: AppSpacing.md,
-            ),
-            separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.md),
-            itemBuilder: (context, i) {
-              Widget tile;
-              if (isLoading) {
-                tile = const FlightRecommendationCard(
-                  item: HomeItem(id: '', type: HomeCardType.flight, title: ''),
-                  loading: true,
-                );
-              } else {
-                final item = displayItems[i];
-                tile = FlightRecommendationCard(
-                  item: item,
-                  onTap: onTapFlight != null ? () => onTapFlight!(item) : null,
-                  onFavorite: onFavorite != null
-                      ? (value) => onFavorite!(item.id, value)
-                      : null,
-                );
-              }
-              return SizedBox(width: cardWidth, child: tile);
-            },
-          ),
+        LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            final double itemWidth = (constraints.maxWidth - AppSpacing.lg * 2)
+                .clamp(1.0, cardWidth)
+                .toDouble();
+
+            return SizedBox(
+              height: cardHeight,
+              child: PageView.builder(
+                itemCount: tileCount,
+                itemBuilder: (BuildContext context, int index) {
+                  final HomeItem? item = isLoading ? null : displayItems[index];
+                  final Widget tile = item == null
+                      ? const FlightRecommendationCard(
+                          item: HomeItem(
+                            id: '',
+                            type: HomeCardType.flight,
+                            title: '',
+                          ),
+                          loading: true,
+                        )
+                      : FlightRecommendationCard(
+                          item: item,
+                          onTap: onTapFlight != null
+                              ? () => onTapFlight!(item)
+                              : null,
+                          onFavorite: onFavorite != null
+                              ? (value) => onFavorite!(item.id, value)
+                              : null,
+                        );
+
+                  return Center(
+                    child: SizedBox(width: itemWidth, child: tile),
+                  );
+                },
+              ),
+            );
+          },
         ),
       ],
     );
