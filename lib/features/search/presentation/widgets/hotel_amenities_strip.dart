@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 
@@ -21,6 +22,7 @@ class HotelAmenitiesStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final visible = amenities
         .map((a) => a.trim())
         .where((a) => a.isNotEmpty)
@@ -55,18 +57,19 @@ class _AmenityTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final typography = AppTypography.forLight();
     return Column(
       children: <Widget>[
         // The sheet's own surface, no plate: the icon is the mark.
-        Icon(hotelAmenityIcon(label), size: 22, color: AppColors.starFill),
+        Icon(hotelAmenityIcon(label), size: 22, color: context.tokigoColors.starFill),
         const SizedBox(height: AppSpacing.xs),
         Text(
           label,
           textAlign: TextAlign.center,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: typography.caption.copyWith(color: AppColors.textSecondary),
+          style: typography.caption.copyWith(color: context.tokigoColors.textSecondary),
         ),
       ],
     );

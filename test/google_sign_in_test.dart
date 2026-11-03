@@ -15,7 +15,10 @@ import 'package:tokigo/core/network/api_client.dart';
 import 'package:tokigo/core/network/api_error.dart';
 import 'package:tokigo/core/network/api_result.dart';
 import 'package:tokigo/core/storage/secure_token_storage.dart';
+import 'package:tokigo/core/theme/app_theme.dart';
 import 'package:tokigo/features/profile/presentation/pages/auth_page.dart';
+import 'package:tokigo/features/profile/presentation/pages/profile_page.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
 
 /// Google sign-in is a three-step chain: platform SDK → `/auth/google` → our
 /// own session. These tests pin each link with fakes, because the real platform
@@ -128,8 +131,7 @@ class _FakeAuthRepository implements AuthRepository {
       ApiResult<AuthUser>.success(user);
 
   @override
-  Future<ApiResult<void>> logout() async =>
-      const ApiResult<void>.success(null);
+  Future<ApiResult<void>> logout() async => const ApiResult<void>.success(null);
 }
 
 class _FakeGoogleSignInService implements GoogleSignInService {
@@ -176,10 +178,9 @@ void main() {
       expect(client.posts.single.path, '/auth/google');
       expect(client.posts.single.body, {'idToken': _fakeIdToken});
       // The client asserts no identity of its own.
-      expect(
-        (client.posts.single.body! as Map<String, dynamic>).keys,
-        ['idToken'],
-      );
+      expect((client.posts.single.body! as Map<String, dynamic>).keys, [
+        'idToken',
+      ]);
       expect(result.valueOrNull?.id, 'user-7');
       expect(await storage.getAccessToken(), 'access-1');
       expect(await storage.getRefreshToken(), 'refresh-1');
@@ -246,34 +247,33 @@ void main() {
       expect(repository.googleCalls, 0);
     });
 
-    test('a platform failure becomes an auth error without calling the API',
-        () async {
-      final repository = _FakeAuthRepository();
-      final controller = AuthController(
-        repository,
-        googleSignInService: _FakeGoogleSignInService(
-          error: const GoogleSignInUnavailableException(
-            GoogleSignInFailure.missingConfiguration,
+    test(
+      'a platform failure becomes an auth error without calling the API',
+      () async {
+        final repository = _FakeAuthRepository();
+        final controller = AuthController(
+          repository,
+          googleSignInService: _FakeGoogleSignInService(
+            error: const GoogleSignInUnavailableException(
+              GoogleSignInFailure.missingConfiguration,
+            ),
           ),
-        ),
-      );
-      await pumpEventQueue();
+        );
+        await pumpEventQueue();
 
-      await controller.signInWithGoogle();
+        await controller.signInWithGoogle();
 
-      final state = controller.state;
-      expect(state, isA<AuthError>());
-      expect((state as AuthError).error, isA<ApiUnknownError>());
-      expect(repository.googleCalls, 0);
-    });
+        final state = controller.state;
+        expect(state, isA<AuthError>());
+        expect((state as AuthError).error, isA<ApiUnknownError>());
+        expect(repository.googleCalls, 0);
+      },
+    );
 
     test('a rejected backend response keeps the previous session', () async {
       final repository = _FakeAuthRepository(
         onGoogle: (token) async => const ApiResult<AuthUser>.failure(
-          ApiClientError(
-            message: 'body',
-            statusCode: 409,
-          ),
+          ApiClientError(message: 'body', statusCode: 409),
         ),
       );
       final controller = AuthController(
@@ -333,7 +333,10 @@ void main() {
       final message = authFailureMessage(leaked, action: AuthAction.google);
 
       expect(message, isNot(contains('stack trace')));
-      expect(message, 'The service is temporarily unavailable. Please try again shortly.');
+      expect(
+        message,
+        'The service is temporarily unavailable. Please try again shortly.',
+      );
     });
   });
 
@@ -351,11 +354,66 @@ void main() {
             _FakeGoogleSignInService(token: _fakeIdToken),
           ),
         ],
-        child: const MaterialApp(home: AuthPage()),
+        child: MaterialApp(
+          locale: const Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const AuthPage(),
+        ),
       ),
     );
     await tester.pumpAndSettle();
 
     expect(find.text('Continue with Google'), findsOneWidget);
+  });
+
+  testWidgets('the Google sign-in control is translated in Arabic', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(_FakeAuthRepository()),
+          googleSignInServiceProvider.overrideWithValue(
+            _FakeGoogleSignInService(token: _fakeIdToken),
+          ),
+        ],
+        child: MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const AuthPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('المتابعة باستخدام Google'), findsOneWidget);
+  });
+
+  testWidgets('Profile no longer shows the preferences section', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(_FakeAuthRepository()),
+          googleSignInServiceProvider.overrideWithValue(
+            _FakeGoogleSignInService(token: _fakeIdToken),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const ProfilePage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('التفضيلات'), findsNothing);
+    expect(find.text('البلد'), findsNothing);
   });
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -11,6 +11,7 @@ import 'package:tokigo/core/ui/localized_date.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/cards/card_image.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/core/widgets/step_progress.dart' show StatusChip;
 import 'package:tokigo/features/bag/application/bag_controller.dart';
 import 'package:tokigo/features/bag/domain/trip.dart';
@@ -93,7 +94,7 @@ class _BagPageState extends ConsumerState<BagPage> {
       });
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(
         child: AiEntranceAnimation(
           child: Column(
@@ -227,17 +228,18 @@ class _TripCard extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: Material(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () => context.push('/bag/${trip.tripId}'),
-          child: Container(
+      child: Pressable.wrap(
+        child: Material(
+          color: context.tokigoColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => context.push('/bag/${trip.tripId}'),
+            child: Container(
             padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: AppColors.outline),
+              border: Border.all(color: context.tokigoColors.outline),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,7 +267,7 @@ class _TripCard extends StatelessWidget {
                           Icon(
                             tripTypeIcon(trip.type),
                             size: 13,
-                            color: AppColors.brand,
+                            color: context.tokigoColors.brand,
                           ),
                           const SizedBox(width: AppSpacing.xxs),
                           Flexible(
@@ -274,7 +276,7 @@ class _TripCard extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: typography.captionSemibold.copyWith(
-                                color: AppColors.brand,
+                                color: context.tokigoColors.brand,
                               ),
                             ),
                           ),
@@ -292,7 +294,7 @@ class _TripCard extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: typography.bodyLargeMedium.copyWith(
-                            color: AppColors.textPrimary,
+                            color: context.tokigoColors.textPrimary,
                           ),
                         ),
                       ],
@@ -303,7 +305,7 @@ class _TripCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: typography.caption.copyWith(
-                            color: AppColors.textTertiary,
+                            color: context.tokigoColors.textTertiary,
                           ),
                         ),
                       ],
@@ -314,7 +316,7 @@ class _TripCard extends StatelessWidget {
                             Icon(
                               Icons.calendar_today_rounded,
                               size: 13,
-                              color: AppColors.textTertiary,
+                              color: context.tokigoColors.textTertiary,
                             ),
                             const SizedBox(width: AppSpacing.xs),
                             Expanded(
@@ -323,7 +325,7 @@ class _TripCard extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: typography.caption.copyWith(
-                                  color: AppColors.textSecondary,
+                                  color: context.tokigoColors.textSecondary,
                                 ),
                               ),
                             ),
@@ -342,7 +344,7 @@ class _TripCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: typography.caption.copyWith(
-                          color: AppColors.textTertiary,
+                          color: context.tokigoColors.textTertiary,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xxs),
@@ -352,7 +354,7 @@ class _TripCard extends StatelessWidget {
                           '${trip.currency} '
                           '${trip.total.toStringAsFixed(2)}',
                           style: typography.bodyLargeMedium.copyWith(
-                            color: AppColors.textPrimary,
+                            color: context.tokigoColors.textPrimary,
                           ),
                         ),
                       ),
@@ -363,6 +365,7 @@ class _TripCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }

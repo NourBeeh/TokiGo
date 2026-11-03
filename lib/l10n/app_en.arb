@@ -104,6 +104,15 @@
   "viewAll": "View all",
   "continueAsGuest": "Continue as guest",
   "signIn": "Sign in",
+  "continueWithGoogle": "Continue with Google",
+  "googleSignInNotConfigured": "Google Sign-In is not configured.",
+  "signInSheetTitle": "Sign in to save",
+  "signInSheetBody": "Keep what you love and get the most out of TokiGo.",
+  "signInSheetBenefitPrice": "Track prices as they change",
+  "signInSheetBenefitTrips": "Save stays and trips",
+  "signInSheetBenefitFeatures": "Unlock every app feature",
+  "signInSheetBenefitSync": "Keep your details on all your devices",
+  "signInSheetNotNow": "Not now",
   "signOut": "Sign out",
   "settings": "Settings",
   "language": "Language",
@@ -214,6 +223,10 @@
   "adminNoProviders": "No provider is configured for this vertical yet.",
   "settingsAccount": "Account",
   "settingsAppLanguage": "App language",
+  "settingsTheme": "Theme",
+  "settingsThemeDark": "Dark",
+  "settingsThemeLight": "Light",
+  "settingsThemeSystem": "System",
   "settingsPreferences": "Preferences",
   "settingsAbout": "About",
   "settingsDangerZone": "Danger zone",
@@ -495,8 +508,24 @@
     }
   },
   "cityStaysCount": "{count, plural, =1{1 stay} other{{count} stays}}",
-  "discoverTitle": "Discover",
+  "discoverTitle": "Explore",
   "discoverMore": "Discover more",
+  "exploreCitySearch": "Search cities or countries",
+  "exploreFilterAll": "All",
+  "exploreFilterYouth": "Youth",
+  "exploreFilterFamilies": "Families",
+  "exploreFilterHoneymoon": "Honeymoon",
+  "exploreFilterBeach": "Beach",
+  "exploreFilterNature": "Nature",
+  "exploreFilterCity": "City",
+  "exploreFilterShopping": "Shopping",
+  "exploreFilterSnow": "Snow",
+  "exploreNoCities": "No cities to explore yet",
+  "exploreNoCitiesBody": "Published destination cards will appear here.",
+  "exploreNoMatchingCities": "No matching destinations",
+  "exploreNoMatchingCitiesBody": "Try another search or clear the selected filters.",
+  "exploreCitiesErrorTitle": "We couldn't load destinations",
+  "exploreCitiesErrorBody": "Check your connection and try again.",
   "hotelResultsCount": "{count, plural, =1{1 stay} other{{count} stays}}",
   "@hotelResultsCount": {
     "placeholders": {
@@ -529,6 +558,12 @@
   "@cardSaveLabel": {
     "placeholders": {
       "amount": {}
+    }
+  },
+  "dealDiscountLabel": "{percent}% OFF",
+  "@dealDiscountLabel": {
+    "placeholders": {
+      "percent": {}
     }
   },
   "cardTaxesIncludedLabel": "Taxes included",
@@ -763,5 +798,21 @@
       "distance": {}
     }
   },
-  "hotelOpenLocationInMaps": "Open location in maps"
+  "hotelOpenLocationInMaps": "Open location in maps",
+  "destinationCityName": "{name}",
+  "@destinationCityName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "destinationRegionName": "{name}",
+  "@destinationRegionName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

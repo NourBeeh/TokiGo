@@ -105,9 +105,11 @@ String flightSearchCacheKey({
   int? passengers,
   List<FlightSearchLeg>? legs,
   String? market,
+  String? currency,
 }) {
   final sb = StringBuffer();
   sb.write('flight|');
+  final String currencyKey = currency?.toUpperCase() ?? '';
   // A multi-city itinerary is its own search: its legs are part of the key,
   // so a DXB→FCO→JFK result can never be served for a DXB→FCO query.
   if (legs != null && legs.isNotEmpty) {
@@ -121,7 +123,7 @@ String flightSearchCacheKey({
     }
     sb.write('|');
     sb.write((passengers ?? 1).toString());
-    sb.write('|${market?.toUpperCase() ?? ''}');
+    sb.write('|${market?.toUpperCase() ?? ''}|$currencyKey');
     return sb.toString();
   }
   sb.write(origin.toLowerCase());
@@ -137,7 +139,7 @@ String flightSearchCacheKey({
     sb.write('|');
     sb.write(passengers);
   }
-  sb.write('|${market?.toUpperCase() ?? ''}');
+  sb.write('|${market?.toUpperCase() ?? ''}|$currencyKey');
   return sb.toString();
 }
 
@@ -149,6 +151,8 @@ String hotelSearchCacheKey({
   int? guests,
   String? country,
   String? market,
+  String? currency,
+  String? languageCode,
 }) {
   final sb = StringBuffer();
   sb.write('hotel|');
@@ -161,7 +165,9 @@ String hotelSearchCacheKey({
     sb.write('|');
     sb.write(guests);
   }
-  sb.write('|${country?.toUpperCase() ?? ''}|${market?.toUpperCase() ?? ''}');
+  sb.write(
+    '|${country?.toUpperCase() ?? ''}|${market?.toUpperCase() ?? ''}|${currency?.toUpperCase() ?? ''}|${languageCode?.toLowerCase() ?? 'en'}',
+  );
   return sb.toString();
 }
 

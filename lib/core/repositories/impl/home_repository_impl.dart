@@ -1,6 +1,7 @@
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/domain/models/offers/customer_price.dart';
 import 'package:tokigo/core/network/api_client.dart';
 import 'package:tokigo/core/network/api_result.dart';
 import 'package:tokigo/core/repositories/contracts/home_repository.dart';
@@ -248,10 +249,17 @@ class HomeRepositoryImpl implements HomeRepository {
   Future<ApiResult<List<HomeItem>>> getRecommendedHotels({
     int limit = 6,
     String? countryCode,
+    String languageCode = 'en',
+    String? currency,
   }) async {
     final code = countryCode?.trim().toUpperCase();
     final query = <String, String>{'limit': limit.toString()};
     if (code != null && code.length == 2) query['code'] = code;
+    query['language'] = languageCode == 'ar' ? 'ar' : 'en';
+    final currencyCode = currency?.trim().toUpperCase();
+    if (currencyCode != null && currencyCode.length == 3) {
+      query['currency'] = currencyCode;
+    }
     final result = await apiClient.get<Map<String, dynamic>>(
       '/home/recommended',
       queryParameters: query,
@@ -315,6 +323,9 @@ class HomeRepositoryImpl implements HomeRepository {
               h['main_photo']?.toString(),
           price: h['price'] is num ? (h['price'] as num).toDouble() : null,
           currency: h['currency']?.toString(),
+          customerPrice: h['customerPrice'] is Map<String, dynamic>
+              ? CustomerPrice.fromJson(h['customerPrice'] as Map<String, dynamic>)
+              : null,
           rating: h['rating'] is num ? (h['rating'] as num).toDouble() : null,
           reviewCount: h['reviewCount'] is int
               ? h['reviewCount'] as int

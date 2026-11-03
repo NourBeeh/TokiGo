@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 
 /// The circular score disc that sits on a photo's top corner.
 ///
-/// The reference paints a white numeral on green. Plain [AppColors.success]
+/// The reference paints a white numeral on green. Plain [context.tokigoColors.success]
 /// #16A34A with white is only 3.4:1 — below AA — so the disc uses
-/// [AppColors.successStrong] #15803D (5.0:1) instead.
+/// [context.tokigoColors.successStrong] #15803D (5.0:1) instead.
 ///
 /// The score is passed pre-formatted because the system is used on a 10-point
 /// scale and a 5-point scale in different verticals; the widget never guesses.
@@ -38,15 +38,15 @@ class RatingBadge extends StatelessWidget {
           width: size,
           height: size,
           alignment: Alignment.center,
-          decoration: const BoxDecoration(
-            color: AppColors.successStrong,
+          decoration: BoxDecoration(
+            color: context.tokigoColors.successStrong,
             shape: BoxShape.circle,
           ),
           child: Text(
             score,
             textDirection: TextDirection.ltr,
             style: typography.label.copyWith(
-              color: AppColors.onMedia,
+              color: context.tokigoColors.onMedia,
               fontWeight: FontWeight.w800,
               height: 1,
             ),

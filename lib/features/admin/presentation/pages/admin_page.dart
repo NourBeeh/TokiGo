@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/theme/app_breakpoints.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_message_state.dart';
@@ -42,7 +43,7 @@ class AdminPage extends StatelessWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.tokigoColors.background,
         body: SafeArea(
           // `bottom: false` left the page's last row under the Android
           // navigation bar (the pill it was written for is gone).
@@ -57,16 +58,16 @@ class AdminPage extends StatelessWidget {
                   TabBar(
                     labelStyle: typography.captionSemibold,
                     unselectedLabelStyle: typography.caption.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.tokigoColors.textSecondary,
                     ),
                     tabs: <Tab>[
                       Tab(text: l10n.adminContent),
                       Tab(text: l10n.adminProviders),
                     ],
-                    labelColor: AppColors.textPrimary,
-                    unselectedLabelColor: AppColors.textSecondary,
-                    indicatorColor: AppColors.brand,
-                    dividerColor: AppColors.outline,
+                    labelColor: context.tokigoColors.textPrimary,
+                    unselectedLabelColor: context.tokigoColors.textSecondary,
+                    indicatorColor: context.tokigoColors.brand,
+                    dividerColor: context.tokigoColors.outline,
                   ),
                   const Expanded(
                     child: TabBarView(
@@ -97,25 +98,32 @@ class _AdminHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
     return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(
+      padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
         AppSpacing.sm,
         AppSpacing.lg,
         AppSpacing.md,
       ),
-      child: Row(
-        children: <Widget>[
-          const AppBackButton(),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: typography.title.copyWith(color: AppColors.textPrimary),
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: Row(
+          textDirection: TextDirection.ltr,
+          children: <Widget>[
+            const AppBackButton(),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textDirection: TextDirection.ltr,
+                style: typography.title.copyWith(
+                  color: context.tokigoColors.textPrimary,
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -132,7 +140,7 @@ class _AdminTooSmall extends StatelessWidget {
       child: SingleChildScrollView(
         child: AppMessageState(
           icon: Icons.desktop_windows_outlined,
-          hue: AppColors.textTertiary,
+          hue: context.tokigoColors.textTertiary,
           title: l10n.adminTabletOnlyTitle,
           body: l10n.adminTabletOnlyBody,
         ),

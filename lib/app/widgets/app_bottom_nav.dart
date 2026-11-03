@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_elevation.dart';
 import 'package:tokigo/core/theme/app_motion.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
@@ -98,7 +98,7 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final color = selected ? scheme.primary : AppColors.textTertiary;
+    final color = selected ? scheme.primary : context.tokigoColors.textTertiary;
 
     return Semantics(
       button: true,

@@ -82,6 +82,15 @@ void main() {
     // was a SliverList of full-width cards.
     final PageView pager = tester.widget<PageView>(find.byType(PageView));
     expect(pager.scrollDirection, Axis.horizontal);
+    final Column carousel = tester.widget<Column>(
+      find
+          .descendant(
+            of: find.byType(HomeStaysCarousel),
+            matching: find.byType(Column),
+          )
+          .first,
+    );
+    expect(carousel.children, hasLength(1));
 
     expect(find.byType(HomeStayCard), findsWidgets);
     expect(_card('stay-a'), findsOneWidget);
@@ -95,10 +104,11 @@ void main() {
     await tester.pumpAndSettle();
 
     final Rect viewport = tester.getRect(find.byType(PageView));
-    final Rect firstCard = tester.getRect(_card('stay-a'));
-    final Rect nextCard = tester.getRect(_card('stay-b'));
+    final Rect firstCard = tester.getRect(find.byType(HomeStayCard).first);
+    final Rect nextCard = tester.getRect(find.byType(HomeStayCard).at(1));
     expect(firstCard.left, closeTo(viewport.left, 1));
-    expect(firstCard.width, closeTo(viewport.width * 0.8, 1));
+    expect(firstCard.width, closeTo(viewport.width * 0.8 - 12, 1));
+    expect(nextCard.left - firstCard.right, closeTo(12, 1));
     expect(
       tester
           .widget<OverlapStayCard>(find.byType(OverlapStayCard).first)
@@ -145,6 +155,21 @@ void main() {
 
     // The rail's height is derived from the text scale, so the sheet must not
     // overflow and the provider's amount must still be readable.
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('291.01'), findsWidgets);
+  });
+
+  testWidgets('the hotel sheet fits the connected phone width', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(720, 1480);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(_host(_threeStays()));
+    await tester.pumpAndSettle();
+
     expect(tester.takeException(), isNull);
     expect(find.textContaining('291.01'), findsWidgets);
   });

@@ -183,4 +183,48 @@ void main() {
     // to the search it can actually run, instead of showing a fiction.
     expect(hotelOfferFromHomeStay(items.single), isNull);
   });
+
+  test('a recommended stay keeps the backend customer price for display', () async {
+    final repo = HomeRepositoryImpl(
+      _FakeClient(<String, dynamic>{
+        'hotels': <dynamic>[
+          <String, dynamic>{
+            'id': 'lp1',
+            'title': 'Cairo Grand',
+            'city': 'Cairo',
+            'country': 'EG',
+            'checkIn': '2026-10-28',
+            'checkOut': '2026-10-29',
+            'price': 100,
+            'currency': 'USD',
+            'customerPrice': <String, dynamic>{
+              'providerAmount': 100,
+              'providerCurrency': 'USD',
+              'customerAmount': 4850,
+              'customerCurrency': 'EGP',
+              'pricingVersion': 'v',
+              'expiresAt': 'x',
+            },
+            'metadata': <String, dynamic>{'providerId': 'nuitee'},
+          },
+        ],
+      }),
+    );
+
+    final HomeItem stay = (await repo.getRecommendedHotels()).when(
+      success: (items) => items.single,
+      failure: (error) => throw StateError('unexpected failure: $error'),
+    );
+
+    // The converted price is carried for the card to display…
+    expect(stay.customerPrice, isNotNull);
+    expect(stay.customerPrice!.customerCurrency, 'EGP');
+    expect(stay.customerPrice!.customerAmount, 4850);
+    // …while the provider's own figures stay untouched beside it.
+    expect(stay.price, 100);
+    expect(stay.currency, 'USD');
+
+    final HotelOffer? offer = hotelOfferFromHomeStay(stay);
+    expect(offer!.customerPrice!.customerCurrency, 'EGP');
+  });
 }

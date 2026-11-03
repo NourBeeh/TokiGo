@@ -8,6 +8,7 @@ import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
 import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
 import 'package:tokigo/core/domain/models/offers/travel_package_offer.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/localized_date.dart';
@@ -86,7 +87,7 @@ class OfferDetailsPage extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: AiEntranceAnimation(
         child: Stack(
           children: <Widget>[
@@ -129,7 +130,7 @@ class OfferDetailsPage extends ConsumerWidget {
                           Text(
                             title,
                             style: typography.headline.copyWith(
-                              color: AppColors.textPrimary,
+                              color: context.tokigoColors.textPrimary,
                             ),
                           ),
                           // The backend titles a flight "CAI → DXB" and its
@@ -143,7 +144,7 @@ class OfferDetailsPage extends ConsumerWidget {
                             Text(
                               subtitle,
                               style: typography.body.copyWith(
-                                color: AppColors.textSecondary,
+                                color: context.tokigoColors.textSecondary,
                               ),
                             ),
                           ],
@@ -177,9 +178,9 @@ class OfferDetailsPage extends ConsumerWidget {
             ),
             // The page's own back control stays visible at every scroll offset
             // (a pushed page always offers a visible back button).
-            PositionedDirectional(
+            Positioned(
               top: 0,
-              start: AppSpacing.md,
+              left: AppSpacing.md,
               child: SafeArea(
                 bottom: false,
                 child: Padding(

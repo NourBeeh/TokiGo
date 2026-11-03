@@ -1,23 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:tokigo/core/domain/models/home/home_item.dart';
-import 'package:tokigo/core/theme/app_spacing.dart';
-import 'package:tokigo/core/widgets/cards/card.dart';
 
-/// Deal discovery card — image-first, full-bleed.
+import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
+import 'package:tokigo/core/widgets/cards/card.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
+
+/// Deal discovery card.
 ///
-/// The photo is the entire card; a shared bottom scrim overlay (never an
-/// inline gradient) carries the deal content:
-/// - discount badge (top-start corner, over the photo)
-/// - title
-/// - optional destination/subtitle
-/// - savings/discount + validity (via [DealPresentation] semantics, kept visual)
-/// - price
-///
-/// The card sizes itself from its parent constraints (Home layout decides the
-/// target ~280×220); no hardcoded dimensions inside.
-///
-/// No strikethrough original price, no countdown, no CTA — the whole card is
-/// tappable via [onTap].
+/// A compact offer-first tile: discount, destination and price are easy to scan
+/// beside a square travel photograph.
 class DealCard extends StatelessWidget {
   const DealCard({
     super.key,
@@ -29,8 +23,10 @@ class DealCard extends StatelessWidget {
   final HomeItem item;
   final VoidCallback? onTap;
 
-  /// Skeleton state — renders the same full-bleed geometry with no data.
+  /// Skeleton state — retains the offer-and-photo geometry without fake data.
   final bool loading;
+
+  static const double _aspectRatio = 280 / 220;
 
   int? _getSavingsPercent() {
     final raw = item.metadata['savingsPercent'];
@@ -46,8 +42,12 @@ class DealCard extends StatelessWidget {
         onTap: null,
         enabled: false,
         loading: true,
+        showBorder: true,
+        borderColor: TravelCardStyle.borderColor(context),
+        showShadow: false,
         semanticsLabel: 'Loading deal',
         padding: EdgeInsets.zero,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: const _LoadingSkeleton(),
       );
     }
@@ -63,136 +63,186 @@ class DealCard extends StatelessWidget {
       if (price != null)
         'Price ${price.toStringAsFixed(0)} ${item.currency ?? ''}',
     ];
-    final semanticLabel = semanticParts.join(', ');
 
     return BaseCard(
       onTap: onTap,
-      semanticsLabel: semanticLabel,
+      semanticsLabel: semanticParts.join(', '),
+      showBorder: true,
+      borderColor: TravelCardStyle.borderColor(context),
+      showShadow: false,
       padding: EdgeInsets.zero,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: AspectRatio(
-        aspectRatio: 280 / 220,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Full-bleed image
-            CardImage(
-              url: item.imageUrl,
-              fallbackIcon: Icons.local_offer,
-              semanticLabel: item.title,
-              fit: BoxFit.cover,
-            ),
-            // Discount badge — top-start corner
-            if (savingsPercent != null && savingsPercent > 0)
-              PositionedDirectional(
-                top: AppSpacing.sm,
-                start: AppSpacing.sm,
-                child: CardBadge(
-                  label: '$savingsPercent% OFF',
-                  icon: Icons.local_offer,
-                  variant: CardBadgeVariant.tinted,
-                  type: BadgeType.discount,
+        aspectRatio: _aspectRatio,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.only(end: AppSpacing.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      if (savingsPercent != null &&
+                          savingsPercent > 0) ...<Widget>[
+                        Text(
+                          AppLocalizations.of(
+                                context,
+                              )?.dealDiscountLabel(savingsPercent) ??
+                              '$savingsPercent% OFF',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.forLight().titleMedium.copyWith(
+                            color: context.tokigoColors.brand,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                      ],
+                      Text(
+                        item.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.forLight().bodyLargeMedium
+                            .copyWith(
+                              color: context.tokigoColors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                              height: 1.25,
+                            ),
+                      ),
+                      if (item.subtitle?.isNotEmpty ?? false) ...<Widget>[
+                        const SizedBox(height: AppSpacing.xxs),
+                        Text(
+                          item.subtitle!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.forLight().caption.copyWith(
+                            color: context.tokigoColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: AppSpacing.sm),
+                      _DealPrice(price: item.price, currency: item.currency),
+                      const SizedBox(height: AppSpacing.xs),
+                      TravelActionHint(
+                        label:
+                            AppLocalizations.of(context)?.navExplore ??
+                            'Explore',
+                        color: context.tokigoColors.textPrimary,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            // Bottom scrim with deal content (shared overlay primitive)
-            CardScrimFooter(
-              strength: CardScrimStrength.strong,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Title
-                  Text(
-                    item.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: CardScrimColors.onScrim,
-                      fontWeight: FontWeight.w700,
+              SizedBox(
+                width: 112,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: CardImage(
+                      url: item.imageUrl,
+                      fallbackIcon: Icons.local_offer_outlined,
+                      semanticLabel: item.title,
+                      fit: BoxFit.cover,
                     ),
                   ),
-                  // Destination/subtitle
-                  if (item.subtitle != null && item.subtitle!.isNotEmpty) ...[
-                    const SizedBox(height: AppSpacing.xxs),
-                    Text(
-                      item.subtitle!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: CardScrimColors.onScrimVariant,
-                      ),
-                    ),
-                  ],
-                  // Price row + savings
-                  if (price != null) ...[
-                    const SizedBox(height: AppSpacing.xxs),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        CardPrice(
-                          price: price,
-                          currency: item.currency,
-                          color: CardScrimColors.onScrim,
-                        ),
-                        if (savingsPercent != null && savingsPercent > 0) ...[
-                          const SizedBox(width: AppSpacing.sm),
-                          Text(
-                            'Save $savingsPercent%',
-                            style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(
-                                  color: CardScrimColors.onScrimVariant,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// Skeleton for [DealCard] — same full-bleed geometry, no fake prices,
-/// titles or discounts.
+class _DealPrice extends StatelessWidget {
+  const _DealPrice({required this.price, required this.currency});
+
+  final double? price;
+  final String? currency;
+
+  @override
+  Widget build(BuildContext context) {
+    if (price == null) return const SizedBox.shrink();
+    final typography = AppTypography.forLight();
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      textDirection: TextDirection.ltr,
+      children: <Widget>[
+        Text(
+          price!.toStringAsFixed(0),
+          maxLines: 1,
+          style: typography.titleMedium.copyWith(
+            color: context.tokigoColors.textPrimary,
+            fontWeight: FontWeight.w800,
+            height: 1.05,
+            letterSpacing: -0.3,
+          ),
+        ),
+        if ((currency ?? '').isNotEmpty) ...<Widget>[
+          const SizedBox(width: AppSpacing.xs),
+          Text(
+            currency!,
+            maxLines: 1,
+            style: typography.caption.copyWith(
+              color: context.tokigoColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Skeleton for [DealCard], with no fake prices, titles or discounts.
 class _LoadingSkeleton extends StatelessWidget {
   const _LoadingSkeleton();
 
   @override
   Widget build(BuildContext context) {
     return AspectRatio(
-      aspectRatio: 280 / 220,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          CardSkeleton.image(),
-          // Badge skeleton — top-start corner
-          PositionedDirectional(
-            top: AppSpacing.sm,
-            start: AppSpacing.sm,
-            child: CardSkeleton.chip(width: 72),
-          ),
-          // Bottom scrim skeleton
-          CardScrimFooter(
-            strength: CardScrimStrength.strong,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CardSkeleton.title(width: 150, height: 18),
-                const SizedBox(height: AppSpacing.xxs),
-                CardSkeleton.text(width: 100),
-                const SizedBox(height: AppSpacing.xxs),
-                CardSkeleton.price(width: 90, height: 20),
-              ],
+      aspectRatio: DealCard._aspectRatio,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsetsDirectional.only(end: AppSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    CardSkeleton.title(width: 74, height: 20),
+                    CardSkeleton.gap(height: AppSpacing.xs),
+                    CardSkeleton.title(width: 118, height: 18),
+                    CardSkeleton.gap(height: AppSpacing.xs),
+                    CardSkeleton.text(width: 90),
+                    CardSkeleton.gap(height: AppSpacing.sm),
+                    CardSkeleton.price(width: 84, height: 22),
+                    CardSkeleton.gap(height: AppSpacing.xs),
+                    CardSkeleton.text(width: 56, height: 14),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ],
+            SizedBox(
+              width: 112,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                child: AspectRatio(aspectRatio: 1, child: CardSkeleton.image()),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

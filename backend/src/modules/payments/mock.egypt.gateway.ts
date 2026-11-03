@@ -23,16 +23,10 @@ import {
  *    webhook completes it — mirroring async recovery flows, point O.9)
  */
 
-const DEV_FALLBACK_SIGNING_KEY = 'dev-only-insecure-webhook-key';
-
 export function signMockWebhook(payload: Omit<WebhookPayload, 'signature'>): string {
-  const secret =
-    process.env.WEBHOOK_SIGNING_KEY ?? DEV_FALLBACK_SIGNING_KEY;
-  if (secret === DEV_FALLBACK_SIGNING_KEY) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      '[MockEgyptGateway] WEBHOOK_SIGNING_KEY not set — using INSECURE dev fallback.',
-    );
+  const secret = process.env.WEBHOOK_SIGNING_KEY;
+  if (!secret) {
+    throw new Error('WEBHOOK_SIGNING_KEY must be set to sign webhooks.');
   }
   return crypto
     .createHmac('sha256', secret)
@@ -50,16 +44,13 @@ export class MockEgyptGateway implements PaymentGateway {
   private readonly idempotencyResults = new Map<string, PaymentIntent>();
 
   constructor(config?: ConfigService) {
-    this.signingKey =
+    const secret =
       (config ? config.get<string>('WEBHOOK_SIGNING_KEY') : undefined) ??
-      process.env.WEBHOOK_SIGNING_KEY ??
-      'dev-only-insecure-webhook-key';
-    if (this.signingKey === 'dev-only-insecure-webhook-key') {
-      // eslint-disable-next-line no-console
-      console.warn(
-        '[MockEgyptGateway] WEBHOOK_SIGNING_KEY not set — using INSECURE dev fallback.',
-      );
+      process.env.WEBHOOK_SIGNING_KEY;
+    if (!secret) {
+      throw new Error('WEBHOOK_SIGNING_KEY must be set for MockEgyptGateway.');
     }
+    this.signingKey = secret;
   }
 
   async createPaymentIntent(input: CreatePaymentIntentInput): Promise<PaymentIntent> {
@@ -164,6 +155,3 @@ export class MockEgyptGateway implements PaymentGateway {
 function randomId(): string {
   return Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
 }
-
-export const MOCK_SIGNATURE_SECRET =
-  process.env.WEBHOOK_SIGNING_KEY ?? 'dev-only-insecure-webhook-key';

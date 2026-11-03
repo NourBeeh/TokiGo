@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 
 /// Visual variant of the unified button kit.
 enum AppButtonType {
@@ -73,103 +73,152 @@ class AppButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final disabled = onPressed == null;
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     final Color foreground;
-    final Color background;
+    final Color baseBackground;
 
     switch (type) {
       case AppButtonType.primary:
-        foreground = AppColors.onBrand;
-        background = disabled ? AppColors.surfaceTertiary : AppColors.brand;
+        foreground = context.tokigoColors.onBrand;
+        baseBackground = disabled
+            ? context.tokigoColors.surfaceTertiary
+            : context.tokigoColors.brand;
       case AppButtonType.secondary:
-        foreground = disabled ? AppColors.textTertiary : AppColors.brand;
-        background = disabled ? AppColors.surfaceTertiary : AppColors.surface;
+        foreground = disabled
+            ? context.tokigoColors.textTertiary
+            : context.tokigoColors.brand;
+        baseBackground = disabled
+            ? context.tokigoColors.surfaceTertiary
+            : context.tokigoColors.surface;
       case AppButtonType.ghost:
-        foreground = disabled ? AppColors.textTertiary : AppColors.brand;
-        background = Colors.transparent;
+        foreground = disabled
+            ? context.tokigoColors.textTertiary
+            : context.tokigoColors.brand;
+        baseBackground = Colors.transparent;
       case AppButtonType.destructive:
         foreground = Colors.white;
-        background = disabled ? AppColors.surfaceTertiary : AppColors.danger;
+        baseBackground = disabled
+            ? context.tokigoColors.surfaceTertiary
+            : context.tokigoColors.danger;
       case AppButtonType.pillOutline:
-        foreground = disabled ? AppColors.textTertiary : AppColors.textPrimary;
-        background = AppColors.surface;
+        foreground = disabled
+            ? context.tokigoColors.textTertiary
+            : context.tokigoColors.textPrimary;
+        baseBackground = context.tokigoColors.surface;
     }
 
     final disabledForeground =
         type == AppButtonType.primary || type == AppButtonType.destructive
-        ? AppColors.textTertiary
+        ? context.tokigoColors.textTertiary
         : foreground;
 
     final textStyle =
         (size == AppButtonSize.sm && type != AppButtonType.pillOutline
-                ? AppTypography.forLight().bodyMedium
-                : AppTypography.forLight().bodyLargeMedium)
+                ? typography.bodyMedium
+                : typography.bodyLargeMedium)
             .copyWith(color: disabled ? disabledForeground : foreground);
 
-    return Semantics(
-      button: true,
-      enabled: !disabled,
-      label: semanticLabel ?? label,
-      child: Material(
-        color: background,
-        borderRadius: _radius,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: disabled
-              ? null
-              : () {
-                  HapticFeedback.lightImpact();
-                  onPressed!();
-                },
-          child: Container(
-            height: _height,
-            constraints: expanded ? null : const BoxConstraints(minWidth: 64),
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            decoration:
-                type == AppButtonType.pillOutline ||
-                    type == AppButtonType.secondary
-                ? BoxDecoration(
-                    border: Border.all(color: AppColors.hairlineStrong),
-                    borderRadius: _radius,
-                  )
-                : null,
-            child: LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                // Only an expanded button in a bounded width needs to give
-                // the label room to shrink; in an unbounded horizontal
-                // context (a scrollable row) a flex child is illegal, and
-                // the button correctly shrink-wraps instead.
-                final bool flexibleLabel =
-                    expanded && constraints.hasBoundedWidth;
-                final Widget labelText = Text(
-                  label,
-                  style: textStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                );
-                return Row(
-                  mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    if (leadingIcon != null) ...<Widget>[
-                      Icon(leadingIcon, size: 20, color: textStyle.color),
-                      const SizedBox(width: AppSpacing.sm),
-                    ],
-                    if (flexibleLabel)
-                      Flexible(child: labelText)
-                    else
-                      labelText,
-                    if (trailingIcon != null) ...<Widget>[
-                      const SizedBox(width: AppSpacing.sm),
-                      Icon(trailingIcon, size: 20, color: textStyle.color),
-                    ],
-                  ],
-                );
-              },
+    bool pressed = false;
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        final Color background = pressed && !disabled
+            ? Color.lerp(baseBackground, foreground, 0.08)!
+            : baseBackground;
+        return Semantics(
+          button: true,
+          enabled: !disabled,
+          label: semanticLabel ?? label,
+          child: AnimatedScale(
+            scale: pressed && !disabled ? 0.98 : 1,
+            duration: const Duration(milliseconds: 110),
+            curve: Curves.easeOut,
+            child: Material(
+              color: background,
+              borderRadius: _radius,
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onHighlightChanged: disabled
+                    ? null
+                    : (bool value) {
+                        if (pressed != value) {
+                          setState(() => pressed = value);
+                        }
+                      },
+                onTap: disabled
+                    ? null
+                    : () {
+                        HapticFeedback.lightImpact();
+                        onPressed!();
+                      },
+                splashFactory: NoSplash.splashFactory,
+                highlightColor: Colors.transparent,
+                child: Container(
+                  height: _height,
+                  constraints: expanded
+                      ? null
+                      : const BoxConstraints(minWidth: 64),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                  ),
+                  decoration:
+                      type == AppButtonType.pillOutline ||
+                          type == AppButtonType.secondary
+                      ? BoxDecoration(
+                          border: Border.all(
+                            color: context.tokigoColors.hairlineStrong,
+                          ),
+                          borderRadius: _radius,
+                        )
+                      : null,
+                  child: LayoutBuilder(
+                    builder: (BuildContext context, BoxConstraints constraints) {
+                      // Only an expanded button in a bounded width needs to give
+                      // the label room to shrink; in an unbounded horizontal
+                      // context (a scrollable row) a flex child is illegal, and
+                      // the button correctly shrink-wraps instead.
+                      final bool flexibleLabel =
+                          expanded && constraints.hasBoundedWidth;
+                      final Widget labelText = Text(
+                        label,
+                        style: textStyle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      );
+                      return Row(
+                        mainAxisSize: expanded
+                            ? MainAxisSize.max
+                            : MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          if (leadingIcon != null) ...<Widget>[
+                            Icon(leadingIcon, size: 20, color: textStyle.color),
+                            const SizedBox(width: AppSpacing.sm),
+                          ],
+                          if (flexibleLabel)
+                            Flexible(child: labelText)
+                          else
+                            labelText,
+                          if (trailingIcon != null) ...<Widget>[
+                            const SizedBox(width: AppSpacing.sm),
+                            Icon(
+                              trailingIcon,
+                              size: 20,
+                              color: textStyle.color,
+                            ),
+                          ],
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

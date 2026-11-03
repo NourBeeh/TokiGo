@@ -5,6 +5,8 @@ import 'package:tokigo/core/auth/auth_provider.dart';
 import 'package:tokigo/core/events/events_tracker.dart';
 import 'package:tokigo/core/geo/country_options.dart';
 import 'package:tokigo/core/geo/geo_client.dart';
+import 'package:tokigo/core/geo/location_permission_providers.dart'
+    show geoRefreshProvider;
 import 'package:tokigo/core/network/http_api_client.dart';
 import 'package:tokigo/core/profile/profile_repository.dart';
 import 'package:tokigo/core/repositories/impl/home_repository_impl.dart';
@@ -21,6 +23,7 @@ import 'package:tokigo/features/home/application/recommendation_service.dart';
 import 'package:tokigo/features/home/domain/home_composer.dart';
 import 'package:tokigo/features/home/domain/personalization_context.dart';
 import 'package:tokigo/features/home/presentation/home_controller.dart';
+import 'package:tokigo/shared/providers/locale_provider.dart';
 
 final apiClientProvider = Provider((ref) => HttpApiClient());
 
@@ -48,11 +51,6 @@ final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
 final geoClientProvider = Provider<GeoClient>((ref) {
   return GeoClient(ref.watch(apiClientProvider));
 });
-
-/// Incremented when the traveller grants location access (Phase 3), so the
-/// country is re-resolved with GPS instead of the IP fallback. An unchanged
-/// counter keeps the session-scoped result — no repeated lookups.
-final geoRefreshProvider = StateProvider<int>((ref) => 0);
 
 /// Device-level country choice, used when GPS permission is declined or
 /// unavailable. Only the ISO-2 code is persisted.
@@ -242,6 +240,8 @@ final homeControllerProvider = StateNotifierProvider<HomeController, HomeState>(
         final code = (manual ?? geo)?.trim().toUpperCase();
         return (code != null && code.length == 2) ? code : null;
       },
+      languageCode: () => ref.read(localeProvider).languageCode,
+      currencyCode: () => ref.read(currencyProvider),
       contextBuilder: (recommendedHotels) async {
         // 1) R-4 recommended hotels → deterministic candidates (real data
         //    only; the AI is never a product source).

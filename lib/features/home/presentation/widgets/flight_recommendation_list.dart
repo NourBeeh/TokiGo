@@ -3,6 +3,7 @@ import 'package:tokigo/l10n/app_localizations.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
 import 'package:tokigo/features/home/presentation/widgets/flight_recommendation_card.dart';
 
@@ -81,15 +82,17 @@ class FlightRecommendationList extends StatelessWidget {
                 ),
               ),
               if (onViewAll != null && !isLoading)
-                TextButton(
-                  onPressed: onViewAll,
-                  child: Text(
-                    // Null-safe: a bare test host has no localizations, and the English
-                    // form is the documented fallback.
-                    AppLocalizations.of(context)?.viewAll ?? 'View all',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: scheme.primary,
-                      fontWeight: FontWeight.w600,
+                Pressable.wrap(
+                  child: TextButton(
+                    onPressed: onViewAll,
+                    child: Text(
+                      // Null-safe: a bare test host has no localizations, and the English
+                      // form is the documented fallback.
+                      AppLocalizations.of(context)?.viewAll ?? 'View all',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: scheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),

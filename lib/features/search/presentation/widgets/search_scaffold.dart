@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -8,6 +8,7 @@ import 'package:tokigo/core/ui/app_button.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/detached_back_button.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 
 /// The unified search-page scaffold (identity unification).
 ///
@@ -69,8 +70,9 @@ class SearchScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(
         // `bottom: false` left the results' last row under the Android
         // navigation bar (the pill it was written for is gone).
@@ -154,23 +156,25 @@ class SearchFieldInput extends StatelessWidget {
     final typography = AppTypography.forLight();
     final label = this.label;
     final value = this.value;
-    return Material(
-      color: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: AppRadius.mdBorder,
-        side: const BorderSide(color: AppColors.outline),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm + 4,
-          ),
-          child: Row(
+    return Pressable.wrap(
+      enabled: onTap != null,
+      child: Material(
+        color: context.tokigoColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.mdBorder,
+          side: BorderSide(color: context.tokigoColors.outline),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm + 4,
+            ),
+            child: Row(
             children: <Widget>[
-              Icon(icon, size: 20, color: AppColors.brand),
+              Icon(icon, size: 20, color: context.tokigoColors.brand),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
@@ -181,7 +185,7 @@ class SearchFieldInput extends StatelessWidget {
                       Text(
                         label,
                         style: typography.caption.copyWith(
-                          color: AppColors.textTertiary,
+                          color: context.tokigoColors.textTertiary,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -192,7 +196,7 @@ class SearchFieldInput extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: typography.bodyLarge.copyWith(
-                          color: AppColors.textPrimary,
+                          color: context.tokigoColors.textPrimary,
                         ),
                       )
                     else
@@ -207,7 +211,7 @@ class SearchFieldInput extends StatelessWidget {
                           readOnly: readOnly,
                           keyboardType: keyboardType,
                           style: typography.bodyLarge.copyWith(
-                            color: AppColors.textPrimary,
+                            color: context.tokigoColors.textPrimary,
                           ),
                           decoration: InputDecoration(
                             isCollapsed: true,
@@ -221,7 +225,7 @@ class SearchFieldInput extends StatelessWidget {
                             contentPadding: EdgeInsets.zero,
                             hintText: hint,
                             hintStyle: typography.bodyLarge.copyWith(
-                              color: AppColors.textTertiary,
+                              color: context.tokigoColors.textTertiary,
                             ),
                           ),
                         ),
@@ -233,6 +237,7 @@ class SearchFieldInput extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -261,33 +266,35 @@ class SearchSegmentedControl<T> extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.surfaceSecondary,
+        color: context.tokigoColors.surfaceSecondary,
         borderRadius: AppRadius.pillBorder,
-        border: Border.all(color: AppColors.outline),
+        border: Border.all(color: context.tokigoColors.outline),
       ),
       child: Row(
         children: <Widget>[
           for (final option in options)
             Expanded(
-              child: Material(
-                color: option == selected
-                    ? AppColors.brand
-                    : Colors.transparent,
-                borderRadius: AppRadius.pillBorder,
-                clipBehavior: Clip.antiAlias,
-                child: InkWell(
-                  onTap: () => onSelected(option),
-                  child: SizedBox(
-                    height: 36,
-                    child: Center(
-                      child: Text(
-                        labelOf(option),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: typography.captionSemibold.copyWith(
-                          color: option == selected
-                              ? AppColors.onBrand
-                              : AppColors.textSecondary,
+              child: Pressable.wrap(
+                child: Material(
+                  color: option == selected
+                      ? context.tokigoColors.brand
+                      : Colors.transparent,
+                  borderRadius: AppRadius.pillBorder,
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: () => onSelected(option),
+                    child: SizedBox(
+                      height: 36,
+                      child: Center(
+                        child: Text(
+                          labelOf(option),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: typography.captionSemibold.copyWith(
+                            color: option == selected
+                                ? context.tokigoColors.onBrand
+                                : context.tokigoColors.textSecondary,
+                          ),
                         ),
                       ),
                     ),
@@ -325,10 +332,10 @@ class SearchStepperInput extends StatelessWidget {
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
     return Material(
-      color: AppColors.surface,
+      color: context.tokigoColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: AppRadius.mdBorder,
-        side: const BorderSide(color: AppColors.outline),
+        side: BorderSide(color: context.tokigoColors.outline),
       ),
       clipBehavior: Clip.antiAlias,
       child: Padding(
@@ -338,13 +345,13 @@ class SearchStepperInput extends StatelessWidget {
         ),
         child: Row(
           children: <Widget>[
-            Icon(icon, size: 20, color: AppColors.brand),
+            Icon(icon, size: 20, color: context.tokigoColors.brand),
             const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Text(
                 label,
                 style: typography.bodyLarge.copyWith(
-                  color: AppColors.textPrimary,
+                  color: context.tokigoColors.textPrimary,
                 ),
               ),
             ),
@@ -354,7 +361,7 @@ class SearchStepperInput extends StatelessWidget {
               Text(
                 '$count',
                 style: typography.bodyLargeMedium.copyWith(
-                  color: AppColors.textPrimary,
+                  color: context.tokigoColors.textPrimary,
                 ),
               ),
             ],
@@ -375,16 +382,18 @@ class _StepperButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.brandContainer,
-      borderRadius: BorderRadius.circular(AppRadius.xs),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: SizedBox(
-          width: 28,
-          height: 28,
-          child: Icon(icon, size: 18, color: AppColors.brand),
+    return Pressable.wrap(
+      child: Material(
+        color: context.tokigoColors.brandContainer,
+        borderRadius: BorderRadius.circular(AppRadius.xs),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            width: 28,
+            height: 28,
+            child: Icon(icon, size: 18, color: context.tokigoColors.brand),
+          ),
         ),
       ),
     );
@@ -413,34 +422,42 @@ class SearchChoiceChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
-    final foreground = selected ? AppColors.onBrand : AppColors.textSecondary;
+    final foreground = selected ? context.tokigoColors.onBrand : context.tokigoColors.textSecondary;
     final icon = this.icon;
-    return Material(
-      color: selected ? AppColors.brand : AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: AppRadius.pillBorder,
-        side: BorderSide(color: selected ? AppColors.brand : AppColors.outline),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.sm + 2,
+    return Pressable.wrap(
+      child: Material(
+        color: selected
+            ? context.tokigoColors.brand
+            : context.tokigoColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.pillBorder,
+          side: BorderSide(
+            color: selected
+                ? context.tokigoColors.brand
+                : context.tokigoColors.outline,
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              if (icon != null) ...<Widget>[
-                Icon(icon, size: 14, color: foreground),
-                const SizedBox(width: AppSpacing.xxs),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.sm + 2,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                if (icon != null) ...<Widget>[
+                  Icon(icon, size: 14, color: foreground),
+                  const SizedBox(width: AppSpacing.xxs),
+                ],
+                Text(
+                  label,
+                  style: typography.captionSemibold.copyWith(color: foreground),
+                ),
               ],
-              Text(
-                label,
-                style: typography.captionSemibold.copyWith(color: foreground),
-              ),
-            ],
+            ),
           ),
         ),
       ),

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { FxService, FxRate } from './fx.service';
-import { DEFAULT_MARKET, MarketContextValue, marketFor } from './market-context';
+import { MarketContextValue, marketFor } from './market-context';
 
 /**
  * PricingEngine (spec point 35) — deterministic customer price from provider
@@ -49,12 +49,13 @@ export class PricingService {
     providerCurrency: string,
     opts: {
       market?: string;
+      currency?: string;
       markupPct?: number;
       paymentFeePct?: number;
       ttlMinutes?: number;
     } = {},
   ): Promise<PriceQuote> {
-    const market: MarketContextValue = marketFor(opts.market ?? DEFAULT_MARKET.marketCountry);
+    const market: MarketContextValue = marketFor(opts.market, opts.currency);
     const displayCurrency = market.displayCurrency;
 
     const converted = await this.fxService.convertForDisplay(
@@ -119,7 +120,12 @@ export class PricingService {
    */
   async enrichOffer<T extends { price: number; currency: string }>(
     offer: T,
-    opts: { market?: string; markupPct?: number; paymentFeePct?: number } = {},
+    opts: {
+      market?: string;
+      currency?: string;
+      markupPct?: number;
+      paymentFeePct?: number;
+    } = {},
   ): Promise<T & { customerPrice: PriceQuote }> {
     const quote = await this.quote(offer.price, offer.currency, opts);
     return { ...offer, customerPrice: quote };
@@ -127,7 +133,12 @@ export class PricingService {
 
   async enrichOffers<T extends { price: number; currency: string }>(
     offers: T[],
-    opts: { market?: string; markupPct?: number; paymentFeePct?: number } = {},
+    opts: {
+      market?: string;
+      currency?: string;
+      markupPct?: number;
+      paymentFeePct?: number;
+    } = {},
   ): Promise<(T & { customerPrice: PriceQuote })[]> {
     const enriched: (T & { customerPrice: PriceQuote })[] = [];
     for (const offer of offers) {

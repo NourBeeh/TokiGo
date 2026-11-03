@@ -78,6 +78,8 @@ class HotelSearchController extends StateNotifier<HotelSearchState> {
         amenities: params.amenities,
         country: params.countryCode,
         market: params.market,
+        currency: params.currency,
+        language: params.languageCode,
       );
     }
 
@@ -88,6 +90,8 @@ class HotelSearchController extends StateNotifier<HotelSearchState> {
       guests: params.adults,
       country: params.countryCode,
       market: params.market,
+      currency: params.currency,
+      languageCode: params.languageCode,
     );
 
     // Try to load from cache first

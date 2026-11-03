@@ -104,6 +104,15 @@
   "viewAll": "عرض الكل",
   "continueAsGuest": "الاستكشاف كضيف",
   "signIn": "تسجيل الدخول",
+  "continueWithGoogle": "المتابعة باستخدام Google",
+  "googleSignInNotConfigured": "تسجيل الدخول باستخدام Google غير مُعدّ.",
+  "signInSheetTitle": "سجّل دخولك عشان تحفظ",
+  "signInSheetBody": "احفظ اللي بيعجبك واستمتع بكل مزايا TokiGo.",
+  "signInSheetBenefitPrice": "تابع تغيّر الأسعار",
+  "signInSheetBenefitTrips": "احفظ الفنادق والرحلات",
+  "signInSheetBenefitFeatures": "استمتع بكل مزايا التطبيق",
+  "signInSheetBenefitSync": "احفظ معلوماتك على كل أجهزتك",
+  "signInSheetNotNow": "مش دلوقتي",
   "signOut": "تسجيل الخروج",
   "settings": "الإعدادات",
   "language": "اللغة",
@@ -213,6 +222,10 @@
   "adminNoProviders": "لا يوجد مزوّد مُهيّأ لهذا القسم بعد.",
   "settingsAccount": "الحساب",
   "settingsAppLanguage": "لغة التطبيق",
+  "settingsTheme": "المظهر",
+  "settingsThemeDark": "داكن",
+  "settingsThemeLight": "فاتح",
+  "settingsThemeSystem": "النظام",
   "settingsPreferences": "التفضيلات",
   "settingsAbout": "حول التطبيق",
   "settingsDangerZone": "منطقة الخطر",
@@ -487,8 +500,24 @@
     }
   },
   "cityStaysCount": "{count, plural, =1{إقامة واحدة} other{{count} إقامة}}",
-  "discoverTitle": "اكتشف",
+  "discoverTitle": "استكشف",
   "discoverMore": "اكتشف المزيد",
+  "exploreCitySearch": "ابحث عن مدينة أو دولة",
+  "exploreFilterAll": "الكل",
+  "exploreFilterYouth": "شبابي",
+  "exploreFilterFamilies": "عائلات",
+  "exploreFilterHoneymoon": "شهر عسل",
+  "exploreFilterBeach": "شاطئ",
+  "exploreFilterNature": "طبيعة",
+  "exploreFilterCity": "مدن",
+  "exploreFilterShopping": "تسوق",
+  "exploreFilterSnow": "ثلوج",
+  "exploreNoCities": "لا توجد مدن للاستكشاف حاليًا",
+  "exploreNoCitiesBody": "ستظهر هنا المدن المنشورة في قسم اكتشف.",
+  "exploreNoMatchingCities": "لا توجد وجهات مطابقة",
+  "exploreNoMatchingCitiesBody": "جرّب بحثًا آخر أو امسح الفلاتر المحددة.",
+  "exploreCitiesErrorTitle": "تعذّر تحميل الوجهات",
+  "exploreCitiesErrorBody": "تحقق من اتصالك وحاول مرة أخرى.",
   "hotelResultsCount": "{count, plural, one{إقامة واحدة} two{إقامتان} few{{count} إقامات} many{{count} إقامة} other{{count} إقامة}}",
   "@hotelResultsCount": {
     "placeholders": {
@@ -521,6 +550,12 @@
   "@cardSaveLabel": {
     "placeholders": {
       "amount": {}
+    }
+  },
+  "dealDiscountLabel": "خصم {percent}٪",
+  "@dealDiscountLabel": {
+    "placeholders": {
+      "percent": {}
     }
   },
   "cardTaxesIncludedLabel": "شامل الضرائب",
@@ -755,5 +790,17 @@
       "distance": {}
     }
   },
-  "hotelOpenLocationInMaps": "افتح الموقع في الخرائط"
+  "hotelOpenLocationInMaps": "افتح الموقع في الخرائط",
+  "destinationCityName": "{name, select, abu_dhabi{أبو ظبي} alexandria{الإسكندرية} amsterdam{أمستردام} antalya{أنطاليا} aswan{أسوان} athens{أثينا} bali{بالي} bangkok{بانكوك} barcelona{برشلونة} beirut{بيروت} berlin{برلين} cairo{القاهرة} cancun{كانكون} cape_town{كيب تاون} casablanca{الدار البيضاء} dahab{دهب} doha{الدوحة} dubai{دبي} gudauri{جوداوري} hong_kong{هونغ كونغ} hurghada{الغردقة} innsbruck{إنسبروك} istanbul{إسطنبول} jeddah{جدة} kuala_lumpur{كوالالمبور} kuwait_city{الكويت} lisbon{لشبونة} london{لندن} luxor{الأقصر} madrid{مدريد} maldives{المالديف} marrakech{مراكش} marsa_alam{مرسى علم} miami{ميامي} milan{ميلان} munich{ميونخ} muscat{مسقط} new_york{نيويورك} nice{نيس} nuweiba{نويبع} oslo{أوسلو} paris{باريس} prague{براغ} rio_de_janeiro{ريو دي جانيرو} riyadh{الرياض} rome{روما} rovaniemi{رو�انييمي} santorini{سانتوريني} shahdag{شاهداغ} sharm_el_sheikh{شرم الشيخ} singapore{سنغافورة} sydney{سيدني} tokyo{طوكيو} venice{البندقية} vienna{فيينا} amman{عمّان} other{{name}}}",
+  "@destinationCityName": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "destinationRegionName": "{name, select, australia{أستراليا} austria{النمسا} brazil{البرازيل} czechia{التشيك} egypt{مصر} finland{فنلندا} france{فرنسا} georgia{جورجيا} germany{ألمانيا} greece{اليونان} hong_kong{هونغ كونغ} indonesia{إندونيسيا} italy{إيطاليا} japan{اليابان} jordan{الأردن} kuwait{الكويت} maldives{المالديف} malaysia{ماليزيا} mexico{المكسيك} morocco{المغرب} netherlands{هولندا} norway{النرويج} oman{عُمان} portugal{البرتغال} qatar{قطر} saudi_arabia{السعودية} singapore{سنغافورة} south_africa{جنوب أفريقيا} spain{إسبانيا} thailand{تايلاند} turkey{تركيا} united_arab_emirates{الإمارات العربية المتحدة} united_kingdom{المملكة المتحدة} united_states{الولايات المتحدة} other{{name}}}",
+  "@destinationRegionName": {
+    "placeholders": {
+      "name": {}
+    }
+  }
 }

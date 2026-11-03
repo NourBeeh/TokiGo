@@ -3,9 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 import 'package:tokigo/features/home/presentation/widgets/deal_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/destination_discovery_card.dart';
@@ -72,17 +73,27 @@ class HomeSectionWidget extends StatelessWidget {
         children: [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: Text(
-              HomeSectionTitles.title(l10n, section.metadata, section.title),
-              // Every Home section heading shares the stay rail's step so
-              // Discover and Stays read as one rhythm instead of two sizes.
-              // The gutter matches [SectionHeader]'s, so the two headings
-              // start on the same vertical line.
-              style: AppTypography.forLight().titleMedium.copyWith(
-                color: AppColors.textPrimary,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    HomeSectionTitles.title(l10n, section.metadata, section.title),
+                    style: AppTypography.forLight().titleMedium.copyWith(
+                      color: context.tokigoColors.textPrimary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (_isDestinationOnlySection)
+                  Pressable(
+                    onTap: () => context.push('/explore'),
+                    child: TextButton(
+                      onPressed: () => context.push('/explore'),
+                      child: Text(l10n?.exploreFilterAll ?? 'All'),
+                    ),
+                  ),
+              ],
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -130,8 +141,7 @@ class HomeSectionWidget extends StatelessWidget {
     final isSkeleton = _isSkeletonItem(item);
     switch (item.type) {
       case HomeCardType.hotel:
-        // Doc 17 §3.5 — a stay in the feed is card A, the same card the
-        // results page renders.
+        // Keep Home and results on the same structured hotel card.
         return HomeStayCard(
           item: item,
           margin: EdgeInsets.zero,
@@ -139,12 +149,15 @@ class HomeSectionWidget extends StatelessWidget {
         );
       case HomeCardType.car:
       case HomeCardType.package:
-      case HomeCardType.deal:
-        // Card E — the promo overlay card (doc 15 §6): the photo with the copy
-        // on a scrim. The Home's discovery content is card E, not the old
-        // gradient card.
         return DiscoveryProductCard(
           item: item,
+          onTap: onItemTap != null ? () => onItemTap!(item) : null,
+        );
+      case HomeCardType.deal:
+        // Offer cards have their own price-and-discount hierarchy.
+        return DealCard(
+          item: item,
+          loading: isSkeleton,
           onTap: onItemTap != null ? () => onItemTap!(item) : null,
         );
       case HomeCardType.flight:
@@ -251,12 +264,18 @@ class HomeSectionWidget extends StatelessWidget {
         primaryType == HomeCardType.destination) {
       return HomeStaysCarousel(
         items: items,
-        viewportFraction: 0.8,
+        viewportFraction: primaryType == HomeCardType.destination ? 0.9 : 0.8,
+        sheetTextHeight: primaryType == HomeCardType.destination
+            ? HomeStaysCarousel.destinationSheetTextHeight
+            : HomeStaysCarousel.staysSheetTextHeight,
         onItemTap: onItemTap,
         itemBuilder: primaryType == HomeCardType.destination
             ? (BuildContext context, HomeItem item) => HomeDiscoveryStayCard(
                 item: item,
                 onTap: () => _openCity(context, item),
+                // Share the rail's media ratio so a city page and a stay page
+                // start and end on the same lines.
+                aspectRatio: HomeStaysCarousel.mediaAspectRatio,
               )
             : null,
       );

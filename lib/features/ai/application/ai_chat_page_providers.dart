@@ -4,6 +4,7 @@ import 'package:tokigo/core/ai/ai_assistant_service.dart';
 import 'package:tokigo/core/network/api_client.dart';
 import 'package:tokigo/core/network/http_api_client.dart';
 import 'package:tokigo/core/storage/secure_token_storage_provider.dart';
+import 'package:tokigo/shared/providers/locale_provider.dart';
 import 'package:tokigo/features/ai/application/ai_chat_guest_only_cache.dart';
 import 'package:tokigo/features/ai/application/ai_chat_service_adapter.dart';
 import 'package:tokigo/features/ai/application/ai_controller.dart';
@@ -72,6 +73,7 @@ final aiChatControllerProvider = StateNotifierProvider<AiController, AiState>((
       flightSearch: ref.watch(flightSearchControllerProvider.notifier),
       hotelSearch: ref.watch(hotelSearchControllerProvider.notifier),
       carSearch: ref.watch(carSearchControllerProvider.notifier),
+      languageCode: () => ref.read(localeProvider).languageCode,
     ),
   );
 });

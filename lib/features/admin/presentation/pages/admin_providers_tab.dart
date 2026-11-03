@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:tokigo/core/admin/admin_provider_models.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_message_state.dart';
@@ -98,7 +99,7 @@ class _AdminProvidersTabState extends ConsumerState<AdminProvidersTab> {
         child: SingleChildScrollView(
           child: AppMessageState(
             icon: Icons.cloud_off_rounded,
-            hue: AppColors.danger,
+            hue: context.tokigoColors.danger,
             title: l10n.adminError,
             body: _error ?? l10n.adminError,
             actionLabel: l10n.adminRetry,
@@ -116,7 +117,7 @@ class _AdminProvidersTabState extends ConsumerState<AdminProvidersTab> {
         child: SingleChildScrollView(
           child: AppMessageState(
             icon: Icons.cable_rounded,
-            hue: AppColors.textTertiary,
+            hue: context.tokigoColors.textTertiary,
             title: l10n.adminProviders,
             body: l10n.adminNoProviders,
           ),
@@ -143,7 +144,7 @@ class _AdminProvidersTabState extends ConsumerState<AdminProvidersTab> {
           Text(
             labels[vertical] ?? vertical,
             style: typography.captionSemibold.copyWith(
-              color: AppColors.textPrimary,
+              color: context.tokigoColors.textPrimary,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -185,7 +186,7 @@ class _AdminProvidersTabState extends ConsumerState<AdminProvidersTab> {
               child: Text(
                 l10n.adminNoProviders,
                 style: typography.caption.copyWith(
-                  color: AppColors.textTertiary,
+                  color: context.tokigoColors.textTertiary,
                 ),
               ),
             ),
@@ -221,7 +222,7 @@ class _TableHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
     final TextStyle style = typography.label.copyWith(
-      color: AppColors.textTertiary,
+      color: context.tokigoColors.textTertiary,
     );
     return Padding(
       padding: const EdgeInsetsDirectional.only(bottom: AppSpacing.xs),
@@ -293,14 +294,14 @@ class _ProviderRow extends StatelessWidget {
                   provider.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: typography.body.copyWith(color: AppColors.textPrimary),
+                  style: typography.body.copyWith(color: context.tokigoColors.textPrimary),
                 ),
                 Text(
                   provider.providerKey,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: typography.caption.copyWith(
-                    color: AppColors.textTertiary,
+                    color: context.tokigoColors.textTertiary,
                   ),
                 ),
               ],
@@ -313,14 +314,14 @@ class _ProviderRow extends StatelessWidget {
               // The number keeps its reading order in Arabic ("#1", never
               // "1#").
               textDirection: TextDirection.ltr,
-              style: typography.body.copyWith(color: AppColors.textPrimary),
+              style: typography.body.copyWith(color: context.tokigoColors.textPrimary),
             ),
           ),
           SizedBox(
             width: _latencyColumn,
             child: Text(
               provider.latencyMs == null ? '—' : '${provider.latencyMs} ms',
-              style: typography.body.copyWith(color: AppColors.textSecondary),
+              style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
             ),
           ),
           SizedBox(
@@ -390,18 +391,18 @@ class _HealthPill extends StatelessWidget {
     final (String label, Color fill, Color ink) = switch (status) {
       'healthy' => (
         l10n.adminHealthy,
-        AppColors.successContainer,
-        AppColors.onSuccessContainer,
+        context.tokigoColors.successContainer,
+        context.tokigoColors.onSuccessContainer,
       ),
       'unhealthy' => (
         l10n.adminUnhealthy,
-        AppColors.dangerContainer,
-        AppColors.danger,
+        context.tokigoColors.dangerContainer,
+        context.tokigoColors.danger,
       ),
       _ => (
         l10n.adminUnknown,
-        AppColors.surfaceSecondary,
-        AppColors.textSecondary,
+        context.tokigoColors.surfaceSecondary,
+        context.tokigoColors.textSecondary,
       ),
     };
     return StatusChip(label: label, color: ink, container: fill);

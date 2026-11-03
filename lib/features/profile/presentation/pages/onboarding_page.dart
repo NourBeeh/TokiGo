@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_button.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:tokigo/core/geo/location_permission_providers.dart';
 import 'package:tokigo/core/ui/app_wordmark.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 import 'package:tokigo/shared/providers/onboarding_provider.dart';
 
@@ -91,12 +91,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   }
 
   Future<void> _requestPermissions() async {
-    // Location
-    try {
-      final svc = ref.read(locationPermissionServiceProvider);
-      await svc.request();
-    } catch (_) {}
-    // Notifications (Android 13+)
+    // Notifications only. Location is intentionally NOT requested here: the
+    // owner decision is that it is asked from the Home explainer card, in
+    // context and on an explicit tap (see `LocationPermissionCard`), so the
+    // user meets one plain-language ask instead of a bulk permission wall.
     try {
       await Permission.notification.request();
     } catch (_) {}
@@ -130,7 +128,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     final slides = _slides(l10n);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(
         child: AiEntranceAnimation(
           child: Column(
@@ -139,12 +137,14 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                 alignment: AlignmentDirectional.centerEnd,
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.md),
-                  child: TextButton(
-                    onPressed: _finish,
-                    child: Text(
-                      l10n.onboardingSkip,
-                      style: typography.body.copyWith(
-                        color: AppColors.textSecondary,
+                  child: Pressable.wrap(
+                    child: TextButton(
+                      onPressed: _finish,
+                      child: Text(
+                        l10n.onboardingSkip,
+                        style: typography.body.copyWith(
+                          color: context.tokigoColors.textSecondary,
+                        ),
                       ),
                     ),
                   ),
@@ -186,8 +186,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                               // `surfaceTertiary` pill vanished on the white
                               // canvas, so the indicator read as a lone pill.
                               color: i == _page
-                                  ? AppColors.brand
-                                  : AppColors.outline,
+                                  ? context.tokigoColors.brand
+                                  : context.tokigoColors.outline,
                               borderRadius: BorderRadius.circular(
                                 AppRadius.pill,
                               ),
@@ -215,25 +215,29 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                         // 44pt, not a second primary button.
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(minHeight: 44),
-                          child: TextButton(
-                            onPressed: _logIn,
-                            child: Text.rich(
-                              TextSpan(
-                                children: <InlineSpan>[
-                                  TextSpan(
-                                    text: '${l10n.onboardingHaveAccount} ',
-                                    style: typography.body.copyWith(
-                                      color: AppColors.textSecondary,
+                          child: Pressable.wrap(
+                            child: TextButton(
+                              onPressed: _logIn,
+                              child: Text.rich(
+                                TextSpan(
+                                  children: <InlineSpan>[
+                                    TextSpan(
+                                      text: '${l10n.onboardingHaveAccount} ',
+                                      style: typography.body.copyWith(
+                                        color: context
+                                            .tokigoColors
+                                            .textSecondary,
+                                      ),
                                     ),
-                                  ),
-                                  TextSpan(
-                                    text: l10n.onboardingLogIn,
-                                    style: typography.body.copyWith(
-                                      color: AppColors.brand,
-                                      fontWeight: AppTypography.weightBold,
+                                    TextSpan(
+                                      text: l10n.onboardingLogIn,
+                                      style: typography.body.copyWith(
+                                        color: context.tokigoColors.brand,
+                                        fontWeight: AppTypography.weightBold,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -285,7 +289,7 @@ class _SlideView extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: typography.display.copyWith(
-                      color: AppColors.textPrimary,
+                      color: context.tokigoColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -295,7 +299,7 @@ class _SlideView extends StatelessWidget {
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                     style: typography.body.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.tokigoColors.textSecondary,
                     ),
                   ),
                 ],
@@ -357,20 +361,20 @@ class _ServicePlate extends StatelessWidget {
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.tokigoColors.surface,
         borderRadius: BorderRadius.circular(
           size > 100 ? AppRadius.xl : AppRadius.lg,
         ),
-        border: Border.all(color: AppColors.hairline),
+        border: Border.all(color: context.tokigoColors.hairline),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.04),
+            color: context.tokigoColors.textPrimary.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Icon(icon, size: size > 100 ? 56 : 26, color: AppColors.brand),
+      child: Icon(icon, size: size > 100 ? 56 : 26, color: context.tokigoColors.brand),
     );
   }
 }

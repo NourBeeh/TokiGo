@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tokigo/app/widgets/home_nav_buttons.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
-import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/geo/location_prompt.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_message_state.dart';
@@ -16,14 +16,16 @@ import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
 import 'package:tokigo/features/home/presentation/home_controller.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_ai_search_field.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_discovery_stay_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_section.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stays_carousel.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart';
 import 'package:tokigo/features/search/domain/country_airport_suggestions.dart';
 import 'package:tokigo/features/search/domain/search_context.dart';
 import 'package:tokigo/features/search/application/providers/offer_selection_provider.dart';
-import 'package:tokigo/features/bag/application/bag_controller.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
+import 'package:tokigo/shared/providers/locale_provider.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -145,10 +147,22 @@ class _HomePageState extends ConsumerState<HomePage>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(localeProvider, (previous, next) {
+      if (previous?.languageCode != next.languageCode) {
+        ref.read(homeControllerProvider.notifier).loadRecommendedHotels();
+      }
+    });
+    // A currency change re-prices the recommendation rail in the new display
+    // currency (the controller reads the choice per request).
+    ref.listen(currencyProvider, (previous, next) {
+      if (previous != next) {
+        ref.read(homeControllerProvider.notifier).loadRecommendedHotels();
+      }
+    });
     final state = ref.watch(homeControllerProvider);
     _consumeScrollTarget();
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       // H1: pull-to-refresh removed by product decision — Home refreshes
       // prices/availability via live validation only (H2). The old
       // RefreshIndicator wrapper is gone; the SafeArea/Column tree is
@@ -274,7 +288,7 @@ class _HomePageState extends ConsumerState<HomePage>
                   // Same step as every other Home section heading so Discover
                   // and Stays read as one rhythm (owner decision, 2026-10-26).
                   titleStyle: AppTypography.forLight().titleMedium.copyWith(
-                    color: AppColors.textPrimary,
+                    color: context.tokigoColors.textPrimary,
                   ),
                 ),
               ),
@@ -312,7 +326,7 @@ class _HomePageState extends ConsumerState<HomePage>
             SliverToBoxAdapter(
               child: AppMessageState(
                 icon: Icons.wifi_off_rounded,
-                hue: AppColors.danger,
+                hue: context.tokigoColors.danger,
                 title: l10n.homeErrorTitle,
                 // Deliberately NOT `state.errorMessage`: that string comes from
                 // the network layer in English and would be the only English
@@ -331,19 +345,25 @@ class _HomePageState extends ConsumerState<HomePage>
   List<Widget> _homeHeaderSlivers(WidgetRef ref) => <Widget>[
     SliverPersistentHeader(
       pinned: true,
-      delegate: _PinnedHomeSearchHeader(accentColor: AppColors.brand),
+      delegate: _PinnedHomeSearchHeader(
+        accentColor: context.tokigoColors.brand,
+      ),
     ),
     SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsetsDirectional.fromSTEB(
           AppSpacing.lg,
-          AppSpacing.xs,
-          AppSpacing.lg,
           AppSpacing.md,
+          AppSpacing.lg,
+          AppSpacing.xl,
         ),
         child: HomeNavButtons(compact: true, searchContext: _searchContext()),
       ),
     ),
+    // In-context location explainer (owner decision: never on launch; the OS
+    // dialog is raised only from the card's own "Allow" tap). Hides itself
+    // once access is granted or the card is dismissed for the session.
+    const SliverToBoxAdapter(child: LocationPermissionCard()),
   ];
 
   /// Phase 4A — the traveller's travel context for the search tiles.
@@ -415,7 +435,7 @@ class _PinnedHomeSearchHeader extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) => Material(
-    color: AppColors.background,
+    color: context.tokigoColors.background,
     elevation: overlapsContent ? 2 : 0,
     child: SizedBox.expand(
       child: Center(
@@ -434,71 +454,61 @@ class _PinnedHomeSearchHeader extends SliverPersistentHeaderDelegate {
       oldDelegate.accentColor != accentColor;
 }
 
-/// Home's top bar — the TokiGo wordmark on the leading edge, and on the
-/// trailing edge the three destinations a traveller reaches from the app's
-/// root: Bag (my trips), Notifications and the profile avatar.
+/// Home's top bar — the TokiGo wordmark, notifications and profile avatar.
 ///
 /// The wordmark is the brand mark, so it is built ONLY through [AppWordmark]
 /// (a hand-rolled pair of text halves would mirror into "GoToki" in Arabic).
 /// It carries no greeting line: the logotype is Home's identity, and a
 /// personalized greeting lives in the composition contract (home_greeting)
 /// rather than occupying the page's loudest slot.
-class _HomeTopBar extends ConsumerWidget {
+class _HomeTopBar extends StatelessWidget {
   const _HomeTopBar();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final typography = AppTypography.forLight();
-    final bool hasCurrentTrips = ref
-        .watch(bagControllerProvider)
-        .currentTrips
-        .isNotEmpty;
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         // 320pt phones are the narrowest target. The two 48pt actions and the
-        // 56pt avatar take 152pt; give the wordmark only what is left and
+        // 56pt avatar take 104pt; give the wordmark only what is left and
         // scale it down rather than letting the row overflow.
-        final double wordmarkWidth = (constraints.maxWidth - 160).clamp(
+        final double wordmarkWidth = (constraints.maxWidth - 112).clamp(
           0.0,
           172.0,
         );
 
-        return Row(
-          children: <Widget>[
-            // One semantics node saying "TokiGo" — the two halves are one word.
-            Semantics(
-              label: 'TokiGo',
-              container: true,
-              child: ExcludeSemantics(
-                child: SizedBox(
-                  width: wordmarkWidth,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: AlignmentDirectional.centerStart,
-                    child: AppWordmark(base: typography.title),
+        return Directionality(
+          textDirection: TextDirection.ltr,
+          child: Row(
+            textDirection: TextDirection.ltr,
+            children: <Widget>[
+              // One semantics node saying "TokiGo" — the two halves are one word.
+              Semantics(
+                label: 'TokiGo',
+                container: true,
+                child: ExcludeSemantics(
+                  child: SizedBox(
+                    width: wordmarkWidth,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerStart,
+                      child: AppWordmark(base: typography.title),
+                    ),
                   ),
                 ),
               ),
-            ),
-            const Spacer(),
-            _TopAction(
-              icon: Icons.luggage_outlined,
-              semanticLabel: l10n.bag,
-              color: hasCurrentTrips
-                  ? AppColors.brandRed
-                  : AppColors.textPrimary,
-              onTap: () => context.push('/bag'),
-            ),
-            _TopAction(
-              icon: Icons.notifications_none_rounded,
-              semanticLabel: l10n.notifications,
-              color: AppColors.textPrimary,
-              onTap: () => context.push('/notifications'),
-            ),
-            const _HomeAvatar(),
-          ],
+              const Spacer(),
+              _TopAction(
+                icon: Icons.notifications_none_rounded,
+                semanticLabel: l10n.notifications,
+                color: context.tokigoColors.textPrimary,
+                onTap: () => context.push('/notifications'),
+              ),
+              const _HomeAvatar(),
+            ],
+          ),
         );
       },
     );
@@ -527,10 +537,9 @@ class _TopAction extends StatelessWidget {
       label: semanticLabel,
       child: Material(
         color: Colors.transparent,
-        child: InkWell(
+        child: Pressable(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(24),
-          child: Ink(
+          child: SizedBox(
             width: 42,
             height: 42,
             child: Center(child: Icon(icon, size: 25, color: color)),
@@ -541,11 +550,15 @@ class _TopAction extends StatelessWidget {
   }
 }
 
-/// Profile destination as a monochrome icon, without an avatar or tile.
+/// Profile destination as a fixed person glyph.
+///
+/// Intentionally static: the chrome looks the SAME whether or not the
+/// traveller is signed in, so Home's only profile affordance never changes
+/// shape (and a signed-in photo never leaks into the header).
 class _HomeAvatar extends StatelessWidget {
   const _HomeAvatar();
 
-  static const double size = 48;
+  static const double size = 40;
 
   @override
   Widget build(BuildContext context) {
@@ -557,21 +570,31 @@ class _HomeAvatar extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         clipBehavior: Clip.antiAlias,
-        borderRadius: BorderRadius.circular(24),
-        child: InkWell(
-          onTap: () => context.push('/profile'),
-          child: SizedBox(
-            width: size,
-            height: size,
-            child: const Center(
-              child: Icon(
-                Icons.person_outline_rounded,
-                size: 25,
-                color: AppColors.textPrimary,
+        borderRadius: BorderRadius.circular(size / 2),
+        child: Pressable(
+            onTap: () => context.push('/profile'),
+            child: ClipOval(
+              child: SizedBox(
+                width: size,
+                height: size,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: context.tokigoColors.surfaceSecondary,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: context.tokigoColors.hairlineStrong,
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.person_rounded,
+                    size: 22,
+                    color: context.tokigoColors.textPrimary,
+                  ),
+                ),
               ),
             ),
           ),
-        ),
       ),
     );
   }
@@ -593,7 +616,10 @@ class _DiscoverSkeletonList extends StatelessWidget {
     final double railWidth = MediaQuery.sizeOf(context).width;
     final double cardWidth =
         railWidth * _StaysSkeletonList._skeletonViewportFraction;
-    final double height = HomeStaysCarousel.railHeight(context);
+    final double height = HomeStaysCarousel.railHeight(
+      context,
+      sheetTextHeight: HomeStaysCarousel.destinationSheetTextHeight,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -615,27 +641,9 @@ class _DiscoverSkeletonList extends StatelessWidget {
             alignment: AlignmentDirectional.centerStart,
             child: SizedBox(
               width: cardWidth,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Expanded(
-                    child: ShimmerBox(
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(
-                      AppSpacing.md,
-                      AppSpacing.sm,
-                      AppSpacing.md,
-                      AppSpacing.md,
-                    ),
-                    child: Align(
-                      alignment: AlignmentDirectional.centerStart,
-                      child: ShimmerBox(height: 20, width: 140),
-                    ),
-                  ),
-                ],
+              child: HomeDiscoveryStayCardSkeleton(
+                aspectRatio: HomeStaysCarousel.mediaAspectRatio,
+                semanticsLabel: 'Loading destination',
               ),
             ),
           ),

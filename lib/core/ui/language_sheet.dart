@@ -5,6 +5,7 @@ import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 import 'package:tokigo/shared/providers/locale_provider.dart';
 
@@ -15,6 +16,9 @@ import 'package:tokigo/shared/providers/locale_provider.dart';
 /// account surfaces.
 Future<void> showLanguageSheet(BuildContext context) async {
   final l10n = AppLocalizations.of(context)!;
+  final typography = Theme.of(context).brightness == Brightness.dark
+      ? AppTypography.forDark()
+      : AppTypography.forLight();
   final ProviderContainer container = ProviderScope.containerOf(
     context,
     listen: false,
@@ -22,7 +26,7 @@ Future<void> showLanguageSheet(BuildContext context) async {
   final Locale current = container.read(localeProvider);
   final Locale? chosen = await showModalBottomSheet<Locale>(
     context: context,
-    backgroundColor: AppColors.surface,
+    backgroundColor: context.tokigoColors.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadiusDirectional.vertical(
         top: Radius.circular(AppRadius.xl),
@@ -43,8 +47,8 @@ Future<void> showLanguageSheet(BuildContext context) async {
             ),
             child: Text(
               l10n.language,
-              style: AppTypography.forLight().title.copyWith(
-                color: AppColors.textPrimary,
+              style: typography.title.copyWith(
+                color: context.tokigoColors.textPrimary,
               ),
             ),
           ),
@@ -64,16 +68,16 @@ Future<void> showLanguageSheet(BuildContext context) async {
                     Expanded(
                       child: Text(
                         locale.languageCode == 'ar' ? 'العربية' : 'English',
-                        style: AppTypography.forLight().body.copyWith(
-                          color: AppColors.textPrimary,
+                        style: typography.body.copyWith(
+                          color: context.tokigoColors.textPrimary,
                         ),
                       ),
                     ),
                     if (locale.languageCode == current.languageCode)
-                      const Icon(
+                      Icon(
                         Icons.check_rounded,
                         size: 20,
-                        color: AppColors.brand,
+                        color: context.tokigoColors.brand,
                       ),
                   ],
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -6,10 +7,11 @@ import '../../../../core/auth/auth_failure_message.dart';
 import '../../../../core/auth/auth_provider.dart';
 import '../../../../core/auth/auth_state.dart';
 import '../../../../core/auth/google_auth_config.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/ai_entrance_animation.dart';
 import '../../../../core/widgets/page_header.dart';
+import '../../../../core/widgets/pressable.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Sign-in / registration page (Phase 17).
 ///
@@ -74,6 +76,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     final theme = Theme.of(context);
     final authState = ref.watch(authControllerProvider);
     final isLoading = authState is AuthLoading;
+    final l10n = AppLocalizations.of(context)!;
 
     // Surface a safe error message; never raw exception text.
     final errorMessage = switch (authState) {
@@ -82,7 +85,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     };
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(
         // `bottom: false` left the form's last field under the Android
         // navigation bar (the pill it was written for is gone).
@@ -107,18 +110,26 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             if (GoogleAuthConfig.isConfigured) ...[
-                              OutlinedButton.icon(
-                                onPressed: isLoading ? null : _signInWithGoogle,
-                                icon: const Icon(Icons.g_mobiledata, size: 28),
-                                label: const Text('Continue with Google'),
-                                style: OutlinedButton.styleFrom(
-                                  minimumSize: const Size.fromHeight(48),
-                                  maximumSize: const Size.fromHeight(48),
+                              Pressable.wrap(
+                                enabled: !isLoading,
+                                child: OutlinedButton.icon(
+                                  onPressed: isLoading
+                                      ? null
+                                      : _signInWithGoogle,
+                                  icon: const Icon(
+                                    Icons.g_mobiledata,
+                                    size: 28,
+                                  ),
+                                  label: Text(l10n.continueWithGoogle),
+                                  style: OutlinedButton.styleFrom(
+                                    minimumSize: const Size.fromHeight(48),
+                                    maximumSize: const Size.fromHeight(48),
+                                  ),
                                 ),
                               ),
                             ] else ...[
-                              const Text(
-                                'Google Sign-In not configured.',
+                              Text(
+                                l10n.googleSignInNotConfigured,
                                 textAlign: TextAlign.center,
                               ),
                             ],

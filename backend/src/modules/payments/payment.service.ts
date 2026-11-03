@@ -9,6 +9,10 @@ import { routesForMarket } from './payment.gateway';
  * idempotent and every movement lands in the ledger.
  */
 
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ProcessedWebhook } from '../../database/entities/processed_webhook.entity';
+
 @Injectable()
 export class PaymentService {
   private readonly processedWebhooks = new Set<string>();
@@ -16,9 +20,11 @@ export class PaymentService {
   private readonly paymentOwners = new Map<string, string>();
   private readonly bookingOwners = new Map<string, string>();
 
-  constructor(
+constructor(
     private readonly router: PaymentRouter,
     private readonly ledger: LedgerService,
+    @InjectRepository(ProcessedWebhook)
+    private readonly processedWebhooksRepo?: Repository<ProcessedWebhook>,
   ) {}
 
   async createPayment(input: {
@@ -71,10 +77,11 @@ export class PaymentService {
     // Ownership check (fail-closed) — only when a caller identity is supplied.
     if (userId) {
       const owner = this.paymentOwners.get(input.paymentId);
-      if (owner && owner !== userId) {
-        throw new ForbiddenException('Payment does not belong to the caller.');
-      }
-      if (input.bookingId && this.bookingOwners.get(input.bookingId) && this.bookingOwners.get(input.bookingId) !== userId) {
+            if (owner !== userId) {
+              throw new ForbiddenException('Payment does not belong to the caller.');
+            }
+            const bookingOwner = this.bookingOwners.get(input.bookingId);
+            if (input.bookingId && bookingOwner !== userId) {
         throw new ForbiddenException('Booking does not belong to the caller.');
       }
     }
@@ -101,10 +108,11 @@ export class PaymentService {
     // Ownership check (fail-closed) — only when a caller identity is supplied.
     if (userId) {
       const owner = this.paymentOwners.get(input.paymentId);
-      if (owner && owner !== userId) {
-        throw new ForbiddenException('Payment does not belong to the caller.');
-      }
-      if (input.bookingId && this.bookingOwners.get(input.bookingId) && this.bookingOwners.get(input.bookingId) !== userId) {
+            if (owner !== userId) {
+              throw new ForbiddenException('Payment does not belong to the caller.');
+            }
+            const bookingOwner = this.bookingOwners.get(input.bookingId);
+            if (input.bookingId && bookingOwner !== userId) {
         throw new ForbiddenException('Booking does not belong to the caller.');
       }
     }
@@ -147,7 +155,14 @@ export class PaymentService {
       return { status: 'REJECTED' as const };
     }
     // Replay protection: a webhook id must be processed at most once.
-    if (this.processedWebhooks.has(payload.id)) {
+    if (this.processedWebhooksRepo) {
+      const existing = await this.processedWebhooksRepo.findOne({
+        where: { id: payload.id },
+      });
+      if (existing) {
+        return { status: 'REJECTED' as const };
+      }
+    } else if (this.processedWebhooks.has(payload.id)) {
       return { status: 'REJECTED' as const };
     }
     // Existence check: the payment must actually exist in the gateway.
@@ -155,7 +170,13 @@ export class PaymentService {
     if (!existing) {
       return { status: 'REJECTED' as const };
     }
-    this.processedWebhooks.add(payload.id);
+    if (this.processedWebhooksRepo) {
+      await this.processedWebhooksRepo.save(
+        this.processedWebhooksRepo.create({ id: payload.id }),
+      );
+    } else {
+      this.processedWebhooks.add(payload.id);
+    }
     // Verified webhooks settle async (3DS) payments — the split-brain
     // recovery path (spec point O.9): payment success never assumes
     // booking success; booking services react to the status change.
@@ -169,12 +190,9 @@ export class PaymentService {
   bookingTimeline(bookingId: string, userId?: string) {
     if (userId) {
       const owner = this.bookingOwners.get(bookingId);
-      // Fail-closed only when we have recorded ownership for this booking.
-      // Unknown (legacy) bookings are allowed to keep backward compat with
-      // pre-existing ledger entries, but only for the recording owner.
-      if (owner && owner !== userId) {
-        throw new ForbiddenException('Booking does not belong to the caller.');
-      }
+            if (owner !== userId) {
+              throw new ForbiddenException('Booking does not belong to the caller.');
+            }
     }
     return this.ledger.forBooking(bookingId);
   }

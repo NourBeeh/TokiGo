@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
+
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/widgets/cards/card.dart';
 import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
 import 'package:tokigo/features/search/presentation/widgets/flight_route_line.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
 
 /// Flight recommendation card — Home discovery product card.
 ///
-/// This is NOT a search-result card: it is a compact, image-light
-/// recommendation tile (~280×240 via [HomeCardDimensions]) surfacing one
-/// recommended flight from [HomeItem] metadata:
+/// This is NOT a search-result card: it is a compact comparison tile
+/// (~300×252 via [HomeCardDimensions]) surfacing one recommended flight:
 ///
-/// - header: airline logo + name + recommendation badge
-/// - route strip: prominent departure/arrival times over airport codes
-/// - metadata: cabin/baggage chips
-/// - price anchored bottom-end
+/// - header: airline mark, name and flight number, recommendation badge
+/// - route line: the visual anchor, without a nested panel
+/// - metadata: one line of stops · cabin · baggage
+/// - footer: limited-seat signal on the start, price at the end
 ///
 /// Navigation is owned by the parent via [onTap]/[onFavorite].
 class FlightRecommendationCard extends StatelessWidget {
@@ -50,20 +54,30 @@ class FlightRecommendationCard extends StatelessWidget {
     return '${minutes}m';
   }
 
-  String _buildStopsText(dynamic stops, String? stopAirport) {
+  String _buildStopsText(
+    dynamic stops,
+    String? stopAirport,
+    AppLocalizations? l10n,
+  ) {
     final s = stops is int
         ? stops
         : int.tryParse(stops?.toString() ?? '0') ?? 0;
-    if (s == 0) return 'Non-stop';
-    if (s == 1) {
-      return stopAirport != null && stopAirport.isNotEmpty
-          ? '1 stop ($stopAirport)'
-          : '1 stop';
+    if (s == 1 && stopAirport != null && stopAirport.isNotEmpty) {
+      return l10n?.offerStopsWithAirport(stopAirport) ??
+          '1 stop ($stopAirport)';
     }
-    return '$s stops';
+    return l10n?.offerStopsCount(s) ??
+        (s == 0
+            ? 'Non-stop'
+            : s == 1
+            ? '1 stop'
+            : '$s stops');
   }
 
-  CardBadge? _buildRecommendationBadge(String? recommendation) {
+  CardBadge? _buildRecommendationBadge(
+    String? recommendation,
+    AppLocalizations? l10n,
+  ) {
     final rec = recommendation?.toString().toLowerCase();
     if (rec == 'cheapest' ||
         rec == 'fastest' ||
@@ -75,18 +89,18 @@ class FlightRecommendationCard extends StatelessWidget {
 
       switch (rec) {
         case 'cheapest':
-          label = 'Cheapest';
+          label = l10n?.offerBadgeCheapest ?? 'Cheapest';
           icon = Icons.attach_money;
           badgeType = BadgeType.cheapest;
           break;
         case 'fastest':
-          label = 'Fastest';
+          label = l10n?.offerBadgeFastest ?? 'Fastest';
           icon = Icons.speed;
           badgeType = BadgeType.fastest;
           break;
         case 'best_value':
         case 'best value':
-          label = 'Best Value';
+          label = l10n?.offerBadgeBestValue ?? 'Best Value';
           icon = Icons.star;
           badgeType = BadgeType.best;
           break;
@@ -108,22 +122,28 @@ class FlightRecommendationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final targetWidth = HomeCardDimensions.cardWidthForType(
       HomeCardType.flight,
     );
     final targetHeight = HomeCardDimensions.cardHeightForType(
       HomeCardType.flight,
     );
+    final AppLocalizations? l10n = AppLocalizations.of(context);
 
     if (loading) {
       return BaseCard(
         onTap: null,
         enabled: false,
         loading: true,
-        semanticsLabel: 'Loading recommended flight',
-        padding: EdgeInsets.all(AppSpacing.md),
-        child: cardLoadingSemantics(_LoadingSkeleton(width: targetWidth)),
+        showBorder: true,
+        borderColor: TravelCardStyle.borderColor(context),
+        showShadow: false,
+        semanticsLabel: l10n?.offerLoadingFlight ?? 'Loading flight',
+        padding: EdgeInsets.zero,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: cardLoadingSemantics(
+          _LoadingSkeleton(width: targetWidth, height: targetHeight),
+        ),
       );
     }
 
@@ -138,9 +158,15 @@ class FlightRecommendationCard extends StatelessWidget {
     final airline = item.metadata['airline']?.toString() ?? item.title;
     final flightNumber = item.metadata['flightNumber']?.toString();
     final duration = _calculateDuration(depTime, arrTime);
-    final stopsText = _buildStopsText(stops, stopAirport);
+    final stopsText = _buildStopsText(stops, stopAirport, l10n);
     final recommendation = item.metadata['recommendation']?.toString();
-    final recommendationBadge = _buildRecommendationBadge(recommendation);
+    final recommendationBadge = _buildRecommendationBadge(recommendation, l10n);
+    final recommendationLabel = switch (recommendation?.toLowerCase()) {
+      'cheapest' => l10n?.offerBadgeCheapest,
+      'fastest' => l10n?.offerBadgeFastest,
+      'best_value' || 'best value' => l10n?.offerBadgeBestValue,
+      _ => null,
+    };
     final seatsLeft = item.metadata['seatsLeft'];
     final seats = seatsLeft is int
         ? seatsLeft
@@ -148,90 +174,113 @@ class FlightRecommendationCard extends StatelessWidget {
     final isFavorite = item.metadata['isWishlisted'] == true;
 
     final semanticParts = <String>[
-      'Recommended flight',
-      ?recommendation,
+      ?recommendationLabel,
       airline,
       if (flightNumber != null && flightNumber.isNotEmpty)
-        'Flight $flightNumber',
-      '$origin to $destination',
+        l10n?.offerSemanticsFlightNumber(flightNumber) ??
+            'Flight $flightNumber',
+      l10n?.offerSemanticsFlightRoute(origin, destination) ??
+          '$origin to $destination',
       if (depTime != null)
-        'Departs at ${depTime.hour.toString().padLeft(2, '0')}:${depTime.minute.toString().padLeft(2, '0')}',
+        l10n?.offerSemanticsDeparts(
+              '${depTime.hour.toString().padLeft(2, '0')}:${depTime.minute.toString().padLeft(2, '0')}',
+            ) ??
+            'Departs at ${depTime.hour.toString().padLeft(2, '0')}:${depTime.minute.toString().padLeft(2, '0')}',
       if (arrTime != null)
-        'Arrives at ${arrTime.hour.toString().padLeft(2, '0')}:${arrTime.minute.toString().padLeft(2, '0')}',
-      if (duration.isNotEmpty) 'Duration $duration',
+        l10n?.offerSemanticsArrives(
+              '${arrTime.hour.toString().padLeft(2, '0')}:${arrTime.minute.toString().padLeft(2, '0')}',
+            ) ??
+            'Arrives at ${arrTime.hour.toString().padLeft(2, '0')}:${arrTime.minute.toString().padLeft(2, '0')}',
+      if (duration.isNotEmpty)
+        l10n?.offerSemanticsDuration(duration) ?? 'Duration $duration',
       if (stopsText.isNotEmpty) stopsText,
       if (cabin != null && cabin.isNotEmpty) cabin,
       if (baggage != null && baggage.isNotEmpty) baggage,
       if (item.price != null)
-        'Price ${item.price!.toStringAsFixed(0)} ${item.currency ?? ''}',
-      if (isFavorite) 'Saved',
+        l10n?.offerSemanticsPrice(
+              '${item.price!.toStringAsFixed(0)} ${item.currency ?? ''}'.trim(),
+            ) ??
+            'Price ${item.price!.toStringAsFixed(0)} ${item.currency ?? ''}',
+      if (isFavorite) l10n?.offerSaved ?? 'Saved',
     ];
-    final semanticLabel = semanticParts.join(', ');
+
+    final metadataParts = <String>[
+      stopsText,
+      if (cabin != null && cabin.isNotEmpty) cabin,
+      if (baggage != null && baggage.isNotEmpty) baggage,
+    ];
 
     return BaseCard(
       onTap: onTap,
-      semanticsLabel: semanticLabel,
-      padding: EdgeInsets.all(AppSpacing.md),
+      semanticsLabel: semanticParts.join(', '),
+      showBorder: true,
+      borderColor: TravelCardStyle.borderColor(context),
+      showShadow: false,
+      padding: EdgeInsets.zero,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: ConstrainedBox(
         constraints: BoxConstraints(
           minWidth: targetWidth,
           minHeight: targetHeight,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // ── Header: airline + badge + favorite ────────────────────
-            Row(
-              children: [
-                Builder(
-                  builder: (context) {
-                    final bg = CardImage.providerFor(
-                      item.imageUrl,
-                      cacheWidth: 128,
-                      cacheHeight: 128,
-                    );
-                    return CircleAvatar(
-                      radius: 16,
-                      backgroundColor: scheme.primaryContainer,
-                      backgroundImage: bg,
-                      onBackgroundImageError: bg != null ? (_, _) {} : null,
-                      child: bg == null
-                          ? Icon(
-                              Icons.flight,
-                              size: 16,
-                              color: scheme.onPrimaryContainer,
-                            )
-                          : null,
-                    );
-                  },
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    airline,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              // ── Header: airline mark + identity + recommendation ─────────
+              Row(
+                children: <Widget>[
+                  _AirlineMark(url: item.imageUrl),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text(
+                          airline,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.forLight().bodyLargeMedium
+                              .copyWith(
+                                color: context.tokigoColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                        if (flightNumber != null &&
+                            flightNumber.isNotEmpty) ...<Widget>[
+                          const SizedBox(height: AppSpacing.xxs),
+                          Text(
+                            flightNumber,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.forLight().caption.copyWith(
+                              color: context.tokigoColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                ),
-                if (recommendationBadge != null) ...[
-                  Flexible(child: recommendationBadge),
-                  const SizedBox(width: AppSpacing.xs),
+                  if (recommendationBadge != null) ...<Widget>[
+                    const SizedBox(width: AppSpacing.xs),
+                    Flexible(child: recommendationBadge),
+                  ],
+                  if (onFavorite != null) ...<Widget>[
+                    const SizedBox(width: AppSpacing.xxs),
+                    CardFavorite(value: isFavorite, onChanged: onFavorite),
+                  ],
                 ],
-                if (onFavorite != null)
-                  CardFavorite(value: isFavorite, onChanged: onFavorite),
-              ],
-            ),
-            // ── Route strip — the visual anchor ───────────────────────
-            const SizedBox(height: AppSpacing.md),
-            Center(
-              child: FlightRouteLine(
+              ),
+              const SizedBox(height: AppSpacing.md),
+              // ── Route strip — the visual anchor ─────────────────────────
+              FlightRouteLine(
                 departureTime:
                     depTime ?? DateTime.fromMillisecondsSinceEpoch(0),
-                arrivalTime: arrTime ?? DateTime.fromMillisecondsSinceEpoch(0),
+                arrivalTime:
+                    arrTime ?? DateTime.fromMillisecondsSinceEpoch(0),
                 origin: origin.isNotEmpty ? origin : '—',
                 destination: destination.isNotEmpty ? destination : '—',
                 stops: stops is int ? stops : 0,
@@ -239,150 +288,255 @@ class FlightRecommendationCard extends StatelessWidget {
                 duration: duration,
                 compact: true,
               ),
-            ),
-            // ── Metadata row: stops + cabin/baggage chips ──────────────
-            const SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                Icon(Icons.schedule, size: 14, color: scheme.onSurfaceVariant),
-                const SizedBox(width: AppSpacing.xs),
-                Flexible(
-                  child: Text(
-                    stopsText,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if ((cabin != null && cabin.isNotEmpty) ||
-                (baggage != null && baggage.isNotEmpty)) ...[
-              const SizedBox(height: AppSpacing.xs),
-              CardFeatureList(
-                features: [
-                  if (cabin != null && cabin.isNotEmpty) cabin,
-                  if (baggage != null && baggage.isNotEmpty) baggage,
+              const SizedBox(height: AppSpacing.sm),
+              // ── One calm metadata line ──────────────────────────────────
+              _MetadataLine(parts: metadataParts),
+              const SizedBox(height: AppSpacing.sm),
+              Divider(
+                height: 1,
+                thickness: 1,
+                color: context.tokigoColors.hairline,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              // ── Footer: scarcity on the start, price at the end ─────────
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  if (seats != null && seats > 0 && seats <= 9)
+                    Flexible(
+                      child: CardBadge(
+                        label:
+                            l10n?.offerSeatsLeft(seats) ??
+                            '$seats seat${seats > 1 ? 's' : ''} left',
+                        icon: Icons.event_seat_outlined,
+                        variant: CardBadgeVariant.tinted,
+                        type: BadgeType.limitedRooms,
+                      ),
+                    )
+                  else
+                    const Spacer(),
+                  const SizedBox(width: AppSpacing.sm),
+                  _FlightPrice(price: item.price, currency: item.currency),
                 ],
-                direction: Axis.horizontal,
               ),
             ],
-            // ── Footer: seats-left badge + PRICE ──────────────────────
-            const SizedBox(height: AppSpacing.sm),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (seats != null && seats > 0 && seats <= 9) ...[
-                  Flexible(
-                    child: CardBadge(
-                      label: '$seats seat${seats > 1 ? 's' : ''} left',
-                      icon: Icons.event_seat,
-                      variant: CardBadgeVariant.tinted,
-                      type: BadgeType.limitedRooms,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                ],
-                const Spacer(),
-                Flexible(
-                  child: CardPrice(
-                    price: item.price,
-                    currency: item.currency,
-                    rawPrice: item.rawPrice,
-                  ),
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// Skeleton for [FlightRecommendationCard] — same tile geometry
-/// (header, route strip, metadata, price) with no fake data.
+/// The airline identity mark: the provider's logo when it sent one, otherwise
+/// a quiet flight glyph. It is a rounded tile, not a coloured avatar, so it
+/// belongs to the monochrome card family.
+class _AirlineMark extends StatelessWidget {
+  const _AirlineMark({required this.url});
+
+  final String? url;
+
+  @override
+  Widget build(BuildContext context) {
+    final ImageProvider? bg = CardImage.providerFor(
+      url,
+      cacheWidth: 128,
+      cacheHeight: 128,
+    );
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        color: context.tokigoColors.surfaceSecondary,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: context.tokigoColors.hairline),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: bg == null
+          ? Icon(
+              Icons.flight_takeoff_rounded,
+              size: 18,
+              color: context.tokigoColors.textSecondary,
+            )
+          : Image(
+              image: bg,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => Icon(
+                Icons.flight_takeoff_rounded,
+                size: 18,
+                color: context.tokigoColors.textSecondary,
+              ),
+            ),
+    );
+  }
+}
+
+class _MetadataLine extends StatelessWidget {
+  const _MetadataLine({required this.parts});
+
+  final List<String> parts;
+
+  @override
+  Widget build(BuildContext context) {
+    if (parts.isEmpty) return const SizedBox.shrink();
+    final typography = AppTypography.forLight();
+    return Row(
+      children: <Widget>[
+        Icon(
+          Icons.schedule_rounded,
+          size: 14,
+          color: context.tokigoColors.textTertiary,
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Expanded(
+          child: Text(
+            parts.join('  ·  '),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: typography.caption.copyWith(
+              color: context.tokigoColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FlightPrice extends StatelessWidget {
+  const _FlightPrice({required this.price, required this.currency});
+
+  final double? price;
+  final String? currency;
+
+  @override
+  Widget build(BuildContext context) {
+    final value = price;
+    if (value == null) return const SizedBox.shrink();
+    final typography = AppTypography.forLight();
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      textDirection: TextDirection.ltr,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Text(
+          value.toStringAsFixed(0),
+          maxLines: 1,
+          style: typography.titleMedium.copyWith(
+            color: context.tokigoColors.textPrimary,
+            fontWeight: FontWeight.w800,
+            height: 1.05,
+            letterSpacing: -0.3,
+          ),
+        ),
+        if ((currency ?? '').isNotEmpty) ...<Widget>[
+          const SizedBox(width: AppSpacing.xs),
+          Text(
+            currency!,
+            maxLines: 1,
+            style: typography.caption.copyWith(
+              color: context.tokigoColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Skeleton for [FlightRecommendationCard] — the header, route, metadata
+/// line and price footer with no fake data.
 class _LoadingSkeleton extends StatelessWidget {
-  const _LoadingSkeleton({required this.width});
+  const _LoadingSkeleton({required this.width, required this.height});
 
   final double width;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: width,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header: avatar + airline + badge
-          Row(
-            children: [
-              CardSkeleton.avatar(size: 32),
-              CardSkeleton.hGap(width: AppSpacing.sm),
-              Expanded(child: CardSkeleton.title(width: 120, height: 16)),
-              CardSkeleton.chip(width: 72),
-            ],
-          ),
-          CardSkeleton.gap(height: AppSpacing.md),
-          // Route strip
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CardSkeleton.title(width: 56, height: 18),
-                    CardSkeleton.gap(height: AppSpacing.xxs),
-                    CardSkeleton.text(width: 40),
-                  ],
+      height: height,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                CardSkeleton.avatar(size: 38),
+                CardSkeleton.hGap(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      CardSkeleton.title(width: 120, height: 16),
+                      CardSkeleton.gap(height: AppSpacing.xxs),
+                      CardSkeleton.text(width: 64, height: 12),
+                    ],
+                  ),
                 ),
-              ),
-              CardSkeleton.hGap(width: AppSpacing.sm),
-              Expanded(
-                flex: 2,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CardSkeleton.text(height: 2),
-                    const SizedBox(height: AppSpacing.xxs),
-                    CardSkeleton.chip(width: 52, height: 16),
-                  ],
+                CardSkeleton.chip(width: 72),
+              ],
+            ),
+            CardSkeleton.gap(height: AppSpacing.md),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      CardSkeleton.title(width: 56, height: 18),
+                      CardSkeleton.gap(height: AppSpacing.xxs),
+                      CardSkeleton.text(width: 40),
+                    ],
+                  ),
                 ),
-              ),
-              CardSkeleton.hGap(width: AppSpacing.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CardSkeleton.title(width: 56, height: 18),
-                    CardSkeleton.gap(height: AppSpacing.xxs),
-                    CardSkeleton.text(width: 40),
-                  ],
+                CardSkeleton.hGap(width: AppSpacing.sm),
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      CardSkeleton.text(height: 2),
+                      const SizedBox(height: AppSpacing.xxs),
+                      CardSkeleton.chip(width: 52, height: 16),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-          CardSkeleton.gap(height: AppSpacing.md),
-          // Metadata row
-          Row(
-            children: [
-              CardSkeleton.text(width: 76),
-              CardSkeleton.hGap(width: AppSpacing.xs),
-              CardSkeleton.chip(width: 60),
-            ],
-          ),
-          CardSkeleton.gap(height: AppSpacing.sm),
-          // Footer price
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [CardSkeleton.price(width: 80)],
-          ),
-        ],
+                CardSkeleton.hGap(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      CardSkeleton.title(width: 56, height: 18),
+                      CardSkeleton.gap(height: AppSpacing.xxs),
+                      CardSkeleton.text(width: 40),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            CardSkeleton.gap(height: AppSpacing.sm),
+            Row(
+              children: <Widget>[
+                CardSkeleton.text(width: 76),
+                CardSkeleton.hGap(width: AppSpacing.xs),
+                CardSkeleton.chip(width: 60),
+              ],
+            ),
+            CardSkeleton.gap(height: AppSpacing.sm),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[CardSkeleton.price(width: 88)],
+            ),
+          ],
+        ),
       ),
     );
   }

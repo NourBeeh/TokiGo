@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -68,7 +68,7 @@ class BookingStatusCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: typography.bodyLargeMedium.copyWith(
-                    color: AppColors.textPrimary,
+                    color: context.tokigoColors.textPrimary,
                   ),
                 ),
                 if (meta != null) ...<Widget>[
@@ -78,7 +78,7 @@ class BookingStatusCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: typography.caption.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.tokigoColors.textSecondary,
                     ),
                   ),
                 ],
@@ -97,7 +97,7 @@ class BookingStatusCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     textDirection: TextDirection.ltr,
                     style: typography.caption.copyWith(
-                      color: AppColors.textTertiary,
+                      color: context.tokigoColors.textTertiary,
                       letterSpacing: 0.3,
                     ),
                   ),
@@ -106,10 +106,10 @@ class BookingStatusCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
-          const Icon(
+          Icon(
             Icons.chevron_right,
             size: 20,
-            color: AppColors.textTertiary,
+            color: context.tokigoColors.textTertiary,
           ),
         ],
       ),

@@ -61,7 +61,10 @@ class FlightSearchController extends StateNotifier<FlightSearchState> {
 
     final repository = usecase.repository;
     if (repository is FlightRepositoryImpl) {
-      repository.setNextSearchContext(market: params.market);
+      repository.setNextSearchContext(
+        market: params.market,
+        currency: params.currency,
+      );
     }
 
     final cacheKey = flightSearchCacheKey(
@@ -74,6 +77,7 @@ class FlightSearchController extends StateNotifier<FlightSearchState> {
           ? params.effectiveLegs
           : const <FlightSearchLeg>[],
       market: params.market,
+      currency: params.currency,
     );
 
     // Try to load from cache first (for instant UI)

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_elevation.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 
@@ -69,13 +70,10 @@ class AppIconAction extends StatelessWidget {
   /// it is what a screen reader announces.
   final bool showTooltip;
 
-  /// Whether the press ripple (the expanding circle) is drawn.
-  ///
-  /// Off for the back control: a circle bursting out of a chevron reads as a
-  /// second, unlabelled button rather than as feedback.
+  /// Retained for source compatibility; press ripples are disabled globally.
   final bool splashEnabled;
 
-  /// Overrides the ink colour (defaults to [AppColors.textPrimary]).
+  /// Overrides the ink colour (defaults to [context.tokigoColors.textPrimary]).
   final Color? color;
 
   /// Whether the action can be pressed.
@@ -89,55 +87,69 @@ class AppIconAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool disc = variant == AppIconActionVariant.disc;
     final Color ink = enabled
-        ? (color ?? AppColors.textPrimary)
-        : AppColors.textTertiary;
+        ? (color ??
+              (disc ? AppColors.textPrimary : context.tokigoColors.textPrimary))
+        : (disc ? AppColors.textSecondary : context.tokigoColors.textTertiary);
 
-    final Widget sized = SizedBox(
-      width: tapTarget,
-      height: tapTarget,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: enabled ? onTap : null,
-          customBorder: const CircleBorder(),
-          // The press ripple is opt-out: a circle bursting out of a bare
-          // chevron reads as a second, unlabelled button, not as feedback.
-          splashFactory: splashEnabled
-              ? InkRipple.splashFactory
-              : NoSplash.splashFactory,
-          highlightColor: splashEnabled ? null : Colors.transparent,
-          // ONE subtree for both roles: the fill and the glyph travel between
-          // the gutter and the centred disc, instead of a second control being
-          // built. The back contract must never see two buttons.
-          child: AnimatedAlign(
-            duration: swapDuration,
-            curve: Curves.easeOutCubic,
-            alignment: disc
-                ? AlignmentDirectional.center
-                : AlignmentDirectional.centerStart,
-            child: AnimatedContainer(
-              duration: swapDuration,
-              curve: Curves.easeOutCubic,
-              width: disc ? discDiameter : bareGlyph,
-              height: disc ? discDiameter : bareGlyph,
-              // No border, ever: a hairline reads as a sticker and vanishes on
-              // a light photo — the shadow is the edge.
-              decoration: disc
-                  ? BoxDecoration(
-                      color: AppColors.onMediaFill,
-                      shape: BoxShape.circle,
-                      boxShadow: AppElevation.shadow(
-                        background: AppColors.surface,
-                        level: AppElevation.lg,
-                      ),
-                    )
-                  : null,
-              child: Center(
-                child: Icon(
-                  icon,
-                  size: disc ? 20 : 22,
-                  color: ink,
-                  semanticLabel: semanticLabel,
+    bool pressed = false;
+    final Widget sized = StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) => SizedBox(
+        width: tapTarget,
+        height: tapTarget,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: enabled ? onTap : null,
+            onHighlightChanged: enabled
+                ? (bool value) {
+                    if (pressed != value) {
+                      setState(() => pressed = value);
+                    }
+                  }
+                : null,
+            customBorder: const CircleBorder(),
+            splashFactory: NoSplash.splashFactory,
+            highlightColor: Colors.transparent,
+            // ONE subtree for both roles: the fill and the glyph travel between
+            // the gutter and the centred disc, instead of a second control being
+            // built. The back contract must never see two buttons.
+            child: AnimatedScale(
+              scale: pressed ? 0.9 : 1,
+              duration: const Duration(milliseconds: 110),
+              curve: Curves.easeOut,
+              child: AnimatedAlign(
+                duration: swapDuration,
+                curve: Curves.easeOutCubic,
+                alignment: disc
+                    ? AlignmentDirectional.center
+                    : AlignmentDirectional.centerStart,
+                child: AnimatedContainer(
+                  duration: swapDuration,
+                  curve: Curves.easeOutCubic,
+                  width: disc ? discDiameter : bareGlyph,
+                  height: disc ? discDiameter : bareGlyph,
+                  // The disc shadow is removed while pressed; scale provides
+                  // feedback without a ripple or shadow burst.
+                  decoration: disc
+                      ? BoxDecoration(
+                          color: context.tokigoColors.onMediaFill,
+                          shape: BoxShape.circle,
+                          boxShadow: pressed
+                              ? null
+                              : AppElevation.shadow(
+                                  background: context.tokigoColors.surface,
+                                  level: AppElevation.lg,
+                                ),
+                        )
+                      : null,
+                  child: Center(
+                    child: Icon(
+                      icon,
+                      size: disc ? 20 : 22,
+                      color: ink,
+                      semanticLabel: semanticLabel,
+                    ),
+                  ),
                 ),
               ),
             ),

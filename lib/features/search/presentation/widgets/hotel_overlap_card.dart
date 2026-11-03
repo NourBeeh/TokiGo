@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import 'package:tokigo/core/domain/models/offers/display_price.dart';
 import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/widgets/cards/card_image.dart';
@@ -61,7 +62,15 @@ class HotelOverlapCard extends StatelessWidget {
     final String? unit = stay.perNight != null
         ? (AppLocalizations.of(context)?.unitNight ?? 'night')
         : null;
-    final double amount = stay.fallbackAmount(data.price);
+    // The backend's converted CUSTOMER price when present (display currency),
+    // else the provider's own figure. The per-night amount is scaled by the
+    // same ratio the quote used.
+    final DisplayMoney display = displayMoneyFor(
+      stay.fallbackAmount(data.price),
+      data.currency,
+      data.customerPrice,
+    );
+    final double amount = display.amount;
     final String money = NumberFormat.currency(
       symbol: '',
       locale: 'en_US',
@@ -81,7 +90,7 @@ class HotelOverlapCard extends StatelessWidget {
       rating: data.rating,
       reviewCount: data.reviewCount,
       amountText: money,
-      currency: data.currency,
+      currency: display.currency,
       unit: unit,
       onTap: onTap,
       onFavorite: onFavorite,
@@ -91,7 +100,7 @@ class HotelOverlapCard extends StatelessWidget {
       margin: _margin,
       semanticsLabel: AppLocalizations.of(context) == null
           ? data.title
-          : _semantics(context, data, money, unit),
+          : _semantics(context, data, money, unit, display.currency),
     );
   }
 
@@ -107,6 +116,7 @@ class HotelOverlapCard extends StatelessWidget {
     HotelOffer data,
     String money,
     String? unit,
+    String currency,
   ) {
     final l10n = AppLocalizations.of(context)!;
     return <String>[
@@ -118,9 +128,9 @@ class HotelOverlapCard extends StatelessWidget {
           data.reviewCount ?? 0,
         ),
       if (unit != null)
-        l10n.cardPerUnitSemantics(unit, money, data.currency)
+        l10n.cardPerUnitSemantics(unit, money, currency)
       else
-        '$money ${data.currency}',
+        '$money $currency',
     ].join(', ');
   }
 }

@@ -282,6 +282,33 @@ class AppLocalizationsAr extends AppLocalizations {
   String get signIn => 'تسجيل الدخول';
 
   @override
+  String get continueWithGoogle => 'المتابعة باستخدام Google';
+
+  @override
+  String get googleSignInNotConfigured => 'تسجيل الدخول باستخدام Google غير مُعدّ.';
+
+  @override
+  String get signInSheetTitle => 'سجّل دخولك عشان تحفظ';
+
+  @override
+  String get signInSheetBody => 'احفظ اللي بيعجبك واستمتع بكل مزايا TokiGo.';
+
+  @override
+  String get signInSheetBenefitPrice => 'تابع تغيّر الأسعار';
+
+  @override
+  String get signInSheetBenefitTrips => 'احفظ الفنادق والرحلات';
+
+  @override
+  String get signInSheetBenefitFeatures => 'استمتع بكل مزايا التطبيق';
+
+  @override
+  String get signInSheetBenefitSync => 'احفظ معلوماتك على كل أجهزتك';
+
+  @override
+  String get signInSheetNotNow => 'مش دلوقتي';
+
+  @override
   String get signOut => 'تسجيل الخروج';
 
   @override
@@ -599,6 +626,18 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get settingsAppLanguage => 'لغة التطبيق';
+
+  @override
+  String get settingsTheme => 'المظهر';
+
+  @override
+  String get settingsThemeDark => 'داكن';
+
+  @override
+  String get settingsThemeLight => 'فاتح';
+
+  @override
+  String get settingsThemeSystem => 'النظام';
 
   @override
   String get settingsPreferences => 'التفضيلات';
@@ -1390,10 +1429,58 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get discoverTitle => 'اكتشف';
+  String get discoverTitle => 'استكشف';
 
   @override
   String get discoverMore => 'اكتشف المزيد';
+
+  @override
+  String get exploreCitySearch => 'ابحث عن مدينة أو دولة';
+
+  @override
+  String get exploreFilterAll => 'الكل';
+
+  @override
+  String get exploreFilterYouth => 'شبابي';
+
+  @override
+  String get exploreFilterFamilies => 'عائلات';
+
+  @override
+  String get exploreFilterHoneymoon => 'شهر عسل';
+
+  @override
+  String get exploreFilterBeach => 'شاطئ';
+
+  @override
+  String get exploreFilterNature => 'طبيعة';
+
+  @override
+  String get exploreFilterCity => 'مدن';
+
+  @override
+  String get exploreFilterShopping => 'تسوق';
+
+  @override
+  String get exploreFilterSnow => 'ثلوج';
+
+  @override
+  String get exploreNoCities => 'لا توجد مدن للاستكشاف حاليًا';
+
+  @override
+  String get exploreNoCitiesBody => 'ستظهر هنا المدن المنشورة في قسم اكتشف.';
+
+  @override
+  String get exploreNoMatchingCities => 'لا توجد وجهات مطابقة';
+
+  @override
+  String get exploreNoMatchingCitiesBody => 'جرّب بحثًا آخر أو امسح الفلاتر المحددة.';
+
+  @override
+  String get exploreCitiesErrorTitle => 'تعذّر تحميل الوجهات';
+
+  @override
+  String get exploreCitiesErrorBody => 'تحقق من اتصالك وحاول مرة أخرى.';
 
   @override
   String hotelResultsCount(int count) {
@@ -1443,6 +1530,11 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String cardSaveLabel(Object amount) {
     return 'وفّر $amount';
+  }
+
+  @override
+  String dealDiscountLabel(Object percent) {
+    return 'خصم $percent٪';
   }
 
   @override
@@ -1845,4 +1937,116 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get hotelOpenLocationInMaps => 'افتح الموقع في الخرائط';
+
+  @override
+  String destinationCityName(String name) {
+    String _temp0 = intl.Intl.selectLogic(
+      name,
+      {
+        'abu_dhabi': 'أبو ظبي',
+        'alexandria': 'الإسكندرية',
+        'amsterdam': 'أمستردام',
+        'antalya': 'أنطاليا',
+        'aswan': 'أسوان',
+        'athens': 'أثينا',
+        'bali': 'بالي',
+        'bangkok': 'بانكوك',
+        'barcelona': 'برشلونة',
+        'beirut': 'بيروت',
+        'berlin': 'برلين',
+        'cairo': 'القاهرة',
+        'cancun': 'كانكون',
+        'cape_town': 'كيب تاون',
+        'casablanca': 'الدار البيضاء',
+        'dahab': 'دهب',
+        'doha': 'الدوحة',
+        'dubai': 'دبي',
+        'gudauri': 'جوداوري',
+        'hong_kong': 'هونغ كونغ',
+        'hurghada': 'الغردقة',
+        'innsbruck': 'إنسبروك',
+        'istanbul': 'إسطنبول',
+        'jeddah': 'جدة',
+        'kuala_lumpur': 'كوالالمبور',
+        'kuwait_city': 'الكويت',
+        'lisbon': 'لشبونة',
+        'london': 'لندن',
+        'luxor': 'الأقصر',
+        'madrid': 'مدريد',
+        'maldives': 'المالديف',
+        'marrakech': 'مراكش',
+        'marsa_alam': 'مرسى علم',
+        'miami': 'ميامي',
+        'milan': 'ميلان',
+        'munich': 'ميونخ',
+        'muscat': 'مسقط',
+        'new_york': 'نيويورك',
+        'nice': 'نيس',
+        'nuweiba': 'نويبع',
+        'oslo': 'أوسلو',
+        'paris': 'باريس',
+        'prague': 'براغ',
+        'rio_de_janeiro': 'ريو دي جانيرو',
+        'riyadh': 'الرياض',
+        'rome': 'روما',
+        'rovaniemi': 'رو�انييمي',
+        'santorini': 'سانتوريني',
+        'shahdag': 'شاهداغ',
+        'sharm_el_sheikh': 'شرم الشيخ',
+        'singapore': 'سنغافورة',
+        'sydney': 'سيدني',
+        'tokyo': 'طوكيو',
+        'venice': 'البندقية',
+        'vienna': 'فيينا',
+        'amman': 'عمّان',
+        'other': '$name',
+      },
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String destinationRegionName(String name) {
+    String _temp0 = intl.Intl.selectLogic(
+      name,
+      {
+        'australia': 'أستراليا',
+        'austria': 'النمسا',
+        'brazil': 'البرازيل',
+        'czechia': 'التشيك',
+        'egypt': 'مصر',
+        'finland': 'فنلندا',
+        'france': 'فرنسا',
+        'georgia': 'جورجيا',
+        'germany': 'ألمانيا',
+        'greece': 'اليونان',
+        'hong_kong': 'هونغ كونغ',
+        'indonesia': 'إندونيسيا',
+        'italy': 'إيطاليا',
+        'japan': 'اليابان',
+        'jordan': 'الأردن',
+        'kuwait': 'الكويت',
+        'maldives': 'المالديف',
+        'malaysia': 'ماليزيا',
+        'mexico': 'المكسيك',
+        'morocco': 'المغرب',
+        'netherlands': 'هولندا',
+        'norway': 'النرويج',
+        'oman': 'عُمان',
+        'portugal': 'البرتغال',
+        'qatar': 'قطر',
+        'saudi_arabia': 'السعودية',
+        'singapore': 'سنغافورة',
+        'south_africa': 'جنوب أفريقيا',
+        'spain': 'إسبانيا',
+        'thailand': 'تايلاند',
+        'turkey': 'تركيا',
+        'united_arab_emirates': 'الإمارات العربية المتحدة',
+        'united_kingdom': 'المملكة المتحدة',
+        'united_states': 'الولايات المتحدة',
+        'other': '$name',
+      },
+    );
+    return '$_temp0';
+  }
 }

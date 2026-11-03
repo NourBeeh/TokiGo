@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -10,6 +10,7 @@ import 'package:tokigo/core/ui/app_button.dart';
 import 'package:tokigo/core/ui/app_message_state.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/core/widgets/step_progress.dart';
 import 'package:tokigo/core/widgets/sticky_cta_bar.dart';
 import 'package:tokigo/features/bag/domain/trip.dart';
@@ -220,7 +221,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     // the honest version of what v1 faked with a generated booking id.
     if (record == null) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.tokigoColors.background,
         body: SafeArea(
           bottom: false,
           child: AiEntranceAnimation(
@@ -256,7 +257,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     final total = record.authoritativePrice + addOnsTotal;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(
         bottom: false,
         child: AiEntranceAnimation(
@@ -283,7 +284,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                           Text(
                             l10n.checkoutPaymentMethod,
                             style: typography.bodyLargeMedium.copyWith(
-                              color: AppColors.textPrimary,
+                              color: context.tokigoColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: AppSpacing.md),
@@ -311,7 +312,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                             Text(
                               l10n.checkoutCardDetails,
                               style: typography.bodyLargeMedium.copyWith(
-                                color: AppColors.textPrimary,
+                                color: context.tokigoColors.textPrimary,
                               ),
                             ),
                             const SizedBox(height: AppSpacing.md),
@@ -327,7 +328,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                           Text(
                             l10n.checkoutPriceBreakdown,
                             style: typography.bodyLargeMedium.copyWith(
-                              color: AppColors.textPrimary,
+                              color: context.tokigoColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: AppSpacing.md),
@@ -344,7 +345,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                       if (_processing)
                         Positioned.fill(
                           child: ColoredBox(
-                            color: AppColors.background.withValues(alpha: 0.7),
+                            color: context.tokigoColors.background.withValues(alpha: 0.7),
                             child: Center(
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
@@ -360,7 +361,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                                   Text(
                                     l10n.checkoutProcessing,
                                     style: typography.bodyLargeMedium.copyWith(
-                                      color: AppColors.textPrimary,
+                                      color: context.tokigoColors.textPrimary,
                                     ),
                                   ),
                                 ],
@@ -390,14 +391,14 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                     Text(
                       l10n.total,
                       style: typography.caption.copyWith(
-                        color: AppColors.textSecondary,
+                        color: context.tokigoColors.textSecondary,
                       ),
                     ),
                     Text(
                       '$currency ${total.toStringAsFixed(2)}',
                       maxLines: 1,
                       style: typography.titleMedium.copyWith(
-                        color: AppColors.textPrimary,
+                        color: context.tokigoColors.textPrimary,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -439,33 +440,34 @@ class _MethodTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.md,
-          ),
+    return Pressable.wrap(
+      child: Material(
+        color: context.tokigoColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
+            ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
-              color: selected ? AppColors.brand : AppColors.outline,
+              color: selected ? context.tokigoColors.brand : context.tokigoColors.outline,
               width: selected ? 1.5 : 1,
             ),
           ),
           child: Row(
             children: <Widget>[
-              Icon(icon, size: 22, color: AppColors.textSecondary),
+              Icon(icon, size: 22, color: context.tokigoColors.textSecondary),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
                   label,
                   style: typography.bodyMedium.copyWith(
-                    color: AppColors.textPrimary,
+                    color: context.tokigoColors.textPrimary,
                   ),
                 ),
               ),
@@ -476,10 +478,10 @@ class _MethodTile extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: selected ? AppColors.brand : AppColors.outline,
+                    color: selected ? context.tokigoColors.brand : context.tokigoColors.outline,
                     width: 2,
                   ),
-                  color: selected ? AppColors.brand : Colors.transparent,
+                  color: selected ? context.tokigoColors.brand : Colors.transparent,
                 ),
                 child: selected
                     ? const Icon(
@@ -492,6 +494,7 @@ class _MethodTile extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -599,9 +602,9 @@ class _PriceBreakdownCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.tokigoColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.outline),
+        border: Border.all(color: context.tokigoColors.outline),
       ),
       child: Column(
         children: <Widget>[
@@ -623,13 +626,13 @@ class _PriceBreakdownCard extends StatelessWidget {
                 child: Text(
                   l10n.total,
                   style: typography.bodyLargeMedium.copyWith(
-                    color: AppColors.textPrimary,
+                    color: context.tokigoColors.textPrimary,
                   ),
                 ),
               ),
               Text(
                 '$currency ${total.toStringAsFixed(2)}',
-                style: typography.title.copyWith(color: AppColors.textPrimary),
+                style: typography.title.copyWith(color: context.tokigoColors.textPrimary),
               ),
             ],
           ),
@@ -660,12 +663,12 @@ class _Row extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: typography.body.copyWith(color: AppColors.textSecondary),
+              style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
             ),
           ),
           Text(
             '$currency ${value.toStringAsFixed(2)}',
-            style: typography.bodyMedium.copyWith(color: AppColors.textPrimary),
+            style: typography.bodyMedium.copyWith(color: context.tokigoColors.textPrimary),
           ),
         ],
       ),
@@ -687,7 +690,7 @@ class _FailureStrip extends StatelessWidget {
       container: true,
       child: Container(
         width: double.infinity,
-        color: AppColors.dangerContainer,
+        color: context.tokigoColors.dangerContainer,
         padding: const EdgeInsetsDirectional.symmetric(
           horizontal: AppSpacing.lg,
           vertical: AppSpacing.md,
@@ -695,17 +698,17 @@ class _FailureStrip extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Icon(
+            Icon(
               Icons.error_outline_rounded,
               size: 20,
-              color: AppColors.danger,
+              color: context.tokigoColors.danger,
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
                 message,
                 style: AppTypography.forLight().caption.copyWith(
-                  color: AppColors.danger,
+                  color: context.tokigoColors.danger,
                 ),
               ),
             ),

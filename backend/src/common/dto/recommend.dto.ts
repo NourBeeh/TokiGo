@@ -22,4 +22,22 @@ export class RecommendedHotelsQueryDto {
   @IsString()
   @Matches(/^[A-Z]{2}$/, { message: 'code must be an ISO-2 country code' })
   code?: string;
+
+  /** Hotel content language. Omitted preserves the provider default. */
+  @IsOptional()
+  @IsString()
+  @Matches(/^(en|ar)$/)
+  language?: string;
+
+  /**
+   * Explicit display currency (ISO-4217) chosen by the traveller. When absent
+   * the market's own currency applies.
+   */
+  @IsOptional()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim().toUpperCase() : value,
+  )
+  @IsString()
+  @Matches(/^[A-Z]{3}$/, { message: 'currency must be an ISO-4217 code' })
+  currency?: string;
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import '../../core/navigation/app_route.dart';
-import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_motion.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
@@ -24,7 +24,7 @@ class PlaceholderPage extends StatelessWidget {
     final theme = Theme.of(context);
     final typography = AppTypography.forLight();
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(
         child: AiEntranceAnimation(
           child: Column(

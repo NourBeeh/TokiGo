@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/widgets/cards/badge_config.dart';
@@ -60,8 +60,11 @@ class CardBadge extends StatelessWidget {
     Color background;
 
     if (onDark) {
+      // A badge over photography is a frosted DARK pill: white ink on a white
+      // wash disappears against a bright sky. The semantic type still supplies
+      // the label/icon, never a solid tint that fights the photo.
       foreground = CardScrimColors.onScrim;
-      background = spec?.getBackgroundColor(context) ?? AppColors.glassFill;
+      background = context.tokigoColors.glassTint;
     } else if (spec != null) {
       foreground = spec.getColor(context);
       background = spec.getBackgroundColor(context);

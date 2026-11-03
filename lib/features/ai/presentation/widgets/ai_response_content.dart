@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/features/ai/application/ai_providers.dart';
 import 'package:tokigo/features/ai/application/ai_state.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_section.dart';
@@ -77,9 +78,11 @@ class _AiErrorState extends StatelessWidget {
             ),
             if (onRetry != null) ...<Widget>[
               const SizedBox(height: AppSpacing.lg),
-              FilledButton(
-                onPressed: onRetry,
-                child: Text(AppLocalizations.of(context)?.retry ?? 'Retry'),
+              Pressable.wrap(
+                child: FilledButton(
+                  onPressed: onRetry,
+                  child: Text(AppLocalizations.of(context)?.retry ?? 'Retry'),
+                ),
               ),
             ],
           ],
@@ -135,10 +138,10 @@ class _AiResponseBubble extends StatelessWidget {
             height: 28,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: <Color>[AppColors.ai, AppColors.aiLight],
+                colors: <Color>[context.tokigoColors.ai, context.tokigoColors.aiLight],
               ),
             ),
             child: Icon(Icons.auto_awesome, size: 14, color: scheme.onPrimary),

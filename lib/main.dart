@@ -10,6 +10,7 @@ import 'core/storage/deferred_offline_cache.dart';
 import 'core/storage/hive_offline_cache.dart';
 import 'core/storage/offline_cache.dart';
 import 'core/storage/offline_cache_providers.dart';
+import 'shared/providers/theme_provider.dart';
 
 /// How long the launch path may wait for the disk cache before the first frame.
 ///
@@ -55,6 +56,7 @@ void main() async {
   final cache = DeferredOfflineCache();
   final stopwatch = Stopwatch()..start();
   final opening = _openCache();
+  OfflineCache? openedCache;
 
   if (kDebugMode) {
     // A debug (JIT) launch can spend ten seconds or more in the box open, and
@@ -65,16 +67,23 @@ void main() async {
     // Debug therefore waits for storage exactly like it used to: a slower dev
     // launch, never a crash. Release keeps the bounded head start below —
     // there the same open is ~200ms.
-    await opening;
+    openedCache = await opening;
   } else {
     // Bounded head start (see [_cacheHeadStart]); storage never blocks the UI
     // beyond it.
-    await opening.timeout(_cacheHeadStart, onTimeout: () => null);
+    openedCache = await opening.timeout(_cacheHeadStart, onTimeout: () => null);
   }
+
+  final ThemeMode initialThemeMode = await _readInitialThemeMode(openedCache);
 
   runApp(
     ProviderScope(
-      overrides: [offlineCacheProvider.overrideWithValue(cache)],
+      overrides: [
+        offlineCacheProvider.overrideWithValue(cache),
+        themeModeProvider.overrideWith(
+          () => ThemeModeController(initialMode: initialThemeMode),
+        ),
+      ],
       child: const TokiGoApp(),
     ),
   );
@@ -91,4 +100,16 @@ void main() async {
       );
     }),
   );
+}
+
+Future<ThemeMode> _readInitialThemeMode(OfflineCache? cache) async {
+  if (cache == null) return ThemeMode.dark;
+  try {
+    final stored = await cache.read(ThemeModeController.cacheKey);
+    return ThemeModeController.fromStoredValue(stored?['value']);
+  } catch (error, stackTrace) {
+    debugPrint('TokiGo: theme preference unavailable — $error');
+    if (kDebugMode) debugPrintStack(stackTrace: stackTrace);
+    return ThemeMode.dark;
+  }
 }

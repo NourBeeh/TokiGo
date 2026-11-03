@@ -62,6 +62,7 @@ HotelOffer? hotelOfferFromHomeStay(HomeItem item) {
     imageUrl: item.imageUrl,
     price: price,
     currency: currency,
+    customerPrice: item.customerPrice,
     rating: item.rating,
     reviewCount: item.reviewCount,
     metadata: metadata,

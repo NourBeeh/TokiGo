@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
 /// The Bag's one vocabulary for a trip: which vertical it is, what its status

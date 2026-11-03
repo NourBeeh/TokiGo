@@ -5,12 +5,13 @@ import 'package:tokigo/core/auth/auth_provider.dart';
 import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
 import 'package:tokigo/core/domain/models/search/hotel_search_params.dart';
 import 'package:tokigo/core/memory/explicit_preference_signal.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_elevation.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/localized_date.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/core/widgets/search_filter_chips.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart';
 import 'package:tokigo/features/profile/application/wishlist_controller.dart';
@@ -30,6 +31,7 @@ import 'package:tokigo/features/search/presentation/widgets/search_map_placehold
 import 'package:tokigo/features/search/presentation/widgets/search_scaffold.dart';
 import 'package:tokigo/features/search/presentation/widgets/search_states_view.dart';
 import 'package:tokigo/features/search/presentation/widgets/search_view_toggle.dart';
+import 'package:tokigo/shared/providers/locale_provider.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
 /// Phase 3C — per-vertical sort/filters state (hotels).
@@ -225,6 +227,8 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
       adults: _guests,
       countryCode: _destinationCountryCode,
       market: _marketCountryCode,
+      currency: ref.read(currencyProvider),
+      languageCode: Localizations.localeOf(context).languageCode,
     );
     setState(() => _editing = false);
     _lastParams = params;
@@ -289,7 +293,7 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
     await showModalBottomSheet<void>(
       context: context,
       useSafeArea: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.tokigoColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadiusDirectional.vertical(
           top: Radius.circular(AppRadius.xl),
@@ -310,16 +314,19 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
               ),
               child: Text(
                 l10n.sortBy,
-                style: typography.title.copyWith(color: AppColors.textPrimary),
+                style: typography.title.copyWith(
+                  color: context.tokigoColors.textPrimary,
+                ),
               ),
             ),
             for (final _HotelSort sort in _HotelSort.values)
-              InkWell(
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  _selectSort(sort);
-                },
-                child: Padding(
+              Pressable.wrap(
+                child: InkWell(
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    _selectSort(sort);
+                  },
+                  child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.lg,
                     vertical: AppSpacing.md,
@@ -330,7 +337,7 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
                         child: Text(
                           _sortLabel(l10n, sort),
                           style: typography.body.copyWith(
-                            color: AppColors.textPrimary,
+                            color: context.tokigoColors.textPrimary,
                             fontWeight: sort == _sort
                                 ? FontWeight.w600
                                 : FontWeight.w400,
@@ -338,14 +345,15 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
                         ),
                       ),
                       if (sort == _sort)
-                        const Icon(
+                        Icon(
                           Icons.check_rounded,
                           size: 20,
-                          color: AppColors.brand,
+                          color: context.tokigoColors.brand,
                         ),
                     ],
                   ),
                 ),
+              ),
               ),
             const SizedBox(height: AppSpacing.sm),
           ],
@@ -443,16 +451,17 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
     final String meta =
         '$dates · ${l10n.hotelGuestsCount(params?.adults ?? _guests)}';
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: AppRadius.lgBorder,
-        boxShadow: AppElevation.shadow(
-          background: AppColors.surface,
-          level: AppElevation.sm,
+    return Pressable.wrap(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: context.tokigoColors.surface,
+          borderRadius: AppRadius.lgBorder,
+          boxShadow: AppElevation.shadow(
+            background: context.tokigoColors.surface,
+            level: AppElevation.sm,
+          ),
         ),
-      ),
-      child: Material(
+        child: Material(
         color: Colors.transparent,
         borderRadius: AppRadius.lgBorder,
         clipBehavior: Clip.antiAlias,
@@ -468,10 +477,10 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
               ),
               child: Row(
                 children: <Widget>[
-                  const Icon(
+                  Icon(
                     Icons.search_rounded,
                     size: 20,
-                    color: AppColors.textPrimary,
+                    color: context.tokigoColors.textPrimary,
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
@@ -484,7 +493,7 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: typography.bodyLargeMedium.copyWith(
-                            color: AppColors.textPrimary,
+                            color: context.tokigoColors.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -493,7 +502,7 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: typography.caption.copyWith(
-                            color: AppColors.textSecondary,
+                            color: context.tokigoColors.textSecondary,
                           ),
                         ),
                       ],
@@ -504,13 +513,14 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
                     onPressed: _showFilters,
                     tooltip: l10n.filtersAction,
                     iconSize: 20,
-                    color: AppColors.textPrimary,
+                    color: context.tokigoColors.textPrimary,
                     icon: const Icon(Icons.tune_rounded),
                   ),
                 ],
               ),
             ),
           ),
+        ),
         ),
       ),
     );
@@ -611,7 +621,7 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: typography.caption.copyWith(
-                color: AppColors.textSecondary,
+                color: context.tokigoColors.textSecondary,
               ),
             ),
           ),
@@ -857,21 +867,22 @@ class _ResultsBarAction extends StatelessWidget {
     return Semantics(
       button: true,
       label: semanticLabel ?? label,
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: AppRadius.pillBorder,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-              vertical: AppSpacing.sm,
-            ),
+      child: Pressable.wrap(
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: AppRadius.pillBorder,
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.sm,
+              ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Icon(icon, size: 18, color: AppColors.textPrimary),
+                Icon(icon, size: 18, color: context.tokigoColors.textPrimary),
                 if (label != null) ...<Widget>[
                   const SizedBox(width: AppSpacing.xxs),
                   ConstrainedBox(
@@ -881,7 +892,7 @@ class _ResultsBarAction extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: typography.captionSemibold.copyWith(
-                        color: AppColors.textPrimary,
+                        color: context.tokigoColors.textPrimary,
                       ),
                     ),
                   ),
@@ -891,8 +902,8 @@ class _ResultsBarAction extends StatelessWidget {
                   Container(
                     width: 6,
                     height: 6,
-                    decoration: const BoxDecoration(
-                      color: AppColors.brand,
+                    decoration: BoxDecoration(
+                      color: context.tokigoColors.brand,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -901,6 +912,7 @@ class _ResultsBarAction extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }
@@ -918,15 +930,17 @@ class _DiscoverMoreButton extends StatelessWidget {
     final typography = AppTypography.forLight();
     final l10n = AppLocalizations.of(context)!;
     return Center(
-      child: TextButton.icon(
-        onPressed: onTap,
-        icon: const Icon(Icons.explore_outlined, size: 20),
-        label: Text(l10n.discoverMore),
-        style: TextButton.styleFrom(
-          foregroundColor: AppColors.brand,
-          minimumSize: const Size(48, 48),
-          textStyle: typography.bodyMedium.copyWith(
-            fontWeight: FontWeight.w600,
+      child: Pressable.wrap(
+        child: TextButton.icon(
+          onPressed: onTap,
+          icon: const Icon(Icons.explore_outlined, size: 20),
+          label: Text(l10n.discoverMore),
+          style: TextButton.styleFrom(
+            foregroundColor: context.tokigoColors.brand,
+            minimumSize: const Size(48, 48),
+            textStyle: typography.bodyMedium.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ),

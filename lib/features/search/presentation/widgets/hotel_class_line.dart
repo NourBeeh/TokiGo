@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 
 /// The hotel's identity line: its own star class and where it is — an outline
@@ -51,7 +52,7 @@ class HotelClassLocationLine extends StatelessWidget {
         style ??
         Theme.of(
           context,
-        ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary);
+        ).textTheme.bodySmall?.copyWith(color: context.tokigoColors.textSecondary);
 
     return Row(
       children: <Widget>[
@@ -69,7 +70,7 @@ class HotelClassLocationLine extends StatelessWidget {
           Icon(
             Icons.location_on_outlined,
             size: iconSize,
-            color: AppColors.textSecondary,
+            color: context.tokigoColors.textSecondary,
           ),
           const SizedBox(width: AppSpacing.xs),
           Expanded(

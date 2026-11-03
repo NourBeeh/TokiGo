@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -13,6 +13,7 @@ import 'package:tokigo/core/ui/localized_date.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/cards/card_image.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/core/widgets/step_progress.dart' show StatusChip;
 import 'package:tokigo/features/bag/application/bag_controller.dart';
 import 'package:tokigo/features/booking/application/booking_providers.dart';
@@ -41,7 +42,7 @@ class TripDetailsPage extends ConsumerWidget {
     final trip = matches.isEmpty ? null : matches.first;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(
         child: AiEntranceAnimation(
           child: Column(
@@ -102,9 +103,9 @@ class _TripBody extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(AppSpacing.lg),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: context.tokigoColors.surface,
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.outline),
+            border: Border.all(color: context.tokigoColors.outline),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,7 +133,7 @@ class _TripBody extends StatelessWidget {
                         Icon(
                           tripTypeIcon(trip.type),
                           size: 13,
-                          color: AppColors.brand,
+                          color: context.tokigoColors.brand,
                         ),
                         const SizedBox(width: AppSpacing.xxs),
                         Flexible(
@@ -141,7 +142,7 @@ class _TripBody extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: typography.captionSemibold.copyWith(
-                              color: AppColors.brand,
+                              color: context.tokigoColors.brand,
                             ),
                           ),
                         ),
@@ -157,7 +158,7 @@ class _TripBody extends StatelessWidget {
                       Text(
                         headline,
                         style: typography.bodyLargeMedium.copyWith(
-                          color: AppColors.textPrimary,
+                          color: context.tokigoColors.textPrimary,
                         ),
                       ),
                     ],
@@ -166,7 +167,7 @@ class _TripBody extends StatelessWidget {
                       Text(
                         place,
                         style: typography.caption.copyWith(
-                          color: AppColors.textTertiary,
+                          color: context.tokigoColors.textTertiary,
                         ),
                       ),
                     ],
@@ -183,9 +184,9 @@ class _TripBody extends StatelessWidget {
             vertical: AppSpacing.xs,
           ),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: context.tokigoColors.surface,
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.outline),
+            border: Border.all(color: context.tokigoColors.outline),
           ),
           child: Column(
             children: <Widget>[
@@ -261,19 +262,23 @@ class _CancelBookingActionState extends ConsumerState<_CancelBookingAction> {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.tokigoColors.surface,
         title: Text(l10n.tripCancelTitle),
         content: Text(l10n.tripCancelBody),
         actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(l10n.tripCancelKeep),
+          Pressable.wrap(
+            child: TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(l10n.tripCancelKeep),
+            ),
           ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(
-              l10n.tripCancelConfirm,
-              style: const TextStyle(color: AppColors.danger),
+          Pressable.wrap(
+            child: TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(
+                l10n.tripCancelConfirm,
+                style: TextStyle(color: context.tokigoColors.danger),
+              ),
             ),
           ),
         ],
@@ -343,7 +348,7 @@ class _FactRow extends StatelessWidget {
     final text = Text(
       value,
       textAlign: TextAlign.end,
-      style: typography.bodyMedium.copyWith(color: AppColors.textPrimary),
+      style: typography.bodyMedium.copyWith(color: context.tokigoColors.textPrimary),
     );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
@@ -353,7 +358,7 @@ class _FactRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: typography.caption.copyWith(color: AppColors.textTertiary),
+              style: typography.caption.copyWith(color: context.tokigoColors.textTertiary),
             ),
           ),
           const SizedBox(width: AppSpacing.md),

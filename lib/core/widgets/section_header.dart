@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -45,7 +46,7 @@ class SectionHeader extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: (titleStyle ?? typography.title).copyWith(
-                color: AppColors.textPrimary,
+                color: context.tokigoColors.textPrimary,
               ),
             ),
           ),
@@ -61,7 +62,7 @@ class SectionHeader extends StatelessWidget {
                 child: Text(
                   actionLabel!,
                   style: typography.captionSemibold.copyWith(
-                    color: AppColors.brand,
+                    color: context.tokigoColors.brand,
                   ),
                 ),
               ),

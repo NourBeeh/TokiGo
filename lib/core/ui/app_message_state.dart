@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_button.dart';
@@ -14,8 +15,8 @@ import 'package:tokigo/core/ui/app_button.dart';
 /// Home and every other surface render the exact same thing instead of each
 /// hand-rolling a bare `Text` + `FilledButton`.
 ///
-/// The hue carries the meaning: [AppColors.brand] for "nothing here yet",
-/// [AppColors.danger] for a failure.
+/// The hue carries the meaning: [context.tokigoColors.brand] for "nothing here yet",
+/// [context.tokigoColors.danger] for a failure.
 class AppMessageState extends StatelessWidget {
   const AppMessageState({
     super.key,
@@ -60,13 +61,13 @@ class AppMessageState extends StatelessWidget {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: typography.title.copyWith(color: AppColors.textPrimary),
+            style: typography.title.copyWith(color: context.tokigoColors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             body,
             textAlign: TextAlign.center,
-            style: typography.body.copyWith(color: AppColors.textSecondary),
+            style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
           ),
           if (actionLabel != null && onAction != null) ...<Widget>[
             const SizedBox(height: AppSpacing.xl),

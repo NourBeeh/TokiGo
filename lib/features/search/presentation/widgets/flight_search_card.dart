@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/widgets/cards/card.dart';
@@ -218,6 +219,7 @@ class FlightSearchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final scheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
 
@@ -467,6 +469,7 @@ class _DotSeparator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     return Text(
       '·',
       style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -483,6 +486,7 @@ class _LoadingSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,

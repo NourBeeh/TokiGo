@@ -6,16 +6,20 @@ import 'package:tokigo/app/config/app_config.dart';
 import 'package:tokigo/core/auth/auth_provider.dart';
 import 'package:tokigo/core/geo/country_options.dart';
 import 'package:tokigo/core/geo/country_selection_sheet.dart';
+import 'package:tokigo/core/geo/currency.dart';
 import 'package:tokigo/core/geo/location_permission_providers.dart';
 import 'package:tokigo/core/geo/location_permission_service.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/geo/location_prompt.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart';
 import 'package:tokigo/shared/providers/locale_provider.dart';
+import 'package:tokigo/shared/providers/theme_provider.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
 /// Settings — the account, the preferences, the language, the app and the
@@ -40,17 +44,6 @@ import 'package:tokigo/l10n/app_localizations.dart';
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
-  /// The currencies the app can display. Real ISO codes — the prices
-  /// themselves always come from the provider.
-  static const List<String> _currencies = <String>[
-    'USD',
-    'EUR',
-    'EGP',
-    'SAR',
-    'AED',
-    'GBP',
-  ];
-
   /// The shipped languages. Their names are endonyms — a language is called
   /// by its own name in every language.
   static const List<Locale> _languages = <Locale>[Locale('en'), Locale('ar')];
@@ -59,16 +52,20 @@ class SettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final locale = ref.watch(localeProvider);
-    final currency = ref.watch(currencyProvider);
+    final themeMode = ref.watch(themeModeProvider);
     final user = ref.watch(authUserProvider);
     final country =
         ref.watch(manualCountryCodeProvider) ??
         ref.watch(geoCountryProvider).asData?.value?.countryCode;
+    final currency = effectiveCurrency(
+      chosen: ref.watch(currencyProvider),
+      countryCode: country,
+    );
     final countryName =
         countryNameForCode(country, locale) ?? l10n.settingsCountryNotSet;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(
         // `bottom: false` left the list's last row under the Android
         // navigation bar (the pill it was written for is gone).
@@ -133,11 +130,35 @@ class SettingsPage extends ConsumerWidget {
                               ],
                             ),
                             onTap: () async {
-                              final svc = ref.read(locationPermissionServiceProvider);
+                              final svc = ref.read(
+                                locationPermissionServiceProvider,
+                              );
                               final access = await svc.request();
-                              if (access == LocationAccess.granted) {
-                                ref.read(geoRefreshProvider.notifier).state++;
+                              if (!context.mounted) return;
+                              switch (access) {
+                                case LocationAccess.granted:
+                                  ref
+                                      .read(geoRefreshProvider.notifier)
+                                      .state = ref.read(geoRefreshProvider) + 1;
+                                  ref.invalidate(locationAccessProvider);
+                                case LocationAccess.deniedForever:
+                                  await showLocationSettingsPrompt(
+                                    context,
+                                    ref,
+                                    serviceOff: false,
+                                  );
+                                case LocationAccess.serviceDisabled:
+                                  await showLocationSettingsPrompt(
+                                    context,
+                                    ref,
+                                    serviceOff: true,
+                                  );
+                                case LocationAccess.denied:
+                                case LocationAccess.unavailable:
+                                  break;
                               }
+                              // Manual selection is always available, whether or
+                              // not the OS permission was granted.
                               if (context.mounted) {
                                 showCountrySelectionSheet(context, ref);
                               }
@@ -174,6 +195,20 @@ class SettingsPage extends ConsumerWidget {
                         ],
                       ),
 
+                      // ---- Theme ---------------------------------------
+                      _GroupHeader(label: l10n.settingsTheme),
+                      _GroupCard(
+                        children: <Widget>[
+                          _SettingsRow(
+                            icon: Icons.dark_mode_rounded,
+                            label: l10n.settingsTheme,
+                            subtitle: _ThemeOptions(current: themeMode),
+                            trailing: const _Chevron(),
+                            onTap: () => _pickTheme(context, ref),
+                          ),
+                        ],
+                      ),
+
                       // ---- About ---------------------------------------
                       _GroupHeader(label: l10n.settingsAbout),
                       _GroupCard(
@@ -196,7 +231,7 @@ class SettingsPage extends ConsumerWidget {
                             _SettingsRow(
                               icon: Icons.logout_rounded,
                               label: l10n.signOut,
-                              labelColor: AppColors.danger,
+                              labelColor: context.tokigoColors.danger,
                               onTap: () => ref
                                   .read(authControllerProvider.notifier)
                                   .logout(),
@@ -221,10 +256,10 @@ class SettingsPage extends ConsumerWidget {
     final Locale current = ref.read(localeProvider);
     final Locale? chosen = await showModalBottomSheet<Locale>(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.tokigoColors.surface,
       builder: (context) => _OptionSheet<Locale>(
         title: l10n.language,
-        options: _languages
+        options: SettingsPage._languages
             .map(
               (Locale locale) => _Option<Locale>(
                 value: locale,
@@ -239,16 +274,54 @@ class SettingsPage extends ConsumerWidget {
     ref.read(localeProvider.notifier).setLocale(chosen);
   }
 
-  /// The currency sheet: the real codes, the current one checked.
+  /// The theme sheet: Dark / Light / System.
+  Future<void> _pickTheme(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
+    final ThemeMode current = ref.read(themeModeProvider);
+    final ThemeMode? chosen = await showModalBottomSheet<ThemeMode>(
+      context: context,
+      backgroundColor: context.tokigoColors.surface,
+      builder: (context) => _OptionSheet<ThemeMode>(
+        title: l10n.settingsTheme,
+        options: <_Option<ThemeMode>>[
+          _Option<ThemeMode>(
+            value: ThemeMode.dark,
+            label: l10n.settingsThemeDark,
+            selected: current == ThemeMode.dark,
+          ),
+          _Option<ThemeMode>(
+            value: ThemeMode.light,
+            label: l10n.settingsThemeLight,
+            selected: current == ThemeMode.light,
+          ),
+          _Option<ThemeMode>(
+            value: ThemeMode.system,
+            label: l10n.settingsThemeSystem,
+            selected: current == ThemeMode.system,
+          ),
+        ],
+      ),
+    );
+    if (chosen == null) return;
+    ref.read(themeModeProvider.notifier).setThemeMode(chosen);
+  }
+
+  /// The currency sheet: the real codes, the effective one checked.
   Future<void> _pickCurrency(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context)!;
-    final String current = ref.read(currencyProvider);
+    final String? country =
+        ref.read(manualCountryCodeProvider) ??
+        ref.read(geoCountryProvider).asData?.value?.countryCode;
+    final String current = effectiveCurrency(
+      chosen: ref.read(currencyProvider),
+      countryCode: country,
+    );
     final String? chosen = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.tokigoColors.surface,
       builder: (context) => _OptionSheet<String>(
         title: l10n.currency,
-        options: _currencies
+        options: displayCurrencies
             .map(
               (String code) => _Option<String>(
                 value: code,
@@ -260,7 +333,7 @@ class SettingsPage extends ConsumerWidget {
       ),
     );
     if (chosen == null) return;
-    ref.read(currencyProvider.notifier).state = chosen;
+    await ref.read(currencyProvider.notifier).setCurrency(chosen);
   }
 
   /// The endonym of a shipped language.
@@ -299,7 +372,7 @@ class _GroupHeader extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: typography.label.copyWith(color: AppColors.textTertiary),
+        style: typography.label.copyWith(color: context.tokigoColors.textTertiary),
       ),
     );
   }
@@ -315,9 +388,9 @@ class _GroupCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.tokigoColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.outline),
+        border: Border.all(color: context.tokigoColors.outline),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(children: children),
@@ -331,12 +404,12 @@ class _GroupDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Divider(
+    return Divider(
       height: 1,
       thickness: 1,
       indent: AppSpacing.lg,
       endIndent: AppSpacing.lg,
-      color: AppColors.divider,
+      color: context.tokigoColors.divider,
     );
   }
 }
@@ -373,7 +446,9 @@ class _SettingsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     final Widget row = ConstrainedBox(
       constraints: const BoxConstraints(minHeight: 56),
       child: Padding(
@@ -384,7 +459,7 @@ class _SettingsRow extends StatelessWidget {
         child: Row(
           children: <Widget>[
             if (icon != null) ...<Widget>[
-              Icon(icon, size: 20, color: AppColors.textSecondary),
+              Icon(icon, size: 20, color: context.tokigoColors.textSecondary),
               const SizedBox(width: AppSpacing.md),
             ],
             Expanded(
@@ -395,7 +470,7 @@ class _SettingsRow extends StatelessWidget {
                   Text(
                     label,
                     style: typography.body.copyWith(
-                      color: labelColor ?? AppColors.textPrimary,
+                      color: labelColor ?? context.tokigoColors.textPrimary,
                     ),
                   ),
                   if (subtitle != null) ...<Widget>[
@@ -415,9 +490,11 @@ class _SettingsRow extends StatelessWidget {
     );
 
     if (onTap == null) return row;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(onTap: onTap, child: row),
+    return Pressable.wrap(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(onTap: onTap, child: row),
+      ),
     );
   }
 }
@@ -433,7 +510,7 @@ class _MutedValue extends StatelessWidget {
     return Text(
       text,
       style: AppTypography.forLight().caption.copyWith(
-        color: AppColors.textSecondary,
+        color: context.tokigoColors.textSecondary,
       ),
     );
   }
@@ -449,7 +526,7 @@ class _Chevron extends StatelessWidget {
     return Icon(
       rtl ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
       size: 20,
-      color: AppColors.textTertiary,
+      color: context.tokigoColors.textTertiary,
     );
   }
 }
@@ -464,21 +541,23 @@ class _LanguageOptions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         for (final Locale locale in SettingsPage._languages) ...<Widget>[
           Text(
             locale.languageCode == 'ar' ? 'العربية' : 'English',
-            style: typography.caption.copyWith(color: AppColors.textSecondary),
+            style: typography.caption.copyWith(color: context.tokigoColors.textSecondary),
           ),
           if (locale.languageCode == current.languageCode) ...<Widget>[
             const SizedBox(width: AppSpacing.xs),
-            const Icon(
+            Icon(
               Icons.check_circle_rounded,
               size: 14,
-              color: AppColors.brand,
+              color: context.tokigoColors.brand,
             ),
           ],
           const SizedBox(width: AppSpacing.sm),
@@ -489,6 +568,28 @@ class _LanguageOptions extends StatelessWidget {
 }
 
 /// One option inside a sheet.
+class _ThemeOptions extends StatelessWidget {
+  const _ThemeOptions({required this.current});
+
+  final ThemeMode current;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
+    String label(ThemeMode m) => switch (m) {
+          ThemeMode.dark => l10n.settingsThemeDark,
+          ThemeMode.light => l10n.settingsThemeLight,
+          ThemeMode.system => l10n.settingsThemeSystem,
+        };
+    return Text(
+      label(current),
+      style: typography.caption.copyWith(color: context.tokigoColors.textSecondary),
+    );
+  }
+}
 class _Option<T> {
   const _Option({
     required this.value,
@@ -511,7 +612,9 @@ class _OptionSheet<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     return SafeArea(
       top: false,
       child: Column(
@@ -527,36 +630,38 @@ class _OptionSheet<T> extends StatelessWidget {
             ),
             child: Text(
               title,
-              style: typography.title.copyWith(color: AppColors.textPrimary),
+              style: typography.title.copyWith(color: context.tokigoColors.textPrimary),
             ),
           ),
           for (final _Option<T> option in options)
-            InkWell(
-              onTap: () => Navigator.of(context).pop(option.value),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 56),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                    vertical: AppSpacing.md,
-                  ),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          option.label,
-                          style: typography.body.copyWith(
-                            color: AppColors.textPrimary,
+            Pressable.wrap(
+              child: InkWell(
+                onTap: () => Navigator.of(context).pop(option.value),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 56),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.md,
+                    ),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(
+                            option.label,
+                            style: typography.body.copyWith(
+                              color: context.tokigoColors.textPrimary,
+                            ),
                           ),
                         ),
-                      ),
-                      if (option.selected)
-                        const Icon(
-                          Icons.check_circle_rounded,
-                          size: 20,
-                          color: AppColors.brand,
-                        ),
-                    ],
+                        if (option.selected)
+                          Icon(
+                            Icons.check_circle_rounded,
+                            size: 20,
+                            color: context.tokigoColors.brand,
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),

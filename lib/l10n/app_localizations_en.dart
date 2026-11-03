@@ -282,6 +282,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signIn => 'Sign in';
 
   @override
+  String get continueWithGoogle => 'Continue with Google';
+
+  @override
+  String get googleSignInNotConfigured => 'Google Sign-In is not configured.';
+
+  @override
+  String get signInSheetTitle => 'Sign in to save';
+
+  @override
+  String get signInSheetBody => 'Keep what you love and get the most out of TokiGo.';
+
+  @override
+  String get signInSheetBenefitPrice => 'Track prices as they change';
+
+  @override
+  String get signInSheetBenefitTrips => 'Save stays and trips';
+
+  @override
+  String get signInSheetBenefitFeatures => 'Unlock every app feature';
+
+  @override
+  String get signInSheetBenefitSync => 'Keep your details on all your devices';
+
+  @override
+  String get signInSheetNotNow => 'Not now';
+
+  @override
   String get signOut => 'Sign out';
 
   @override
@@ -596,6 +623,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsAppLanguage => 'App language';
+
+  @override
+  String get settingsTheme => 'Theme';
+
+  @override
+  String get settingsThemeDark => 'Dark';
+
+  @override
+  String get settingsThemeLight => 'Light';
+
+  @override
+  String get settingsThemeSystem => 'System';
 
   @override
   String get settingsPreferences => 'Preferences';
@@ -1374,10 +1413,58 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get discoverTitle => 'Discover';
+  String get discoverTitle => 'Explore';
 
   @override
   String get discoverMore => 'Discover more';
+
+  @override
+  String get exploreCitySearch => 'Search cities or countries';
+
+  @override
+  String get exploreFilterAll => 'All';
+
+  @override
+  String get exploreFilterYouth => 'Youth';
+
+  @override
+  String get exploreFilterFamilies => 'Families';
+
+  @override
+  String get exploreFilterHoneymoon => 'Honeymoon';
+
+  @override
+  String get exploreFilterBeach => 'Beach';
+
+  @override
+  String get exploreFilterNature => 'Nature';
+
+  @override
+  String get exploreFilterCity => 'City';
+
+  @override
+  String get exploreFilterShopping => 'Shopping';
+
+  @override
+  String get exploreFilterSnow => 'Snow';
+
+  @override
+  String get exploreNoCities => 'No cities to explore yet';
+
+  @override
+  String get exploreNoCitiesBody => 'Published destination cards will appear here.';
+
+  @override
+  String get exploreNoMatchingCities => 'No matching destinations';
+
+  @override
+  String get exploreNoMatchingCitiesBody => 'Try another search or clear the selected filters.';
+
+  @override
+  String get exploreCitiesErrorTitle => 'We couldn\'t load destinations';
+
+  @override
+  String get exploreCitiesErrorBody => 'Check your connection and try again.';
 
   @override
   String hotelResultsCount(int count) {
@@ -1424,6 +1511,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String cardSaveLabel(Object amount) {
     return 'Save $amount';
+  }
+
+  @override
+  String dealDiscountLabel(Object percent) {
+    return '$percent% OFF';
   }
 
   @override
@@ -1814,4 +1906,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hotelOpenLocationInMaps => 'Open location in maps';
+
+  @override
+  String destinationCityName(String name) {
+    return '$name';
+  }
+
+  @override
+  String destinationRegionName(String name) {
+    return '$name';
+  }
 }

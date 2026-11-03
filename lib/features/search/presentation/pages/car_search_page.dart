@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -212,6 +213,7 @@ class _CarSearchPageState extends ConsumerState<CarSearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final l10n = AppLocalizations.of(context)!;
 
     // ── Honest gate (owner decision, 2026-10-18/19) ────────────────────────

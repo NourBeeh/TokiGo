@@ -6,6 +6,7 @@ import {
   Min,
   IsArray,
   IsIn,
+  Matches,
   ValidateNested,
   ArrayMinSize,
   ArrayMaxSize,
@@ -64,6 +65,15 @@ export class FlightSearchDto {
   @IsOptional()
   @IsString()
   market?: string;
+
+  /**
+   * Explicit display currency (ISO-4217) chosen by the traveller. When absent
+   * the market's own currency applies.
+   */
+  @IsOptional()
+  @IsString()
+  @Matches(/^[A-Za-z]{3}$/, { message: 'currency must be an ISO-4217 code' })
+  currency?: string;
 
   /** Informational traveller context; providers do not receive this field. */
   @IsOptional()

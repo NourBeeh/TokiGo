@@ -17,7 +17,7 @@ import { JwtStrategy } from './jwt.strategy';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
-        secret: config.get('jwt.accessSecret') ?? 'dev-access-secret',
+        secret: config.get<string>('jwt.accessSecret'),
         signOptions: { expiresIn: config.get('jwt.accessExpiresIn') ?? '15m' },
       }),
       inject: [ConfigService],

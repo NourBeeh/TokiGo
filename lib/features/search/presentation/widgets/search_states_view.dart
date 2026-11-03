@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_message_state.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
 /// The unified search results state surface (Wave 2 identity).
@@ -63,6 +64,7 @@ class SearchStatesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     switch (_state) {
       case _SearchState.loading:
         return Padding(
@@ -82,8 +84,8 @@ class SearchStatesView extends StatelessWidget {
               ? Icons.wifi_off_rounded
               : icon ?? Icons.travel_explore_rounded,
           hue: _state == _SearchState.error
-              ? AppColors.danger
-              : AppColors.brand,
+              ? context.tokigoColors.danger
+              : context.tokigoColors.brand,
           title: title ?? '',
           body: body ?? '',
           actionLabel: onAction != null
@@ -135,6 +137,7 @@ class SortChipsRow<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     // The fade sits at the trailing edge; resolved here because the shader
     // callback runs at paint time, outside the Directionality scope.
     final isRtl = Directionality.of(context) == TextDirection.rtl;
@@ -217,39 +220,45 @@ class _SortChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
-    final foreground = selected ? Colors.white : AppColors.textSecondary;
+    final foreground = selected ? Colors.white : context.tokigoColors.textSecondary;
     final icon = this.icon;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-      child: Material(
-        color: selected ? AppColors.brand : AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-              border: Border.all(
-                color: selected ? AppColors.brand : AppColors.outline,
+      child: Pressable.wrap(
+        child: Material(
+          color: selected
+              ? context.tokigoColors.brand
+              : context.tokigoColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(
+                  color: selected
+                      ? context.tokigoColors.brand
+                      : context.tokigoColors.outline,
+                ),
               ),
-            ),
-            child: Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  if (icon != null) ...<Widget>[
-                    Icon(icon, size: 14, color: foreground),
-                    const SizedBox(width: AppSpacing.xxs),
-                  ],
-                  Text(
-                    label,
-                    style: typography.captionSemibold.copyWith(
-                      color: foreground,
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    if (icon != null) ...<Widget>[
+                      Icon(icon, size: 14, color: foreground),
+                      const SizedBox(width: AppSpacing.xxs),
+                    ],
+                    Text(
+                      label,
+                      style: typography.captionSemibold.copyWith(
+                        color: foreground,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -275,35 +284,45 @@ class _FilterButton extends StatelessWidget {
     final typography = AppTypography.forLight();
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-      child: Material(
-        color: active ? AppColors.brandContainer : AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-              border: Border.all(
-                color: active ? AppColors.brand : AppColors.outline,
+      child: Pressable.wrap(
+        child: Material(
+          color: active
+              ? context.tokigoColors.brandContainer
+              : context.tokigoColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(
+                  color: active
+                      ? context.tokigoColors.brand
+                      : context.tokigoColors.outline,
+                ),
               ),
-            ),
-            child: Row(
-              children: <Widget>[
-                Icon(
-                  Icons.tune_rounded,
-                  size: 16,
-                  color: active ? AppColors.brand : AppColors.textSecondary,
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                Text(
-                  label,
-                  style: typography.captionSemibold.copyWith(
-                    color: active ? AppColors.brand : AppColors.textSecondary,
+              child: Row(
+                children: <Widget>[
+                  Icon(
+                    Icons.tune_rounded,
+                    size: 16,
+                    color: active
+                        ? context.tokigoColors.brand
+                        : context.tokigoColors.textSecondary,
                   ),
-                ),
-              ],
+                  const SizedBox(width: AppSpacing.xs),
+                  Text(
+                    label,
+                    style: typography.captionSemibold.copyWith(
+                      color: active
+                          ? context.tokigoColors.brand
+                          : context.tokigoColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

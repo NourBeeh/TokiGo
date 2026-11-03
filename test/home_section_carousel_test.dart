@@ -102,7 +102,8 @@ void main() {
     final Rect viewport = tester.getRect(find.byType(PageView));
     final Rect firstCard = tester.getRect(find.byType(HomeStayCard).first);
     final Rect nextCard = tester.getRect(find.byType(HomeStayCard).last);
-    expect(firstCard.width, closeTo(viewport.width * 0.8, 1));
+    expect(firstCard.width, closeTo(viewport.width * 0.8 - 12, 1));
+    expect(nextCard.left - firstCard.right, closeTo(12, 1));
     expect(
       nextCard.intersect(viewport).width,
       closeTo(viewport.width * 0.2, 1),

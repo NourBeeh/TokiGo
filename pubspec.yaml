@@ -85,22 +85,24 @@ flutter_launcher_icons:
   adaptive_icon_background: "#111111"
   adaptive_icon_foreground: assets/branding/icon_foreground.png
 
-# The splash shows the SAME mark the app does: both masters are rendered from
-# lib/core/ui/app_wordmark.dart's spec (Manrope ExtraBold, ink #111111, brand red
-# #FF2D2D) by tool/branding/generate_wordmark.py. Regenerate them there, then run
+# The splash shows the SAME mark the app does: light and dark masters are
+# rendered from lib/core/ui/app_wordmark.dart's spec by
+# tool/branding/generate_wordmark.py. Regenerate them there, then run
 # `dart run flutter_native_splash:create`.
 flutter_native_splash:
   color: "#FFFFFF"
   image: assets/branding/logo_wordmark.png
+  color_dark: "#111111"
+  image_dark: assets/branding/logo_wordmark_dark.png
   android_gravity: center
   fullscreen: true
   android_12:
     # Android 12+ draws the icon on the window background and masks its outer
-    # third, so it takes the square master, whose mark sits inside the safe
-    # circle. The window is white here too: the mark's "Toki" half is #111111,
-    # which would vanish on a dark background.
+    # third, so it takes a square master whose mark sits inside the safe circle.
     color: "#FFFFFF"
     image: assets/branding/logo_wordmark_android12.png
+    color_dark: "#111111"
+    image_dark: assets/branding/logo_wordmark_android12_dark.png
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

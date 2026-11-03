@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -22,6 +23,7 @@ class OfferDetailsFlightJourney extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final typography = AppTypography.forLight();
     final l10n = AppLocalizations.of(context)!;
     final departure = flight.departureTime;
@@ -79,16 +81,16 @@ class OfferDetailsFlightJourney extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.tokigoColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.outline),
+        border: Border.all(color: context.tokigoColors.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
             dateLine,
-            style: typography.caption.copyWith(color: AppColors.textTertiary),
+            style: typography.caption.copyWith(color: context.tokigoColors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.md),
           FlightRouteLine(
@@ -103,17 +105,17 @@ class OfferDetailsFlightJourney extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           Row(
             children: <Widget>[
-              const Icon(
+              Icon(
                 Icons.schedule_rounded,
                 size: 14,
-                color: AppColors.textTertiary,
+                color: context.tokigoColors.textTertiary,
               ),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
                   '${l10n.offerStopsCount(stops)} · $duration',
                   style: typography.captionSemibold.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.tokigoColors.textSecondary,
                   ),
                 ),
               ),
@@ -162,6 +164,7 @@ class _FactChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final typography = AppTypography.forLight();
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -169,14 +172,14 @@ class _FactChip extends StatelessWidget {
         vertical: AppSpacing.sm,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.tokigoColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.outline),
+        border: Border.all(color: context.tokigoColors.outline),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon, size: 16, color: AppColors.brand),
+          Icon(icon, size: 16, color: context.tokigoColors.brand),
           const SizedBox(width: AppSpacing.sm),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,7 +188,7 @@ class _FactChip extends StatelessWidget {
               Text(
                 label,
                 style: typography.caption.copyWith(
-                  color: AppColors.textTertiary,
+                  color: context.tokigoColors.textTertiary,
                 ),
               ),
               Text(
@@ -196,7 +199,7 @@ class _FactChip extends StatelessWidget {
                 // Arabic word still renders correctly under an LTR paragraph.
                 textDirection: TextDirection.ltr,
                 style: typography.captionSemibold.copyWith(
-                  color: AppColors.textPrimary,
+                  color: context.tokigoColors.textPrimary,
                 ),
               ),
             ],

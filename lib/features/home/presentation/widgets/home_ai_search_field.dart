@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -89,7 +90,9 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
     // `withValues(alpha: 0.7)` blended it to ≈#979797 — 2.9:1, below WCAG AA
     // for body text. The placeholder must stay legible, not fade away.
     // Doc 17 §3.2 — the placeholder is `body` 15/400.
-    final baseStyle = typography.body.copyWith(color: AppColors.textSecondary);
+    final baseStyle = typography.body.copyWith(
+      color: context.tokigoColors.textSecondary,
+    );
     final baseSize = baseStyle.fontSize ?? 15;
 
     return LayoutBuilder(
@@ -112,135 +115,141 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
     final l10n = AppLocalizations.of(context)!;
+    final colors = context.tokigoColors;
+    final lightMode = Theme.of(context).brightness == Brightness.light;
 
-    return Container(
-      // A raised white search surface stands out against the seasonal canvas.
-      constraints: const BoxConstraints(minHeight: 46),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: AppRadius.lgBorder,
-        border: Border.all(color: AppColors.hairline),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: widget.accentColor.withValues(alpha: 0.12),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
+    return TapRegion(
+      onTapOutside: (_) => _focusNode.unfocus(),
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 46),
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: AppRadius.lgBorder,
+          border: Border.all(color: colors.hairline),
+          boxShadow: lightMode
+              ? <BoxShadow>[
+                  BoxShadow(
+                    color: widget.accentColor.withValues(alpha: 0.12),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
+                  ),
+                ]
+              : const <BoxShadow>[],
+        ),
+        child: Padding(
+          // Slim pill: the vertical inset is one step below the horizontal one
+          // so the bar reads as a thin, premium search field.
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          child: Row(
+            children: <Widget>[
+              // The editable field with a static, localized hint. The trailing
+              // search/send action submits the current query.
+              Expanded(
+                child: TextField(
+                  controller: _textCtrl,
+                  focusNode: _focusNode,
+                  decoration: InputDecoration(
+                    // The static hint is a WIDGET, not hintText: it must always
+                    // read as ONE line, so it scales with the room the field
+                    // actually has (see [_fittedHint]).
+                    hint: _fittedHint(l10n.aiSearchHint, typography),
+                    // Fully opt out of the global inputDecorationTheme: its
+                    // filled off-white fill and its state borders (the blue
+                    // brand focusedBorder) must never repaint this pill.
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
+                    filled: false,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                      vertical: AppSpacing.xs,
+                    ),
+                  ),
+                  keyboardType: TextInputType.text,
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: (_) => _submit(),
+                  minLines: 1,
+                  maxLines: 1,
+                  style: typography.bodyLarge.copyWith(
+                    color: context.tokigoColors.textPrimary,
+                  ),
+                  autofocus: false,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              // Voice — opens the chat where the live microphone lives.
+              Semantics(
+                button: true,
+                label: l10n.voiceSearch,
+                child: InkResponse(
+                  onTap: () => _openChat(),
+                  customBorder: const CircleBorder(),
+                  radius: 22,
+                  child: SizedBox(
+                    width: _trailingActionSize,
+                    height: _trailingActionSize,
+                    child: Center(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: widget.accentColor.withValues(alpha: 0.10),
+                          shape: BoxShape.circle,
+                        ),
+                        child: SizedBox(
+                          width: 34,
+                          height: 34,
+                          child: Center(
+                            child: Icon(
+                              Icons.mic_rounded,
+                              size: 19,
+                              color: widget.accentColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Search / send is the solid season-colored primary action.
+              Semantics(
+                button: true,
+                label: l10n.aiSend,
+                child: InkResponse(
+                  onTap: _submit,
+                  customBorder: const CircleBorder(),
+                  radius: 22,
+                  child: SizedBox(
+                    width: _trailingActionSize,
+                    height: _trailingActionSize,
+                    child: Center(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: widget.accentColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const SizedBox(
+                          width: 34,
+                          height: 34,
+                          child: Center(
+                            child: Icon(
+                              Icons.search_rounded,
+                              size: 20,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+            ],
           ),
-        ],
-      ),
-      child: Padding(
-        // Slim pill: the vertical inset is one step below the horizontal one
-        // so the bar reads as a thin, premium search field.
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-        child: Row(
-          children: <Widget>[
-            // The editable field with a static, localized hint. The trailing
-            // search/send action submits the current query.
-            Expanded(
-              child: TextField(
-                controller: _textCtrl,
-                focusNode: _focusNode,
-                decoration: InputDecoration(
-                  // The static hint is a WIDGET, not hintText: it must always
-                  // read as ONE line, so it scales with the room the field
-                  // actually has (see [_fittedHint]).
-                  hint: _fittedHint(l10n.aiSearchHint, typography),
-                  // Fully opt out of the global inputDecorationTheme: its
-                  // filled off-white fill and its state borders (the blue
-                  // brand focusedBorder) must never repaint this pill.
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  disabledBorder: InputBorder.none,
-                  errorBorder: InputBorder.none,
-                  focusedErrorBorder: InputBorder.none,
-                  filled: false,
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.xs,
-                  ),
-                ),
-                keyboardType: TextInputType.text,
-                textInputAction: TextInputAction.search,
-                onSubmitted: (_) => _submit(),
-                minLines: 1,
-                maxLines: 1,
-                style: typography.bodyLarge.copyWith(
-                  color: AppColors.textPrimary,
-                ),
-                autofocus: false,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            // Voice — opens the chat where the live microphone lives.
-            Semantics(
-              button: true,
-              label: l10n.voiceSearch,
-              child: InkResponse(
-                onTap: () => _openChat(),
-                customBorder: const CircleBorder(),
-                radius: 22,
-                child: SizedBox(
-                  width: _trailingActionSize,
-                  height: _trailingActionSize,
-                  child: Center(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: widget.accentColor.withValues(alpha: 0.10),
-                        shape: BoxShape.circle,
-                      ),
-                      child: SizedBox(
-                        width: 34,
-                        height: 34,
-                        child: Center(
-                          child: Icon(
-                            Icons.mic_rounded,
-                            size: 19,
-                            color: widget.accentColor,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // Search / send is the solid season-colored primary action.
-            Semantics(
-              button: true,
-              label: l10n.aiSend,
-              child: InkResponse(
-                onTap: _submit,
-                customBorder: const CircleBorder(),
-                radius: 22,
-                child: SizedBox(
-                  width: _trailingActionSize,
-                  height: _trailingActionSize,
-                  child: Center(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: widget.accentColor,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const SizedBox(
-                        width: 34,
-                        height: 34,
-                        child: Center(
-                          child: Icon(
-                            Icons.search_rounded,
-                            size: 20,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-          ],
         ),
       ),
     );

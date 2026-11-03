@@ -23,6 +23,7 @@ import '../../features/booking/presentation/pages/checkout_page.dart';
 import '../../features/booking/presentation/pages/passenger_details_page.dart';
 import '../../features/groups/presentation/pages/groups_page.dart';
 import '../../features/home/presentation/pages/city_page.dart';
+import '../../features/home/presentation/pages/explore_cities_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/home/presentation/pages/trip_builder_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
@@ -171,6 +172,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     ),
                   ),
                   GoRoute(
+                    path: 'explore',
+                    name: 'explore_cities',
+                    pageBuilder: (context, state) => slideFromRightPage(
+                      name: 'explore_cities',
+                      child: const SwipeFromRightToPop(
+                        child: ExploreCitiesPage(),
+                      ),
+                    ),
+                  ),
+                  GoRoute(
                     path: 'bag',
                     name: 'bag',
                     pageBuilder: (context, state) => slideFromRightPage(
@@ -228,7 +239,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     name: 'edit_profile',
                     pageBuilder: (context, state) => slideFromRightPage(
                       name: 'edit_profile',
-                      child: const SwipeFromRightToPop(child: EditProfilePage()),
+                      child: const SwipeFromRightToPop(
+                        child: EditProfilePage(),
+                      ),
                     ),
                   ),
                   GoRoute(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:intl/intl.dart';
 import 'package:tokigo/core/domain/models/offers/car_offer.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
@@ -120,6 +121,7 @@ class CarSearchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final scheme = Theme.of(context).colorScheme;
 
     if (loading) {
@@ -305,6 +307,7 @@ class _LoadingSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

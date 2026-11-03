@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/core/widgets/sticky_cta_bar.dart';
 
 /// The pinned dark bar at the bottom of the details page (doc 18 §8).
@@ -52,7 +53,7 @@ class OfferDetailsCtaBar extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: typography.caption.copyWith(
-                      color: AppColors.onCtaBarVariant,
+                      color: context.tokigoColors.onCtaBarVariant,
                     ),
                   ),
                 // Doc 18 §8 — no price, no amount. Never a zero.
@@ -65,7 +66,7 @@ class OfferDetailsCtaBar extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: typography.titleMedium.copyWith(
-                      color: AppColors.onCtaBar,
+                      color: context.tokigoColors.onCtaBar,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -93,15 +94,11 @@ class _CtaButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
     return Material(
-      color: AppColors.ctaBarButton,
+      color: context.tokigoColors.ctaBarButton,
       borderRadius: AppRadius.smBorder,
-      child: InkWell(
+      child: Pressable(
         onTap: onPressed,
-        borderRadius: AppRadius.smBorder,
         child: Container(
-          // `alignment:` on a Container makes it fill the incoming (loose)
-          // constraints — inside the bar's Row that would stretch the slab to
-          // the full screen height. `Center` with factors shrink-wraps instead.
           constraints: const BoxConstraints(minHeight: 48),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,
@@ -115,7 +112,7 @@ class _CtaButton extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: typography.bodyLargeMedium.copyWith(
-                color: AppColors.onCtaBarButton,
+                color: context.tokigoColors.onCtaBarButton,
               ),
             ),
           ),

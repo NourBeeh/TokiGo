@@ -30,6 +30,7 @@ class BaseCard extends StatefulWidget {
     this.borderColor,
     this.showBorder = true,
     this.showShadow = true,
+    this.shadowLevel = AppElevation.md,
     this.margin = EdgeInsets.zero,
     this.semanticsLabel,
   });
@@ -54,8 +55,13 @@ class BaseCard extends StatefulWidget {
   /// "no border" (the overlap card A/G surfaces).
   final bool showBorder;
 
-  /// Draw the resting `md` shadow. Off for card A ("card shadow: none").
+  /// Draw the resting halo shadow. Off for card A ("card shadow: none").
   final bool showShadow;
+
+  /// Shadow depth when [showShadow] is on. Home's photo cards use
+  /// [AppElevation.lg] so the photo sheet lifts off the feed; list cards keep
+  /// the quieter [AppElevation.md].
+  final double shadowLevel;
 
   final EdgeInsetsGeometry margin;
 
@@ -90,7 +96,9 @@ class _BaseCardState extends State<BaseCard> {
           final basePadding =
               widget.padding ?? const EdgeInsets.all(AppSpacing.lg);
           final effectivePadding =
-              constraints.maxWidth < 360 && basePadding is EdgeInsets
+              constraints.maxWidth < 360 &&
+                  basePadding is EdgeInsets &&
+                  basePadding != EdgeInsets.zero
               ? basePadding.copyWith(left: AppSpacing.md, right: AppSpacing.md)
               : basePadding;
 
@@ -118,10 +126,10 @@ class _BaseCardState extends State<BaseCard> {
                                   scheme.outlineVariant.withValues(alpha: 0.4),
                             )
                           : null,
-                      boxShadow: widget.showShadow
+                      boxShadow: widget.showShadow && !_pressed
                           ? AppElevation.shadow(
                               background: scheme.surface,
-                              level: AppElevation.md,
+                              level: widget.shadowLevel,
                             )
                           : null,
                     ),

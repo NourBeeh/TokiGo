@@ -8,11 +8,13 @@ import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/features/ai/application/ai_chat_page_providers.dart';
 import 'package:tokigo/features/ai/application/ai_state.dart';
 import 'package:tokigo/features/ai/domain/ai_chat_message.dart';
@@ -403,12 +405,12 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: context.tokigoColors.surface,
                 borderRadius: AppRadius.xlBorder,
-                border: Border.all(color: AppColors.outline),
+                border: Border.all(color: context.tokigoColors.outline),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.textPrimary.withValues(alpha: 0.05),
+                    color: context.tokigoColors.textPrimary.withValues(alpha: 0.05),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -458,14 +460,14 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
               onTap: _submit,
               customBorder: const CircleBorder(),
               radius: 24,
-              child: const SizedBox(
+              child: SizedBox(
                 width: AppSpacing.minimumTapTarget,
                 height: AppSpacing.minimumTapTarget,
                 child: Center(
                   child: Icon(
                     Icons.send_rounded,
                     size: 24,
-                    color: AppColors.brand,
+                    color: context.tokigoColors.brand,
                   ),
                 ),
               ),
@@ -524,10 +526,10 @@ class _FollowUpRow extends StatelessWidget {
             .map(
               (chip) => ActionChip(
                 label: Text(chip.$1),
-                backgroundColor: AppColors.surfaceSecondary,
-                side: const BorderSide(color: AppColors.outline),
+                backgroundColor: context.tokigoColors.surfaceSecondary,
+                side: BorderSide(color: context.tokigoColors.outline),
                 labelStyle: typography.caption.copyWith(
-                  color: AppColors.textPrimary,
+                  color: context.tokigoColors.textPrimary,
                 ),
                 onPressed: () => onTap(chip.$2),
               ),
@@ -581,20 +583,22 @@ class ChatBubble extends StatelessWidget {
             if (!isUser && message.fromCache) ...[
               const SizedBox(width: AppSpacing.xs),
               // A quiet marker, not a hue: the palette owns no accent.
-              const Icon(Icons.bolt, size: 13, color: AppColors.textSecondary),
+              Icon(Icons.bolt, size: 13, color: context.tokigoColors.textSecondary),
             ],
           ],
         ),
         if (showRetry)
           Padding(
             padding: const EdgeInsets.only(top: 2),
-            child: TextButton(
-              style: TextButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Pressable.wrap(
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                onPressed: onRetry,
+                child: Text(AppLocalizations.of(context)!.adminRetry),
               ),
-              onPressed: onRetry,
-              child: Text(AppLocalizations.of(context)!.adminRetry),
             ),
           ),
       ],
@@ -627,14 +631,14 @@ class ChatBubble extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             gradient: isUser
-                ? const LinearGradient(
+                ? LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [AppColors.brand, AppColors.brandLight],
+                    colors: [context.tokigoColors.brand, AppColors.brandLight],
                   )
                 : null,
-            color: isUser ? null : AppColors.surfaceSecondary,
-            border: isUser ? null : Border.all(color: AppColors.outline),
+            color: isUser ? null : context.tokigoColors.surfaceSecondary,
+            border: isUser ? null : Border.all(color: context.tokigoColors.outline),
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(isUser ? AppRadius.lg : AppRadius.xs),
               topRight: Radius.circular(isUser ? AppRadius.xs : AppRadius.lg),

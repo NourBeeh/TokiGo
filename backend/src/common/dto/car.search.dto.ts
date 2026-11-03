@@ -1,4 +1,4 @@
-import { IsString, IsDateString, IsOptional } from 'class-validator';
+import { IsString, IsDateString, IsOptional, Matches } from 'class-validator';
 
 export class CarSearchDto {
   @IsString()
@@ -14,4 +14,10 @@ export class CarSearchDto {
   @IsOptional()
   @IsString()
   market?: string;
+
+  /** Explicit display currency (ISO-4217); the market currency applies when absent. */
+  @IsOptional()
+  @IsString()
+  @Matches(/^[A-Za-z]{3}$/, { message: 'currency must be an ISO-4217 code' })
+  currency?: string;
 }

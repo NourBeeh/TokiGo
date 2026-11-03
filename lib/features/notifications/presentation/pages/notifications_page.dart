@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
@@ -49,7 +50,7 @@ class NotificationsPage extends StatelessWidget {
     final double bottom = AppSpacing.xxl + MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(
         // `bottom: false` left the list's last row under the Android
         // navigation bar (the pill it was written for is gone).
@@ -141,7 +142,7 @@ class _GroupHeader extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: typography.label.copyWith(color: AppColors.textTertiary),
+          style: typography.label.copyWith(color: context.tokigoColors.textTertiary),
         ),
       ),
     );
@@ -154,12 +155,12 @@ class _RowDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Divider(
+    return Divider(
       height: 1,
       thickness: 1,
       indent: AppSpacing.lg,
       endIndent: AppSpacing.lg,
-      color: AppColors.divider,
+      color: context.tokigoColors.divider,
     );
   }
 }
@@ -193,8 +194,8 @@ class _NotificationRow extends StatelessWidget {
                   width: 8,
                   height: 8,
                   margin: const EdgeInsets.only(top: 6),
-                  decoration: const BoxDecoration(
-                    color: AppColors.brand,
+                  decoration: BoxDecoration(
+                    color: context.tokigoColors.brand,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -208,7 +209,7 @@ class _NotificationRow extends StatelessWidget {
                   Text(
                     notification.title,
                     style: typography.bodyLargeMedium.copyWith(
-                      color: AppColors.textPrimary,
+                      color: context.tokigoColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xxs),
@@ -217,7 +218,7 @@ class _NotificationRow extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: typography.caption.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.tokigoColors.textSecondary,
                     ),
                   ),
                 ],
@@ -226,7 +227,7 @@ class _NotificationRow extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             Text(
               _timeLabel(context),
-              style: typography.caption.copyWith(color: AppColors.textTertiary),
+              style: typography.caption.copyWith(color: context.tokigoColors.textTertiary),
             ),
           ],
         ),
@@ -266,24 +267,24 @@ class _NotificationsEmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const Icon(
+            Icon(
               Icons.notifications_none_rounded,
               size: 48,
-              color: AppColors.textTertiary,
+              color: context.tokigoColors.textTertiary,
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
               l10n.notificationsEmptyTitle,
               textAlign: TextAlign.center,
               style: typography.bodyLargeMedium.copyWith(
-                color: AppColors.textPrimary,
+                color: context.tokigoColors.textPrimary,
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               l10n.notificationsEmptyBody,
               textAlign: TextAlign.center,
-              style: typography.body.copyWith(color: AppColors.textSecondary),
+              style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
             ),
           ],
         ),

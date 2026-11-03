@@ -3,11 +3,13 @@ import 'package:go_router/go_router.dart';
 
 import 'package:tokigo/core/navigation/app_route.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
 /// Unified search hub — the "known destination" tab.
@@ -22,7 +24,7 @@ class SearchHubPage extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(
         // `bottom: false` left the list's last row under the Android
         // navigation bar (the pill it was written for is gone).
@@ -68,7 +70,7 @@ class _SearchHero extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
-        color: AppColors.brand,
+        color: context.tokigoColors.brand,
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Column(
@@ -132,49 +134,51 @@ class _HeroSearchField extends StatelessWidget {
     return Semantics(
       button: true,
       label: l10n.searchHint,
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
+      child: Pressable.wrap(
+        child: Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.lg,
               vertical: AppSpacing.lg,
             ),
             child: Row(
               children: <Widget>[
-                const Icon(
+                Icon(
                   Icons.search_rounded,
                   size: 22,
-                  color: AppColors.brand,
+                  color: context.tokigoColors.brand,
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Text(
                     l10n.searchHint,
                     style: typography.bodyLarge.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.tokigoColors.textSecondary,
                     ),
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.sm),
                   decoration: BoxDecoration(
-                    color: AppColors.brandContainer,
+                    color: context.tokigoColors.brandContainer,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_forward_rounded,
                     size: 16,
-                    color: AppColors.brand,
+                    color: context.tokigoColors.brand,
                   ),
                 ),
               ],
             ),
           ),
         ),
+      ),
       ),
     );
   }
@@ -194,14 +198,15 @@ class _HeroQuickLink extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: AppSpacing.xs,
-        ),
+    return Pressable.wrap(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: AppSpacing.xs,
+          ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
@@ -222,6 +227,7 @@ class _HeroQuickLink extends StatelessWidget {
           ],
         ),
       ),
+      ),
     );
   }
 }
@@ -239,7 +245,7 @@ class _ServiceGrid extends StatelessWidget {
         Text(
           l10n.searchAllServices,
           style: AppTypography.forLight().title.copyWith(
-            color: AppColors.textPrimary,
+            color: context.tokigoColors.textPrimary,
           ),
         ),
         const SizedBox(height: AppSpacing.md),
@@ -305,37 +311,39 @@ class _ServiceTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
 
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.outline),
-          ),
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                decoration: BoxDecoration(
-                  color: colorContainer,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+    return Pressable.wrap(
+      child: Material(
+        color: context.tokigoColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(color: context.tokigoColors.outline),
+            ),
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: colorContainer,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: Icon(icon, size: 22, color: color),
                 ),
-                child: Icon(icon, size: 22, color: color),
-              ),
-              const Spacer(),
-              Text(
-                label,
-                style: typography.bodyLargeMedium.copyWith(
-                  color: AppColors.textPrimary,
+                const Spacer(),
+                Text(
+                  label,
+                  style: typography.bodyLargeMedium.copyWith(
+                    color: context.tokigoColors.textPrimary,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

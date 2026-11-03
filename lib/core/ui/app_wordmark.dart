@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 
 /// Decorates one half of the wordmark (index 0 = "Toki", 1 = "Go").
@@ -24,8 +24,8 @@ typedef WordmarkPartBuilder =
 ///    Latin letterforms.
 ///  * **Tracking and the gap between the halves** are em-based, so the mark is
 ///    the same shape at the 25px header and the 36px hero instead of drifting.
-///  * **Colours** are the brand pair — [AppColors.wordmarkInk] and
-///    [AppColors.brandRed].
+///  * **Colours** are the brand pair — [context.tokigoColors.wordmarkInk] and
+///    [context.tokigoColors.brandRed].
 ///
 /// The raster splash masters (`assets/branding/logo_wordmark*.png`) are rendered
 /// from this exact spec by `tool/branding/generate_wordmark.py`, whose constants
@@ -35,8 +35,8 @@ class AppWordmark extends StatelessWidget {
   const AppWordmark({
     super.key,
     required this.base,
-    this.inkColor = AppColors.wordmarkInk,
-    this.goColor = AppColors.brandRed,
+    this.inkColor,
+    this.goColor,
     this.buildPart,
   });
 
@@ -46,11 +46,11 @@ class AppWordmark extends StatelessWidget {
   final TextStyle base;
 
   /// The "Toki" half. Override only for a surface that needs it, e.g.
-  /// [AppColors.wordmarkOnMedia] over photography.
-  final Color inkColor;
+  /// [context.tokigoColors.wordmarkOnMedia] over photography.
+  final Color? inkColor;
 
   /// The "Go" half — the brand red.
-  final Color goColor;
+  final Color? goColor;
 
   /// Optional decorator for each half, used by the animated Home header.
   final WordmarkPartBuilder? buildPart;
@@ -73,8 +73,9 @@ class AppWordmark extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double size = base.fontSize ?? AppTypography.fontSizeTitle;
-    final TextStyle ink = _half(base, inkColor, size);
-    final TextStyle go = _half(base, goColor, size);
+    final colors = context.tokigoColors;
+    final TextStyle ink = _half(base, inkColor ?? colors.wordmarkInk, size);
+    final TextStyle go = _half(base, goColor ?? colors.brandRed, size);
 
     Widget part(int index, String text, TextStyle style) {
       final child = Text(text, style: style);

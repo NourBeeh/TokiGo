@@ -15,7 +15,7 @@ class Trip {
   /// Real provider references carried by confirmed bookings.
   final List<String> bookingReferences;
 
-  /// Readiness gaps (missing transfer, return leg, document, etc.)
+  /// Readiness gaps (missing transfer, return leg, document, econtext.tokigoColors.)
   /// derived honestly from the trip's real items.
   final List<String> readinessGaps;
 

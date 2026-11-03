@@ -51,16 +51,16 @@ export class SearchService {
     private readonly pricing: PricingService,
   ) {}
 
-  async searchFlights(params: any, market?: string) {
-    return this.search('flight', 'searchFlights', params, market);
+  async searchFlights(params: any, market?: string, currency?: string) {
+    return this.search('flight', 'searchFlights', params, market, currency);
   }
 
-  async searchHotels(params: any, market?: string) {
-    return this.search('hotel', 'searchHotels', params, market);
+  async searchHotels(params: any, market?: string, currency?: string) {
+    return this.search('hotel', 'searchHotels', params, market, currency);
   }
 
-  async searchCars(params: any, market?: string) {
-    return this.search('car', 'searchCars', params, market);
+  async searchCars(params: any, market?: string, currency?: string) {
+    return this.search('car', 'searchCars', params, market, currency);
   }
 
   private async search(
@@ -68,8 +68,9 @@ export class SearchService {
     method: 'searchFlights' | 'searchHotels' | 'searchCars',
     params: any,
     market?: string,
+    currency?: string,
   ) {
-    const cacheKey = canonicalSearchCacheKey(vertical, params, market);
+    const cacheKey = canonicalSearchCacheKey(vertical, params, market, currency);
     const cached = await this.cache.get(cacheKey);
     if (cached) return cached;
 
@@ -81,6 +82,8 @@ export class SearchService {
           : this.registry.getCarProviders();
     const providerParams = { ...params };
     delete providerParams.mood;
+    // Display currency is a pricing input, never a provider input.
+    delete providerParams.currency;
 
     // Fan-out with a per-provider timeout budget: a hung or slow provider
     // resolves as a failure after the budget instead of blocking the whole
@@ -102,7 +105,7 @@ export class SearchService {
       ),
     );
 
-    const aggregated = await this.aggregateWithPricing(settled, market);
+    const aggregated = await this.aggregateWithPricing(settled, market, currency);
     // Only fully-successful aggregations are cached; a partial-failure
     // response is re-fetched next time (the failing provider may recover).
     if (aggregated.failures.length === 0) {
@@ -118,6 +121,7 @@ export class SearchService {
   private async aggregateWithPricing(
     results: PromiseSettledResult<any>[],
     market?: string,
+    currency?: string,
   ) {
     const successes: any[] = [];
     const failures: any[] = [];
@@ -145,7 +149,7 @@ export class SearchService {
             !offer?.customerPrice
           ) {
             enrichedOffers.push(
-              await this.pricing.enrichOffer(offer, { market }),
+              await this.pricing.enrichOffer(offer, { market, currency }),
             );
           } else {
             enrichedOffers.push(offer);
@@ -208,12 +212,16 @@ export function canonicalSearchCacheKey(
   vertical: 'flight' | 'hotel' | 'car',
   params: any,
   market?: string,
+  currency?: string,
 ): string {
   const canonical = canonicalize(normalizeForKey(vertical, params));
   const marketKey = String(market ?? DEFAULT_MARKET.marketCountry)
     .trim()
     .toUpperCase();
-  return `search:${vertical}:${JSON.stringify(canonical)}:${marketKey}`;
+  // The display currency changes the priced response, so it is part of the
+  // cache identity.
+  const currencyKey = String(currency ?? '').trim().toUpperCase();
+  return `search:${vertical}:${JSON.stringify(canonical)}:${marketKey}:${currencyKey}`;
 }
 
 /**
@@ -228,9 +236,10 @@ function normalizeForKey(vertical: 'flight' | 'hotel' | 'car', params: any): any
   if (!params || typeof params !== 'object') return params;
   const out: Record<string, any> = { ...params };
 
-  // `market` is already the key suffix; leaving it in the params would make an
-  // explicit `market: 'EG'` and an omitted one two different entries.
+  // `market` and `currency` are already key suffixes; leaving them in the
+  // params would split an explicit value and an omitted one into two entries.
   delete out.market;
+  delete out.currency;
 
   if (vertical === 'hotel') {
     // Nuitee searches 2 guests in 1 room, and resolves the country from the

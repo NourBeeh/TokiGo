@@ -3,11 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_button.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
+import 'package:tokigo/core/widgets/cards/card_favorite.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
 import 'package:tokigo/features/profile/application/wishlist_controller.dart';
 import 'package:tokigo/features/search/presentation/widgets/hotel_overlap_card.dart';
@@ -90,7 +91,7 @@ class WishlistPage extends ConsumerWidget {
               child: Text(
                 l10n.wishlistSavedCount(stays.length),
                 style: AppTypography.forLight().caption.copyWith(
-                  color: AppColors.textTertiary,
+                  color: context.tokigoColors.textTertiary,
                 ),
               ),
             ),
@@ -126,7 +127,7 @@ class WishlistPage extends ConsumerWidget {
 
     if (embedded) return content;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(child: content),
     );
   }
@@ -159,24 +160,27 @@ class _WishlistEmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const Icon(
-              Icons.favorite_border_rounded,
-              size: 48,
-              color: AppColors.textTertiary,
+            HeartPlatter(
+              diameter: 96,
+              child: Icon(
+                Icons.favorite_border_rounded,
+                size: 42,
+                color: context.tokigoColors.textTertiary,
+              ),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
               l10n.wishlistEmptyTitle,
               textAlign: TextAlign.center,
               style: typography.bodyLargeMedium.copyWith(
-                color: AppColors.textPrimary,
+                color: context.tokigoColors.textPrimary,
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               l10n.wishlistEmptyBody,
               textAlign: TextAlign.center,
-              style: typography.body.copyWith(color: AppColors.textSecondary),
+              style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.xl),
             AppButton(

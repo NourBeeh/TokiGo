@@ -101,7 +101,7 @@ CustomTransitionPage<void> fadeThroughPage({
 /// nothing dims** — the page underneath is perfectly still (owner decision,
 /// 2026-10-20: "سلايد بسيط … واللي تحتها ثابتة تمامًا").
 ///
-/// It mirrors for RTL (the leading edge is the left in LTR and the right in RTL).
+/// It always enters from the physical right, regardless of locale direction.
 ///
 /// It began as the AI-chat surface's transition and is now the language for the
 /// whole app: the verticals (flights / hotels / cars / packages), the offer
@@ -134,25 +134,18 @@ class SlideFromRightTransition extends CustomTransitionPage<void> {
              return FadeTransition(opacity: curved, child: child);
            }
 
-           // One tween, both directions: in from the trailing edge on push, out
-           // to the same edge on pop. `secondaryAnimation` is deliberately
+           // One tween, both directions: in from the physical right on push,
+           // out to the same edge on pop. `secondaryAnimation` is deliberately
            // IGNORED — the covered page must not move or dim.
            return SlideTransition(
              position: Tween<Offset>(
-               begin: _enterOffsetFor(context),
+               begin: const Offset(1, 0),
                end: Offset.zero,
              ).animate(curved),
              child: child,
            );
          },
        );
-
-  /// The edge the page enters from — the TRAILING edge, so it mirrors in RTL
-  /// and always matches the interactive swipe's leading edge.
-  static Offset _enterOffsetFor(BuildContext context) =>
-      Directionality.of(context) == TextDirection.rtl
-      ? const Offset(-1, 0)
-      : const Offset(1, 0);
 }
 
 /// Convenience wrapper: wraps [child] with the right-edge slide transition

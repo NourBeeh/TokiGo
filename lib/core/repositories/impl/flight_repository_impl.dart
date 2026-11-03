@@ -9,11 +9,13 @@ import 'package:tokigo/core/repositories/contracts/flight_repository.dart';
 class FlightRepositoryImpl implements FlightRepository {
   final ApiClient apiClient;
   String? _nextMarket;
+  String? _nextCurrency;
 
   FlightRepositoryImpl(this.apiClient);
 
-  void setNextSearchContext({String? market}) {
+  void setNextSearchContext({String? market, String? currency}) {
     _nextMarket = market;
+    _nextCurrency = currency;
   }
 
   @override
@@ -35,6 +37,7 @@ class FlightRepositoryImpl implements FlightRepository {
         passengers: passengers,
         legs: legs,
         market: _nextMarket,
+        currency: _nextCurrency,
       ),
     );
 
@@ -66,6 +69,7 @@ class FlightRepositoryImpl implements FlightRepository {
     int? passengers,
     List<FlightSearchLeg>? legs,
     String? market,
+    String? currency,
   }) => <String, dynamic>{
     'origin': origin,
     'destination': destination,
@@ -82,6 +86,7 @@ class FlightRepositoryImpl implements FlightRepository {
           },
       ],
     if (market != null && market.isNotEmpty) 'market': market,
+    if (currency != null && currency.isNotEmpty) 'currency': currency,
   };
 
   @override

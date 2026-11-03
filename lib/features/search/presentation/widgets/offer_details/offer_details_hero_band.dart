@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
 import 'package:tokigo/core/network/image_proxy.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 
@@ -30,6 +31,7 @@ class OfferDetailsHeroBand extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final typography = AppTypography.forLight();
     final url = imageUrl;
     final flightOffer = flight;
@@ -41,11 +43,11 @@ class OfferDetailsHeroBand extends StatelessWidget {
 
     if (url == null || flightOffer != null) {
       return Container(
-        color: flightOffer == null ? AppColors.surfaceSecondary : hue,
+        color: flightOffer == null ? context.tokigoColors.surfaceSecondary : hue,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         alignment: Alignment.center,
         child: flightOffer == null
-            ? Icon(glyph, size: 48, color: AppColors.textTertiary)
+            ? Icon(glyph, size: 48, color: context.tokigoColors.textTertiary)
             : Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
@@ -78,14 +80,14 @@ class OfferDetailsHeroBand extends StatelessWidget {
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: typography.title.copyWith(color: AppColors.onBrand),
+                    style: typography.title.copyWith(color: context.tokigoColors.onBrand),
                   ),
                   if (flightOffer.flightNumber.isNotEmpty) ...<Widget>[
                     const SizedBox(height: AppSpacing.xs),
                     Text(
                       flightOffer.flightNumber,
                       style: typography.caption.copyWith(
-                        color: AppColors.onBrand.withValues(alpha: 0.85),
+                        color: context.tokigoColors.onBrand.withValues(alpha: 0.85),
                       ),
                     ),
                   ],
@@ -107,15 +109,15 @@ class OfferDetailsHeroBand extends StatelessWidget {
             errorBuilder: (_, _, _) => _HueFallback(hue: hue),
           ),
         ),
-        const DecoratedBox(
+        DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: <Color>[
-                AppColors.scrimSoft,
+                context.tokigoColors.scrimSoft,
                 Colors.transparent,
-                AppColors.scrimStrong,
+                context.tokigoColors.scrimStrong,
               ],
               stops: <double>[0, 0.4, 1],
             ),
@@ -133,6 +135,7 @@ class _HueFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     return Container(color: hue.withValues(alpha: 0.85));
   }
 }

@@ -7,6 +7,7 @@ import 'app_radius.dart';
 import 'app_spacing.dart';
 import 'app_tokens.dart';
 import 'app_typography.dart';
+import 'tokigo_colors.dart';
 
 /// Builds the central light-only [ThemeData] for TokiGo.
 ///
@@ -30,6 +31,16 @@ abstract final class AppTheme {
     statusBarBrightness: Brightness.light,
     systemNavigationBarColor: Colors.transparent,
     systemNavigationBarIconBrightness: Brightness.dark,
+    systemNavigationBarDividerColor: Colors.transparent,
+  );
+
+  /// System chrome for the dark canvas: light icons on a transparent bar.
+  static const SystemUiOverlayStyle systemOverlayDark = SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+    statusBarBrightness: Brightness.dark,
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarIconBrightness: Brightness.light,
     systemNavigationBarDividerColor: Colors.transparent,
   );
 
@@ -77,7 +88,11 @@ abstract final class AppTheme {
     );
 
     return base.copyWith(
+      extensions: <ThemeExtension<dynamic>>[TokiGoColors.light()],
       visualDensity: VisualDensity.adaptivePlatformDensity,
+      splashFactory: NoSplash.splashFactory,
+      highlightColor: AppColors.brand.withValues(alpha: 0.08),
+      splashColor: Colors.transparent,
       cardTheme: CardThemeData(
         color: palette.surface,
         elevation: AppElevation.none,
@@ -105,29 +120,50 @@ abstract final class AppTheme {
       ),
       dividerTheme: DividerThemeData(color: palette.divider, thickness: 1),
       filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: AppColors.brand,
-          foregroundColor: AppColors.onBrand,
-          disabledBackgroundColor: AppColors.surfaceTertiary,
-          disabledForegroundColor: AppColors.textTertiary,
-          minimumSize: const Size(64, 52),
-          shape: RoundedRectangleBorder(borderRadius: AppRadius.mdBorder),
-          textStyle: typography.bodyLargeMedium,
-        ),
+        style:
+            FilledButton.styleFrom(
+              backgroundColor: AppColors.brand,
+              foregroundColor: AppColors.onBrand,
+              disabledBackgroundColor: AppColors.surfaceTertiary,
+              disabledForegroundColor: AppColors.textTertiary,
+              minimumSize: const Size(64, 52),
+              shape: RoundedRectangleBorder(borderRadius: AppRadius.mdBorder),
+              textStyle: typography.bodyLargeMedium,
+            ).copyWith(
+              overlayColor: WidgetStatePropertyAll<Color>(
+                AppColors.brand.withValues(alpha: 0.08),
+              ),
+            ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.brand,
-          side: const BorderSide(color: AppColors.hairlineStrong),
-          minimumSize: const Size(64, 52),
-          shape: RoundedRectangleBorder(borderRadius: AppRadius.mdBorder),
-          textStyle: typography.bodyLargeMedium,
-        ),
+        style:
+            OutlinedButton.styleFrom(
+              foregroundColor: AppColors.brand,
+              side: const BorderSide(color: AppColors.hairlineStrong),
+              minimumSize: const Size(64, 52),
+              shape: RoundedRectangleBorder(borderRadius: AppRadius.mdBorder),
+              textStyle: typography.bodyLargeMedium,
+            ).copyWith(
+              overlayColor: WidgetStatePropertyAll<Color>(
+                AppColors.brand.withValues(alpha: 0.08),
+              ),
+            ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: AppColors.brand,
-          textStyle: typography.bodyLargeMedium,
+        style:
+            TextButton.styleFrom(
+              foregroundColor: AppColors.brand,
+              textStyle: typography.bodyLargeMedium,
+            ).copyWith(
+              overlayColor: WidgetStatePropertyAll<Color>(
+                AppColors.brand.withValues(alpha: 0.08),
+              ),
+            ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          overlayColor: Colors.transparent,
+          splashFactory: NoSplash.splashFactory,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -158,6 +194,165 @@ abstract final class AppTheme {
         surfaceTintColor: Colors.transparent,
       ),
       bottomSheetTheme: BottomSheetThemeData(
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.xlBorder),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.mdBorder),
+      ),
+    );
+  }
+
+  static ThemeData dark() {
+    final palette = TokiGoColors.dark();
+    final typography = AppTypography.forDark();
+
+    final colorScheme = ColorScheme(
+      brightness: Brightness.dark,
+      primary: palette.brand,
+      onPrimary: palette.onBrand,
+      primaryContainer: palette.brandContainer,
+      onPrimaryContainer: palette.onBrandContainer,
+      secondary: palette.ink,
+      onSecondary: palette.background,
+      secondaryContainer: palette.surfaceTertiary,
+      onSecondaryContainer: palette.ink,
+      tertiary: palette.ink,
+      onTertiary: palette.background,
+      tertiaryContainer: palette.surfaceSecondary,
+      onTertiaryContainer: palette.ink,
+      error: palette.danger,
+      onError: palette.background,
+      surface: palette.surface,
+      onSurface: palette.textPrimary,
+      surfaceContainerHighest: palette.surfaceSecondary,
+      onSurfaceVariant: palette.textSecondary,
+      outline: palette.outline,
+      outlineVariant: palette.divider,
+      shadow: Colors.black,
+      scrim: Colors.black,
+      inverseSurface: palette.textPrimary,
+      onInverseSurface: palette.surface,
+      inversePrimary: palette.brand,
+    );
+
+    final base = ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      colorScheme: colorScheme,
+      textTheme: typography.buildTextTheme(),
+      scaffoldBackgroundColor: palette.background,
+      fontFamily: AppTypography.fontFamily,
+    );
+
+    return base.copyWith(
+      extensions: <ThemeExtension<dynamic>>[palette],
+      visualDensity: VisualDensity.adaptivePlatformDensity,
+      splashFactory: NoSplash.splashFactory,
+      highlightColor: palette.brand.withValues(alpha: 0.08),
+      splashColor: Colors.transparent,
+      cardTheme: CardThemeData(
+        color: palette.surfaceElevated,
+        elevation: AppElevation.none,
+        margin: EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.sm,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.lgBorder,
+          side: BorderSide(color: palette.outline),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: palette.surfaceElevated,
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.xlBorder),
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: AppElevation.none,
+        scrolledUnderElevation: AppElevation.none,
+        foregroundColor: TokiGoColors.dark().textPrimary,
+        surfaceTintColor: Colors.transparent,
+        centerTitle: false,
+        systemOverlayStyle: AppTheme.systemOverlayDark,
+      ),
+      dividerTheme: DividerThemeData(color: palette.divider, thickness: 1),
+      filledButtonTheme: FilledButtonThemeData(
+        style:
+            FilledButton.styleFrom(
+              backgroundColor: palette.brand,
+              foregroundColor: palette.onBrand,
+              disabledBackgroundColor: palette.surfaceTertiary,
+              disabledForegroundColor: palette.textTertiary,
+              minimumSize: const Size(64, 52),
+              shape: RoundedRectangleBorder(borderRadius: AppRadius.mdBorder),
+              textStyle: typography.bodyLargeMedium,
+            ).copyWith(
+              overlayColor: WidgetStatePropertyAll<Color>(
+                palette.brand.withValues(alpha: 0.08),
+              ),
+            ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style:
+            OutlinedButton.styleFrom(
+              foregroundColor: palette.brand,
+              side: BorderSide(color: palette.hairlineStrong),
+              minimumSize: const Size(64, 52),
+              shape: RoundedRectangleBorder(borderRadius: AppRadius.mdBorder),
+              textStyle: typography.bodyLargeMedium,
+            ).copyWith(
+              overlayColor: WidgetStatePropertyAll<Color>(
+                palette.brand.withValues(alpha: 0.08),
+              ),
+            ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style:
+            TextButton.styleFrom(
+              foregroundColor: palette.brand,
+              textStyle: typography.bodyLargeMedium,
+            ).copyWith(
+              overlayColor: WidgetStatePropertyAll<Color>(
+                palette.brand.withValues(alpha: 0.08),
+              ),
+            ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          overlayColor: Colors.transparent,
+          splashFactory: NoSplash.splashFactory,
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: palette.surfaceSecondary,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: AppRadius.mdBorder,
+          borderSide: BorderSide(color: palette.outline),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: AppRadius.mdBorder,
+          borderSide: BorderSide(color: palette.outline),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: AppRadius.mdBorder,
+          borderSide: BorderSide(color: palette.brand, width: 1.5),
+        ),
+        hintStyle: typography.bodyMedium.copyWith(color: palette.textTertiary),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: palette.surface,
+        indicatorColor: palette.brandContainer,
+        elevation: AppElevation.none,
+        surfaceTintColor: Colors.transparent,
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: palette.surfaceElevated,
         shape: RoundedRectangleBorder(borderRadius: AppRadius.xlBorder),
       ),
       snackBarTheme: SnackBarThemeData(

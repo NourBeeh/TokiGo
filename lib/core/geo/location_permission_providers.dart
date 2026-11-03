@@ -17,3 +17,8 @@ final locationAccessProvider = FutureProvider<LocationAccess>((ref) {
 /// may ask again. Persisting a "never ask" flag would silently strand
 /// travellers who dismissed the card by accident.
 final locationPromptDismissedProvider = StateProvider<bool>((ref) => false);
+
+/// Incremented when the traveller grants location access, so the country is
+/// re-resolved with GPS instead of the IP fallback. An unchanged counter keeps
+/// the session-scoped result — no repeated lookups.
+final geoRefreshProvider = StateProvider<int>((ref) => 0);

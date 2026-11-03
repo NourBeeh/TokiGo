@@ -43,11 +43,13 @@ class ChatSearchPipeline {
     required this.flightSearch,
     required this.hotelSearch,
     required this.carSearch,
+    this.languageCode,
   });
 
   final FlightSearchController flightSearch;
   final HotelSearchController hotelSearch;
   final CarSearchController carSearch;
+  final String Function()? languageCode;
 
   Future<ChatSearchOutcome> run(
     String query, {
@@ -157,6 +159,7 @@ class ChatSearchPipeline {
             maxPrice: _maxPriceFor(intent),
             minPrice: _minPriceFor(intent),
             amenities: intent.amenities,
+            languageCode: languageCode?.call() ?? 'en',
           ),
         );
         final minPrice = _minPriceFor(intent);

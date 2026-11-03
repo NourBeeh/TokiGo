@@ -13,7 +13,7 @@ class HomeCardDimensions {
       case HomeCardType.hotel:
         return 220.0;
       case HomeCardType.flight:
-        return 280.0; // full recommendation card width
+        return 300.0; // full recommendation card width
       case HomeCardType.car:
         return 220.0;
       case HomeCardType.package:
@@ -29,13 +29,13 @@ class HomeCardDimensions {
   static double cardHeightForType(HomeCardType type) {
     switch (type) {
       case HomeCardType.hotel:
-        return 240.0;
+        return 276.0;
       case HomeCardType.flight:
-        return 240.0;
+        return 252.0;
       case HomeCardType.car:
-        return 220.0;
+        return 276.0;
       case HomeCardType.package:
-        return 220.0;
+        return 276.0;
       case HomeCardType.destination:
         return 240.0;
       case HomeCardType.deal:

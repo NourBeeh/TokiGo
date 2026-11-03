@@ -4,6 +4,7 @@ import 'package:tokigo/core/admin/admin_home_content_service.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -29,7 +30,7 @@ Future<Map<String, dynamic>?> showAdminCardEditor({
   return showModalBottomSheet<Map<String, dynamic>>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: AppColors.surface,
+    backgroundColor: context.tokigoColors.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
     ),
@@ -130,7 +131,7 @@ class _AdminCardEditorSheetState extends State<_AdminCardEditorSheet> {
           children: <Widget>[
             Text(
               widget.card == null ? l10n.adminAddCard : l10n.adminEditCard,
-              style: typography.title.copyWith(color: AppColors.textPrimary),
+              style: typography.title.copyWith(color: context.tokigoColors.textPrimary),
             ),
             const SizedBox(height: AppSpacing.md),
             Row(
@@ -241,13 +242,13 @@ class _AdminCardEditorSheetState extends State<_AdminCardEditorSheet> {
             Text(
               l10n.adminPreview,
               style: typography.caption.copyWith(
-                color: AppColors.textSecondary,
+                color: context.tokigoColors.textSecondary,
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
             Container(
               decoration: BoxDecoration(
-                color: AppColors.surfaceSecondary,
+                color: context.tokigoColors.surfaceSecondary,
                 borderRadius: AppRadius.mdBorder,
               ),
               padding: const EdgeInsets.all(AppSpacing.md),

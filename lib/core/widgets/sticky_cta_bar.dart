@@ -2,7 +2,7 @@ import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_elevation.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
@@ -40,14 +40,22 @@ class StickyCtaBar extends StatelessWidget {
     );
 
     if (variant == StickyCtaBarVariant.dark) {
+      final bool isDark = Theme.of(context).brightness == Brightness.dark;
       return Container(
         // Doc 18 §2.6 — solid `ctaBar`, top radius 24, AppElevation.lg cast
         // UPWARDS so the slab separates from the sheet without a hairline.
+        // In dark mode the slab sits only one step above the canvas, so a top
+        // hairline takes over from the shadow that the canvas swallows.
         decoration: BoxDecoration(
-          color: AppColors.ctaBar,
+          color: context.tokigoColors.ctaBar,
           borderRadius: const BorderRadiusDirectional.vertical(
             top: Radius.circular(AppRadius.xl),
           ),
+          border: isDark
+              ? Border(
+                  top: BorderSide(color: context.tokigoColors.hairlineStrong),
+                )
+              : null,
           boxShadow: AppElevation.up(level: AppElevation.lg),
         ),
         padding: padding,
@@ -60,8 +68,10 @@ class StickyCtaBar extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.surface.withValues(alpha: 0.9),
-            border: Border(top: BorderSide(color: AppColors.hairlineStrong)),
+            color: context.tokigoColors.surface.withValues(alpha: 0.9),
+            border: Border(
+              top: BorderSide(color: context.tokigoColors.hairlineStrong),
+            ),
           ),
           padding: padding,
           child: child,

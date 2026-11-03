@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 
 import 'package:tokigo/core/theme/app_motion.dart';
 
@@ -42,6 +43,7 @@ class _AiAmbientVisualState extends State<AiAmbientVisual>
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final primary = Theme.of(context).colorScheme.primary;
 
     return IgnorePointer(

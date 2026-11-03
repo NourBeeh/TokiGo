@@ -3,11 +3,12 @@ import 'package:tokigo/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:tokigo/core/theme/app_elevation.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_motion.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/features/ai/application/ai_providers.dart';
 
 /// Bottom prompt input for the AI surface.
@@ -124,13 +125,15 @@ class _SendButton extends StatelessWidget {
       button: true,
       enabled: enabled,
       label: AppLocalizations.of(context)?.aiSendPrompt ?? 'Send prompt',
-      child: Material(
-        color: Colors.transparent,
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: enabled ? onTap : null,
-          child: AnimatedContainer(
+      child: Pressable.wrap(
+        enabled: enabled,
+        child: Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: enabled ? onTap : null,
+            child: AnimatedContainer(
             duration: AppMotion.fast,
             curve: AppMotion.standard,
             width: 44,
@@ -139,10 +142,10 @@ class _SendButton extends StatelessWidget {
               shape: BoxShape.circle,
               color: enabled ? null : scheme.surfaceContainerHighest,
               gradient: enabled
-                  ? const LinearGradient(
+                  ? LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: <Color>[AppColors.ai, AppColors.aiLight],
+                      colors: <Color>[context.tokigoColors.ai, context.tokigoColors.aiLight],
                     )
                   : null,
             ),
@@ -155,6 +158,7 @@ class _SendButton extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }

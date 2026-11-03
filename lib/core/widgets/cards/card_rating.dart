@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/widgets/cards/card_glass.dart';
@@ -39,7 +39,9 @@ class CardRating extends StatelessWidget {
           size: 14,
           // No accent hue: the star is ink on paper and the scrim's white
           // over a photo (an ink star on a dark glass pill would vanish).
-          color: onImage ? CardScrimColors.onScrim : AppColors.starFill,
+          color: onImage
+              ? CardScrimColors.onScrim
+              : context.tokigoColors.starFill,
         ),
         const SizedBox(width: 2),
         Text(
@@ -71,7 +73,7 @@ class CardRating extends StatelessWidget {
         vertical: AppSpacing.xxs,
       ),
       borderRadius: AppRadius.pillBorder,
-      tint: AppColors.glassTint,
+      tint: context.tokigoColors.glassTint,
       borderColor: CardScrimColors.onScrimBorder,
       child: content,
     );

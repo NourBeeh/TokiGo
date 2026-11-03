@@ -629,6 +629,60 @@ abstract class AppLocalizations {
   /// **'Sign in'**
   String get signIn;
 
+  /// No description provided for @continueWithGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get continueWithGoogle;
+
+  /// No description provided for @googleSignInNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Sign-In is not configured.'**
+  String get googleSignInNotConfigured;
+
+  /// No description provided for @signInSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to save'**
+  String get signInSheetTitle;
+
+  /// No description provided for @signInSheetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep what you love and get the most out of TokiGo.'**
+  String get signInSheetBody;
+
+  /// No description provided for @signInSheetBenefitPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Track prices as they change'**
+  String get signInSheetBenefitPrice;
+
+  /// No description provided for @signInSheetBenefitTrips.
+  ///
+  /// In en, this message translates to:
+  /// **'Save stays and trips'**
+  String get signInSheetBenefitTrips;
+
+  /// No description provided for @signInSheetBenefitFeatures.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock every app feature'**
+  String get signInSheetBenefitFeatures;
+
+  /// No description provided for @signInSheetBenefitSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep your details on all your devices'**
+  String get signInSheetBenefitSync;
+
+  /// No description provided for @signInSheetNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get signInSheetNotNow;
+
   /// No description provided for @signOut.
   ///
   /// In en, this message translates to:
@@ -1240,6 +1294,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'App language'**
   String get settingsAppLanguage;
+
+  /// No description provided for @settingsTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get settingsTheme;
+
+  /// No description provided for @settingsThemeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get settingsThemeDark;
+
+  /// No description provided for @settingsThemeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get settingsThemeLight;
+
+  /// No description provided for @settingsThemeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get settingsThemeSystem;
 
   /// No description provided for @settingsPreferences.
   ///
@@ -2672,7 +2750,7 @@ abstract class AppLocalizations {
   /// No description provided for @discoverTitle.
   ///
   /// In en, this message translates to:
-  /// **'Discover'**
+  /// **'Explore'**
   String get discoverTitle;
 
   /// No description provided for @discoverMore.
@@ -2680,6 +2758,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Discover more'**
   String get discoverMore;
+
+  /// No description provided for @exploreCitySearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search cities or countries'**
+  String get exploreCitySearch;
+
+  /// No description provided for @exploreFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get exploreFilterAll;
+
+  /// No description provided for @exploreFilterYouth.
+  ///
+  /// In en, this message translates to:
+  /// **'Youth'**
+  String get exploreFilterYouth;
+
+  /// No description provided for @exploreFilterFamilies.
+  ///
+  /// In en, this message translates to:
+  /// **'Families'**
+  String get exploreFilterFamilies;
+
+  /// No description provided for @exploreFilterHoneymoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Honeymoon'**
+  String get exploreFilterHoneymoon;
+
+  /// No description provided for @exploreFilterBeach.
+  ///
+  /// In en, this message translates to:
+  /// **'Beach'**
+  String get exploreFilterBeach;
+
+  /// No description provided for @exploreFilterNature.
+  ///
+  /// In en, this message translates to:
+  /// **'Nature'**
+  String get exploreFilterNature;
+
+  /// No description provided for @exploreFilterCity.
+  ///
+  /// In en, this message translates to:
+  /// **'City'**
+  String get exploreFilterCity;
+
+  /// No description provided for @exploreFilterShopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping'**
+  String get exploreFilterShopping;
+
+  /// No description provided for @exploreFilterSnow.
+  ///
+  /// In en, this message translates to:
+  /// **'Snow'**
+  String get exploreFilterSnow;
+
+  /// No description provided for @exploreNoCities.
+  ///
+  /// In en, this message translates to:
+  /// **'No cities to explore yet'**
+  String get exploreNoCities;
+
+  /// No description provided for @exploreNoCitiesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Published destination cards will appear here.'**
+  String get exploreNoCitiesBody;
+
+  /// No description provided for @exploreNoMatchingCities.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching destinations'**
+  String get exploreNoMatchingCities;
+
+  /// No description provided for @exploreNoMatchingCitiesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Try another search or clear the selected filters.'**
+  String get exploreNoMatchingCitiesBody;
+
+  /// No description provided for @exploreCitiesErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load destinations'**
+  String get exploreCitiesErrorTitle;
+
+  /// No description provided for @exploreCitiesErrorBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your connection and try again.'**
+  String get exploreCitiesErrorBody;
 
   /// No description provided for @hotelResultsCount.
   ///
@@ -2746,6 +2920,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save {amount}'**
   String cardSaveLabel(Object amount);
+
+  /// No description provided for @dealDiscountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% OFF'**
+  String dealDiscountLabel(Object percent);
 
   /// No description provided for @cardTaxesIncludedLabel.
   ///
@@ -3382,6 +3562,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open location in maps'**
   String get hotelOpenLocationInMaps;
+
+  /// No description provided for @destinationCityName.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}'**
+  String destinationCityName(String name);
+
+  /// No description provided for @destinationRegionName.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}'**
+  String destinationRegionName(String name);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -49,6 +50,7 @@ class FlightRouteLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final scheme = Theme.of(context).colorScheme;
     final lineColor = scheme.outlineVariant;
     final timeStyle = Theme.of(context).textTheme.titleMedium?.copyWith(

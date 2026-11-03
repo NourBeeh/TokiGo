@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:tokigo/core/domain/models/booking/booking.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -16,6 +17,7 @@ import 'package:tokigo/core/ui/localized_date.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/cards/card_image.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/features/booking/application/booking_providers.dart';
 import 'package:tokigo/features/booking/application/providers/checkout_flow_providers.dart';
 import 'package:tokigo/features/booking/domain/booking_record.dart';
@@ -102,7 +104,7 @@ class _BookingConfirmationPageState
     // Nothing was confirmed → never claim otherwise.
     if (!confirmed) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.tokigoColors.background,
         body: SafeArea(
           child: AiEntranceAnimation(
             child: Column(
@@ -151,7 +153,7 @@ class _BookingConfirmationPageState
         : travelers.length;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(
         child: AiEntranceAnimation(
           child: Column(
@@ -189,8 +191,8 @@ class _BookingConfirmationPageState
                                   return Container(
                                     width: 96,
                                     height: 96,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.successContainer,
+                                    decoration: BoxDecoration(
+                                      color: context.tokigoColors.successContainer,
                                       shape: BoxShape.circle,
                                     ),
                                     child: CustomPaint(
@@ -206,7 +208,7 @@ class _BookingConfirmationPageState
                                 l10n.bookingConfirmedTitle,
                                 textAlign: TextAlign.center,
                                 style: typography.headline.copyWith(
-                                  color: AppColors.textPrimary,
+                                  color: context.tokigoColors.textPrimary,
                                 ),
                               ),
                               const SizedBox(height: AppSpacing.sm),
@@ -218,7 +220,7 @@ class _BookingConfirmationPageState
                                 l10n.confirmationSubtitle,
                                 textAlign: TextAlign.center,
                                 style: typography.body.copyWith(
-                                  color: AppColors.textSecondary,
+                                  color: context.tokigoColors.textSecondary,
                                 ),
                               ),
                               const SizedBox(height: AppSpacing.xl),
@@ -343,9 +345,9 @@ class _BookingRecapCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.tokigoColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.outline),
+        border: Border.all(color: context.tokigoColors.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -377,7 +379,7 @@ class _BookingRecapCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: typography.bodyLargeMedium.copyWith(
-                          color: AppColors.textPrimary,
+                          color: context.tokigoColors.textPrimary,
                         ),
                       ),
                       if (subtitle != null && subtitle.isNotEmpty) ...<Widget>[
@@ -387,7 +389,7 @@ class _BookingRecapCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: typography.caption.copyWith(
-                            color: AppColors.textTertiary,
+                            color: context.tokigoColors.textTertiary,
                           ),
                         ),
                       ],
@@ -416,13 +418,13 @@ class _BookingRecapCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Sandbox simulated booking — no real charge',
-            style: typography.caption.copyWith(color: AppColors.info),
+            style: typography.caption.copyWith(color: context.tokigoColors.info),
           ),
           // Simplified sandbox passenger info (4D — simplified passenger data)
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Passenger: Test Guest (ADT) — simplified sandbox data',
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12, color: context.tokigoColors.textSecondary),
           ),
           _Row(
             label: l10n.bookingTravellersLabel,
@@ -438,7 +440,7 @@ class _BookingRecapCard extends StatelessWidget {
           ),
           if (reference.isNotEmpty) ...<Widget>[
             const SizedBox(height: AppSpacing.md),
-            const Divider(height: 1, thickness: 1, color: AppColors.outline),
+            Divider(height: 1, thickness: 1, color: context.tokigoColors.outline),
             const SizedBox(height: AppSpacing.md),
             Row(
               children: <Widget>[
@@ -449,7 +451,7 @@ class _BookingRecapCard extends StatelessWidget {
                       Text(
                         l10n.bookingReferenceLabel,
                         style: typography.caption.copyWith(
-                          color: AppColors.textTertiary,
+                          color: context.tokigoColors.textTertiary,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xxs),
@@ -460,7 +462,7 @@ class _BookingRecapCard extends StatelessWidget {
                         child: Text(
                           reference,
                           style: typography.bodyLargeMedium.copyWith(
-                            color: AppColors.textPrimary,
+                            color: context.tokigoColors.textPrimary,
                           ),
                         ),
                       ),
@@ -542,24 +544,26 @@ class _CopyReferenceButtonState extends State<_CopyReferenceButton> {
       child: Semantics(
         button: true,
         label: label,
-        child: InkWell(
-          onTap: _copy,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          child: Container(
+        child: Pressable.wrap(
+          child: InkWell(
+            onTap: _copy,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            child: Container(
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.surfaceSecondary,
+              color: context.tokigoColors.surfaceSecondary,
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              border: Border.all(color: AppColors.outline),
+              border: Border.all(color: context.tokigoColors.outline),
             ),
             child: Icon(
               _copied ? Icons.check_rounded : Icons.copy_rounded,
               size: 18,
-              color: _copied ? AppColors.success : AppColors.textSecondary,
+              color: _copied ? context.tokigoColors.success : context.tokigoColors.textSecondary,
             ),
           ),
         ),
+      ),
       ),
     );
   }
@@ -585,12 +589,12 @@ class _Row extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: typography.body.copyWith(color: AppColors.textSecondary),
+              style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
             ),
           ),
           Text(
             value,
-            style: typography.bodyMedium.copyWith(color: AppColors.textPrimary),
+            style: typography.bodyMedium.copyWith(color: context.tokigoColors.textPrimary),
           ),
         ],
       ),

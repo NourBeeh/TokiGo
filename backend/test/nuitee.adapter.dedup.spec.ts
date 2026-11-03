@@ -31,9 +31,9 @@ function rate(rateId: string, amount: number) {
   };
 }
 
-function makeService() {
+function makeService(contentCache?: any) {
   const config = { get: () => 'sand_test-key' }; // sandbox-style key
-  return new NuiteeService(config as any);
+  return new NuiteeService(config as any, contentCache);
 }
 
 /** Non-null accessor for the provider payload (success paths only). */
@@ -156,5 +156,144 @@ describe('NuiteeService.searchHotels — one offer per hotel (cheapest room)', (
     expect(offersOf(result)).toHaveLength(1);
     expect(offersOf(result)[0].price).toBe(100);
     expect(offersOf(result)[0].metadata.providerRateId).toBe('r-cheap');
+  });
+
+  it('uses Nuitee Arabic content for Arabic search results and preserves English metadata', async () => {
+    const fetch = jest
+      .fn()
+      .mockResolvedValueOnce(
+        nuiteeResponse({
+          data: [
+            {
+              hotelId: 'H1',
+              roomTypes: [
+                { roomTypeName: 'Standard', rates: [rate('r-ar', 120)] },
+              ],
+            },
+          ],
+          hotels: [{ id: 'H1', name: 'Cairo Grand', city_name: 'Cairo' }],
+        }),
+      )
+      .mockResolvedValueOnce(
+        nuiteeResponse({
+          data: [{ id: 'H1', name: 'فندق القاهرة الكبير' }],
+        }),
+      );
+    (global as any).fetch = fetch;
+
+    const result = await makeService().searchHotels({
+      city: 'Cairo',
+      country: 'EG',
+      checkIn: new Date('2027-01-10'),
+      checkOut: new Date('2027-01-12'),
+      language: 'ar',
+    });
+
+    expect(result.success).toBe(true);
+    expect(offersOf(result)[0].title).toBe('فندق القاهرة الكبير');
+    expect(offersOf(result)[0].metadata).toMatchObject({
+      hotelNameEn: 'Cairo Grand',
+      hotelNameAr: 'فندق القاهرة الكبير',
+    });
+    expect(fetch).toHaveBeenCalledTimes(2);
+    const contentUrl = String(fetch.mock.calls[1][0]);
+    expect(contentUrl).toContain('/v3.0/data/hotels?');
+    expect(contentUrl).toContain('hotelIds=H1');
+    expect(contentUrl).toContain('language=ar');
+  });
+
+  it('falls back to the original hotel name when Nuitee has no Arabic name', async () => {
+    (global as any).fetch = jest
+      .fn()
+      .mockResolvedValueOnce(
+        nuiteeResponse({
+          data: [
+            {
+              hotelId: 'H1',
+              roomTypes: [
+                { roomTypeName: 'Standard', rates: [rate('r-en', 120)] },
+              ],
+            },
+          ],
+          hotels: [{ id: 'H1', name: 'Cairo Grand' }],
+        }),
+      )
+      .mockResolvedValueOnce(
+        nuiteeResponse({ data: [{ id: 'H1', name: 'Cairo Grand' }] }),
+      );
+
+    const result = await makeService().searchHotels({
+      city: 'Cairo',
+      checkIn: new Date('2027-01-10'),
+      checkOut: new Date('2027-01-12'),
+      language: 'ar',
+    });
+
+    expect(offersOf(result)[0].title).toBe('Cairo Grand');
+    expect(offersOf(result)[0].metadata.hotelNameAr).toBeUndefined();
+  });
+
+  it('caches Arabic names by language and reuses them on later searches', async () => {
+    const stored = new Map<string, any>();
+    const contentCache = {
+      get: jest.fn(async (key: string) => stored.get(key) ?? null),
+      set: jest.fn(async (key: string, value: any) => stored.set(key, value)),
+    };
+    const fetch = jest
+      .fn()
+      .mockResolvedValueOnce(
+        nuiteeResponse({
+          data: [
+            {
+              hotelId: 'H1',
+              roomTypes: [
+                { roomTypeName: 'Standard', rates: [rate('r-first', 120)] },
+              ],
+            },
+          ],
+          hotels: [{ id: 'H1', name: 'Cairo Grand' }],
+        }),
+      )
+      .mockResolvedValueOnce(
+        nuiteeResponse({
+          data: [{ id: 'H1', name: 'فندق القاهرة الكبير' }],
+        }),
+      )
+      .mockResolvedValueOnce(
+        nuiteeResponse({
+          data: [
+            {
+              hotelId: 'H1',
+              roomTypes: [
+                { roomTypeName: 'Standard', rates: [rate('r-second', 125)] },
+              ],
+            },
+          ],
+          hotels: [{ id: 'H1', name: 'Cairo Grand' }],
+        }),
+      );
+    (global as any).fetch = fetch;
+
+    const service = makeService(contentCache);
+    const params = {
+      city: 'Cairo',
+      checkIn: new Date('2027-01-10'),
+      checkOut: new Date('2027-01-12'),
+      language: 'ar' as const,
+    };
+    await service.searchHotels(params);
+    const repeated = await service.searchHotels(params);
+
+    expect(offersOf(repeated)[0].title).toBe('فندق القاهرة الكبير');
+    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(contentCache.set).toHaveBeenCalledWith(
+      'nuitee:hotel-content:ar:H1',
+      expect.objectContaining({ name: 'فندق القاهرة الكبير' }),
+      7 * 24 * 60 * 60,
+    );
+    expect(contentCache.get).toHaveBeenCalledWith(
+      'nuitee:hotel-content:ar:H1',
+    );
+    expect([...stored.keys()]).toEqual(['nuitee:hotel-content:ar:H1']);
   });
 });

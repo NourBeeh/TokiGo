@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/features/search/application/providers/search_view_providers.dart';
 import 'package:tokigo/features/search/domain/search_view_mode.dart';
 
@@ -30,19 +31,22 @@ class SearchViewToggle extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.all(2),
-      child: IconButton(
-        tooltip: tooltip ?? (isMap ? l10n.viewList : l10n.viewMap),
-        onPressed: () => ref.read(searchViewModeProvider.notifier).state = isMap
-            ? SearchViewMode.list
-            : SearchViewMode.map,
-        style: IconButton.styleFrom(
-          backgroundColor: isMap ? cs.primary : cs.surfaceContainerHighest,
-          foregroundColor: isMap ? cs.onPrimary : cs.onSurfaceVariant,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.pill),
+      child: Pressable.wrap(
+        child: IconButton(
+          tooltip: tooltip ?? (isMap ? l10n.viewList : l10n.viewMap),
+          onPressed: () =>
+              ref.read(searchViewModeProvider.notifier).state = isMap
+              ? SearchViewMode.list
+              : SearchViewMode.map,
+          style: IconButton.styleFrom(
+            backgroundColor: isMap ? cs.primary : cs.surfaceContainerHighest,
+            foregroundColor: isMap ? cs.onPrimary : cs.onSurfaceVariant,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
           ),
+          icon: Icon(isMap ? Icons.map_outlined : Icons.view_list_rounded),
         ),
-        icon: Icon(isMap ? Icons.map_outlined : Icons.view_list_rounded),
       ),
     );
   }

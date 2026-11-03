@@ -15,6 +15,8 @@ export interface NuiteeSearchParams {
   rooms?: number;
   /** ISO-2 country of the city. Omitted → resolved from the city table. */
   country?: string;
+  /** Hotel content language. Omitted preserves Nuitee's default (English). */
+  language?: 'en' | 'ar';
 }
 
 /** Prebook outcome: the frozen quote plus the ids Nuitee will not re-issue. */

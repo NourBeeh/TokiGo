@@ -15,16 +15,16 @@ export class SearchController {
 
   @Post('flights')
   async searchFlights(@Body() dto: FlightSearchDto) {
-    return this.searchService.searchFlights(dto, dto.market);
+    return this.searchService.searchFlights(dto, dto.market, dto.currency);
   }
 
   @Post('hotels')
   async searchHotels(@Body() dto: HotelSearchDto) {
-    return this.searchService.searchHotels(dto, dto.market);
+    return this.searchService.searchHotels(dto, dto.market, dto.currency);
   }
 
   @Post('cars')
   async searchCars(@Body() dto: CarSearchDto) {
-    return this.searchService.searchCars(dto, dto.market);
+    return this.searchService.searchCars(dto, dto.market, dto.currency);
   }
 }

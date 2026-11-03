@@ -3,6 +3,8 @@ import { PaymentRouter } from '../src/modules/payments/payment.router';
 import { MockEgyptGateway, signMockWebhook } from '../src/modules/payments/mock.egypt.gateway';
 import { LedgerService } from '../src/modules/payments/ledger.service';
 
+process.env.WEBHOOK_SIGNING_KEY = 'test-signing-key';
+
 /**
  * Payment abstraction tests (spec points 10, 31-36, O.8/O.9):
  * idempotency, market routing, 3DS async recovery via webhook, and the

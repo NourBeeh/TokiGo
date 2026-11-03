@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/features/universal_search/application/voice_search_state.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
@@ -30,7 +31,7 @@ class VoiceMicButton extends StatelessWidget {
         : Icons.mic_rounded;
     // The brand mic is red in every restful state; listening keeps the same
     // warm red so only the icon + pulse communicate the state change.
-    final color = isListening ? scheme.error : AppColors.brandRed;
+    final color = isListening ? scheme.error : context.tokigoColors.brandRed;
 
     return Semantics(
       button: true,
@@ -151,11 +152,13 @@ class VoiceFailureBanner extends StatelessWidget {
                 style: typography.caption.copyWith(color: scheme.error),
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.close_rounded, size: 16),
-              tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-              visualDensity: VisualDensity.compact,
-              onPressed: onDismiss,
+            Pressable.wrap(
+              child: IconButton(
+                icon: const Icon(Icons.close_rounded, size: 16),
+                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                visualDensity: VisualDensity.compact,
+                onPressed: onDismiss,
+              ),
             ),
           ],
         ),

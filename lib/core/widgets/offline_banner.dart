@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
 /// The "the connection is cut" strip.
@@ -18,26 +19,28 @@ class OfflineBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     return Container(
       width: double.infinity,
-      color: AppColors.warningContainer,
+      color: context.tokigoColors.warningContainer,
       padding: const EdgeInsetsDirectional.symmetric(
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.sm,
       ),
       child: Row(
         children: <Widget>[
-          const Icon(
+          Icon(
             Icons.wifi_off_rounded,
             size: 18,
-            color: AppColors.warning,
+            color: context.tokigoColors.warning,
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               l10n.offlineShowingCached,
-              style: typography.caption.copyWith(color: AppColors.warning),
+              style: typography.caption.copyWith(color: context.tokigoColors.warning),
             ),
           ),
         ],

@@ -12,6 +12,7 @@ import { GoogleLoginDto } from '../src/common/dto/auth.dto';
 import { AuthService } from '../src/modules/auth/auth.service';
 import { GoogleTokenVerifier } from '../src/modules/auth/google-token.verifier';
 import { User } from '../src/database/entities/user.entity';
+import { Session } from '../src/database/entities/session.entity';
 
 const VERIFIED_PROFILE = {
   subject: 'google-sub-1',
@@ -78,16 +79,25 @@ const makeService = () => {
 
   const verifier = { verify: jest.fn(async () => ({ ...VERIFIED_PROFILE })) };
 
+  const sessions = {
+    findOne: jest.fn(),
+    update: jest.fn(),
+    create: jest.fn((data: Partial<Session>) => ({ ...data, id: 'session-1' } as Session)),
+    save: jest.fn(async (data: Partial<Session>) => ({ ...data } as Session)),
+  };
+
   const service = new AuthService(
     jwtService as unknown as JwtService,
     config as unknown as ConfigService,
     users as unknown as Repository<User>,
+    sessions as unknown as Repository<Session>,
     verifier as unknown as GoogleTokenVerifier,
   );
 
   return {
     service,
     users,
+    sessions,
     verifier,
     // Set the account the lookup resolves to (null = no such account).
     existing: (value: unknown) => {
@@ -174,7 +184,7 @@ describe('AuthService.loginWithGoogle', () => {
 
     expect(result.user.id).toBe('user-9');
     expect(users.create).not.toHaveBeenCalled();
-    expect(users.save).not.toHaveBeenCalled();
+    expect(users.save).toHaveBeenCalled();
   });
 
   it('refuses to attach Google to an account that has a password', async () => {

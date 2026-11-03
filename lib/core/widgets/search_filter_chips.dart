@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -92,8 +93,8 @@ class _Chip extends StatelessWidget {
       child: ExcludeSemantics(
         child: Material(
           color: selected
-              ? AppColors.brandContainer
-              : AppColors.surfaceSecondary,
+              ? context.tokigoColors.brandContainer
+              : context.tokigoColors.surfaceSecondary,
           borderRadius: AppRadius.pillBorder,
           child: InkWell(
             onTap: chip.onTap,
@@ -105,7 +106,7 @@ class _Chip extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: AppRadius.pillBorder,
                 border: Border.all(
-                  color: selected ? AppColors.brand : AppColors.outline,
+                  color: selected ? context.tokigoColors.brand : context.tokigoColors.outline,
                 ),
               ),
               child: Row(
@@ -115,7 +116,7 @@ class _Chip extends StatelessWidget {
                     Icon(
                       chip.icon,
                       size: 14,
-                      color: selected ? AppColors.brand : AppColors.textPrimary,
+                      color: selected ? context.tokigoColors.brand : context.tokigoColors.textPrimary,
                     ),
                     const SizedBox(width: AppSpacing.xxs),
                   ],
@@ -126,7 +127,7 @@ class _Chip extends StatelessWidget {
                     // Doc 14 §3.2: 13/600, `brand` on `brandContainer`
                     // (4.98:1 — AA at this size).
                     style: typography.captionSemibold.copyWith(
-                      color: selected ? AppColors.brand : AppColors.textPrimary,
+                      color: selected ? context.tokigoColors.brand : context.tokigoColors.textPrimary,
                     ),
                   ),
                 ],

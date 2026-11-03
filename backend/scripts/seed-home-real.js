@@ -44,7 +44,7 @@ const SECTIONS = {
   },
   discover: {
     id: '00000000-0000-4000-8000-000000000002',
-    title: 'Discover',
+    title: 'Explore',
     subtitle: 'Where travellers are going',
     layout: 'grid',
     order: 2,

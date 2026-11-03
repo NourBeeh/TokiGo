@@ -9,6 +9,7 @@ import { LoginDto, RegisterDto } from '../src/common/dto/auth.dto';
 import { AuthService } from '../src/modules/auth/auth.service';
 import { GoogleTokenVerifier } from '../src/modules/auth/google-token.verifier';
 import { User } from '../src/database/entities/user.entity';
+import { Session } from '../src/database/entities/session.entity';
 
 describe('Auth DTO validation', () => {
   it('rejects a login payload with an invalid email', async () => {
@@ -70,26 +71,35 @@ const makeDeps = () => {
     }) as User),
     createQueryBuilder: undefined,
   };
+  const sessions = {
+    findOne: jest.fn(),
+    update: jest.fn(),
+    create: jest.fn((data: Partial<Session>) => ({ ...data, id: 'session-1' } as Session)),
+    save: jest.fn(async (data: Partial<Session>) => ({ ...data } as Session)),
+  };
   const jwtService = {
     signAsync: jest.fn(async (payload: object) => `signed:${JSON.stringify(payload)}`),
     verifyAsync: jest.fn(),
   };
   const config = {
-    get: jest.fn((key: string) => {
-      if (key === 'jwt.refreshSecret') return 'test-refresh-secret';
-      if (key === 'jwt.accessExpiresIn') return '15m';
-      if (key === 'jwt.refreshExpiresIn') return '7d';
-      return undefined;
-    }),
-  };
+      get: jest.fn((key: string) => {
+        if (key === 'jwt.accessSecret') return 'test-access-secret';
+        if (key === 'jwt.refreshSecret') return 'test-refresh-secret';
+        if (key === 'jwt.accessExpiresIn') return '15m';
+        if (key === 'jwt.refreshExpiresIn') return '7d';
+        return undefined;
+      }),
+    };
   return {
     service: new AuthService(
       jwtService as unknown as JwtService,
       config as unknown as ConfigService,
       users as unknown as Repository<User>,
+      sessions as unknown as Repository<Session>,
       { verify: jest.fn() } as unknown as GoogleTokenVerifier,
     ),
     users,
+    sessions,
     jwtService,
   };
 };
@@ -219,12 +229,14 @@ describe('AuthService.me', () => {
 
     const me = await service.me('user-1');
 
-    expect(me).toEqual({
-      id: 'user-1',
-      email: 'user@example.com',
-      displayName: 'Nour',
-      role: 'user',
-    });
+    expect(me).toEqual(
+      expect.objectContaining({
+        id: 'user-1',
+        email: 'user@example.com',
+        displayName: 'Nour',
+        role: 'user',
+      }),
+    );
   });
 
   it('rejects missing or inactive users', async () => {
@@ -239,13 +251,21 @@ describe('AuthService.me', () => {
 
 describe('AuthService.refresh', () => {
   it('issues a fresh access token for a valid refresh token of an active user', async () => {
-    const { service, jwtService, users } = makeDeps();
+    const { service, jwtService, users, sessions } = makeDeps();
     users.findOne.mockResolvedValueOnce({ id: 'user-1', email: 'u@e.com', isActive: true });
     jwtService.verifyAsync.mockResolvedValueOnce({ sub: 'user-1', email: 'u@e.com' });
+    sessions.findOne.mockResolvedValueOnce({
+      id: 'session-1',
+      userId: 'user-1',
+      isActive: true,
+      accessTokenHash: 'hash',
+      refreshTokenHash: 'hash-of-valid-refresh-token',
+    });
 
     const result = await service.refresh('valid-refresh-token');
 
     expect(result).toHaveProperty('accessToken');
+    expect(result).toHaveProperty('refreshToken');
     // Refresh verification must use the dedicated refresh secret.
     expect(jwtService.verifyAsync).toHaveBeenCalledWith(
       'valid-refresh-token',
@@ -260,5 +280,41 @@ describe('AuthService.refresh', () => {
     const result = await service.refresh('garbage');
 
     expect(result).toEqual({ error: 'Invalid refresh token' });
+  });
+
+  it('rejects a refresh token when the session is revoked', async () => {
+    const { service, jwtService, users, sessions } = makeDeps();
+    users.findOne.mockResolvedValueOnce({ id: 'user-1', email: 'u@e.com', isActive: true });
+    jwtService.verifyAsync.mockResolvedValueOnce({ sub: 'user-1', email: 'u@e.com' });
+    sessions.findOne.mockResolvedValueOnce(null);
+
+    const result = await service.refresh('revoked-refresh-token');
+
+    expect(result).toEqual({ error: 'Invalid refresh token' });
+  });
+});
+
+describe('AuthService.logout', () => {
+  it('revokes the session for a valid refresh token', async () => {
+    const { service, jwtService, sessions } = makeDeps();
+    jwtService.verifyAsync.mockResolvedValueOnce({ sub: 'user-1', email: 'u@e.com' });
+    sessions.update.mockResolvedValueOnce({ affected: 1 });
+
+    const result = await service.logout('valid-refresh-token');
+
+    expect(result).toEqual({ success: true });
+    expect(sessions.update).toHaveBeenCalledWith(
+      { userId: 'user-1', refreshTokenHash: expect.any(String), isActive: true },
+      { isActive: false },
+    );
+  });
+
+  it('succeeds even if the refresh token is already invalid', async () => {
+    const { service, jwtService } = makeDeps();
+    jwtService.verifyAsync.mockRejectedValueOnce(new Error('bad token'));
+
+    const result = await service.logout('garbage');
+
+    expect(result).toEqual({ success: true });
   });
 });

@@ -34,8 +34,8 @@ export class CreatePaymentDto {
 
   /** Minor-unit-free decimal amount as the client quoted it. */
   @IsNumber()
-  @Min(0)
-  amount!: number;
+    @Min(0.01)
+    amount!: number;
 
   /** ISO-4217, e.g. EGP / USD. */
   @IsString()
@@ -82,8 +82,8 @@ export class RefundDto {
   paymentId!: string;
 
   @IsNumber()
-  @Min(0)
-  amount!: number;
+    @Min(0.01)
+    amount!: number;
 
   @IsOptional()
   @IsString()

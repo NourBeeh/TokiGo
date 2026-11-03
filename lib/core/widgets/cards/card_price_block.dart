@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/widgets/cards/card_price.dart';
@@ -307,19 +307,21 @@ class _SavingsChip extends StatelessWidget {
         vertical: AppSpacing.xxs,
       ),
       decoration: BoxDecoration(
-        color: AppColors.success.withValues(alpha: 0.15),
+        color: context.tokigoColors.success.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: context.tokigoColors.success.withValues(alpha: 0.3),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.check, size: 10, color: AppColors.success),
+          Icon(Icons.check, size: 10, color: context.tokigoColors.success),
           const SizedBox(width: AppSpacing.xxs),
           Text(
             label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.success,
+              color: context.tokigoColors.success,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -339,7 +341,7 @@ class _TaxInfoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final color = isIncluded ? AppColors.success : scheme.primary;
+    final color = isIncluded ? context.tokigoColors.success : scheme.primary;
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
@@ -401,7 +403,7 @@ class _PriceSkeletonState extends State<_PriceSkeleton>
           height: 24,
           width: 80,
           decoration: BoxDecoration(
-            color: AppColors.surfaceTertiary.withValues(
+            color: context.tokigoColors.surfaceTertiary.withValues(
               alpha: 0.3 * _animation.value,
             ),
             borderRadius: BorderRadius.circular(4),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tokigo/core/geo/country_options.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
@@ -45,9 +46,9 @@ Future<void> showCountrySelectionSheet(
                     title: Text(option.localizedName(locale)),
                     subtitle: Text('${option.code} · ${option.airportCode}'),
                     trailing: isSelected
-                        ? const Icon(
+                        ? Icon(
                             Icons.check_circle_rounded,
-                            color: AppColors.brand,
+                            color: context.tokigoColors.brand,
                           )
                         : null,
                     onTap: () => Navigator.of(sheetContext).pop(option.code),

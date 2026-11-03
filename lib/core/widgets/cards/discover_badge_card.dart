@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' as intl;
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -179,7 +179,7 @@ class _DiscoverBadgeCardState extends State<DiscoverBadgeCard> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: typography.bodyLargeMedium.copyWith(
-                                color: AppColors.textPrimary,
+                                color: context.tokigoColors.textPrimary,
                               ),
                             ),
                             if (widget.reviewCount != null)
@@ -188,7 +188,7 @@ class _DiscoverBadgeCardState extends State<DiscoverBadgeCard> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: typography.caption.copyWith(
-                                  color: AppColors.textSecondary,
+                                  color: context.tokigoColors.textSecondary,
                                 ),
                               ),
                           ],
@@ -202,7 +202,7 @@ class _DiscoverBadgeCardState extends State<DiscoverBadgeCard> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: typography.bodyLargeMedium.copyWith(
-                      color: AppColors.textPrimary,
+                      color: context.tokigoColors.textPrimary,
                     ),
                   ),
                 if (_money != null) ...<Widget>[
@@ -216,7 +216,7 @@ class _DiscoverBadgeCardState extends State<DiscoverBadgeCard> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: typography.caption.copyWith(
-                              color: AppColors.textSecondary,
+                              color: context.tokigoColors.textSecondary,
                             ),
                           ),
                         )
@@ -240,7 +240,7 @@ class _DiscoverBadgeCardState extends State<DiscoverBadgeCard> {
                                 style: typography.titleMedium.copyWith(
                                   color:
                                       widget.priceColor ??
-                                      AppColors.textPrimary,
+                                      context.tokigoColors.textPrimary,
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
@@ -250,7 +250,7 @@ class _DiscoverBadgeCardState extends State<DiscoverBadgeCard> {
                                   '$_oldMoney ${widget.currency}',
                                   textDirection: TextDirection.ltr,
                                   style: typography.body.copyWith(
-                                    color: AppColors.textTertiary,
+                                    color: context.tokigoColors.textTertiary,
                                     decoration: TextDecoration.lineThrough,
                                   ),
                                 ),
@@ -284,7 +284,11 @@ class _ClassStars extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         for (int i = 0; i < safe; i++)
-          const Icon(Icons.star_rounded, size: 12, color: AppColors.classStar),
+          Icon(
+            Icons.star_rounded,
+            size: 12,
+            color: context.tokigoColors.classStar,
+          ),
       ],
     );
   }

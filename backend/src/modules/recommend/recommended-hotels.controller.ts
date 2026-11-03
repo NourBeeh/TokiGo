@@ -21,6 +21,8 @@ export class RecommendedHotelsController {
       // Explicit caller country wins over the profile fallback. Dropping this
       // silently was why every Home stayed on the launch market.
       countryCode: query.code,
+      language: query.language === 'ar' ? 'ar' : 'en',
+      currency: query.currency,
     });
     return {
       ...result,

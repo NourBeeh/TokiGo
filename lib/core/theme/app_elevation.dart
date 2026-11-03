@@ -29,6 +29,70 @@ abstract final class AppElevation {
     required Color background,
     double level = AppElevation.md,
   }) {
+    // A dark surface needs a real black contact shadow and a faint light rim;
+    // the warm ink halo that defines a white card is invisible on a near-black
+    // canvas. Branching on the surface (rather than on ThemeData) keeps every
+    // existing call site working and lets custom surfaces opt in by colour.
+    final bool onDark = background.computeLuminance() < 0.2;
+    if (onDark) {
+      switch (level) {
+        case AppElevation.none:
+          return const <BoxShadow>[];
+        case AppElevation.sm:
+          return <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.28),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.03),
+              blurRadius: 1,
+              offset: const Offset(0, 1),
+            ),
+          ];
+        case AppElevation.lg:
+          return <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.38),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
+            ),
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.035),
+              blurRadius: 1,
+              offset: const Offset(0, 1),
+            ),
+          ];
+        case AppElevation.xl:
+          return <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.48),
+              blurRadius: 34,
+              offset: const Offset(0, 18),
+            ),
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.04),
+              blurRadius: 1,
+              offset: const Offset(0, 1),
+            ),
+          ];
+        case AppElevation.md:
+        default:
+          return <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.32),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.03),
+              blurRadius: 1,
+              offset: const Offset(0, 1),
+            ),
+          ];
+      }
+    }
     switch (level) {
       case AppElevation.none:
         return const <BoxShadow>[];

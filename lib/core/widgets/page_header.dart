@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/widgets/app_back_button.dart';
@@ -65,6 +65,7 @@ class AppPageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
+    final TextDirection appTextDirection = Directionality.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
@@ -72,65 +73,81 @@ class AppPageHeader extends StatelessWidget {
         AppSpacing.lg,
         AppSpacing.md,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          if (title case final String line)
-            Row(
-              children: <Widget>[
-                if (showBackButton)
-                  AppBackButton(
-                    fallbackLocation: backFallbackLocation,
-                    enabled: backEnabled,
-                  )
-                else
-                  const SizedBox(
-                    width: AppIconAction.tapTarget,
-                    height: AppIconAction.tapTarget,
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            if (title case final String line)
+              Row(
+                textDirection: TextDirection.ltr,
+                children: <Widget>[
+                  if (showBackButton)
+                    AppBackButton(
+                      fallbackLocation: backFallbackLocation,
+                      enabled: backEnabled,
+                    )
+                  else
+                    const SizedBox(
+                      width: AppIconAction.tapTarget,
+                      height: AppIconAction.tapTarget,
+                    ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      line,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textDirection: TextDirection.ltr,
+                      style: typography.headline.copyWith(
+                        color: context.tokigoColors.textPrimary,
+                      ),
+                    ),
                   ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
+                  ?trailing,
+                ],
+              )
+            else
+              Row(
+                textDirection: TextDirection.ltr,
+                children: <Widget>[
+                  if (showBackButton)
+                    AppBackButton(
+                      fallbackLocation: backFallbackLocation,
+                      enabled: backEnabled,
+                    )
+                  else
+                    const SizedBox(
+                      width: AppIconAction.tapTarget,
+                      height: AppIconAction.tapTarget,
+                    ),
+                  const Spacer(),
+                  ?trailing,
+                ],
+              ),
+            if (subtitle case final String line) ...<Widget>[
+              const SizedBox(height: AppSpacing.xs),
+              Align(
+                alignment: appTextDirection == TextDirection.rtl
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft,
+                child: Directionality(
+                  textDirection: appTextDirection,
                   child: Text(
                     line,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: typography.headline.copyWith(
-                      color: AppColors.textPrimary,
+                    style: typography.body.copyWith(
+                      color: context.tokigoColors.textTertiary,
                     ),
                   ),
                 ),
-                ?trailing,
-              ],
-            )
-          else
-            Row(
-              children: <Widget>[
-                if (showBackButton)
-                  AppBackButton(
-                    fallbackLocation: backFallbackLocation,
-                    enabled: backEnabled,
-                  )
-                else
-                  const SizedBox(
-                    width: AppIconAction.tapTarget,
-                    height: AppIconAction.tapTarget,
-                  ),
-                const Spacer(),
-                ?trailing,
-              ],
-            ),
-          if (subtitle case final String line) ...<Widget>[
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              line,
-              style: typography.body.copyWith(color: AppColors.textTertiary),
-            ),
+              ),
+            ],
+            if (steps case final Widget progress) ...<Widget>[
+              const SizedBox(height: AppSpacing.md),
+              Directionality(textDirection: appTextDirection, child: progress),
+            ],
           ],
-          if (steps case final Widget progress) ...<Widget>[
-            const SizedBox(height: AppSpacing.md),
-            progress,
-          ],
-        ],
+        ),
       ),
     );
   }

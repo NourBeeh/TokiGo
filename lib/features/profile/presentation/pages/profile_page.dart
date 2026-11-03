@@ -7,22 +7,16 @@ import 'package:tokigo/core/auth/google_auth_config.dart';
 import 'package:tokigo/core/auth/auth_state.dart';
 import 'package:tokigo/core/auth/user_model.dart';
 import 'package:tokigo/core/network/user_facing_message.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/ui/app_message_state.dart';
-import 'package:tokigo/core/geo/country_options.dart';
-import 'package:tokigo/core/geo/location_permission_providers.dart';
-import 'package:tokigo/core/geo/location_permission_service.dart';
-import 'package:tokigo/core/geo/country_selection_sheet.dart';
-import 'package:tokigo/core/ui/language_sheet.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/cards/card_image.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
-import 'package:tokigo/features/home/providers/home_providers.dart';
-import 'package:tokigo/shared/providers/locale_provider.dart';
 
 /// Profile — the account surface.
 ///
@@ -49,7 +43,7 @@ class ProfilePage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(
         // `bottom: false` left the menu's last row (sign out) under the
         // Android navigation bar (the pill it was written for is gone).
@@ -57,7 +51,16 @@ class ProfilePage extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              AppPageHeader(title: l10n.profile),
+              AppPageHeader(
+                title: l10n.profile,
+                trailing: Pressable.wrap(
+                  child: IconButton(
+                    tooltip: l10n.settings,
+                    icon: const Icon(Icons.settings_outlined),
+                    onPressed: () => context.push('/settings'),
+                  ),
+                ),
+              ),
               Expanded(
                 child: switch (authState) {
                   AuthLoading() => const Center(
@@ -69,7 +72,7 @@ class ProfilePage extends ConsumerWidget {
                   AuthError(:final error) => _CenteredState(
                     child: AppMessageState(
                       icon: Icons.cloud_off_rounded,
-                      hue: AppColors.danger,
+                      hue: context.tokigoColors.danger,
                       title: l10n.profileErrorTitle,
                       body: userFacingMessage(error, subject: 'profile'),
                       actionLabel: l10n.signIn,
@@ -82,21 +85,21 @@ class ProfilePage extends ConsumerWidget {
                       children: <Widget>[
                         AppMessageState(
                           icon: Icons.person_outline_rounded,
-                          hue: AppColors.brand,
+                          hue: context.tokigoColors.brand,
                           title: l10n.profileGuestTitle,
                           body: l10n.profileGuestBody,
                         ),
                         const SizedBox(height: AppSpacing.lg),
                         if (GoogleAuthConfig.isConfigured)
-                          OutlinedButton.icon(
-                            onPressed: () => ref
-                                .read(authControllerProvider.notifier)
-                                .signInWithGoogle(),
-                            icon: const Icon(Icons.g_mobiledata, size: 28),
-                            label: const Text('Continue with Google'),
+                          Pressable.wrap(
+                            child: OutlinedButton.icon(
+                              onPressed: () => ref
+                                  .read(authControllerProvider.notifier)
+                                  .signInWithGoogle(),
+                              icon: const Icon(Icons.g_mobiledata, size: 28),
+                              label: Text(l10n.continueWithGoogle),
+                            ),
                           ),
-                        const SizedBox(height: AppSpacing.xl),
-                        const _AppPreferencesSection(),
                       ],
                     ),
                   ),
@@ -139,29 +142,66 @@ class _ProfileContent extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
           child: Column(
             children: <Widget>[
-              ClipOval(
-                child: SizedBox(
-                  width: 80,
-                  height: 80,
-                  child: avatarUrl.isNotEmpty
-                      ? CardImage(
-                          url: avatarUrl,
-                          fallbackIcon: Icons.person_rounded,
-                          semanticLabel: name,
-                          fit: BoxFit.cover,
-                        )
-                      : _InitialAvatar(name: name, email: email),
-                ),
+              Stack(
+                alignment: Alignment.center,
+                children: <Widget>[
+                  ClipOval(
+                    child: SizedBox(
+                      width: 80,
+                      height: 80,
+                      child: avatarUrl.isNotEmpty
+                          ? CardImage(
+                              url: avatarUrl,
+                              fallbackIcon: Icons.person_rounded,
+                              semanticLabel: name,
+                              fit: BoxFit.cover,
+                            )
+                          : _InitialAvatar(name: name, email: email),
+                    ),
+                  ),
+                  PositionedDirectional(
+                    end: 0,
+                    bottom: 0,
+                    child: Pressable(
+                      onTap: () => context.push('/edit-profile'),
+                      child: Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: context.tokigoColors.brand,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.camera_alt_rounded,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: AppSpacing.md),
-              Text(
-                name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: typography.titleMedium.copyWith(
-                  color: AppColors.textPrimary,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: typography.titleMedium.copyWith(
+                      color: context.tokigoColors.textPrimary,
+                    ),
+                  ),
+                  Pressable.wrap(
+                    child: IconButton(
+                      icon: const Icon(Icons.edit_rounded, size: 18),
+                      onPressed: () => context.push('/edit-profile'),
+                    ),
+                  ),
+                ],
               ),
               if (email.isNotEmpty) ...<Widget>[
                 const SizedBox(height: AppSpacing.xxs),
@@ -171,7 +211,7 @@ class _ProfileContent extends ConsumerWidget {
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: typography.body.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.tokigoColors.textSecondary,
                   ),
                 ),
               ],
@@ -180,27 +220,26 @@ class _ProfileContent extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.md),
         // Edit profile — at top of the page.
+        // (removed: edit action now lives as pencil icon next to the name)
         Container(
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: context.tokigoColors.surface,
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.outline),
+            border: Border.all(color: context.tokigoColors.outline),
           ),
           clipBehavior: Clip.antiAlias,
           child: _MenuRow(
-            icon: Icons.edit_outlined,
-            label: l10n.editProfile,
-            onTap: () => context.push('/edit-profile'),
+            icon: Icons.luggage_outlined,
+            label: l10n.bag,
+            onTap: () => context.push('/bag'),
           ),
         ),
         const SizedBox(height: AppSpacing.md),
-        const _AppPreferencesSection(),
-        const SizedBox(height: AppSpacing.md),
         Container(
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: context.tokigoColors.surface,
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.outline),
+            border: Border.all(color: context.tokigoColors.outline),
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(
@@ -231,209 +270,6 @@ class _ProfileContent extends ConsumerWidget {
 
 /// The account's own initial — the honest stand-in when no avatar photo was
 /// provided by the identity provider.
-class _AppPreferencesSection extends ConsumerWidget {
-  const _AppPreferencesSection();
-
-  static const List<String> _currencies = <String>[
-    'USD',
-    'EUR',
-    'EGP',
-    'SAR',
-    'AED',
-    'GBP',
-  ];
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
-    final locale = ref.watch(localeProvider);
-    final currency = ref.watch(currencyProvider);
-    final country =
-        ref.watch(manualCountryCodeProvider) ??
-        ref.watch(geoCountryProvider).asData?.value?.countryCode;
-    final countryName = countryNameForCode(country, locale) ?? l10n.settingsCountryNotSet;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Padding(
-          padding: const EdgeInsetsDirectional.only(
-            start: AppSpacing.xs,
-            bottom: AppSpacing.sm,
-          ),
-          child: Text(
-            l10n.settingsPreferences,
-            style: AppTypography.forLight().label.copyWith(
-              color: AppColors.textTertiary,
-            ),
-          ),
-        ),
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.outline),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            children: <Widget>[
-              _PreferenceRow(
-                icon: Icons.public_rounded,
-                label: l10n.settingsCountry,
-                value: countryName,
-                onTap: () async {
-                  final svc = ref.read(locationPermissionServiceProvider);
-                  final access = await svc.request();
-                  if (access == LocationAccess.granted) {
-                    ref.read(geoRefreshProvider.notifier).state++;
-                  }
-                  if (context.mounted) showCountrySelectionSheet(context, ref);
-                },
-              ),
-              const _MenuDivider(),
-              _PreferenceRow(
-                icon: Icons.translate_rounded,
-                label: l10n.settingsAppLanguage,
-                value: locale.languageCode == 'ar' ? 'العربية' : 'English',
-                onTap: () => showLanguageSheet(context),
-              ),
-              const _MenuDivider(),
-              _PreferenceRow(
-                icon: Icons.payments_outlined,
-                label: l10n.currency,
-                value: currency,
-                onTap: () => _pickCurrency(context, ref),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _pickCurrency(BuildContext context, WidgetRef ref) async {
-    final l10n = AppLocalizations.of(context)!;
-    final String current = ref.read(currencyProvider);
-    final String? chosen = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: AppColors.surface,
-      builder: (BuildContext sheetContext) => SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.lg,
-                AppSpacing.lg,
-                AppSpacing.sm,
-              ),
-              child: Text(
-                l10n.currency,
-                style: AppTypography.forLight().title.copyWith(
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ),
-            for (final String code in _currencies)
-              InkWell(
-                onTap: () => Navigator.of(sheetContext).pop(code),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                    vertical: AppSpacing.md,
-                  ),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          code,
-                          style: AppTypography.forLight().body.copyWith(
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                      if (code == current)
-                        const Icon(
-                          Icons.check_rounded,
-                          size: 20,
-                          color: AppColors.brand,
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            const SizedBox(height: AppSpacing.sm),
-          ],
-        ),
-      ),
-    );
-    if (chosen != null) {
-      ref.read(currencyProvider.notifier).state = chosen;
-    }
-  }
-}
-
-class _PreferenceRow extends StatelessWidget {
-  const _PreferenceRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final chevron = Directionality.of(context) == TextDirection.rtl
-        ? Icons.chevron_left_rounded
-        : Icons.chevron_right_rounded;
-    return InkWell(
-      onTap: onTap,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 56),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.md,
-          ),
-          child: Row(
-            children: <Widget>[
-              Icon(icon, size: 20, color: AppColors.textSecondary),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.forLight().bodyMedium.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Text(
-                value,
-                style: AppTypography.forLight().caption.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              Icon(chevron, size: 20, color: AppColors.textTertiary),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _InitialAvatar extends StatelessWidget {
   const _InitialAvatar({required this.name, required this.email});
 
@@ -446,11 +282,13 @@ class _InitialAvatar extends StatelessWidget {
     final source = name.trim().isNotEmpty ? name.trim() : email.trim();
     final initial = source.isEmpty ? '?' : source[0].toUpperCase();
     return Container(
-      color: AppColors.brandContainer,
+      color: context.tokigoColors.brandContainer,
       alignment: Alignment.center,
       child: Text(
         initial,
-        style: typography.title.copyWith(color: AppColors.onBrandContainer),
+        style: typography.title.copyWith(
+          color: context.tokigoColors.onBrandContainer,
+        ),
       ),
     );
   }
@@ -483,12 +321,12 @@ class _MenuDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Divider(
+    return Divider(
       height: 1,
       thickness: 1,
       indent: AppSpacing.lg,
       endIndent: AppSpacing.lg,
-      color: AppColors.divider,
+      color: context.tokigoColors.divider,
     );
   }
 }
@@ -511,10 +349,8 @@ class _MenuRow extends StatelessWidget {
     final chevron = Directionality.of(context) == TextDirection.rtl
         ? Icons.chevron_left_rounded
         : Icons.chevron_right_rounded;
-    return InkWell(
+    return Pressable(
       onTap: onTap,
-      // Doc 22 §2.2 — a menu row is 56 tall: the icon column, the label and
-      // the chevron, with the fill (never a ripple) carrying the press.
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 56),
         child: Padding(
@@ -524,7 +360,7 @@ class _MenuRow extends StatelessWidget {
           ),
           child: Row(
             children: <Widget>[
-              Icon(icon, size: 20, color: AppColors.textSecondary),
+              Icon(icon, size: 20, color: context.tokigoColors.textSecondary),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
@@ -532,12 +368,12 @@ class _MenuRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: typography.bodyMedium.copyWith(
-                    color: AppColors.textPrimary,
+                    color: context.tokigoColors.textPrimary,
                   ),
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              Icon(chevron, size: 20, color: AppColors.textTertiary),
+              Icon(chevron, size: 20, color: context.tokigoColors.textTertiary),
             ],
           ),
         ),
@@ -555,8 +391,10 @@ class _DangerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
-    return InkWell(
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
+    return Pressable(
       onTap: onTap,
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 56),
@@ -569,7 +407,7 @@ class _DangerRow extends StatelessWidget {
             child: Text(
               label,
               style: typography.bodyMedium.copyWith(
-                color: AppColors.danger,
+                color: context.tokigoColors.danger,
                 fontWeight: FontWeight.w600,
               ),
             ),

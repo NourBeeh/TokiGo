@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_elevation.dart';
 import 'package:tokigo/core/theme/app_overlap.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
@@ -42,6 +42,7 @@ class CardOverlap extends StatelessWidget {
     ),
     this.elevated = true,
     this.clipOuter = true,
+    this.fillSheet = false,
   });
 
   /// The photo (or any media). Painted full-height behind the sheet.
@@ -80,6 +81,13 @@ class CardOverlap extends StatelessWidget {
   /// only the sheet's top corners are rounded.
   final bool clipOuter;
 
+  /// Stretch the sheet to the card's own height when the parent supplies a
+  /// bounded one (a fixed-height rail, a grid cell). The sheet can then pin a
+  /// footer to the bottom with [MainAxisAlignment.spaceBetween].
+  ///
+  /// Off by default: a content-sized card must end where its sheet ends.
+  final bool fillSheet;
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -97,9 +105,17 @@ class CardOverlap extends StatelessWidget {
             mediaHeight ?? constraints.maxWidth / mediaAspectRatio;
         final double aboveSheet = math.max(0.0, mediaExtent - overlap);
         final double topRadius = sheetTopRadius ?? radius;
+        final EdgeInsets resolvedPadding = sheetPadding.resolve(
+          Directionality.of(context),
+        );
+        // Only a parent that already fixed the card's height can hand the
+        // sheet a definite remainder to fill.
+        final double? sheetHeight = fillSheet && constraints.hasBoundedHeight
+            ? math.max(0.0, constraints.maxHeight - aboveSheet)
+            : null;
 
         final Widget content = ColoredBox(
-          color: AppColors.surface,
+          color: context.tokigoColors.surface,
           child: Stack(
             children: <Widget>[
               PositionedDirectional(
@@ -116,18 +132,29 @@ class CardOverlap extends StatelessWidget {
                   SizedBox(height: aboveSheet),
                   DecoratedBox(
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: context.tokigoColors.surface,
                       borderRadius: BorderRadiusDirectional.vertical(
                         top: Radius.circular(topRadius),
                       ),
                       boxShadow: elevated
                           ? AppElevation.shadow(
-                              background: AppColors.surface,
+                              background: context.tokigoColors.surface,
                               level: AppElevation.md,
                             )
                           : null,
                     ),
-                    child: Padding(padding: sheetPadding, child: sheet),
+                    child: Padding(
+                      padding: resolvedPadding,
+                      child: sheetHeight == null
+                          ? sheet
+                          : SizedBox(
+                              height: math.max(
+                                0.0,
+                                sheetHeight - resolvedPadding.vertical,
+                              ),
+                              child: sheet,
+                            ),
+                    ),
                   ),
                 ],
               ),

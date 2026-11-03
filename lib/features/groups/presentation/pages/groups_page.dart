@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_message_state.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
 /// Groups tab — trusted group trips.
@@ -27,7 +29,7 @@ class GroupsPage extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(
         child: AiEntranceAnimation(
           child: CustomScrollView(
@@ -97,20 +99,21 @@ class _CreateGroupCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
 
-    return Material(
-      color: AppColors.brandContainer,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Row(
+    return Pressable.wrap(
+      child: Material(
+        color: context.tokigoColors.brandContainer,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Row(
             children: <Widget>[
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: const BoxDecoration(
-                  color: AppColors.brand,
+                decoration: BoxDecoration(
+                  color: context.tokigoColors.brand,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -128,7 +131,7 @@ class _CreateGroupCard extends StatelessWidget {
                       AppLocalizations.of(context)?.groupsCreateTrip ??
                           'Create a group trip',
                       style: typography.bodyLargeMedium.copyWith(
-                        color: AppColors.onBrandContainer,
+                        color: context.tokigoColors.onBrandContainer,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xxs),
@@ -136,7 +139,7 @@ class _CreateGroupCard extends StatelessWidget {
                       AppLocalizations.of(context)?.groupsPlanTogether ??
                           'Plan together, decide together',
                       style: typography.caption.copyWith(
-                        color: AppColors.onBrandContainer.withValues(
+                        color: context.tokigoColors.onBrandContainer.withValues(
                           alpha: 0.7,
                         ),
                       ),
@@ -144,13 +147,14 @@ class _CreateGroupCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
-                color: AppColors.onBrandContainer,
+                color: context.tokigoColors.onBrandContainer,
               ),
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -177,17 +181,18 @@ class _GroupCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
 
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () {},
-        child: Container(
+    return Pressable.wrap(
+      child: Material(
+        color: context.tokigoColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () {},
+          child: Container(
           padding: const EdgeInsets.all(AppSpacing.lg),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.outline),
+            border: Border.all(color: context.tokigoColors.outline),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,13 +215,13 @@ class _GroupCard extends StatelessWidget {
                         Text(
                           title,
                           style: typography.bodyLargeMedium.copyWith(
-                            color: AppColors.textPrimary,
+                            color: context.tokigoColors.textPrimary,
                           ),
                         ),
                         Text(
                           destination,
                           style: typography.caption.copyWith(
-                            color: AppColors.textTertiary,
+                            color: context.tokigoColors.textTertiary,
                           ),
                         ),
                       ],
@@ -230,13 +235,13 @@ class _GroupCard extends StatelessWidget {
                   Icon(
                     Icons.calendar_today_rounded,
                     size: 14,
-                    color: AppColors.textTertiary,
+                    color: context.tokigoColors.textTertiary,
                   ),
                   const SizedBox(width: AppSpacing.xs),
                   Text(
                     dateLabel,
                     style: typography.caption.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.tokigoColors.textSecondary,
                     ),
                   ),
                   const Spacer(),
@@ -245,7 +250,7 @@ class _GroupCard extends StatelessWidget {
                   Text(
                     '$membersCount/$maxMembers',
                     style: typography.captionSemibold.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.tokigoColors.textSecondary,
                     ),
                   ),
                 ],
@@ -253,6 +258,7 @@ class _GroupCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

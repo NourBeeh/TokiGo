@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tokigo/core/theme/app_spacing.dart';
@@ -25,6 +26,7 @@ class PackagesSearchPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final l10n = AppLocalizations.of(context)!;
     return SearchScaffold(
       title: l10n.searchPackages,

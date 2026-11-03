@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -174,6 +175,7 @@ class _FilterPanelState extends State<FilterPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final l10n = AppLocalizations.of(context)!;
     final typography = AppTypography.forLight();
     final facet = widget.priceFacet;
@@ -285,7 +287,7 @@ class _FilterPanelState extends State<FilterPanel> {
         maxHeight: MediaQuery.sizeOf(context).height * 0.9,
       ),
       child: Material(
-        color: AppColors.surface,
+        color: context.tokigoColors.surface,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppRadius.xl),
         ),
@@ -304,7 +306,7 @@ class _FilterPanelState extends State<FilterPanel> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.outline,
+                      color: context.tokigoColors.outline,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                   ),
@@ -323,7 +325,7 @@ class _FilterPanelState extends State<FilterPanel> {
                       child: Text(
                         l10n.filtersAction,
                         style: typography.title.copyWith(
-                          color: AppColors.textPrimary,
+                          color: context.tokigoColors.textPrimary,
                         ),
                       ),
                     ),
@@ -337,7 +339,7 @@ class _FilterPanelState extends State<FilterPanel> {
                   ],
                 ),
               ),
-              const Divider(height: 1, color: AppColors.divider),
+              Divider(height: 1, color: context.tokigoColors.divider),
               Flexible(
                 child: SingleChildScrollView(
                   padding: const EdgeInsetsDirectional.fromSTEB(
@@ -350,7 +352,7 @@ class _FilterPanelState extends State<FilterPanel> {
                     children: <Widget>[
                       for (var i = 0; i < sections.length; i++) ...<Widget>[
                         if (i > 0)
-                          const Divider(height: 1, color: AppColors.divider),
+                          Divider(height: 1, color: context.tokigoColors.divider),
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             vertical: AppSpacing.lg,
@@ -362,7 +364,7 @@ class _FilterPanelState extends State<FilterPanel> {
                   ),
                 ),
               ),
-              const Divider(height: 1, color: AppColors.divider),
+              Divider(height: 1, color: context.tokigoColors.divider),
               Padding(
                 padding: const EdgeInsetsDirectional.fromSTEB(
                   AppSpacing.lg,
@@ -393,14 +395,14 @@ class _FilterPanelState extends State<FilterPanel> {
             ' – '
             '${formatCardPrice(price: end, currency: facet.currency)}',
             style: typography.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
+              color: context.tokigoColors.textSecondary,
             ),
           ),
           RangeSlider(
             min: facet.min,
             max: facet.max,
             values: RangeValues(start, end),
-            activeColor: AppColors.brand,
+            activeColor: context.tokigoColors.brand,
             labels: RangeLabels(
               formatCardPrice(price: start, currency: facet.currency),
               formatCardPrice(price: end, currency: facet.currency),
@@ -423,7 +425,7 @@ class _FilterPanelState extends State<FilterPanel> {
         Text(
           label,
           style: typography.bodyLargeMedium.copyWith(
-            color: AppColors.textPrimary,
+            color: context.tokigoColors.textPrimary,
           ),
         ),
         const SizedBox(height: AppSpacing.sm),

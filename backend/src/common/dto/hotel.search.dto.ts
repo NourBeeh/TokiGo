@@ -78,8 +78,22 @@ export class HotelSearchDto {
   @IsString()
   market?: string;
 
+  /**
+   * Explicit display currency (ISO-4217) chosen by the traveller. When absent
+   * the market's own currency applies.
+   */
+  @IsOptional()
+  @IsString()
+  @Matches(/^[A-Za-z]{3}$/, { message: 'currency must be an ISO-4217 code' })
+  currency?: string;
+
   /** Informational traveller context; providers do not receive this field. */
   @IsOptional()
   @IsIn([...TRAVEL_MOODS])
   mood?: string;
+
+  /** Nuitee hotel content locale. Omitted preserves the provider default. */
+  @IsOptional()
+  @IsIn(['en', 'ar'])
+  language?: string;
 }

@@ -6,6 +6,10 @@ import { ProfileService } from '../profile/profile.service';
 import { CacheService } from '../cache/cache.service';
 import { ProviderResult } from '../../common/providers/provider.result';
 import { COUNTRY_CITIES } from '../../common/market/popular-cities';
+import {
+  PricingService,
+  PriceQuote,
+} from '../../common/market/pricing.service';
 
 const DEFAULT_GUESTS = 2;
 
@@ -72,6 +76,12 @@ export interface HotelCandidate {
    */
   pricePerNight?: number;
   currency?: string;
+  /**
+   * Backend-quoted customer display price (market/currency converted). The
+   * card shows this in the traveller's currency; the provider amount stays in
+   * [price]/[currency] so revalidation compares like with like.
+   */
+  customerPrice?: PriceQuote;
   rating?: number;
   reviewCount?: number;
   imageUrl?: string;
@@ -110,6 +120,8 @@ export interface HotelCandidate {
     longitude?: number;
     address?: string;
     distanceToCenter?: number;
+    hotelNameEn?: string;
+    hotelNameAr?: string;
   };
 }
 
@@ -145,6 +157,7 @@ export class RecommendedHotelService {
     @Inject(AI_PROVIDER) private readonly ai: AiProvider | null,
     private readonly config: ConfigService,
     private readonly cache: CacheService,
+    private readonly pricing: PricingService,
   ) {
     this.aiRerankEnabled = isEnabled(config.get<string>('RECOMMEND_AI_RERANK'));
   }
@@ -154,6 +167,8 @@ export class RecommendedHotelService {
     countryCode?: string;
     countryConfidence?: string;
     limit?: number;
+    language?: 'en' | 'ar';
+    currency?: string;
   }): Promise<RecommendedHotelsResult> {
     const limit = Math.min(Math.max(params.limit ?? 6, 1), HOTEL_LIMIT_MAX);
 
@@ -173,14 +188,23 @@ export class RecommendedHotelService {
     // here costs. The scanned nights belong to the cache identity — prices are
     // presentation snapshots tied to those dates, never durable booking truth.
     const nights = scannedNights();
+    const language = params.language === 'ar' ? 'ar' : 'en';
+    // The DISPLAY market is the caller's own country (not the served-search
+    // market, which falls back to EG for unsupported countries). Unknown
+    // countries + the traveller's chosen currency are resolved in marketFor.
+    const displayCountry = explicit ?? fromProfile;
+    const currencyKey = String(params.currency ?? '')
+      .trim()
+      .toUpperCase();
     const cacheKey =
-      `home:recommended:${country}:${limit}:` +
+      `home:recommended:${language}:${country}:${limit}:` +
+      (currencyKey ? `${currencyKey}:` : '') +
       nights.map((night) => isoDay(night.checkIn)).join(',');
 
     const cached = await this.cache.get<RecommendedHotelsResult>(cacheKey);
     if (cached) return cached;
 
-    const candidates = await this.candidatesFor(country, nights);
+    const candidates = await this.candidatesFor(country, nights, language);
     if (candidates.length === 0) {
       // Provider down, no inventory, or an unserved market: honest empty.
       return { source: 'fallback', countryCode: country, confidence, hotels: [] };
@@ -200,11 +224,19 @@ export class RecommendedHotelService {
       }
     }
 
+    // Attach the customer display price (converted to the market/currency) to
+    // each card the traveller will actually see. Provider price/currency stay
+    // untouched inside the candidate.
+    const selected = hotels.slice(0, limit);
+    const pricedHotels = await Promise.all(
+      selected.map((hotel) => this.withCustomerPrice(hotel, displayCountry, params.currency)),
+    );
+
     const result: RecommendedHotelsResult = {
       source: 'provider',
       countryCode: country,
       confidence,
-      hotels: hotels.slice(0, limit),
+      hotels: pricedHotels,
     };
 
     // Cache only a non-empty provider snapshot; an empty answer may recover.
@@ -225,6 +257,28 @@ export class RecommendedHotelService {
   }
 
   /**
+   * Attaches the backend-quoted customer display price to a candidate. Display
+   * only: a pricing failure returns the card unpriced rather than dropping it.
+   */
+  private async withCustomerPrice(
+    hotel: HotelCandidate,
+    market?: string,
+    currency?: string,
+  ): Promise<HotelCandidate> {
+    if (typeof hotel.price !== 'number' || !hotel.currency) return hotel;
+    try {
+      const customerPrice = await this.pricing.quote(
+        hotel.price,
+        hotel.currency,
+        { market, currency },
+      );
+      return { ...hotel, customerPrice };
+    } catch {
+      return hotel;
+    }
+  }
+
+  /**
    * Scans popular cities in the country via Nuitee real search — one search per
    * (city, scanned night) — and keeps each hotel's CHEAPEST night.
    *
@@ -235,6 +289,7 @@ export class RecommendedHotelService {
   private async candidatesFor(
     country: string,
     nights: StayNight[],
+    language: 'en' | 'ar',
   ): Promise<HotelCandidate[]> {
     const cities = COUNTRY_CITIES[country] ?? [];
     if (cities.length === 0) return [];
@@ -256,6 +311,7 @@ export class RecommendedHotelService {
             checkOut: job.night.checkOut,
             guests: DEFAULT_GUESTS,
             rooms: 1,
+            language,
           });
           return { job, value };
         } catch (error) {
@@ -343,6 +399,8 @@ export class RecommendedHotelService {
             longitude: offer.metadata?.longitude,
             address: offer.metadata?.address,
             distanceToCenter: offer.metadata?.distanceToCenter,
+            hotelNameEn: offer.metadata?.hotelNameEn,
+            hotelNameAr: offer.metadata?.hotelNameAr,
           },
         });
       }

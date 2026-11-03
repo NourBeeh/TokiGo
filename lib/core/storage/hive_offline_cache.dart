@@ -100,7 +100,7 @@ class HiveOfflineCache implements OfflineCache {
       return convertHiveValue(await _rawGet(key));
     } catch (_) {
       // HiveError for an entry written by an older/incompatible schema, a
-      // corrupted box after an abnormal process kill, etc. A cache miss is
+      // corrupted box after an abnormal process kill, econtext.tokigoColors. A cache miss is
       // always recoverable; an exception escaping into a search controller is
       // not (it left the results page stuck between loading and error).
       return null;

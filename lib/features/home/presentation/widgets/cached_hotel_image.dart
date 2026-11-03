@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/network/image_proxy.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/widgets/shimmer.dart';
 import 'package:tokigo/features/home/application/hotel_image_cache.dart';
 import 'package:tokigo/features/home/application/hotel_image_memory_cache.dart';
@@ -226,7 +226,7 @@ class _CachedHotelImageState extends State<CachedHotelImage> {
   Widget _fallback() => Container(
     height: widget.height,
     width: widget.width,
-    color: AppColors.surfaceTertiary,
+    color: context.tokigoColors.surfaceTertiary,
     child: const Icon(Icons.image_not_supported_outlined, size: 32),
   );
 }

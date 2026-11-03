@@ -59,6 +59,8 @@ class HomeController extends StateNotifier<HomeState> {
     this._contextBuilder,
     this._liveValidation,
     this._countryCode,
+    this._languageCode,
+    this._currencyCode,
   }) : super(const HomeState()) {
     _startUp();
   }
@@ -91,6 +93,12 @@ class HomeController extends StateNotifier<HomeState> {
   /// selection wins over geo). Null in tests/legacy wiring → no `code` is sent
   /// and the backend resolves it from the profile, then the launch market.
   final String? Function()? _countryCode;
+  final String Function()? _languageCode;
+
+  /// Resolves the traveller's explicit display currency at request time (null
+  /// = AUTO: the backend applies the market currency). Null function in
+  /// tests/legacy wiring keeps the backend default.
+  final String? Function()? _currencyCode;
 
   /// Guards against duplicate validation jobs for the same snapshot (§15).
   bool _validationInFlight = false;
@@ -549,8 +557,11 @@ class HomeController extends StateNotifier<HomeState> {
     // provider is queried by city AND country: without it the backend can only
     // fall back to the launch market for everyone.
     final country = _countryCode?.call()?.trim().toUpperCase();
+    final currency = _currencyCode?.call()?.trim().toUpperCase();
     final result = await repository.getRecommendedHotels(
       countryCode: (country != null && country.length == 2) ? country : null,
+      languageCode: _languageCode?.call() ?? 'en',
+      currency: (currency != null && currency.length == 3) ? currency : null,
     );
     result.when(
       success: (hotels) {

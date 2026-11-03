@@ -12,6 +12,11 @@ abstract interface class HomeRepository {
     /// Every provider query needs the city's country; without it Nuitee
     /// answers with an empty list (a false "no availability").
     String? countryCode,
+    String languageCode = 'en',
+
+    /// Explicit display currency (ISO-4217) chosen by the traveller. Null =
+    /// the backend applies the market currency (EGP/SAR/AED, else USD).
+    String? currency,
   });
   Future<ApiResult<void>> refresh();
 

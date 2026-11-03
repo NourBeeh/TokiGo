@@ -24,6 +24,7 @@ class HomeSectionTitles {
   static const Map<String, String> _publishedTitles = <String, String>{
     'Hotels recommended for you': 'homeStaysTitle',
     'Discover': 'discoverTitle',
+    'Explore': 'discoverTitle',
   };
 
   /// The section's title, in the active language.

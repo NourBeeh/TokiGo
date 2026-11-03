@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_button.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/core/widgets/step_progress.dart';
 import 'package:tokigo/core/widgets/sticky_cta_bar.dart';
 import 'package:tokigo/features/booking/application/providers/checkout_flow_providers.dart';
@@ -96,7 +97,7 @@ class _PassengerDetailsPageState extends ConsumerState<PassengerDetailsPage> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(
         // `bottom: false` left the page's last row under the Android
         // navigation bar (the pill it was written for is gone).
@@ -130,7 +131,7 @@ class _PassengerDetailsPageState extends ConsumerState<PassengerDetailsPage> {
                     Text(
                       l10n.bookingContactInformation,
                       style: typography.title.copyWith(
-                        color: AppColors.textPrimary,
+                        color: context.tokigoColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -158,7 +159,7 @@ class _PassengerDetailsPageState extends ConsumerState<PassengerDetailsPage> {
                 Text(
                   l10n.total,
                   style: typography.caption.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.tokigoColors.textSecondary,
                   ),
                 ),
                 Text(
@@ -166,7 +167,7 @@ class _PassengerDetailsPageState extends ConsumerState<PassengerDetailsPage> {
                   '${ref.watch(checkoutBasePriceProvider).toStringAsFixed(2)}',
                   maxLines: 1,
                   style: typography.titleMedium.copyWith(
-                    color: AppColors.textPrimary,
+                    color: context.tokigoColors.textPrimary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -234,9 +235,9 @@ class _TravelerCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.tokigoColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.outline),
+        border: Border.all(color: context.tokigoColors.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,20 +247,22 @@ class _TravelerCard extends StatelessWidget {
               Text(
                 '${l10n.passengerDetails} ${index + 1}',
                 style: typography.bodyLargeMedium.copyWith(
-                  color: AppColors.textPrimary,
+                  color: context.tokigoColors.textPrimary,
                 ),
               ),
               const Spacer(),
               if (removable)
-                IconButton(
-                  icon: const Icon(
-                    Icons.remove_circle_outline_rounded,
-                    size: 20,
-                    color: AppColors.danger,
+                Pressable.wrap(
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.remove_circle_outline_rounded,
+                      size: 20,
+                      color: context.tokigoColors.danger,
+                    ),
+                    onPressed: onRemove,
+                    tooltip: l10n.bookingRemoveTraveller,
+                    visualDensity: VisualDensity.compact,
                   ),
-                  onPressed: onRemove,
-                  tooltip: l10n.bookingRemoveTraveller,
-                  visualDensity: VisualDensity.compact,
                 ),
             ],
           ),

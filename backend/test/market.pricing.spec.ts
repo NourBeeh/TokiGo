@@ -16,11 +16,24 @@ describe('MarketContext (spec point 3)', () => {
     expect(DEFAULT_MARKET.paymentRegion).toBe('EG');
   });
 
-  it('marketFor resolves known codes and falls back to EG', () => {
+  it('marketFor resolves known codes and defaults other countries to USD', () => {
     expect(marketFor('SA').displayCurrency).toBe('SAR');
     expect(marketFor('ae').displayCurrency).toBe('AED');
-    expect(marketFor('XX')).toBe(DEFAULT_MARKET);
+    expect(marketFor('EG').displayCurrency).toBe('EGP');
+    // Owner decision (2026-11-03): an unconfigured country displays in USD
+    // while the launch market's region defaults stay untouched.
+    expect(marketFor('XX').displayCurrency).toBe('USD');
+    expect(marketFor('XX').marketCountry).toBe('EG');
+    // No country at all keeps the launch-market default.
     expect(marketFor(null)).toBe(DEFAULT_MARKET);
+  });
+
+  it('an explicit supported currency overrides the market display currency', () => {
+    expect(marketFor('EG', 'USD').displayCurrency).toBe('USD');
+    expect(marketFor('XX', 'EUR').displayCurrency).toBe('EUR');
+    expect(marketFor(null, 'GBP').displayCurrency).toBe('GBP');
+    // Unsupported codes are ignored (the market currency stands).
+    expect(marketFor('EG', 'ZZZ').displayCurrency).toBe('EGP');
   });
 
   it('SA/AE are prepared but separate contexts (no merged country field)', () => {

@@ -209,7 +209,7 @@ describe('Phase 10B-A: POST /ai/query over real HTTP through OpenAiAiProvider', 
       });
 
       expect(status).toBe(201);
-      expect(JSON.parse(captured[0].body).max_tokens).toBeUndefined();
+      expect(JSON.parse(captured[0].body).max_tokens).toBe(512);
     });
 
     it('sends the configured key as a Bearer credential', async () => {

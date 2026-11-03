@@ -121,7 +121,7 @@ export class AiService {
       requestedMaxOutputTokens >= 64 &&
       requestedMaxOutputTokens <= 2048
         ? requestedMaxOutputTokens
-        : undefined;
+        : 512;
     if (context) {
       const contextParts: string[] = [];
       const metadata = context.metadata ?? {};

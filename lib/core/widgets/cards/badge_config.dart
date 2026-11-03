@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 
 /// Semantic badge categories for consistent UX and theming
 enum BadgeCategory {
@@ -71,7 +71,7 @@ class BadgeSpec {
       case BadgeEmphasis.secondary:
         return scheme.onSurfaceVariant;
       case BadgeEmphasis.warning:
-        return AppColors.warning;
+        return context.tokigoColors.warning;
       case BadgeEmphasis.error:
         return scheme.error;
       case BadgeEmphasis.info:
@@ -88,7 +88,7 @@ class BadgeSpec {
       case BadgeEmphasis.secondary:
         return scheme.surfaceContainerHighest;
       case BadgeEmphasis.warning:
-        return AppColors.warning.withValues(alpha: 0.15);
+        return context.tokigoColors.warning.withValues(alpha: 0.15);
       case BadgeEmphasis.error:
         return scheme.errorContainer;
       case BadgeEmphasis.info:

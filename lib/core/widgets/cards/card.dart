@@ -29,6 +29,7 @@ export 'overlap_stay_card.dart';
 export 'photo_counter_chip.dart';
 export 'photo_pager_dots.dart';
 export 'rating_badge.dart';
+export 'travel_card_style.dart';
 
 /// New badge system exports
 export 'badge_config.dart';

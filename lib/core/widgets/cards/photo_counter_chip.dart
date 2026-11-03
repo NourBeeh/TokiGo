@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -34,14 +34,14 @@ class PhotoCounterChip extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             // The reference's 45% black — the same value as the glass tint.
-            color: AppColors.glassTint,
+            color: context.tokigoColors.glassTint,
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           child: Text(
             text,
             textDirection: TextDirection.ltr,
             style: typography.label.copyWith(
-              color: AppColors.onMedia,
+              color: context.tokigoColors.onMedia,
               fontWeight: FontWeight.w600,
               height: 1.2,
             ),

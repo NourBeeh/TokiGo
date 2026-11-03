@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:tokigo/core/admin/admin_home_content_service.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_button.dart';
 import 'package:tokigo/core/ui/app_message_state.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/core/widgets/step_progress.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 import 'package:tokigo/features/admin/presentation/admin_services.dart';
@@ -96,7 +97,7 @@ class _AdminContentTabState extends ConsumerState<AdminContentTab> {
         child: SingleChildScrollView(
           child: AppMessageState(
             icon: Icons.cloud_off_rounded,
-            hue: AppColors.danger,
+            hue: context.tokigoColors.danger,
             title: l10n.adminError,
             body: _error ?? l10n.adminError,
             actionLabel: l10n.adminRetry,
@@ -189,7 +190,7 @@ class _AdminContentTabState extends ConsumerState<AdminContentTab> {
           bottom: AppSpacing.lg,
           child: FloatingActionButton.extended(
             heroTag: 'admin-add-section',
-            backgroundColor: AppColors.brand,
+            backgroundColor: context.tokigoColors.brand,
             foregroundColor: Colors.white,
             onPressed: _busy ? null : () => _createSection(context),
             icon: const Icon(Icons.add_rounded),
@@ -229,7 +230,7 @@ class _AdminContentTabState extends ConsumerState<AdminContentTab> {
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.tokigoColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
@@ -352,7 +353,7 @@ class _TableHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
     final TextStyle style = typography.label.copyWith(
-      color: AppColors.textTertiary,
+      color: context.tokigoColors.textTertiary,
     );
     return Padding(
       padding: const EdgeInsetsDirectional.only(bottom: AppSpacing.sm),
@@ -400,12 +401,13 @@ class _SectionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
 
-    return InkWell(
-      onTap: onToggleExpanded,
-      child: Semantics(
-        label: section.title,
-        button: true,
-        child: ConstrainedBox(
+    return Pressable.wrap(
+      child: InkWell(
+        onTap: onToggleExpanded,
+        child: Semantics(
+          label: section.title,
+          button: true,
+          child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 48),
           child: Row(
             children: <Widget>[
@@ -416,7 +418,7 @@ class _SectionRow extends StatelessWidget {
                       ? Icons.expand_more_rounded
                       : Icons.chevron_right_rounded,
                   size: 20,
-                  color: AppColors.textTertiary,
+                  color: context.tokigoColors.textTertiary,
                 ),
               ),
               Expanded(
@@ -424,14 +426,14 @@ class _SectionRow extends StatelessWidget {
                   section.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: typography.body.copyWith(color: AppColors.textPrimary),
+                  style: typography.body.copyWith(color: context.tokigoColors.textPrimary),
                 ),
               ),
               SizedBox(
                 width: _cardsColumn,
                 child: Text(
                   '${section.cards.length}',
-                  style: typography.body.copyWith(color: AppColors.textPrimary),
+                  style: typography.body.copyWith(color: context.tokigoColors.textPrimary),
                 ),
               ),
               SizedBox(
@@ -450,6 +452,7 @@ class _SectionRow extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -502,20 +505,29 @@ class _SectionDetail extends StatelessWidget {
             height: 48,
             child: Row(
               children: <Widget>[
-                IconButton(
-                  tooltip: l10n.adminMoveUp,
-                  onPressed: busy ? null : () => onMove(true),
-                  icon: const Icon(Icons.arrow_upward_rounded, size: 20),
+                Pressable.wrap(
+                  enabled: !busy,
+                  child: IconButton(
+                    tooltip: l10n.adminMoveUp,
+                    onPressed: busy ? null : () => onMove(true),
+                    icon: const Icon(Icons.arrow_upward_rounded, size: 20),
+                  ),
                 ),
-                IconButton(
-                  tooltip: l10n.adminMoveDown,
-                  onPressed: busy ? null : () => onMove(false),
-                  icon: const Icon(Icons.arrow_downward_rounded, size: 20),
+                Pressable.wrap(
+                  enabled: !busy,
+                  child: IconButton(
+                    tooltip: l10n.adminMoveDown,
+                    onPressed: busy ? null : () => onMove(false),
+                    icon: const Icon(Icons.arrow_downward_rounded, size: 20),
+                  ),
                 ),
-                IconButton(
-                  tooltip: l10n.adminDelete,
-                  onPressed: busy ? null : onDelete,
-                  icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                Pressable.wrap(
+                  enabled: !busy,
+                  child: IconButton(
+                    tooltip: l10n.adminDelete,
+                    onPressed: busy ? null : onDelete,
+                    icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                  ),
                 ),
                 const Spacer(),
                 Padding(
@@ -564,14 +576,14 @@ class _CardRow extends StatelessWidget {
       constraints: const BoxConstraints(minHeight: 48),
       child: Row(
         children: <Widget>[
-          Icon(_iconFor(card.cardType), size: 20, color: AppColors.brand),
+          Icon(_iconFor(card.cardType), size: 20, color: context.tokigoColors.brand),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               card.content['title']?.toString() ?? card.id,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: typography.body.copyWith(color: AppColors.textPrimary),
+              style: typography.body.copyWith(color: context.tokigoColors.textPrimary),
             ),
           ),
           Flexible(child: _StatusPill(status: card.status)),
@@ -648,11 +660,11 @@ class _StatusPill extends StatelessWidget {
     return StatusChip(
       label: isDraft ? l10n.adminDraft : l10n.adminPublished,
       color: isDraft
-          ? AppColors.onWarningContainer
-          : AppColors.onSuccessContainer,
+          ? context.tokigoColors.onWarningContainer
+          : context.tokigoColors.onSuccessContainer,
       container: isDraft
-          ? AppColors.warningContainer
-          : AppColors.successContainer,
+          ? context.tokigoColors.warningContainer
+          : context.tokigoColors.successContainer,
     );
   }
 }

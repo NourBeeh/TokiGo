@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -15,6 +16,7 @@ class AiEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final typography = AppTypography.forLight();
     final scheme = Theme.of(context).colorScheme;
 
@@ -80,11 +82,11 @@ class AiEmptyState extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: <Color>[AppColors.ai, AppColors.aiLight],
+            colors: <Color>[scheme.primary, scheme.onSurfaceVariant],
           ),
           boxShadow: <BoxShadow>[
             BoxShadow(
-              color: AppColors.ai.withValues(alpha: 0.28),
+              color: scheme.primary.withValues(alpha: 0.28),
               blurRadius: 40,
               offset: const Offset(0, 12),
             ),

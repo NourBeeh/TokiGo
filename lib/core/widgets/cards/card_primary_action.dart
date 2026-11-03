@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 
@@ -32,6 +33,7 @@ class CardPrimaryAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final foreground = scheme.onPrimary;
+    bool pressed = false;
 
     final child = Row(
       mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
@@ -61,21 +63,48 @@ class CardPrimaryAction extends StatelessWidget {
 
     return Opacity(
       opacity: _disabled && !loading ? 0.55 : 1,
-      child: GestureDetector(
-        onTap: _disabled ? null : onPressed,
-        child: Container(
-          height: height,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: AlignmentDirectional.topStart,
-              end: AlignmentDirectional.bottomEnd,
-              colors: [AppColors.brand, AppColors.brand],
+      child: StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) =>
+            GestureDetector(
+              onTapDown: _disabled
+                  ? null
+                  : (_) => setState(() => pressed = true),
+              onTapUp: _disabled
+                  ? null
+                  : (_) => setState(() => pressed = false),
+              onTapCancel: _disabled
+                  ? null
+                  : () => setState(() => pressed = false),
+              onTap: _disabled
+                  ? null
+                  : () {
+                      HapticFeedback.lightImpact();
+                      onPressed!();
+                    },
+              child: AnimatedScale(
+                scale: pressed ? 0.96 : 1,
+                duration: const Duration(milliseconds: 110),
+                curve: Curves.easeOut,
+                child: Container(
+                  height: height,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: AlignmentDirectional.topStart,
+                      end: AlignmentDirectional.bottomEnd,
+                      colors: [
+                        context.tokigoColors.brand,
+                        context.tokigoColors.brand,
+                      ],
+                    ),
+                    borderRadius: AppRadius.pillBorder,
+                  ),
+                  child: child,
+                ),
+              ),
             ),
-            borderRadius: AppRadius.pillBorder,
-          ),
-          child: child,
-        ),
       ),
     );
   }

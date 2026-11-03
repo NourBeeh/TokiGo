@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -50,6 +51,7 @@ class BookingReviewPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tc = context.tokigoColors;
     final selectedOffer = ref.watch(selectedOfferProvider);
     final bookingState = state ?? ref.watch(bookingControllerProvider);
     final bookingNotifier = ref.read(bookingControllerProvider.notifier);
@@ -60,7 +62,7 @@ class BookingReviewPage extends ConsumerWidget {
         bookingState?.record == null &&
         selectedOffer == null) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.tokigoColors.background,
         body: SafeArea(
           bottom: false,
           child: AiEntranceAnimation(
@@ -76,7 +78,7 @@ class BookingReviewPage extends ConsumerWidget {
                     child: Text(
                       l10n.bookingNoSelection,
                       style: typography.body.copyWith(
-                        color: AppColors.textTertiary,
+                        color: context.tokigoColors.textTertiary,
                       ),
                     ),
                   ),
@@ -137,7 +139,7 @@ class BookingReviewPage extends ConsumerWidget {
     final offerType = selectedOffer?.offerType ?? record?.type ?? '';
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -185,14 +187,14 @@ class BookingReviewPage extends ConsumerWidget {
                 Text(
                   l10n.total,
                   style: typography.caption.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.tokigoColors.textSecondary,
                   ),
                 ),
                 Text(
                   '$currency ${price.toStringAsFixed(2)}',
                   maxLines: 1,
                   style: typography.titleMedium.copyWith(
-                    color: AppColors.textPrimary,
+                    color: context.tokigoColors.textPrimary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -236,13 +238,14 @@ class _OfferSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final typography = AppTypography.forLight();
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.tokigoColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.outline),
+        border: Border.all(color: context.tokigoColors.outline),
       ),
       child: Row(
         children: <Widget>[
@@ -250,7 +253,7 @@ class _OfferSummaryCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.brandContainer,
+              color: context.tokigoColors.brandContainer,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Icon(
@@ -262,7 +265,7 @@ class _OfferSummaryCard extends StatelessWidget {
                 _ => Icons.receipt_long_rounded,
               },
               size: 24,
-              color: AppColors.brand,
+              color: context.tokigoColors.brand,
             ),
           ),
           const SizedBox(width: AppSpacing.lg),
@@ -278,7 +281,7 @@ class _OfferSummaryCard extends StatelessWidget {
                 Text(
                   providerName,
                   style: typography.bodyLargeMedium.copyWith(
-                    color: AppColors.textPrimary,
+                    color: context.tokigoColors.textPrimary,
                   ),
                 ),
               ],
@@ -290,7 +293,7 @@ class _OfferSummaryCard extends StatelessWidget {
               Text(
                 '$currency ${price.toStringAsFixed(2)}',
                 style: typography.bodyLargeMedium.copyWith(
-                  color: AppColors.textPrimary,
+                  color: context.tokigoColors.textPrimary,
                 ),
               ),
             ],
@@ -322,15 +325,16 @@ class _PhaseTimelineCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final typography = AppTypography.forLight();
     final l10n = AppLocalizations.of(context)!;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.tokigoColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.outline),
+        border: Border.all(color: context.tokigoColors.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -338,7 +342,7 @@ class _PhaseTimelineCard extends StatelessWidget {
           Text(
             l10n.bookingStatusTitle,
             style: typography.bodyLargeMedium.copyWith(
-              color: AppColors.textPrimary,
+              color: context.tokigoColors.textPrimary,
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -417,11 +421,12 @@ class _TimelineStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final typography = AppTypography.forLight();
     final color = switch (state) {
-      _StepState.done => AppColors.success,
-      _StepState.active => AppColors.brand,
-      _StepState.idle => AppColors.textTertiary,
+      _StepState.done => context.tokigoColors.success,
+      _StepState.active => context.tokigoColors.brand,
+      _StepState.idle => context.tokigoColors.textTertiary,
     };
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
@@ -466,25 +471,26 @@ class _ErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final typography = AppTypography.forLight();
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.dangerContainer,
+        color: context.tokigoColors.dangerContainer,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         children: <Widget>[
-          const Icon(
+          Icon(
             Icons.error_outline_rounded,
             size: 18,
-            color: AppColors.danger,
+            color: context.tokigoColors.danger,
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               message,
-              style: typography.caption.copyWith(color: AppColors.danger),
+              style: typography.caption.copyWith(color: context.tokigoColors.danger),
             ),
           ),
         ],
@@ -508,12 +514,13 @@ class _PriceChangedBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final typography = AppTypography.forLight();
     final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.warningContainer,
+        color: context.tokigoColors.warningContainer,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
@@ -521,16 +528,16 @@ class _PriceChangedBanner extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              const Icon(
+              Icon(
                 Icons.trending_up_rounded,
                 size: 18,
-                color: AppColors.warning,
+                color: context.tokigoColors.warning,
               ),
               const SizedBox(width: AppSpacing.sm),
               Text(
                 l10n.bookingPriceChanged,
                 style: typography.bodyMedium.copyWith(
-                  color: AppColors.warning,
+                  color: context.tokigoColors.warning,
                   fontWeight: AppTypography.weightSemibold,
                 ),
               ),
@@ -539,7 +546,7 @@ class _PriceChangedBanner extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Text(
             '${oldPrice?.toStringAsFixed(2)} → ${newPrice?.toStringAsFixed(2)} $currency',
-            style: typography.body.copyWith(color: AppColors.textPrimary),
+            style: typography.body.copyWith(color: context.tokigoColors.textPrimary),
           ),
           if (onAccept != null) ...<Widget>[
             const SizedBox(height: AppSpacing.md),
@@ -581,6 +588,7 @@ class _PrimaryActionForPhase extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tc = context.tokigoColors;
     final l10n = AppLocalizations.of(context)!;
 
     switch (phase) {
@@ -684,6 +692,7 @@ class _ProcessingButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     return const SizedBox(
       height: 52,
       child: Center(

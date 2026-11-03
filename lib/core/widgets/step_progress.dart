@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -50,8 +51,8 @@ class StepProgress extends StatelessWidget {
                   height: segmentHeight,
                   decoration: BoxDecoration(
                     color: i <= safeCurrent
-                        ? AppColors.brand
-                        : AppColors.surfaceTertiary,
+                        ? context.tokigoColors.brand
+                        : context.tokigoColors.surfaceTertiary,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),

@@ -37,35 +37,38 @@ class AppBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppIconAction(
-      icon: Icons.arrow_back_ios_new_rounded,
-      variant: variant,
-      color: color,
-      enabled: enabled,
-      // The control now sits BESIDE the page title, so a floating "Back"
-      // chip on hover would compete with the very title it introduces.
-      // The semantic label stays — it is what a screen reader announces.
-      showTooltip: false,
-      // No press ripple: a circle bursting out of a bare chevron reads as a
-      // second, unlabelled button rather than as feedback.
-      splashEnabled: false,
-      // Localized by Material — the app ships English and Arabic.
-      semanticLabel: MaterialLocalizations.of(context).backButtonTooltip,
-      onTap: () {
-        // Router-first, since every product surface is a route. A widget test
-        // (or a preview) that mounts the page under a bare Navigator still
-        // gets working back behaviour instead of a crash.
-        final GoRouter? router = GoRouter.maybeOf(context);
-        if (router == null) {
-          Navigator.of(context).maybePop();
-          return;
-        }
-        if (router.canPop()) {
-          router.pop();
-        } else {
-          router.go(fallbackLocation);
-        }
-      },
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: AppIconAction(
+        icon: Icons.arrow_back_ios_new_rounded,
+        variant: variant,
+        color: color,
+        enabled: enabled,
+        // The control now sits BESIDE the page title, so a floating "Back"
+        // chip on hover would compete with the very title it introduces.
+        // The semantic label stays — it is what a screen reader announces.
+        showTooltip: false,
+        // No press ripple: a circle bursting out of a bare chevron reads as a
+        // second, unlabelled button rather than as feedback.
+        splashEnabled: false,
+        // Localized by Material — the app ships English and Arabic.
+        semanticLabel: MaterialLocalizations.of(context).backButtonTooltip,
+        onTap: () {
+          // Router-first, since every product surface is a route. A widget test
+          // (or a preview) that mounts the page under a bare Navigator still
+          // gets working back behaviour instead of a crash.
+          final GoRouter? router = GoRouter.maybeOf(context);
+          if (router == null) {
+            Navigator.of(context).maybePop();
+            return;
+          }
+          if (router.canPop()) {
+            router.pop();
+          } else {
+            router.go(fallbackLocation);
+          }
+        },
+      ),
     );
   }
 }

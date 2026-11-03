@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,7 @@ import '../l10n/app_localizations.dart';
 import 'config/app_config.dart';
 import 'router/go_router_config.dart';
 import '../shared/providers/locale_provider.dart';
+import '../shared/providers/theme_provider.dart';
 
 class TokiGoApp extends ConsumerWidget {
   const TokiGoApp({super.key});
@@ -18,6 +20,7 @@ class TokiGoApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(goRouterProvider);
     final locale = ref.watch(localeProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       onGenerateTitle: (BuildContext context) {
@@ -26,6 +29,8 @@ class TokiGoApp extends ConsumerWidget {
       },
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: themeMode,
       locale: locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
@@ -36,30 +41,35 @@ class TokiGoApp extends ConsumerWidget {
       ],
       builder: (BuildContext context, Widget? child) {
         return AnnotatedRegion<SystemUiOverlayStyle>(
-          value: AppTheme.systemOverlay,
+          value: Theme.of(context).brightness == Brightness.dark
+              ? AppTheme.systemOverlayDark
+              : AppTheme.systemOverlay,
           child: ListenableBuilder(
             listenable: NetworkStatus.instance,
             builder: (BuildContext context, Widget? _) {
               final MediaQueryData media = MediaQuery.of(context);
               final bool offline = !NetworkStatus.instance.online;
-              return Column(
-                children: <Widget>[
-                  if (offline)
-                    const SafeArea(bottom: false, child: OfflineBanner()),
-                  Expanded(
-                    child: MediaQuery(
-                      data: media.copyWith(
-                        padding: media.padding.copyWith(
-                          top: offline ? 0 : media.padding.top,
+              return ColoredBox(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                child: Column(
+                  children: <Widget>[
+                    if (offline)
+                      const SafeArea(bottom: false, child: OfflineBanner()),
+                    Expanded(
+                      child: MediaQuery(
+                        data: media.copyWith(
+                          padding: media.padding.copyWith(
+                            top: offline ? 0 : media.padding.top,
+                          ),
+                        ),
+                        child: ScrollConfiguration(
+                          behavior: const _SmoothScrollBehavior(),
+                          child: child ?? const SizedBox.shrink(),
                         ),
                       ),
-                      child: ScrollConfiguration(
-                        behavior: const _SmoothScrollBehavior(),
-                        child: child ?? const SizedBox.shrink(),
-                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               );
             },
           ),
@@ -75,13 +85,23 @@ class _SmoothScrollBehavior extends ScrollBehavior {
 
   @override
   ScrollPhysics getScrollPhysics(BuildContext context) =>
-      const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+      const BouncingScrollPhysics(
+        decelerationRate: ScrollDecelerationRate.fast,
+        parent: RangeMaintainingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
+      );
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => <PointerDeviceKind>{
+    ...super.dragDevices,
+    PointerDeviceKind.mouse,
+  };
 
   @override
   Widget buildOverscrollIndicator(
     BuildContext context,
     Widget child,
     ScrollableDetails details,
-  ) =>
-      child;
+  ) => child;
 }

@@ -8,10 +8,16 @@ async function bootstrap() {
   // Every JSON payload above 1KB is gzipped. A hotel search response is
   // ~140KB raw and ~15KB compressed — the single cheapest win on mobile data.
   app.use(compression({ threshold: 1024 }));
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',')
+        .map((o) => o.trim())
+        .filter((o) => o.length > 0)
+    : ['http://localhost:3000'];
+  if (allowedOrigins.includes('*')) {
+    throw new Error('ALLOWED_ORIGINS must not contain "*" when credentials are enabled.');
+  }
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS
-      ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
-      : ['http://localhost:3000'],
+    origin: allowedOrigins,
     credentials: true,
   });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));

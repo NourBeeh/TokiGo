@@ -60,6 +60,9 @@ class FlightSearchParams {
   final List<FlightSearchLeg> legs;
   final String? market;
 
+  /// Explicit display currency (ISO-4217); null = the backend's market default.
+  final String? currency;
+
   const FlightSearchParams({
     required this.origin,
     required this.destination,
@@ -73,6 +76,7 @@ class FlightSearchParams {
     this.directOnly = false,
     this.legs = const <FlightSearchLeg>[],
     this.market,
+    this.currency,
   });
 
   /// The itinerary as the API sees it: the explicit legs when there are any,
@@ -100,6 +104,7 @@ class FlightSearchParams {
     bool? directOnly,
     List<FlightSearchLeg>? legs,
     String? market,
+    String? currency,
   }) {
     return FlightSearchParams(
       origin: origin ?? this.origin,
@@ -114,6 +119,7 @@ class FlightSearchParams {
       directOnly: directOnly ?? this.directOnly,
       legs: legs ?? this.legs,
       market: market ?? this.market,
+      currency: currency ?? this.currency,
     );
   }
 }

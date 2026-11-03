@@ -51,7 +51,59 @@ export const MARKET_CONFIGS: Record<string, MarketContextValue> = {
 
 export const DEFAULT_MARKET: MarketContextValue = MARKET_CONFIGS.EG;
 
-export function marketFor(countryCode?: string | null): MarketContextValue {
-  if (!countryCode) return DEFAULT_MARKET;
-  return MARKET_CONFIGS[countryCode.toUpperCase()] ?? DEFAULT_MARKET;
+/**
+ * The display currency for a country we have no full market config for.
+ * Owner decision (2026-11-03): countries outside the configured markets
+ * (EG/SA/AE) display in USD instead of silently inheriting EGP.
+ */
+export const DEFAULT_DISPLAY_CURRENCY = 'USD';
+
+/**
+ * Currencies the app can display. A requested currency outside this set is
+ * ignored (the market's own currency stands) rather than trusting arbitrary
+ * input into the pricing engine.
+ */
+export const SUPPORTED_DISPLAY_CURRENCIES = new Set([
+  'EGP',
+  'SAR',
+  'AED',
+  'USD',
+  'EUR',
+  'GBP',
+]);
+
+/** Normalises + validates a requested display currency (ISO-4217). */
+export function normalizeDisplayCurrency(
+  currency?: string | null,
+): string | null {
+  if (!currency) return null;
+  const code = currency.trim().toUpperCase();
+  return SUPPORTED_DISPLAY_CURRENCIES.has(code) ? code : null;
+}
+
+/**
+ * Resolves the market context. A country with a full config (EG/SA/AE) keeps
+ * its display currency + region; any other country displays in USD while the
+ * region defaults stay untouched (display-only — no new payment region is
+ * enabled). An explicit, supported `currencyOverride` (the traveller's chosen
+ * display currency) wins over both.
+ */
+export function marketFor(
+  countryCode?: string | null,
+  currencyOverride?: string | null,
+): MarketContextValue {
+  const override = normalizeDisplayCurrency(currencyOverride);
+  // No country at all keeps the launch-market default (unchanged behaviour);
+  // an explicit but unconfigured country displays in USD (owner decision).
+  if (!countryCode) {
+    return override
+      ? { ...DEFAULT_MARKET, displayCurrency: override }
+      : DEFAULT_MARKET;
+  }
+  const configured = MARKET_CONFIGS[countryCode.toUpperCase()];
+  const base: MarketContextValue = configured ?? {
+    ...DEFAULT_MARKET,
+    displayCurrency: DEFAULT_DISPLAY_CURRENCY,
+  };
+  return override ? { ...base, displayCurrency: override } : base;
 }

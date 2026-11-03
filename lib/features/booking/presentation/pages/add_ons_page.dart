@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_button.dart';
@@ -37,7 +38,7 @@ class AddOnsPage extends ConsumerWidget {
     final currency = ref.watch(checkoutCurrencyProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(
         bottom: false,
         child: AiEntranceAnimation(
@@ -72,14 +73,14 @@ class AddOnsPage extends ConsumerWidget {
                 Text(
                   l10n.total,
                   style: typography.caption.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.tokigoColors.textSecondary,
                   ),
                 ),
                 Text(
                   '$currency ${basePrice.toStringAsFixed(2)}',
                   maxLines: 1,
                   style: typography.titleMedium.copyWith(
-                    color: AppColors.textPrimary,
+                    color: context.tokigoColors.textPrimary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),

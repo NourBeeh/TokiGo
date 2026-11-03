@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/widgets/cards/card.dart';
-import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
 
-/// Real discovery product card for hotels / cars / packages in the Home
-/// feed (Wave 2): image-first vertical card with rating, highlights chips
-/// and price — one design replacing the previous skeleton-only preview.
+/// Discovery product card for cars and packages in the Home feed.
+///
+/// A product image leads, followed by a quiet information panel for the name,
+/// supporting detail, rating and price.
 ///
 /// Loading mirrors the exact geometry via [DiscoveryProductCard.loading].
 class DiscoveryProductCard extends StatelessWidget {
@@ -27,6 +28,7 @@ class DiscoveryProductCard extends StatelessWidget {
   final bool _loading;
 
   static const double kWidth = 220;
+  static const double kHeight = 276;
 
   @override
   Widget build(BuildContext context) {
@@ -35,35 +37,42 @@ class DiscoveryProductCard extends StatelessWidget {
         onTap: null,
         enabled: false,
         loading: true,
-        showBorder: false,
+        showBorder: true,
+        borderColor: TravelCardStyle.borderColor(context),
+        showShadow: false,
         semanticsLabel: 'Loading',
         padding: EdgeInsets.zero,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: cardLoadingSemantics(
           LayoutBuilder(
             builder: (context, constraints) {
               final bounded =
                   constraints.hasBoundedHeight &&
                   constraints.maxHeight.isFinite;
-              // Same overlay geometry as the real card: photo fills the card,
-              // skeleton copy sits bottom-start.
-              final Widget skeleton = Stack(
-                fit: StackFit.expand,
+              final Widget skeleton = Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  CardSkeleton.image(),
-                  PositionedDirectional(
-                    start: AppSpacing.md,
-                    end: AppSpacing.md,
-                    bottom: AppSpacing.md,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        CardSkeleton.title(width: 130),
-                        CardSkeleton.gap(height: AppSpacing.xs),
-                        CardSkeleton.text(width: 90),
-                        CardSkeleton.gap(height: AppSpacing.sm),
-                        CardSkeleton.price(width: 72),
-                      ],
+                  Expanded(flex: 5, child: CardSkeleton.image()),
+                  Expanded(
+                    flex: 4,
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          CardSkeleton.title(width: 144, height: 18),
+                          CardSkeleton.gap(height: AppSpacing.xs),
+                          CardSkeleton.text(width: 98, height: 14),
+                          const Spacer(),
+                          Row(
+                            children: <Widget>[
+                              CardSkeleton.chip(width: 54),
+                              const Spacer(),
+                              CardSkeleton.price(width: 78, height: 22),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -71,7 +80,7 @@ class DiscoveryProductCard extends StatelessWidget {
               return bounded
                   ? skeleton
                   : SizedBox(
-                      height: HomeCardDimensions.cardHeightForType(item.type),
+                      height: kHeight,
                       child: skeleton,
                     );
             },
@@ -82,127 +91,167 @@ class DiscoveryProductCard extends StatelessWidget {
 
     final typography = AppTypography.forLight();
     final rating = item.rating;
+    final price = item.price;
+    final currency = item.currency;
 
     return BaseCard(
       onTap: onTap,
-      showBorder: false,
+      showBorder: true,
+      borderColor: TravelCardStyle.borderColor(context),
+      showShadow: false,
       semanticsLabel:
-          '${item.type.name} ${item.title}${item.price != null ? ', price ${item.currency ?? ''} ${item.price}' : ''}',
+          '${item.type.name} ${item.title}${price != null ? ', price ${currency ?? ''} $price' : ''}',
       padding: EdgeInsets.zero,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final bounded =
               constraints.hasBoundedHeight && constraints.maxHeight.isFinite;
-
-          final Widget media = Stack(
-            fit: StackFit.expand,
+          final String supportingText =
+              item.subtitle?.trim().isNotEmpty == true
+              ? item.subtitle!.trim()
+              : item.highlights.take(2).join(' · ');
+          final Widget product = Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              CardImage(url: item.imageUrl),
-              // Card E: the copy sits ON the photo, held by a bottom-up scrim.
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: <Color>[Colors.transparent, AppColors.photoScrim],
-                    stops: <double>[0.35, 1],
-                  ),
-                ),
-              ),
-              PositionedDirectional(
-                start: AppSpacing.md,
-                end: AppSpacing.md,
-                bottom: AppSpacing.md,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+              Expanded(
+                flex: 5,
+                child: Stack(
+                  fit: StackFit.expand,
                   children: <Widget>[
-                    if (item.badge?.isNotEmpty ?? false) ...<Widget>[
-                      CardBadge(label: item.badge!),
-                      const SizedBox(height: AppSpacing.sm),
-                    ],
-                    Text(
-                      item.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: typography.bodyLargeMedium.copyWith(
-                        color: CardScrimColors.onScrim,
-                      ),
+                    CardImage(
+                      url: item.imageUrl,
+                      fallbackIcon: Icons.travel_explore_rounded,
+                      semanticLabel: item.title,
+                      fit: BoxFit.cover,
                     ),
-                    if (item.subtitle?.isNotEmpty ?? false) ...<Widget>[
-                      const SizedBox(height: AppSpacing.xxs),
-                      Text(
-                        item.subtitle!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: typography.caption.copyWith(
-                          color: CardScrimColors.onScrimVariant,
+                    if (item.badge?.isNotEmpty ?? false)
+                      PositionedDirectional(
+                        top: AppSpacing.sm,
+                        start: AppSpacing.sm,
+                        child: CardBadge(
+                          label: item.badge!,
+                          variant: CardBadgeVariant.glass,
                         ),
                       ),
-                    ],
-                    const SizedBox(height: AppSpacing.sm),
-                    Row(
-                      children: <Widget>[
-                        if (rating != null) ...<Widget>[
-                          const Icon(
-                            Icons.star_rounded,
-                            size: 14,
-                            color: AppColors.starFill,
-                          ),
-                          const SizedBox(width: AppSpacing.xxs),
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 4,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
                           Text(
-                            rating.toStringAsFixed(1),
-                            style: typography.caption.copyWith(
-                              color: CardScrimColors.onScrimVariant,
-                              fontWeight: FontWeight.w600,
+                            item.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: typography.bodyLargeMedium.copyWith(
+                              color: context.tokigoColors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                              height: 1.25,
                             ),
                           ),
-                          const SizedBox(width: AppSpacing.sm),
-                        ],
-                        if (item.highlights.isNotEmpty)
-                          Expanded(
-                            child: Text(
-                              item.highlights.take(2).join(' · '),
+                          if (supportingText.isNotEmpty) ...<Widget>[
+                            const SizedBox(height: AppSpacing.xxs),
+                            Text(
+                              supportingText,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: typography.caption.copyWith(
-                                color: CardScrimColors.onScrimVariant,
+                                color: context.tokigoColors.textSecondary,
                               ),
                             ),
-                          )
-                        else
-                          const Spacer(),
-                        if (item.price != null) ...<Widget>[
-                          const SizedBox(width: AppSpacing.sm),
-                          Text(
-                            '${item.currency ?? '\$'}${item.price!.toStringAsFixed(0)}',
-                            maxLines: 1,
-                            textDirection: TextDirection.ltr,
-                            style: typography.bodyLargeMedium.copyWith(
-                              color: CardScrimColors.onScrim,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                          ],
                         ],
-                      ],
-                    ),
-                  ],
+                      ),
+                      Row(
+                        children: <Widget>[
+                          if (rating != null) ...<Widget>[
+                            Icon(
+                              Icons.star_rounded,
+                              size: 14,
+                              color: context.tokigoColors.starFill,
+                            ),
+                            const SizedBox(width: AppSpacing.xxs),
+                            Text(
+                              rating.toStringAsFixed(1),
+                              style: typography.captionSemibold.copyWith(
+                                color: context.tokigoColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                          const Spacer(),
+                          if (price != null)
+                            _ProductPrice(
+                              price: price,
+                              currency: currency,
+                              typography: typography,
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
           );
-
-          // An overlay card needs an explicit height when the parent gives it
-          // none (the AI thread, vertical lists). Use the Home rail height so
-          // the card never grows the section it sits in.
           return bounded
-              ? media
-              : SizedBox(
-                  height: HomeCardDimensions.cardHeightForType(item.type),
-                  child: media,
-                );
+              ? product
+              : SizedBox(height: kHeight, child: product);
         },
       ),
+    );
+  }
+}
+
+class _ProductPrice extends StatelessWidget {
+  const _ProductPrice({
+    required this.price,
+    required this.currency,
+    required this.typography,
+  });
+
+  final double price;
+  final String? currency;
+  final AppTypography typography;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      textDirection: TextDirection.ltr,
+      children: <Widget>[
+        Text(
+          price.toStringAsFixed(0),
+          maxLines: 1,
+          style: typography.titleMedium.copyWith(
+            color: context.tokigoColors.textPrimary,
+            fontWeight: FontWeight.w800,
+            height: 1.05,
+            letterSpacing: -0.3,
+          ),
+        ),
+        if ((currency ?? '').isNotEmpty) ...<Widget>[
+          const SizedBox(width: AppSpacing.xs),
+          Text(
+            currency!,
+            maxLines: 1,
+            style: typography.caption.copyWith(
+              color: context.tokigoColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

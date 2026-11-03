@@ -9,9 +9,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:tokigo/core/auth/auth_provider.dart';
 import 'package:tokigo/core/geo/country_options.dart';
 import 'package:tokigo/core/storage/offline_cache_providers.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
 /// Edit profile — identity fields the traveller can change.
@@ -164,7 +165,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(
         child: Column(
           children: <Widget>[
@@ -176,7 +177,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   children: <Widget>[
                     Center(
-                      child: GestureDetector(
+                      child: Pressable(
                         onTap: _pickAvatar,
                         child: Stack(
                           children: <Widget>[
@@ -248,15 +249,18 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                     _readOnlyField(l10n.email, ref.read(authControllerProvider).user?.email ?? ''),
                     _field(l10n.phoneNumber, _phoneCtrl, keyboard: TextInputType.phone),
                     const SizedBox(height: AppSpacing.lg),
-                    FilledButton(
-                      onPressed: _saving ? null : _save,
-                      child: _saving
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(l10n.save),
+                    Pressable.wrap(
+                      enabled: !_saving,
+                      child: FilledButton(
+                        onPressed: _saving ? null : _save,
+                        child: _saving
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : Text(l10n.save),
+                      ),
                     ),
                   ],
                 ),
@@ -294,23 +298,25 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   Widget _dateField(BuildContext context, String label) {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: InkWell(
-        onTap: () async {
-          final picked = await showDatePicker(
-            context: context,
-            initialDate: _dob ?? DateTime(2000),
-            firstDate: DateTime(1900),
-            lastDate: DateTime.now(),
-          );
-          if (picked != null) setState(() => _dob = picked);
-        },
-        child: InputDecorator(
+      child: Pressable.wrap(
+        child: InkWell(
+          onTap: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: _dob ?? DateTime(2000),
+              firstDate: DateTime(1900),
+              lastDate: DateTime.now(),
+            );
+            if (picked != null) setState(() => _dob = picked);
+          },
+          child: InputDecorator(
           decoration: InputDecoration(labelText: label),
           child: Text(
             _dob == null
                 ? ''
                 : '${_dob!.year}-${_dob!.month.toString().padLeft(2, '0')}-${_dob!.day.toString().padLeft(2, '0')}',
           ),
+        ),
         ),
       ),
     );

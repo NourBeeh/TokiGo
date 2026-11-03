@@ -4,6 +4,7 @@ import 'package:tokigo/core/domain/models/offers/car_offer.dart';
 import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
 import 'package:tokigo/core/domain/models/offers/travel_package_offer.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -22,15 +23,16 @@ class OfferDetailsSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final typography = AppTypography.forLight();
     final rows = _rowsFor(context, offer);
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.tokigoColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.outline),
+        border: Border.all(color: context.tokigoColors.outline),
       ),
       child: Column(
         children: <Widget>[
@@ -38,20 +40,20 @@ class OfferDetailsSummaryCard extends StatelessWidget {
             if (i > 0) const SizedBox(height: AppSpacing.md),
             Row(
               children: <Widget>[
-                Icon(rows[i].$3, size: 18, color: AppColors.brand),
+                Icon(rows[i].$3, size: 18, color: context.tokigoColors.brand),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Text(
                     rows[i].$1,
                     style: typography.caption.copyWith(
-                      color: AppColors.textTertiary,
+                      color: context.tokigoColors.textTertiary,
                     ),
                   ),
                 ),
                 Text(
                   rows[i].$2,
                   style: typography.bodyMedium.copyWith(
-                    color: AppColors.textPrimary,
+                    color: context.tokigoColors.textPrimary,
                   ),
                 ),
               ],

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 
 /// Cancellation-policy line: check (free cancellation) or info icon + caption.
@@ -25,7 +25,9 @@ class CardCancellation extends StatelessWidget {
         Icon(
           freeCancellation ? Icons.check_circle_outline : Icons.info_outline,
           size: 14,
-          color: freeCancellation ? AppColors.success : scheme.onSurfaceVariant,
+          color: freeCancellation
+              ? context.tokigoColors.success
+              : scheme.onSurfaceVariant,
         ),
         const SizedBox(width: AppSpacing.xs),
         Expanded(

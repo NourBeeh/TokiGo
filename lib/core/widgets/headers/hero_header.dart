@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/ui/app_wordmark.dart';
 import 'package:tokigo/core/widgets/cards/card.dart';
 import 'package:tokigo/core/widgets/cards/card_image.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tokigo/core/auth/auth_provider.dart';
 import 'package:tokigo/features/search/domain/search_context.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
@@ -64,7 +66,9 @@ class HeroHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     final l10n = AppLocalizations.of(context)!;
 
     // Hero image: full-bleed or placeholder gradient
@@ -84,7 +88,7 @@ class HeroHeader extends StatelessWidget {
     );
 
     return Card(
-      color: Colors.white,
+      color: context.tokigoColors.surface,
       clipBehavior: Clip.antiAlias,
       child: Stack(
         clipBehavior: Clip.none,
@@ -131,7 +135,7 @@ class HeroHeader extends StatelessWidget {
                     child: Text(
                       title!,
                       style: typography.priceHero.copyWith(
-                        color: AppColors.textPrimary,
+                        color: context.tokigoColors.textPrimary,
                       ),
                     ),
                   ),
@@ -143,7 +147,7 @@ class HeroHeader extends StatelessWidget {
                   Text(
                     subtitle!,
                     style: typography.body.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.tokigoColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -175,8 +179,9 @@ class _PlaceholderGradient extends StatelessWidget {
   final double height;
 
   @override
-  Widget build(BuildContext context) => Container(
-    color: AppColors.surfaceSecondary,
+  Widget build(BuildContext context) {
+    return Container(
+      color: context.tokigoColors.surfaceSecondary,
     height: height,
     width: double.infinity,
     child: Center(
@@ -189,6 +194,7 @@ class _PlaceholderGradient extends StatelessWidget {
       ),
     ),
   );
+  }
 }
 
 /// Search field embedded in the hero header.
@@ -206,17 +212,19 @@ class _SearchField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
 
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AppColors.hairline),
+        color: context.tokigoColors.surface,
+        border: Border.all(color: context.tokigoColors.hairline),
         borderRadius: AppRadius.mdBorder,
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: AppColors.brand.withValues(alpha: 0.04),
+            color: context.tokigoColors.brand.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -226,17 +234,17 @@ class _SearchField extends StatelessWidget {
         padding: const EdgeInsetsDirectional.fromSTEB(AppSpacing.sm, 0, AppSpacing.sm, 0),
         child: Row(
           children: <Widget>[
-            const Icon(
+            Icon(
               Icons.search_rounded,
               size: 20,
-              color: AppColors.textTertiary,
+              color: context.tokigoColors.textTertiary,
             ),
             const SizedBox(width: AppSpacing.xs),
             Expanded(
               child: TextField(
                 decoration: InputDecoration(
                   hintText: l10n.searchHint,
-                  hintStyle: typography.body.copyWith(color: AppColors.textTertiary),
+                  hintStyle: typography.body.copyWith(color: context.tokigoColors.textTertiary),
                   border: InputBorder.none,
                   isDense: true,
                 ),
@@ -245,10 +253,10 @@ class _SearchField extends StatelessWidget {
             ),
             if (showClear)
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.close_rounded,
                   size: 18,
-                  color: AppColors.textTertiary,
+                  color: context.tokigoColors.textTertiary,
                 ),
                 onPressed: () {},
               ),
@@ -284,12 +292,12 @@ class _ActionRow extends StatelessWidget {
       children: <Widget>[_TopActionButton(
         icon: Icons.luggage_outlined,
         label: l10n.bag,
-        color: AppColors.brandRed,
+        color: context.tokigoColors.brandRed,
         onTap: () => context.push('/bag'),
       ), const SizedBox(width: AppSpacing.md), _TopActionButton(
         icon: Icons.notifications_none_rounded,
         label: l10n.notifications,
-        color: AppColors.textPrimary,
+        color: context.tokigoColors.textPrimary,
         onTap: () => context.push('/notifications'),
       ), const SizedBox(width: AppSpacing.md), _HomeAvatar(),],
     );
@@ -312,7 +320,9 @@ class _TopActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -340,28 +350,48 @@ class _TopActionButton extends StatelessWidget {
   }
 }
 
-/// Profile destination as a monochrome icon, without an avatar or tile.
-class _HomeAvatar extends StatelessWidget {
+/// Profile destination as a circular avatar showing the user's photo (or a
+/// person glyph when no photo is set).
+class _HomeAvatar extends ConsumerWidget {
+  const _HomeAvatar();
+
   static const double size = 48;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authUserProvider);
+    final avatarUrl = user?.avatarUrl?.trim() ?? '';
+    final name = (user?.displayName?.trim().isNotEmpty ?? false)
+        ? user!.displayName!.trim()
+        : (user?.email.trim() ?? '');
+
     return Material(
       color: Colors.transparent,
       clipBehavior: Clip.antiAlias,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(size / 2),
       child: InkWell(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(size / 2),
         onTap: () => context.push('/profile'),
-        child: SizedBox(
-          width: size,
-          height: size,
-          child: const Center(
-            child: Icon(
-              Icons.person_outline_rounded,
-              size: 25,
-              color: AppColors.textPrimary,
-            ),
+        child: ClipOval(
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: avatarUrl.isNotEmpty
+                ? CardImage(
+                    url: avatarUrl,
+                    fit: BoxFit.cover,
+                    fallbackIcon: Icons.person_outline_rounded,
+                    semanticLabel: name,
+                  )
+                : Container(
+                    color: context.tokigoColors.surfaceSecondary,
+                    alignment: Alignment.center,
+                    child: Icon(
+                      Icons.person_rounded,
+                      size: 24,
+                      color: context.tokigoColors.textSecondary,
+                    ),
+                  ),
           ),
         ),
       ),

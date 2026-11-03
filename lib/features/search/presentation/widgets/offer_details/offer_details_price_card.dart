@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -32,6 +33,7 @@ class OfferDetailsPriceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final typography = AppTypography.forLight();
     final l10n = AppLocalizations.of(context)!;
     final stayInfo = stay;
@@ -46,9 +48,9 @@ class OfferDetailsPriceCard extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(AppSpacing.lg),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: context.tokigoColors.surface,
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.outline),
+            border: Border.all(color: context.tokigoColors.outline),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,7 +61,7 @@ class OfferDetailsPriceCard extends StatelessWidget {
                     child: Text(
                       l10n.offerTotalFromProvider,
                       style: typography.body.copyWith(
-                        color: AppColors.textSecondary,
+                        color: context.tokigoColors.textSecondary,
                       ),
                     ),
                   ),
@@ -69,7 +71,7 @@ class OfferDetailsPriceCard extends StatelessWidget {
                     // confirmation never disagree about the price.
                     '$currency ${price.toStringAsFixed(2)}',
                     style: typography.title.copyWith(
-                      color: AppColors.textPrimary,
+                      color: context.tokigoColors.textPrimary,
                     ),
                   ),
                 ],
@@ -85,7 +87,7 @@ class OfferDetailsPriceCard extends StatelessWidget {
                   ' ${l10n.cardPerUnitLabel(l10n.unitNight)}'
                   ' · ${stayInfo.derived ? l10n.offerPerNightDerived(l10n.hotelNightsCount(stayInfo.nights)) : l10n.offerPerNightStated}',
                   style: typography.caption.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.tokigoColors.textSecondary,
                   ),
                 ),
               ],
@@ -93,7 +95,7 @@ class OfferDetailsPriceCard extends StatelessWidget {
               Text(
                 l10n.offerPriceNote,
                 style: typography.caption.copyWith(
-                  color: AppColors.textTertiary,
+                  color: context.tokigoColors.textTertiary,
                 ),
               ),
               const SizedBox(height: AppSpacing.xxs),
@@ -102,7 +104,7 @@ class OfferDetailsPriceCard extends StatelessWidget {
               Text(
                 l10n.offerRevalidated,
                 style: typography.caption.copyWith(
-                  color: AppColors.textTertiary,
+                  color: context.tokigoColors.textTertiary,
                   fontSize: AppTypography.fontSizeLabel,
                 ),
               ),

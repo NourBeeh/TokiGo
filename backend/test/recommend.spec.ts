@@ -268,7 +268,7 @@ describe('RecommendedHotelService — ISO-2 country is always sent', () => {
 });
 
 describe('RecommendedHotelService — snapshot cache', () => {
-  it('caches a non-empty snapshot with a short TTL, keyed by country + limit + dates', async () => {
+  it('caches a non-empty snapshot by language, country, limit, and dates', async () => {
     const { cache, sets } = recordingCache();
     const service = makeService(fakeNuitee(), fakeAi(null), fakeProfiles(), { cache });
 
@@ -279,7 +279,7 @@ describe('RecommendedHotelService — snapshot cache', () => {
     // One date per scanned night, comma separated: the window IS the cache
     // identity, so a snapshot can never be served for a night it did not price.
     expect(sets[0].key).toMatch(
-      /^home:recommended:FR:6:\d{4}-\d{2}-\d{2}(,\d{4}-\d{2}-\d{2})*$/,
+      /^home:recommended:en:FR:6:\d{4}-\d{2}-\d{2}(,\d{4}-\d{2}-\d{2})*$/,
     );
   });
 
@@ -316,9 +316,29 @@ describe('RecommendedHotelService — snapshot cache', () => {
     });
 
     expect(sets.map((s) => s.key)).toEqual([
-      expect.stringContaining('home:recommended:FR:'),
-      expect.stringContaining('home:recommended:AE:'),
+      expect.stringContaining('home:recommended:en:FR:'),
+      expect.stringContaining('home:recommended:en:AE:'),
     ]);
+  });
+
+  it('does not reuse an English recommendation snapshot for Arabic', async () => {
+    const { cache, sets } = recordingCache();
+    const nuitee = fakeNuitee();
+    const service = makeService(nuitee, fakeAi(null), fakeProfiles(), { cache });
+
+    await service.recommend({ countryCode: 'EG', language: 'en' });
+    await service.recommend({ countryCode: 'EG', language: 'ar' });
+
+    expect(sets.map((entry) => entry.key)).toEqual([
+      expect.stringContaining('home:recommended:en:EG:'),
+      expect.stringContaining('home:recommended:ar:EG:'),
+    ]);
+    expect(nuitee.searchHotels).toHaveBeenCalledWith(
+      expect.objectContaining({ language: 'en' }),
+    );
+    expect(nuitee.searchHotels).toHaveBeenCalledWith(
+      expect.objectContaining({ language: 'ar' }),
+    );
   });
 
   it('failed/empty results are NOT cached (the provider may recover)', async () => {

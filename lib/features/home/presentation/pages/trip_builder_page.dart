@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/features/home/application/trip_draft_provider.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
@@ -29,7 +30,7 @@ class TripBuilderPage extends ConsumerWidget {
     }
     final extras = <String, dynamic>{'city': draft.destination};
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -37,13 +38,15 @@ class TripBuilderPage extends ConsumerWidget {
               child: AppPageHeader(
                 title: l10n.tripBuilderTitle,
                 subtitle: draft.destination,
-                trailing: IconButton(
-                  tooltip: l10n.tripBuilderCancel,
-                  onPressed: () {
-                    ref.read(tripDraftProvider.notifier).clear();
-                    context.pop();
-                  },
-                  icon: const Icon(Icons.close_rounded),
+                trailing: Pressable.wrap(
+                  child: IconButton(
+                    tooltip: l10n.tripBuilderCancel,
+                    onPressed: () {
+                      ref.read(tripDraftProvider.notifier).clear();
+                      context.pop();
+                    },
+                    icon: const Icon(Icons.close_rounded),
+                  ),
                 ),
               ),
             ),
@@ -53,7 +56,7 @@ class TripBuilderPage extends ConsumerWidget {
                 child: Text(
                   l10n.tripBuilderAddProducts,
                   style: AppTypography.forLight().title.copyWith(
-                    color: AppColors.textPrimary,
+                    color: context.tokigoColors.textPrimary,
                   ),
                 ),
               ),
@@ -104,7 +107,7 @@ class TripBuilderPage extends ConsumerWidget {
                 child: Text(
                   l10n.tripBuilderSelected,
                   style: AppTypography.forLight().title.copyWith(
-                    color: AppColors.textPrimary,
+                    color: context.tokigoColors.textPrimary,
                   ),
                 ),
               ),
@@ -136,12 +139,14 @@ class TripBuilderPage extends ConsumerWidget {
                         Text(
                           '${item.currency} ${item.price.toStringAsFixed(2)}',
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.close_rounded),
-                          tooltip: l10n.tripBuilderRemove,
-                          onPressed: () => ref
-                              .read(tripDraftProvider.notifier)
-                              .remove(item.offerType),
+                        Pressable.wrap(
+                          child: IconButton(
+                            icon: const Icon(Icons.close_rounded),
+                            tooltip: l10n.tripBuilderRemove,
+                            onPressed: () => ref
+                                .read(tripDraftProvider.notifier)
+                                .remove(item.offerType),
+                          ),
                         ),
                       ],
                     ),
@@ -169,7 +174,7 @@ class TripBuilderPage extends ConsumerWidget {
                         child: Text(
                           '${entry.key} ${entry.value.toStringAsFixed(2)}',
                           style: AppTypography.forLight().headline.copyWith(
-                            color: AppColors.brand,
+                            color: context.tokigoColors.brand,
                           ),
                         ),
                       ),
@@ -180,7 +185,7 @@ class TripBuilderPage extends ConsumerWidget {
                     Text(
                       l10n.tripBuilderTotalNote,
                       style: AppTypography.forLight().caption.copyWith(
-                        color: AppColors.textSecondary,
+                        color: context.tokigoColors.textSecondary,
                       ),
                     ),
                   ],
@@ -204,9 +209,11 @@ class _AddProductButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
   @override
-  Widget build(BuildContext context) => OutlinedButton.icon(
-    onPressed: onTap,
-    icon: Icon(icon),
-    label: Text(label),
+  Widget build(BuildContext context) => Pressable.wrap(
+    child: OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon),
+      label: Text(label),
+    ),
   );
 }

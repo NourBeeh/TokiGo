@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tokigo/core/auth/auth_provider.dart';
 import 'package:tokigo/core/memory/explicit_preference_signal.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/core/widgets/search_filter_chips.dart';
 import 'package:tokigo/features/search/application/providers/search_providers.dart';
 import 'package:tokigo/features/search/application/controllers/flight_search_controller.dart';
@@ -12,9 +13,10 @@ import 'package:tokigo/features/search/presentation/widgets/search_states_view.d
 import 'package:tokigo/features/search/presentation/widgets/destination_picker_sheet.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart'
     show geoCountryProvider, profileRepositoryProvider;
+import 'package:tokigo/shared/providers/locale_provider.dart';
 import 'package:tokigo/features/search/presentation/widgets/flight_search_card.dart';
 import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -382,6 +384,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
         adults: _passengers,
         legs: legs,
         market: _marketCountryCode,
+        currency: ref.read(currencyProvider),
       );
       _lastParams = params;
       ref.read(flightSearchControllerProvider.notifier).search(params);
@@ -403,6 +406,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
       tripType: _roundTrip ? 'roundtrip' : 'oneway',
       adults: _passengers,
       market: _marketCountryCode,
+      currency: ref.read(currencyProvider),
     );
     _lastParams = params;
     ref.read(flightSearchControllerProvider.notifier).search(params);
@@ -675,13 +679,15 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
         ),
       Align(
         alignment: AlignmentDirectional.centerStart,
-        child: TextButton.icon(
-          onPressed: _addLeg,
-          icon: const Icon(Icons.add_rounded, size: 20),
-          label: Text(l10n.flightAddLeg),
-          style: TextButton.styleFrom(
-            foregroundColor: AppColors.brand,
-            minimumSize: const Size(48, 44),
+        child: Pressable.wrap(
+          child: TextButton.icon(
+            onPressed: _addLeg,
+            icon: const Icon(Icons.add_rounded, size: 20),
+            label: Text(l10n.flightAddLeg),
+            style: TextButton.styleFrom(
+              foregroundColor: context.tokigoColors.brand,
+              minimumSize: const Size(48, 44),
+            ),
           ),
         ),
       ),
@@ -694,9 +700,9 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.tokigoColors.surface,
         borderRadius: AppRadius.lgBorder,
-        border: Border.all(color: AppColors.outline),
+        border: Border.all(color: context.tokigoColors.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -707,17 +713,19 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
                 child: Text(
                   l10n.flightLegLabel(index + 1),
                   style: AppTypography.forLight().label.copyWith(
-                    color: AppColors.textTertiary,
+                    color: context.tokigoColors.textTertiary,
                   ),
                 ),
               ),
               if (_legs.length > 2)
-                IconButton(
-                  onPressed: () => _removeLeg(index),
-                  iconSize: 20,
-                  color: AppColors.textSecondary,
-                  tooltip: l10n.flightRemoveLeg,
-                  icon: const Icon(Icons.close_rounded),
+                Pressable.wrap(
+                  child: IconButton(
+                    onPressed: () => _removeLeg(index),
+                    iconSize: 20,
+                    color: context.tokigoColors.textSecondary,
+                    tooltip: l10n.flightRemoveLeg,
+                    icon: const Icon(Icons.close_rounded),
+                  ),
                 ),
             ],
           ),
@@ -871,22 +879,24 @@ class _SwapRouteButton extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
       child: Tooltip(
         message: tooltip,
-        child: Material(
-          color: AppColors.surface,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(AppRadius.pill)),
-            side: BorderSide(color: AppColors.outline),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onTap,
-            child: const SizedBox(
-              width: 40,
-              height: 40,
-              child: Icon(
-                Icons.swap_horiz_rounded,
-                size: 20,
-                color: AppColors.brand,
+        child: Pressable.wrap(
+          child: Material(
+            color: context.tokigoColors.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(AppRadius.pill)),
+              side: BorderSide(color: context.tokigoColors.outline),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: onTap,
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: Icon(
+                  Icons.swap_horiz_rounded,
+                  size: 20,
+                  color: context.tokigoColors.brand,
+                ),
               ),
             ),
           ),

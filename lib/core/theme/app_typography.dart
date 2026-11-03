@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
+import 'tokigo_colors.dart';
 
 /// Typography scale for TokiGo — "Warm Editorial" (reference A).
 ///
@@ -16,6 +17,10 @@ class AppTypography {
   const AppTypography.forLight()
     : textColor = AppColors.textPrimary,
       textMutedColor = AppColors.textSecondary;
+
+  AppTypography.forDark()
+    : textColor = TokiGoColors.dark().textPrimary,
+      textMutedColor = TokiGoColors.dark().textSecondary;
 
   final Color textColor;
   final Color textMutedColor;

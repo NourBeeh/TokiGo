@@ -51,8 +51,8 @@ class _DetachedBackButtonState extends State<DetachedBackButton> {
       child: Stack(
         children: <Widget>[
           widget.child,
-          PositionedDirectional(
-            start: AppSpacing.lg,
+          Positioned(
+            left: AppSpacing.lg,
             top: AppSpacing.sm,
             child: AppBackButton(
               variant: _detached

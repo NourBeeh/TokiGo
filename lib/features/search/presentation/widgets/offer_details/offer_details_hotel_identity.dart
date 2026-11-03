@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/features/search/presentation/widgets/hotel_amenities_strip.dart';
@@ -22,6 +23,7 @@ class OfferDetailsHotelIdentity extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final typography = AppTypography.forLight();
     final l10n = AppLocalizations.of(context)!;
     final rating = hotel.rating;
@@ -36,23 +38,23 @@ class OfferDetailsHotelIdentity extends StatelessWidget {
           country: hotel.country,
           // Doc 18 §2.5 — the class stars are bronze, 16px.
           iconSize: 16,
-          starColor: AppColors.starFill,
-          style: typography.body.copyWith(color: AppColors.textSecondary),
+          starColor: context.tokigoColors.starFill,
+          style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
         ),
         if (rating != null) ...<Widget>[
           const SizedBox(height: AppSpacing.xs),
           Row(
             children: <Widget>[
-              const Icon(
+              Icon(
                 Icons.star_rounded,
                 size: 16,
-                color: AppColors.starFill,
+                color: context.tokigoColors.starFill,
               ),
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 rating.toStringAsFixed(1),
                 style: typography.bodyMedium.copyWith(
-                  color: AppColors.textPrimary,
+                  color: context.tokigoColors.textPrimary,
                 ),
               ),
               if (reviews != null && reviews > 0) ...<Widget>[
@@ -60,7 +62,7 @@ class OfferDetailsHotelIdentity extends StatelessWidget {
                 Text(
                   '·',
                   style: typography.body.copyWith(
-                    color: AppColors.textSecondary,
+                    color: context.tokigoColors.textSecondary,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
@@ -71,7 +73,7 @@ class OfferDetailsHotelIdentity extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     // Doc 18 §2.5 — 13/400 `textSecondary` (AA on the sheet).
                     style: typography.caption.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.tokigoColors.textSecondary,
                     ),
                   ),
                 ),

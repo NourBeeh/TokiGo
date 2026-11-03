@@ -1,5 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { CacheService } from '../cache/cache.service';
 import { HotelProvider } from '../../common/providers/hotel.provider';
 import { ProviderResult } from '../../common/providers/provider.result';
 import { NuiteeClient } from './nuitee.client';
@@ -48,9 +49,14 @@ export class NuiteeService implements HotelProvider {
 
   private readonly logger = new Logger(NuiteeService.name);
   private readonly client: NuiteeClient;
+  private readonly contentCache?: CacheService;
 
-  constructor(configService: ConfigService) {
+  constructor(
+    configService: ConfigService,
+    @Optional() contentCache?: CacheService,
+  ) {
     this.client = new NuiteeClient(configService);
+    this.contentCache = contentCache;
   }
 
   /**
@@ -88,6 +94,20 @@ export class NuiteeService implements HotelProvider {
       });
 
       const hotelMeta = hotelMetaIndex(response);
+      if (params.language === 'ar') {
+        const hotelIds = [...hotelMeta.keys()];
+        const arabicMeta = await this.localizedHotelMetadata(hotelIds, 'ar');
+        for (const [hotelId, localized] of arabicMeta) {
+          const current = hotelMeta.get(hotelId) ?? {};
+          hotelMeta.set(hotelId, {
+            ...current,
+            ...localized,
+            nameEn: current.name,
+            nameAr: localized.name,
+            name: localized.name,
+          });
+        }
+      }
       const perHotel = cheapestPerHotel(extractRateResults(response));
 
       const mapped = [...perHotel.values()]
@@ -244,6 +264,7 @@ export class NuiteeService implements HotelProvider {
   async hotelContent(
     city: string,
     country?: string,
+    language?: string,
   ): Promise<ProviderResult<any>> {
     if (!this.client.enabled) {
       return { ...this.disabledResult(), error: 'NUITEE_API_KEY missing' };
@@ -252,6 +273,7 @@ export class NuiteeService implements HotelProvider {
       const query = new URLSearchParams({ cityName: city });
       const countryCode = country ?? countryFor(city);
       if (countryCode) query.set('countryCode', countryCode);
+      if (language) query.set('language', language);
 
       const response = await this.client.request(
         `/data/hotels?${query.toString()}`,
@@ -274,6 +296,107 @@ export class NuiteeService implements HotelProvider {
         timestamp: new Date(),
       };
     }
+  }
+
+  private async localizedHotelMetadata(
+    hotelIds: string[],
+    language: 'ar',
+  ): Promise<Map<string, Record<string, any>>> {
+    const localized = new Map<string, Record<string, any>>();
+    const missing: string[] = [];
+
+    for (const hotelId of hotelIds) {
+      const key = localizedHotelCacheKey(language, hotelId);
+      try {
+        const cached = await this.contentCache?.get<Record<string, any>>(key);
+        if (cached) {
+          if (cached.unavailable !== true) localized.set(hotelId, cached);
+          continue;
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Localized hotel cache read failed for ${hotelId}: ${(error as Error).message}`,
+        );
+      }
+      missing.push(hotelId);
+    }
+
+    if (missing.length === 0) return localized;
+
+    try {
+      const query = new URLSearchParams({
+        hotelIds: missing.join(','),
+        language,
+      });
+      const response = await this.client.request(
+        `/data/hotels?${query.toString()}`,
+        { method: 'GET' },
+      );
+      const hotels = response?.data ?? response?.hotels ?? [];
+      if (!Array.isArray(hotels)) {
+        this.logger.warn('Nuitee localized hotel content was not a list');
+        return localized;
+      }
+
+      for (const hotel of hotels) {
+        const id = String(hotel?.id ?? hotel?.hotelId ?? '');
+        const name = typeof hotel?.name === 'string' ? hotel.name.trim() : '';
+        if (!id || !missing.includes(id)) continue;
+        if (!name || !containsArabicScript(name)) {
+          try {
+            await this.contentCache?.set(
+              localizedHotelCacheKey(language, id),
+              { unavailable: true },
+              24 * 60 * 60,
+            );
+          } catch (error) {
+            this.logger.warn(
+              `Localized hotel cache write failed for ${id}: ${(error as Error).message}`,
+            );
+          }
+          continue;
+        }
+
+        localized.set(id, { ...hotel, name });
+        try {
+          await this.contentCache?.set(
+            localizedHotelCacheKey(language, id),
+            { ...hotel, name },
+            7 * 24 * 60 * 60,
+          );
+        } catch (error) {
+          this.logger.warn(
+            `Localized hotel cache write failed for ${id}: ${(error as Error).message}`,
+          );
+        }
+      }
+
+      const returnedIds = new Set(
+        hotels
+          .map((hotel: any) => String(hotel?.id ?? hotel?.hotelId ?? ''))
+          .filter(Boolean),
+      );
+      for (const hotelId of missing) {
+        if (returnedIds.has(hotelId)) continue;
+        try {
+          await this.contentCache?.set(
+            localizedHotelCacheKey(language, hotelId),
+            { unavailable: true },
+            24 * 60 * 60,
+          );
+        } catch (error) {
+          this.logger.warn(
+            `Localized hotel cache write failed for ${hotelId}: ${(error as Error).message}`,
+          );
+        }
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Nuitee Arabic hotel content unavailable: ${(error as Error).message}`,
+      );
+    }
+
+    return localized;
   }
 
   /** Honest "provider disabled" payload — never fake availability. */
@@ -304,6 +427,16 @@ export class NuiteeService implements HotelProvider {
       timestamp: new Date(),
     };
   }
+}
+
+function localizedHotelCacheKey(language: string, hotelId: string): string {
+  return `nuitee:hotel-content:${language}:${hotelId}`;
+}
+
+function containsArabicScript(value: string): boolean {
+  return /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
+    value,
+  );
 }
 
 function firstNameOf(fullName: string): string {

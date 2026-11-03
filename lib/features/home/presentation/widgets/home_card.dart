@@ -1,6 +1,8 @@
+import "package:tokigo/core/theme/tokigo_colors.dart";
 import 'package:flutter/material.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/widgets/cards/card.dart';
 import 'package:tokigo/features/home/presentation/widgets/deal_card.dart';
@@ -35,7 +37,7 @@ class HomeCard extends StatelessWidget {
       case HomeCardType.destination:
         return DestinationDiscoveryCard(item: item, onTap: onTap);
       case HomeCardType.deal:
-        return DealCard(item: item);
+        return DealCard(item: item, onTap: onTap);
       case HomeCardType.flight:
         return const HomeSkeletonCard();
     }
@@ -62,6 +64,10 @@ class HomeSkeletonCard extends StatelessWidget {
       onTap: null,
       enabled: false,
       loading: true,
+      showBorder: true,
+      borderColor: TravelCardStyle.borderColor(context),
+      showShadow: false,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       semanticsLabel: 'Loading',
       padding: EdgeInsets.zero,
       child: cardLoadingSemantics(
@@ -83,8 +89,14 @@ class HomeSkeletonCard extends StatelessWidget {
                   : MainAxisSize.min,
               children: [
                 imageWidget,
-                Padding(
+                Container(
                   padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: context.tokigoColors.surface,
+                    border: Border(
+                      top: BorderSide(color: context.tokigoColors.hairline),
+                    ),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
@@ -101,7 +113,10 @@ class HomeSkeletonCard extends StatelessWidget {
                         ],
                       ),
                       CardSkeleton.gap(height: AppSpacing.sm),
-                      CardSkeleton.price(width: 88),
+                      Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: CardSkeleton.price(width: 88),
+                      ),
                     ],
                   ),
                 ),

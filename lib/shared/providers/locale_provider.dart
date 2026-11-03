@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:tokigo/core/geo/currency.dart';
 import 'package:tokigo/core/storage/deferred_offline_cache.dart';
 import 'package:tokigo/core/storage/offline_cache_providers.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -76,5 +77,56 @@ final localeProvider = NotifierProvider<LocaleController, Locale>(
   LocaleController.new,
 );
 
-/// Reactive display-currency preference (ISO code).
-final currencyProvider = StateProvider<String>((ref) => 'USD');
+/// Reactive, persisted display-currency preference (ISO-4217).
+///
+/// `null` means **AUTO**: the backend applies the market currency (EGP/SAR/AED,
+/// or USD outside those markets). A non-null value is the traveller's explicit
+/// choice and is sent to the backend on every priced request, so the whole app
+/// shows that currency.
+class CurrencyController extends Notifier<String?> {
+  /// Where the chosen currency is stored (the shared device cache), so it
+  /// survives a restart like the language and theme choices do.
+  static const String cacheKey = 'settings:currency';
+
+  @override
+  String? build() {
+    _restore();
+    return null;
+  }
+
+  Future<void> _restore() async {
+    try {
+      final cache = ref.read(offlineCacheProvider);
+      // The disk cache may still be opening (see `main.dart`): wait for it so a
+      // slow launch restores the choice instead of dropping back to AUTO.
+      if (cache is DeferredOfflineCache && !cache.isAttached) {
+        await cache.ready;
+      }
+      final stored = await cache.read(cacheKey);
+      final saved = stored?['value'] as String?;
+      if (saved != null && displayCurrencies.contains(saved)) {
+        state = saved;
+      }
+    } catch (_) {
+      // Storage unavailable (tests, a very early launch): AUTO stays.
+    }
+  }
+
+  /// Selects an explicit currency, or `null` for AUTO. Unknown codes are
+  /// ignored. Persists best-effort; the in-memory choice applies immediately.
+  Future<void> setCurrency(String? code) async {
+    final normalized = code?.trim().toUpperCase();
+    if (normalized != null && !displayCurrencies.contains(normalized)) return;
+    if (normalized == state) return;
+    state = normalized;
+    try {
+      await ref.read(offlineCacheProvider).write(cacheKey, <String, dynamic>{
+        'value': normalized,
+      });
+    } catch (_) {}
+  }
+}
+
+final currencyProvider = NotifierProvider<CurrencyController, String?>(
+  CurrencyController.new,
+);

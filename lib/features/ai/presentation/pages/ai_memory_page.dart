@@ -3,12 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tokigo/core/memory/budget_currency.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/features/ai/application/explicit_memory_controller.dart';
 import 'package:tokigo/features/ai/application/memory_controls_providers.dart';
 import 'package:tokigo/features/ai/domain/explicit_memory_view.dart';
@@ -34,7 +35,7 @@ class AiMemoryPage extends ConsumerWidget {
     final signedIn = ref.watch(memoryControlsSignedInProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(
         child: AiEntranceAnimation(
           child: Column(
@@ -77,20 +78,22 @@ class _SignInPrompt extends StatelessWidget {
             Icon(
               Icons.lock_outline_rounded,
               size: 44,
-              color: AppColors.textSecondary,
+              color: context.tokigoColors.textSecondary,
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
               l10n.aiMemorySignInPrompt,
               textAlign: TextAlign.center,
               style: typography.bodyLarge.copyWith(
-                color: AppColors.textSecondary,
+                color: context.tokigoColors.textSecondary,
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            FilledButton(
-              onPressed: () => context.go('/auth'),
-              child: Text(l10n.signIn),
+            Pressable.wrap(
+              child: FilledButton(
+                onPressed: () => context.go('/auth'),
+                child: Text(l10n.signIn),
+              ),
             ),
           ],
         ),
@@ -176,18 +179,23 @@ class _EmptyState extends StatelessWidget {
             Icon(
               Icons.psychology_alt_outlined,
               size: 44,
-              color: AppColors.textSecondary,
+              color: context.tokigoColors.textSecondary,
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
               l10n.aiMemoryEmpty,
               textAlign: TextAlign.center,
               style: typography.bodyLarge.copyWith(
-                color: AppColors.textSecondary,
+                color: context.tokigoColors.textSecondary,
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            TextButton(onPressed: onRetry, child: Text(l10n.adminRetry)),
+            Pressable.wrap(
+              child: TextButton(
+                onPressed: onRetry,
+                child: Text(l10n.adminRetry),
+              ),
+            ),
           ],
         ),
       ),
@@ -219,9 +227,11 @@ class _ErrorBanner extends StatelessWidget {
                 style: TextStyle(color: scheme.onErrorContainer),
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.close, size: 18),
-              onPressed: onDismiss,
+            Pressable.wrap(
+              child: IconButton(
+                icon: const Icon(Icons.close, size: 18),
+                onPressed: onDismiss,
+              ),
             ),
           ],
         ),
@@ -244,7 +254,7 @@ class _MemoryCard extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.tokigoColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.4)),
       ),
@@ -256,36 +266,40 @@ class _MemoryCard extends ConsumerWidget {
             Text(
               memory.title,
               style: typography.bodyLargeMedium.copyWith(
-                color: AppColors.textPrimary,
+                color: context.tokigoColors.textPrimary,
               ),
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               memory.displayValue,
               style: typography.bodyLarge.copyWith(
-                color: AppColors.textSecondary,
+                color: context.tokigoColors.textSecondary,
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: <Widget>[
-                TextButton.icon(
-                  onPressed: () => _openEditor(context, controller),
-                  icon: const Icon(Icons.edit_outlined, size: 16),
-                  label: Text(l10n.aiMemoryEdit),
+                Pressable.wrap(
+                  child: TextButton.icon(
+                    onPressed: () => _openEditor(context, controller),
+                    icon: const Icon(Icons.edit_outlined, size: 16),
+                    label: Text(l10n.aiMemoryEdit),
+                  ),
                 ),
-                TextButton.icon(
-                  onPressed: () async {
-                    final ok = await controller.delete(memory);
-                    if (ok && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l10n.aiMemoryDeleted)),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.delete_outline_rounded, size: 16),
-                  label: Text(l10n.aiMemoryDelete),
+                Pressable.wrap(
+                  child: TextButton.icon(
+                    onPressed: () async {
+                      final ok = await controller.delete(memory);
+                      if (ok && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(l10n.aiMemoryDeleted)),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.delete_outline_rounded, size: 16),
+                    label: Text(l10n.aiMemoryDelete),
+                  ),
                 ),
               ],
             ),
@@ -330,14 +344,16 @@ class _ClearAllBar extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: SizedBox(
           width: double.infinity,
-          child: OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: scheme.error,
-              side: BorderSide(color: scheme.error.withValues(alpha: 0.5)),
+          child: Pressable.wrap(
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: scheme.error,
+                side: BorderSide(color: scheme.error.withValues(alpha: 0.5)),
+              ),
+              onPressed: () => _confirmClearAll(context),
+              icon: const Icon(Icons.delete_sweep_outlined, size: 18),
+              label: Text(l10n.aiMemoryClearAll),
             ),
-            onPressed: () => _confirmClearAll(context),
-            icon: const Icon(Icons.delete_sweep_outlined, size: 18),
-            label: Text(l10n.aiMemoryClearAll),
           ),
         ),
       ),
@@ -352,16 +368,20 @@ class _ClearAllBar extends StatelessWidget {
         title: Text(l10n.aiMemoryClearAll),
         content: Text(l10n.aiMemoryClearAllConfirm),
         actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(l10n.adminCancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+          Pressable.wrap(
+            child: TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(l10n.adminCancel),
             ),
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(l10n.aiMemoryClearAll),
+          ),
+          Pressable.wrap(
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(dialogContext).colorScheme.error,
+              ),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(l10n.aiMemoryClearAll),
+            ),
           ),
         ],
       ),
@@ -496,7 +516,7 @@ class _MemoryEditorSheetState extends State<_MemoryEditorSheet> {
         children: <Widget>[
           Text(
             l10n.aiMemoryEdit,
-            style: typography.title.copyWith(color: AppColors.textPrimary),
+            style: typography.title.copyWith(color: context.tokigoColors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.md),
           if (kind == 'preferred_destination')
@@ -580,7 +600,12 @@ class _MemoryEditorSheetState extends State<_MemoryEditorSheet> {
           const SizedBox(height: AppSpacing.lg),
           SizedBox(
             width: double.infinity,
-            child: FilledButton(onPressed: _save, child: Text(l10n.adminSave)),
+            child: Pressable.wrap(
+              child: FilledButton(
+                onPressed: _save,
+                child: Text(l10n.adminSave),
+              ),
+            ),
           ),
         ],
       ),

@@ -2,11 +2,11 @@
 """Generate the TokiGo wordmark rasters from the app's own brand spec.
 
 The splash drawables are *generated* Android resources (flutter_native_splash),
-and the in-app logotype is text (`lib/core/ui/app_wordmark.dart`). For the two
-to stay identical, the raster must be produced with the exact same font, weight,
+and the in-app logotype is text (`lib/core/ui/app_wordmark.dart`). For both to
+stay identical, the raster must be produced with the exact same font, weight,
 tracking, gap and colours the widget renders. This script is that bridge: it
-draws "TokiGo" with the bundled Manrope variable font and writes the two
-masters that `pubspec.yaml` feeds to flutter_native_splash.
+draws "TokiGo" with the bundled Manrope variable font and writes the light and
+dark masters that `pubspec.yaml` feeds to flutter_native_splash.
 
 Canonical spec (keep in sync with `lib/core/ui/app_wordmark.dart` and
 `lib/core/theme/app_colors.dart`):
@@ -28,6 +28,9 @@ Writes:
                                                mark inside the system safe
                                                circle - Android masks the
                                                outer third of the icon)
+  assets/branding/logo_wordmark_dark.png      dark-mode wide master, white ink
+  assets/branding/logo_wordmark_android12_dark.png
+                                              dark-mode square master
 
 Then regenerate the drawables:
 
@@ -55,6 +58,7 @@ WEIGHT = 800  # FontWeight.w800 == AppTypography.weightExtraBold
 TRACKING_EM = -0.012  # AppWordmark.trackingEm
 GAP_EM = 0.16  # AppWordmark.gapEm
 INK = (0x11, 0x11, 0x11)  # AppColors.wordmarkInk
+INK_DARK = (0xFF, 0xFF, 0xFF)
 GO = (0xFF, 0x2D, 0x2D)  # AppColors.brandRed
 
 # The masters are drawn on a 4x (xxxhdpi) grid so the source PNG equals what
@@ -72,6 +76,8 @@ REFERENCE_PX = 180  # first-pass render used to solve the font size
 HALVES = (("Toki", INK), ("Go", GO))
 OUT_WIDE = Path("assets/branding/logo_wordmark.png")
 OUT_SQUARE = Path("assets/branding/logo_wordmark_android12.png")
+OUT_WIDE_DARK = Path("assets/branding/logo_wordmark_dark.png")
+OUT_SQUARE_DARK = Path("assets/branding/logo_wordmark_android12_dark.png")
 
 
 def render_half(text: str, font: ImageFont.FreeTypeFont) -> tuple[Image.Image, int]:
@@ -99,10 +105,14 @@ def render_half(text: str, font: ImageFont.FreeTypeFont) -> tuple[Image.Image, i
     return canvas.crop(bbox), baseline_row
 
 
-def build_wordmark(font: ImageFont.FreeTypeFont) -> Image.Image:
+def build_wordmark(
+    font: ImageFont.FreeTypeFont,
+    ink_color: tuple[int, int, int] = INK,
+) -> Image.Image:
     """Compose the brand mark: 'Toki' + 0.16em + 'Go', baselines aligned."""
     gap = int(round(GAP_EM * font.size))
-    parts = [(render_half(text, font), color) for text, color in HALVES]
+    halves = ((HALVES[0][0], ink_color), HALVES[1])
+    parts = [(render_half(text, font), color) for text, color in halves]
 
     width = sum(mask.width for (mask, _), _ in parts) + gap * (len(parts) - 1)
     # Baseline sits at max(baseline_row) so no half can be clipped at the top.
@@ -145,11 +155,19 @@ def measure(img: Image.Image) -> dict:
     }
 
 
-def verify(img: Image.Image, label: str, safe_circle: bool = False) -> dict:
+def verify(
+    img: Image.Image,
+    label: str,
+    safe_circle: bool = False,
+    ink_color: tuple[int, int, int] = INK,
+) -> dict:
     """Fail loudly if the render is not the brand spec."""
     stats = measure(img)
     found = {c for c, _ in stats["colors"]}
-    want = {f"#{r:02X}{g:02X}{b:02X}" for _, (r, g, b) in ((0, INK), (1, GO))}
+    want = {
+        f"#{r:02X}{g:02X}{b:02X}"
+        for r, g, b in (ink_color, GO)
+    }
     print(
         f"  {label}: canvas={stats['canvas']} ink={stats['ink']} "
         f"colors={stats['colors']}"
@@ -197,31 +215,56 @@ def main() -> int:
     mark = build_wordmark(font)
     wide = centered(mark, CANVAS_WIDE)
     square = centered(mark, CANVAS_SQUARE)
+    dark_mark = build_wordmark(font, ink_color=INK_DARK)
+    wide_dark = centered(dark_mark, CANVAS_WIDE)
+    square_dark = centered(dark_mark, CANVAS_SQUARE)
     print(
         f"brand mark: font {font.size}px ({font.size / SCALE:g}dp) x{SCALE} "
         f"-> ink {mark.width / SCALE:g}x{mark.height / SCALE:g}dp"
     )
 
     if args.check:
-        for path, expected in ((OUT_WIDE, wide), (OUT_SQUARE, square)):
+        outputs = (
+            (OUT_WIDE, wide, INK, False),
+            (OUT_SQUARE, square, INK, True),
+            (OUT_WIDE_DARK, wide_dark, INK_DARK, False),
+            (OUT_SQUARE_DARK, square_dark, INK_DARK, True),
+        )
+        for path, expected, ink_color, safe_circle in outputs:
             if not path.exists():
                 raise SystemExit(f"missing {path}")
-            if path.read_bytes() != _encode(expected):
+            actual = Image.open(path).convert("RGBA")
+            if (
+                actual.size != expected.size
+                or actual.tobytes() != expected.tobytes()
+            ):
                 raise SystemExit(
                     f"{path} differs from the brand spec - "
                     "run: python tool/branding/generate_wordmark.py"
                 )
             verify(
-                Image.open(path).convert("RGBA"),
+                actual,
                 str(path),
-                safe_circle=path is OUT_SQUARE,
+                safe_circle=safe_circle,
+                ink_color=ink_color,
             )
         print("brand rasters match the spec")
         return 0
 
-    for path, img in ((OUT_WIDE, wide), (OUT_SQUARE, square)):
+    outputs = (
+        (OUT_WIDE, wide, INK, False),
+        (OUT_SQUARE, square, INK, True),
+        (OUT_WIDE_DARK, wide_dark, INK_DARK, False),
+        (OUT_SQUARE_DARK, square_dark, INK_DARK, True),
+    )
+    for path, img, ink_color, safe_circle in outputs:
         _write(path, _encode(img))
-        verify(img, str(path), safe_circle=path is OUT_SQUARE)
+        verify(
+            img,
+            str(path),
+            safe_circle=safe_circle,
+            ink_color=ink_color,
+        )
     print("now regenerate the Android drawables: dart run flutter_native_splash:create")
     return 0
 

@@ -1,3 +1,4 @@
+import 'package:tokigo/core/domain/models/offers/customer_price.dart';
 import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
 import 'package:tokigo/core/repositories/contracts/hotel_repository.dart';
 import 'package:tokigo/core/network/http_api_client.dart';
@@ -67,6 +68,8 @@ class HotelRepositoryImpl implements HotelRepository {
     List<String>? amenities,
     String? country,
     String? market,
+    String? currency,
+    String? language,
   }) {
     return <String, dynamic>{
       'city': city,
@@ -79,6 +82,8 @@ class HotelRepositoryImpl implements HotelRepository {
       'minPrice': minPrice,
       if (country != null && country.isNotEmpty) 'country': country,
       if (market != null && market.isNotEmpty) 'market': market,
+      if (currency != null && currency.isNotEmpty) 'currency': currency,
+      if (language != null && language.isNotEmpty) 'language': language,
       // Amenities: an explicit EMPTY list is meaningful (filter out
       // everything) only when the caller set it — null means "not set".
       if (amenities != null && amenities.isNotEmpty) 'amenities': amenities,
@@ -102,6 +107,8 @@ class HotelRepositoryImpl implements HotelRepository {
     amenities: _pendingAmenities,
     country: _pendingCountry,
     market: _pendingMarket,
+    currency: _pendingCurrency,
+    language: _pendingLanguage,
   );
 
   // The repository contract (`search({city, checkIn, checkOut, guests})`)
@@ -115,6 +122,8 @@ class HotelRepositoryImpl implements HotelRepository {
   List<String>? _pendingAmenities;
   String? _pendingCountry;
   String? _pendingMarket;
+  String? _pendingCurrency;
+  String? _pendingLanguage;
 
   /// Phase 3A — seeds the rich hotel search fields for the NEXT `search()`
   /// call (the interface stays backward-compatible for every existing
@@ -127,6 +136,8 @@ class HotelRepositoryImpl implements HotelRepository {
     List<String>? amenities,
     String? country,
     String? market,
+    String? currency,
+    String? language,
   }) {
     _pendingRooms = rooms;
     _pendingMinRating = minRating;
@@ -135,6 +146,8 @@ class HotelRepositoryImpl implements HotelRepository {
     _pendingAmenities = amenities;
     _pendingCountry = country;
     _pendingMarket = market;
+    _pendingCurrency = currency;
+    _pendingLanguage = language;
   }
 
   List<HotelOffer> _parseHotels(Map<String, dynamic> data) {
@@ -172,6 +185,10 @@ class HotelRepositoryImpl implements HotelRepository {
 
   HotelOffer? _offerFromMap(Map<String, dynamic> item) {
     try {
+      final rawCustomerPrice = item['customerPrice'];
+      final CustomerPrice? customerPrice = rawCustomerPrice is Map
+          ? CustomerPrice.fromJson(Map<String, dynamic>.from(rawCustomerPrice))
+          : null;
       return HotelOffer(
         id: item['id']?.toString() ?? '',
         providerId: item['providerId']?.toString() ?? 'nuitee',
@@ -179,6 +196,7 @@ class HotelRepositoryImpl implements HotelRepository {
         title: item['title']?.toString() ?? '',
         price: (item['price'] as num?)?.toDouble() ?? 0,
         currency: item['currency']?.toString() ?? 'USD',
+        customerPrice: customerPrice,
         city: item['city']?.toString() ?? '',
         country: item['country']?.toString() ?? '',
         checkIn:

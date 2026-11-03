@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 import 'package:tokigo/features/search/domain/country_airport_suggestions.dart';
 
@@ -275,8 +276,8 @@ class _PickerSheetState extends State<_PickerSheet> {
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.75,
         ),
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
+        decoration: BoxDecoration(
+          color: context.tokigoColors.surface,
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(AppRadius.xl),
           ),
@@ -292,7 +293,7 @@ class _PickerSheetState extends State<_PickerSheet> {
                   Text(
                     widget.title,
                     style: typography.title.copyWith(
-                      color: AppColors.textPrimary,
+                      color: context.tokigoColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -304,12 +305,17 @@ class _PickerSheetState extends State<_PickerSheet> {
                       prefixIcon: const Icon(Icons.search_rounded),
                       hintText: l10n?.pickerSearchHint ?? 'Search…',
                       suffixIcon: _query.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.close_rounded, size: 18),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() => _query = '');
-                              },
+                          ? Pressable.wrap(
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.close_rounded,
+                                  size: 18,
+                                ),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _query = '');
+                                },
+                              ),
                             )
                           : null,
                     ),
@@ -324,7 +330,7 @@ class _PickerSheetState extends State<_PickerSheet> {
                       child: Text(
                         l10n?.pickerNoMatches ?? 'No matches',
                         style: typography.body.copyWith(
-                          color: AppColors.textTertiary,
+                          color: context.tokigoColors.textTertiary,
                         ),
                       ),
                     )
@@ -360,22 +366,23 @@ class _PickerTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.md,
-          ),
+    return Pressable.wrap(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
+            ),
           child: Row(
             children: <Widget>[
               Container(
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppColors.brandContainer,
+                  color: context.tokigoColors.brandContainer,
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Center(
@@ -384,7 +391,7 @@ class _PickerTile extends StatelessWidget {
                         ? entry.code
                         : entry.code.substring(0, 2).toUpperCase(),
                     style: typography.captionSemibold.copyWith(
-                      color: AppColors.brand,
+                      color: context.tokigoColors.brand,
                     ),
                   ),
                 ),
@@ -400,15 +407,15 @@ class _PickerTile extends StatelessWidget {
                           child: Text(
                             entry.name,
                             style: typography.bodyLargeMedium.copyWith(
-                              color: AppColors.textPrimary,
+                              color: context.tokigoColors.textPrimary,
                             ),
                           ),
                         ),
                         if (entry.isPopular)
-                          const Icon(
+                          Icon(
                             Icons.star_rounded,
                             size: 14,
-                            color: AppColors.starFill,
+                            color: context.tokigoColors.starFill,
                           ),
                       ],
                     ),
@@ -416,7 +423,7 @@ class _PickerTile extends StatelessWidget {
                       Text(
                         '${entry.country} · ${entry.code}',
                         style: typography.caption.copyWith(
-                          color: AppColors.textTertiary,
+                          color: context.tokigoColors.textTertiary,
                         ),
                       ),
                   ],
@@ -425,6 +432,7 @@ class _PickerTile extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

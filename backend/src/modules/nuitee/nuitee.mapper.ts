@@ -209,6 +209,8 @@ export function mapRateToOffer(
       providerRateId: rateId,
       providerOfferId: entry?.offerId,
       providerHotelId: entry?.hotelId,
+      hotelNameEn: meta?.nameEn ?? meta?.name,
+      hotelNameAr: meta?.nameAr,
       retrievedAt: new Date().toISOString(),
       refundable,
       boardType: rate?.boardType,

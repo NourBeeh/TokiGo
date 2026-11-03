@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../offers/customer_price.dart';
 import 'home_types.dart';
 
 @immutable
@@ -12,6 +13,9 @@ class HomeItem {
     this.imageUrl,
     this.price,
     this.currency,
+    /// Backend-quoted display price (market/currency converted). The card shows
+    /// this when present; [price]/[currency] stay the provider's own figures.
+    this.customerPrice,
     this.rating,
     this.reviewCount,
     this.badge,
@@ -30,6 +34,7 @@ class HomeItem {
   final String? imageUrl;
   final double? price;
   final String? currency;
+  final CustomerPrice? customerPrice;
   final double? rating;
   final int? reviewCount;
   final String? badge;

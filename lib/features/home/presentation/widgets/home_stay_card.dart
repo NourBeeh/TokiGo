@@ -3,19 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/domain/models/offers/display_price.dart';
 import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/widgets/cards/overlap_stay_card.dart';
 import 'package:tokigo/features/home/presentation/home_stay_offer.dart';
 import 'package:tokigo/features/home/presentation/open_stay_map.dart';
 import 'package:tokigo/features/home/presentation/stay_distance.dart';
 import 'package:tokigo/features/home/presentation/widgets/cached_hotel_image.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart';
+import 'package:tokigo/features/profile/application/wishlist_controller.dart';
 import 'package:tokigo/features/search/domain/stay_price.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
-/// A stay on **card A** — the reference-A overlap card (4:3 photo, the white
-/// sheet biting 48px over it).
+/// A stay on the Home feed — a wide hotel photo above a distinct details panel.
 ///
 /// This is the one card the Home uses for a hotel, so the stays in the feed
 /// and the stays in the results are the same object on screen.
@@ -38,7 +39,7 @@ class HomeStayCard extends ConsumerWidget {
   /// passes its own action.
   final VoidCallback? onTap;
 
-  /// The Home rail uses a taller image while other stay surfaces keep 4:3.
+  /// The Home rail uses a wider image than other stay surfaces.
   final double aspectRatio;
 
   @override
@@ -56,8 +57,17 @@ class HomeStayCard extends ConsumerWidget {
     // only when it can be derived from the offer's own window — never by
     // assuming a nightly rate for a total that has no dates.
     final StayPrice? stayPrice = offer == null ? null : StayPrice.of(offer);
-    final double? amount = stayPrice?.perNight ?? item.price;
-    final String amountText = amount == null ? '' : _wholeAmount(amount);
+    final double? providerAmount = stayPrice?.perNight ?? item.price;
+    // Show the backend's converted CUSTOMER price when it exists, in the
+    // traveller's display currency; otherwise the provider's own figure.
+    final DisplayMoney? money = providerAmount == null
+        ? null
+        : displayMoneyFor(
+            providerAmount,
+            item.currency ?? '',
+            offer?.customerPrice,
+          );
+    final String amountText = money == null ? '' : _wholeAmount(money.amount);
     final String? unit = stayPrice?.perNight != null
         ? (l10n?.unitNight ?? 'night')
         : null;
@@ -86,6 +96,10 @@ class HomeStayCard extends ConsumerWidget {
           item.metadata['long'],
     );
 
+    final bool isSaved = offer == null
+        ? false
+        : ref.watch(wishlistProvider).any((HotelOffer o) => o.id == offer.id);
+
     return OverlapStayCard(
       media: StayPhoto(item: item),
       title: item.title,
@@ -103,13 +117,17 @@ class HomeStayCard extends ConsumerWidget {
             ),
       distanceText: distanceText,
       amountText: amountText,
-      currency: item.currency ?? '',
+      currency: money?.currency ?? item.currency ?? '',
       unit: unit,
-      // The card is tappable when it has an action: its own details, or the
-      // surface's (the AI answer hands the offer to the booking flow).
       enabled: onTap != null || offer != null || city.isNotEmpty,
       margin: margin,
       aspectRatio: aspectRatio,
+      isFavorite: isSaved,
+      onFavorite: offer == null
+          ? null
+          : (bool saved) => ref
+              .read(wishlistProvider.notifier)
+              .setSaved(offer, saved),
       // Owner decision (2026-10-25): the stay opens ITSELF. Sending the
       // traveller to a city search hid the hotel they had just tapped.
       onTap: onTap ?? _openStay(context, offer: offer, city: city),
@@ -156,12 +174,12 @@ class StayPhoto extends ConsumerWidget {
     final String? url = item.imageUrl;
     if (url == null || url.isEmpty) {
       return Container(
-        color: AppColors.surfaceTertiary,
+        color: context.tokigoColors.surfaceTertiary,
         alignment: Alignment.center,
-        child: const Icon(
+        child: Icon(
           Icons.house_rounded,
           size: 40,
-          color: AppColors.textTertiary,
+          color: context.tokigoColors.textTertiary,
         ),
       );
     }

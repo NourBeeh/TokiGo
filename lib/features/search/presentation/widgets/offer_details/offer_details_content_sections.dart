@@ -5,6 +5,7 @@ import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
 import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
 import 'package:tokigo/core/domain/models/offers/travel_package_offer.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/features/search/presentation/widgets/offer_details/offer_details_section_title.dart';
@@ -22,6 +23,7 @@ class OfferDetailsContentSections extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
     final typography = AppTypography.forLight();
     final l10n = AppLocalizations.of(context)!;
     final widgets = <Widget>[];
@@ -41,7 +43,7 @@ class OfferDetailsContentSections extends StatelessWidget {
         ),
         Text(
           description,
-          style: typography.body.copyWith(color: AppColors.textSecondary),
+          style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
         ),
       ]);
     }
@@ -60,7 +62,7 @@ class OfferDetailsContentSections extends StatelessWidget {
             '${taxes['description'] ?? l10n.offerTaxesFees}: '
             '${taxes['currency']} ${taxes['amount']}'
             '${taxes['included'] == true ? ' ${l10n.offerTaxesIncluded}' : ''}',
-            style: typography.body.copyWith(color: AppColors.textSecondary),
+            style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
           ),
         ]);
       }
@@ -79,18 +81,18 @@ class OfferDetailsContentSections extends StatelessWidget {
               until != null
                   ? l10n.offerFreeCancellationUntil('$until')
                   : l10n.offerRefundableRate,
-              style: typography.body.copyWith(color: AppColors.textSecondary),
+              style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
             )
           else
             Text(
               l10n.offerNonRefundableRate,
-              style: typography.body.copyWith(color: AppColors.textSecondary),
+              style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
             ),
           if (hotel.metadata['refundable'] == true && fee != null) ...[
             const SizedBox(height: AppSpacing.xxs),
             Text(
               l10n.offerCancellationFeeNote('$feeCurrency $fee'),
-              style: typography.caption.copyWith(color: AppColors.textTertiary),
+              style: typography.caption.copyWith(color: context.tokigoColors.textTertiary),
             ),
           ],
         ]);
@@ -102,7 +104,7 @@ class OfferDetailsContentSections extends StatelessWidget {
           ),
           Text(
             l10n.offerNonRefundableRate,
-            style: typography.body.copyWith(color: AppColors.textSecondary),
+            style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
           ),
         ]);
       }
@@ -120,7 +122,7 @@ class OfferDetailsContentSections extends StatelessWidget {
           ),
           Text(
             '$cancellation',
-            style: typography.body.copyWith(color: AppColors.textSecondary),
+            style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
           ),
         ]);
       }
@@ -133,7 +135,7 @@ class OfferDetailsContentSections extends StatelessWidget {
           ),
           Text(
             features.join(' · '),
-            style: typography.body.copyWith(color: AppColors.textSecondary),
+            style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
           ),
         ]);
       }
@@ -154,17 +156,17 @@ class OfferDetailsContentSections extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
             child: Row(
               children: <Widget>[
-                const Icon(
+                Icon(
                   Icons.check_rounded,
                   size: 18,
-                  color: AppColors.brand,
+                  color: context.tokigoColors.brand,
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
                     line,
                     style: typography.body.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.tokigoColors.textSecondary,
                     ),
                   ),
                 ),
@@ -189,7 +191,7 @@ class OfferDetailsContentSections extends StatelessWidget {
         CarOffer o => o.providerName,
         TravelPackageOffer o => o.providerName,
         _ => '',
-      }, style: typography.bodyMedium.copyWith(color: AppColors.textPrimary)),
+      }, style: typography.bodyMedium.copyWith(color: context.tokigoColors.textPrimary)),
     ]);
 
     return Column(

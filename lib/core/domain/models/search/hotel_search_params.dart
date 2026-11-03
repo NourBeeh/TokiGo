@@ -16,6 +16,8 @@ class HotelSearchParams {
   final List<String> amenities;
   final String? countryCode;
   final String? market;
+  final String? currency;
+  final String languageCode;
 
   const HotelSearchParams({
     required this.destination,
@@ -30,5 +32,7 @@ class HotelSearchParams {
     this.amenities = const [],
     this.countryCode,
     this.market,
+    this.currency,
+    this.languageCode = 'en',
   });
 }
