@@ -90,6 +90,14 @@ class HttpApiClient implements ApiClient {
   /// The port the backend listens on (see `backend/src/main.ts`).
   static const int _devPort = 3000;
 
+  /// Explicit opt-in for local development against a private LAN backend over
+  /// HTTP on release builds. Defaults to false and must never be enabled for
+  /// production.
+  static const bool _allowInsecureLocalApi = bool.fromEnvironment(
+    'ALLOW_INSECURE_LOCAL_API',
+    defaultValue: false,
+  );
+
   @override
   String get baseUrl {
     final String? override = baseUrlOverride;
@@ -117,15 +125,75 @@ class HttpApiClient implements ApiClient {
     return resolved;
   }
 
-  /// Release builds must never send tokens/data over plaintext HTTP.
+  /// Release builds must never send tokens/data over plaintext HTTP, unless
+  /// [ALLOW_INSECURE_LOCAL_API] is explicitly enabled for a private LAN host.
   static void _assertSecureBaseUrl(String resolved) {
-    assert(
-      !kReleaseMode || resolved.startsWith('https://'),
-      'HTTPS is required for API_BASE_URL in release builds.',
+    _validateBaseUrl(
+      resolved,
+      isRelease: kReleaseMode,
+      allowInsecureLocalApi: _allowInsecureLocalApi,
     );
-    if (kReleaseMode && resolved.startsWith('http://')) {
+  }
+
+  /// Visible for tests: validates [resolved] according to the release-mode
+  /// rules. In non-release builds every URL is accepted (debug/dev).
+  static void validateBaseUrl(
+    String resolved, {
+    bool isRelease = kReleaseMode,
+    bool allowInsecureLocalApi = _allowInsecureLocalApi,
+  }) {
+    _validateBaseUrl(
+      resolved,
+      isRelease: isRelease,
+      allowInsecureLocalApi: allowInsecureLocalApi,
+    );
+  }
+
+  static void _validateBaseUrl(
+    String resolved, {
+    required bool isRelease,
+    required bool allowInsecureLocalApi,
+  }) {
+    if (!isRelease) return;
+
+    if (resolved.startsWith('https://')) return;
+
+    if (!resolved.startsWith('http://')) {
       throw StateError('HTTPS is required for API_BASE_URL in release builds.');
     }
+
+    if (!allowInsecureLocalApi) {
+      throw StateError('HTTPS is required for API_BASE_URL in release builds.');
+    }
+
+    final Uri? uri = Uri.tryParse(resolved);
+    if (uri == null || uri.host.isEmpty) {
+      throw StateError('Invalid API_BASE_URL.');
+    }
+    if (!_isPrivateLanIpv4(uri.host)) {
+      throw StateError(
+        'HTTP is allowed only for private LAN IPv4 addresses in release builds.',
+      );
+    }
+  }
+
+  /// Returns true only for RFC1918 private IPv4 addresses.
+  static bool _isPrivateLanIpv4(String host) {
+    final RegExp ipv4 = RegExp(r'^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$');
+    final Match? match = ipv4.firstMatch(host);
+    if (match == null) return false;
+    final List<int> octets = <int>[
+      int.parse(match.group(1)!),
+      int.parse(match.group(2)!),
+      int.parse(match.group(3)!),
+      int.parse(match.group(4)!),
+    ];
+    if (octets.any((int o) => o < 0 || o > 255)) return false;
+
+    if (octets[0] == 10) return true;
+    if (octets[0] == 172 && octets[1] >= 16 && octets[1] <= 31) return true;
+    if (octets[0] == 192 && octets[1] == 168) return true;
+    return false;
   }
 
   @override
