@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tokigo/core/theme/app_motion.dart';
@@ -150,11 +152,17 @@ class SlideFromRightTransition extends CustomTransitionPage<void> {
 
 /// Convenience wrapper: wraps [child] with the right-edge slide transition
 /// for go-router page builders.
-CustomTransitionPage<void> slideFromRightPage({
+Page<void> slideFromRightPage({
   required Widget child,
   Object? arguments,
   String? name,
 }) {
+  if (defaultTargetPlatform == TargetPlatform.iOS) {
+    return CupertinoPage<void>(
+      name: name,
+      child: child,
+    );
+  }
   return SlideFromRightTransition(
     child: child,
     arguments: arguments,
