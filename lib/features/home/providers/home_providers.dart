@@ -27,38 +27,6 @@ import 'package:tokigo/shared/providers/locale_provider.dart';
 
 final apiClientProvider = Provider((ref) => HttpApiClient());
 
-final homeRepositoryProvider = Provider((ref) {
-  final client = ref.watch(apiClientProvider);
-  final cache = ref.watch(offlineCacheProvider);
-  return HomeRepositoryImpl(client, offlineCache: cache);
-});
-
-/// Read-only local behavior signals (Phase 1B). Backed by the shared offline
-/// cache; scans existing search keys, never writes.
-final localBehaviorStoreProvider = Provider<LocalBehaviorStore>((ref) {
-  return LocalBehaviorStore(ref.watch(offlineCacheProvider));
-});
-
-/// Phase 1C — Profile/Geo/Events/AI-rerank clients. All reuse the shared
-/// HTTP client + secure token storage (AdminHttpMixin-style auth headers).
-final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
-  return ProfileRepository(
-    ref.watch(apiClientProvider),
-    ref.watch(secureTokenStorageProvider),
-  );
-});
-
-final geoClientProvider = Provider<GeoClient>((ref) {
-  return GeoClient(ref.watch(apiClientProvider));
-});
-
-/// Device-level country choice, used when GPS permission is declined or
-/// unavailable. Only the ISO-2 code is persisted.
-final manualCountryCodeProvider =
-    NotifierProvider<ManualCountryCodeController, String?>(
-      ManualCountryCodeController.new,
-    );
-
 class ManualCountryCodeController extends Notifier<String?> {
   static const String cacheKey = 'settings:manual-country-code';
   int _changeGeneration = 0;
@@ -96,9 +64,10 @@ class ManualCountryCodeController extends Notifier<String?> {
     // so a profile-network failure must never surface as "not saved".
     if (ref.read(authUserProvider) != null) {
       try {
-        await ref
-            .read(profileRepositoryProvider)
-            .saveDetectedCountry(normalized, 'high');
+        await ref.read(profileRepositoryProvider).saveDetectedCountry(
+          normalized,
+          'high',
+        );
       } catch (_) {
         // The device-level choice stands; the profile syncs on a later edit.
       }
@@ -121,12 +90,35 @@ class ManualCountryCodeController extends Notifier<String?> {
   }
 }
 
-/// Country-level travel context shared by AI and search surfaces. This client
-/// never raises the OS permission dialog (the Home explainer does) and
-/// discards precise coordinates after the single lookup.
-///
-/// When [geoRefreshProvider] moves (the traveller granted location access),
-/// the session-scoped geo result is discarded and resolved again with GPS.
+final homeRepositoryProvider = Provider((ref) {
+  final client = ref.watch(apiClientProvider);
+  final cache = ref.watch(offlineCacheProvider);
+  return HomeRepositoryImpl(client, offlineCache: cache);
+});
+
+/// Device-level country choice, used when GPS permission is declined or
+/// unavailable. Only the ISO-2 code is persisted.
+final manualCountryCodeProvider =
+    NotifierProvider<ManualCountryCodeController, String?>(
+      ManualCountryCodeController.new,
+    );
+
+/// Phase 1C — Profile/Geo/Events/AI-rerank clients. All reuse the shared
+/// HTTP client + secure token storage (AdminHttpMixin-style auth headers).
+final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
+  return ProfileRepository(
+    ref.watch(apiClientProvider),
+    ref.watch(secureTokenStorageProvider),
+  );
+});
+
+/// Geo client for country resolution.
+final geoClientProvider = Provider<GeoClient>((ref) {
+  return GeoClient(ref.watch(apiClientProvider));
+});
+
+/// Phase 1C — Profile/Geo/Events/AI-rerank clients. All reuse the shared
+/// HTTP client + secure token storage (AdminHttpMixin-style auth headers).
 final geoCountryProvider = FutureProvider<GeoCountry?>((ref) {
   final int generation = ref.watch(geoRefreshProvider);
   final manualCountry = ref.watch(manualCountryCodeProvider);
@@ -158,6 +150,51 @@ Future<GeoCountry?> _resolveHomeCountry(Ref ref, {bool refresh = false}) async {
   );
 }
 
+/// Persisted GPS-detected country (if any). Writes the country code to the
+/// offline cache ONLY when the user has not manually selected a country.
+///
+/// This provider is read by the router's entry-point logic to decide whether
+/// to show the location explainer (no country) or the Home (country exists).
+final geoDetectedCountryProvider = FutureProvider<GeoCountry?>((ref) async {
+  // First, try the GPS-detected country (refs geoCountryProvider's logic).
+  final gpsCountry = await ref.read(geoCountryProvider.future);
+  if (gpsCountry != null) return gpsCountry;
+
+  // Fallback: profile country (already stored on the server).
+  final user = ref.read(authUserProvider);
+  if (user == null) return null;
+  final profile = await ref.read(profileRepositoryProvider).fetchProfile();
+  if (profile?.countryCode != null &&
+      profile!.countryCode != null &&
+      profile!.countryCode!.isNotEmpty) {
+    return GeoCountry(
+      countryCode: profile.countryCode!,
+      confidence: profile.countryConfidence,
+      source: 'profile',
+    );
+  }
+  return null;
+});
+
+/// Applies the GPS-detected country to disk (if the user has not manually
+/// selected one). Called after location is granted.
+Future<void> detectAndPersistCountry(Ref ref) async {
+  final manualCountry = ref.read(manualCountryCodeProvider);
+  if (manualCountry != null) return; // never overwrite manual selection
+
+  final detected = await ref.read(geoCountryProvider.future);
+  if (detected?.countryCode == null) return;
+
+  try {
+    await ref.read(offlineCacheProvider).write(
+      'settings:geolocation-country-code',
+      <String, dynamic>{'value': detected!.countryCode},
+    );
+  } catch (_) {
+    // Persistence failure must not block the UI or override the manual choice.
+  }
+}
+
 final eventsTrackerProvider = Provider<EventsTracker>((ref) {
   return EventsTracker(
     ref.watch(apiClientProvider),
@@ -168,6 +205,12 @@ final eventsTrackerProvider = Provider<EventsTracker>((ref) {
 /// Phase 1C — deterministic candidate ranking (no ML, no AI).
 final recommendationServiceProvider = Provider<RecommendationService>((ref) {
   return const RecommendationService();
+});
+
+/// Read-only local behavior signals (Phase 1B). Backed by the shared offline
+/// cache; scans existing search keys, never writes.
+final localBehaviorStoreProvider = Provider<LocalBehaviorStore>((ref) {
+  return LocalBehaviorStore(ref.watch(offlineCacheProvider));
 });
 
 /// Phase 1C — parallel personalization orchestrator (profile/geo/behavior).

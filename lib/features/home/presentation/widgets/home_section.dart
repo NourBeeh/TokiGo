@@ -16,7 +16,7 @@ import 'package:tokigo/features/home/presentation/widgets/flight_recommendation_
 import 'package:tokigo/features/home/presentation/widgets/home_section_titles.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stay_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stays_carousel.dart';
-import 'package:tokigo/features/home/presentation/widgets/home_discovery_stay_card.dart';
+import 'package:tokigo/features/home/presentation/widgets/destination_cover_flow_carousel.dart';
 import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
 
 typedef FlightTapCallback = void Function(HomeItem flight);
@@ -260,27 +260,26 @@ class HomeSectionWidget extends StatelessWidget {
     final primaryType = items.isNotEmpty
         ? items.first.type
         : HomeCardType.hotel;
-    if (primaryType == HomeCardType.hotel ||
-        primaryType == HomeCardType.destination) {
+    if (primaryType == HomeCardType.hotel) {
+      // The hotel rail keeps [HomeStaysCarousel] unchanged.
       return HomeStaysCarousel(
         items: items,
-        viewportFraction: primaryType == HomeCardType.destination ? 0.9 : 0.8,
-        sheetTextHeight: primaryType == HomeCardType.destination
-            ? HomeStaysCarousel.destinationSheetTextHeight
-            : HomeStaysCarousel.staysSheetTextHeight,
+        viewportFraction: 0.8,
+        sheetTextHeight: HomeStaysCarousel.staysSheetTextHeight,
         onItemTap: onItemTap,
-        itemBuilder: primaryType == HomeCardType.destination
-            ? (BuildContext context, HomeItem item) => HomeDiscoveryStayCard(
-                item: item,
-                onTap: () => _openCity(context, item),
-                // Share the rail's media ratio so a city page and a stay page
-                // start and end on the same lines.
-                aspectRatio: HomeStaysCarousel.mediaAspectRatio,
-              )
-            : null,
       );
     }
 
+    // Destination-only section: the premium 3D cover flow.
+    if (primaryType == HomeCardType.destination) {
+      return DestinationCoverFlowCarousel(
+        items: items,
+        onItemTap: onItemTap,
+        viewportFraction: 0.9,
+      );
+    }
+
+    // Fall through for non-hotel, non-destination items.
     final cardHeight = HomeCardDimensions.cardHeightForType(primaryType);
     final cardWidth = HomeCardDimensions.cardWidthForType(primaryType);
 

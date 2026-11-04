@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -203,8 +204,14 @@ abstract final class AppTheme {
       ),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: <TargetPlatform, PageTransitionsBuilder>{
+          // Android: the system owns back / predictive back. Do not replace
+          // this with a custom slide builder or the gesture detector is lost.
           TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
-          TargetPlatform.iOS: SlideFromRightPageTransitionsBuilder(),
+          // iOS: native Cupertino transition *and* the native interactive
+          // edge-swipe back gesture (including RTL direction handling).
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          // Desktop has no system back gesture; use the app's RTL-aware,
+          // strictly-horizontal slide.
           TargetPlatform.macOS: SlideFromRightPageTransitionsBuilder(),
           TargetPlatform.linux: SlideFromRightPageTransitionsBuilder(),
           TargetPlatform.windows: SlideFromRightPageTransitionsBuilder(),
@@ -372,8 +379,14 @@ abstract final class AppTheme {
       ),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: <TargetPlatform, PageTransitionsBuilder>{
+          // Android: the system owns back / predictive back. Do not replace
+          // this with a custom slide builder or the gesture detector is lost.
           TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
-          TargetPlatform.iOS: SlideFromRightPageTransitionsBuilder(),
+          // iOS: native Cupertino transition *and* the native interactive
+          // edge-swipe back gesture (including RTL direction handling).
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          // Desktop has no system back gesture; use the app's RTL-aware,
+          // strictly-horizontal slide.
           TargetPlatform.macOS: SlideFromRightPageTransitionsBuilder(),
           TargetPlatform.linux: SlideFromRightPageTransitionsBuilder(),
           TargetPlatform.windows: SlideFromRightPageTransitionsBuilder(),

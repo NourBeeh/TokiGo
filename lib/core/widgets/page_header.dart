@@ -74,56 +74,28 @@ class AppPageHeader extends StatelessWidget {
         AppSpacing.md,
       ),
       child: Directionality(
-        textDirection: TextDirection.ltr,
+        textDirection: appTextDirection,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             if (title case final String line)
-              Row(
-                textDirection: TextDirection.ltr,
-                children: <Widget>[
-                  if (showBackButton)
-                    AppBackButton(
-                      fallbackLocation: backFallbackLocation,
-                      enabled: backEnabled,
-                    )
-                  else
-                    const SizedBox(
-                      width: AppIconAction.tapTarget,
-                      height: AppIconAction.tapTarget,
-                    ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      line,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textDirection: TextDirection.ltr,
-                      style: typography.headline.copyWith(
-                        color: context.tokigoColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                  ?trailing,
-                ],
+              _buildControlRow(
+                context: context,
+                line: line,
+                showBackButton: showBackButton,
+                trailing: trailing,
+                backFallbackLocation: backFallbackLocation,
+                backEnabled: backEnabled,
+                appTextDirection: appTextDirection,
               )
             else
-              Row(
-                textDirection: TextDirection.ltr,
-                children: <Widget>[
-                  if (showBackButton)
-                    AppBackButton(
-                      fallbackLocation: backFallbackLocation,
-                      enabled: backEnabled,
-                    )
-                  else
-                    const SizedBox(
-                      width: AppIconAction.tapTarget,
-                      height: AppIconAction.tapTarget,
-                    ),
-                  const Spacer(),
-                  ?trailing,
-                ],
+              _buildControlRowNoTitle(
+                context: context,
+                showBackButton: showBackButton,
+                trailing: trailing,
+                backFallbackLocation: backFallbackLocation,
+                backEnabled: backEnabled,
+                appTextDirection: appTextDirection,
               ),
             if (subtitle case final String line) ...<Widget>[
               const SizedBox(height: AppSpacing.xs),
@@ -150,5 +122,162 @@ class AppPageHeader extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Builds the control row (back control + optional trailing action) over the
+  /// headline title, ordered for the ambient text direction:
+  ///
+  ///  * **LTR (English):** back control on the left, title in the middle, trailing
+  ///    action on the right.
+  ///  * **RTL (Arabic):** trailing action on the left, title in the middle, back
+  ///    control on the right.
+  Widget _buildControlRow({
+    required BuildContext context,
+    required String line,
+    required bool showBackButton,
+    required Widget? trailing,
+    required String backFallbackLocation,
+    required bool backEnabled,
+    required TextDirection appTextDirection,
+  }) {
+    final headline = AppTypography.forLight().headline.copyWith(
+      color: context.tokigoColors.textPrimary,
+    );
+    final bool rtl = appTextDirection == TextDirection.rtl;
+    return Row(
+      children: <Widget>[
+        if (rtl) ..._rtlTitleRowChildren(
+          line: line,
+          headline: headline,
+          showBackButton: showBackButton,
+          trailing: trailing,
+          backFallbackLocation: backFallbackLocation,
+          backEnabled: backEnabled,
+        )
+        else ..._ltrTitleRowChildren(
+          line: line,
+          headline: headline,
+          showBackButton: showBackButton,
+          trailing: trailing,
+          backFallbackLocation: backFallbackLocation,
+          backEnabled: backEnabled,
+        ),
+      ],
+    );
+  }
+
+  /// Builds the control row for surfaces that have no page title (an existing
+  /// hero heading already occupies the title slot). Mirrors
+  /// [_buildControlRow] in layout behaviour, but uses a [Spacer] rather than an
+  /// expanded [Text] for the title.
+  Widget _buildControlRowNoTitle({
+    required BuildContext context,
+    required bool showBackButton,
+    required Widget? trailing,
+    required String backFallbackLocation,
+    required bool backEnabled,
+    required TextDirection appTextDirection,
+  }) {
+    final bool rtl = appTextDirection == TextDirection.rtl;
+    return Row(
+      children: <Widget>[
+        if (rtl) ..._rtlNoTitleRowChildren(
+          showBackButton: showBackButton,
+          trailing: trailing,
+          backFallbackLocation: backFallbackLocation,
+          backEnabled: backEnabled,
+        )
+        else ..._ltrNoTitleRowChildren(
+          showBackButton: showBackButton,
+          trailing: trailing,
+          backFallbackLocation: backFallbackLocation,
+          backEnabled: backEnabled,
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _ltrTitleRowChildren({
+    required String line,
+    required TextStyle headline,
+    required bool showBackButton,
+    required Widget? trailing,
+    required String backFallbackLocation,
+    required bool backEnabled,
+  }) {
+    return <Widget>[
+      if (showBackButton)
+        AppBackButton(fallbackLocation: backFallbackLocation, enabled: backEnabled)
+      else
+        const SizedBox(width: AppIconAction.tapTarget, height: AppIconAction.tapTarget),
+      const SizedBox(width: AppSpacing.sm),
+      Expanded(
+        child: Text(
+          line,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: headline,
+        ),
+      ),
+      if (trailing != null) trailing,
+    ];
+  }
+
+  List<Widget> _rtlTitleRowChildren({
+    required String line,
+    required TextStyle headline,
+    required bool showBackButton,
+    required Widget? trailing,
+    required String backFallbackLocation,
+    required bool backEnabled,
+  }) {
+    return <Widget>[
+      if (trailing != null) trailing,
+      Expanded(
+        child: Text(
+          line,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: headline,
+        ),
+      ),
+      const SizedBox(width: AppSpacing.sm),
+      if (showBackButton)
+        AppBackButton(fallbackLocation: backFallbackLocation, enabled: backEnabled)
+      else
+        const SizedBox(width: AppIconAction.tapTarget, height: AppIconAction.tapTarget),
+    ];
+  }
+
+  List<Widget> _ltrNoTitleRowChildren({
+    required bool showBackButton,
+    required Widget? trailing,
+    required String backFallbackLocation,
+    required bool backEnabled,
+  }) {
+    return <Widget>[
+      if (showBackButton)
+        AppBackButton(fallbackLocation: backFallbackLocation, enabled: backEnabled)
+      else
+        const SizedBox(width: AppIconAction.tapTarget, height: AppIconAction.tapTarget),
+      const Spacer(),
+      if (trailing != null) trailing,
+    ];
+  }
+
+  List<Widget> _rtlNoTitleRowChildren({
+    required bool showBackButton,
+    required Widget? trailing,
+    required String backFallbackLocation,
+    required bool backEnabled,
+  }) {
+    return <Widget>[
+      if (trailing != null) trailing,
+      const Spacer(),
+      if (showBackButton)
+        AppBackButton(fallbackLocation: backFallbackLocation, enabled: backEnabled)
+      else
+        const SizedBox(width: AppIconAction.tapTarget, height: AppIconAction.tapTarget),
+    ];
   }
 }

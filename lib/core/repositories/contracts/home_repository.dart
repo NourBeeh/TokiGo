@@ -2,6 +2,11 @@ import '../../domain/models/home/home_section.dart';
 import '../../domain/models/home/home_item.dart';
 import '../../../core/network/api_result.dart';
 
+/// The freshness state of a cached Home snapshot, as the data layer reports it.
+/// This is a plain enum (no classes, no factories) so it can be used as a
+/// type argument in the `snapshotState` contract method.
+enum SnapshotState { fresh, stale, unavailable }
+
 abstract interface class HomeRepository {
   Future<ApiResult<List<HomeSection>>> getHomeSections();
   Future<ApiResult<List<HomeItem>>> getRecommendedHotels({
@@ -38,4 +43,11 @@ abstract interface class HomeRepository {
     List<HomeSection> sections, {
     required String audience,
   });
+
+  /// Reports whether the cached Home snapshot for [audience] is fresh, stale,
+  /// or unavailable. A snapshot is fresh within [HomeCacheConfig.ttl] of
+  /// `savedAt`; it is stale when it is older than the TTL or when the envelope
+  /// lacks a parseable `savedAt`; it is unavailable when no snapshot exists.
+  /// Implementations must not throw.
+  Future<SnapshotState> snapshotState({required String audience});
 }

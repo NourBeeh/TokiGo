@@ -639,11 +639,11 @@ class ChatBubble extends StatelessWidget {
                 : null,
             color: isUser ? null : context.tokigoColors.surfaceSecondary,
             border: isUser ? null : Border.all(color: context.tokigoColors.outline),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(isUser ? AppRadius.lg : AppRadius.xs),
-              topRight: Radius.circular(isUser ? AppRadius.xs : AppRadius.lg),
-              bottomLeft: const Radius.circular(AppRadius.lg),
-              bottomRight: const Radius.circular(AppRadius.lg),
+            borderRadius: BorderRadiusDirectional.only(
+              topStart: Radius.circular(isUser ? AppRadius.lg : AppRadius.xs),
+              topEnd: Radius.circular(isUser ? AppRadius.xs : AppRadius.lg),
+              bottomStart: const Radius.circular(AppRadius.lg),
+              bottomEnd: const Radius.circular(AppRadius.lg),
             ),
           ),
           child: content,

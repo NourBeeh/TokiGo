@@ -44,7 +44,7 @@ class AppBottomNav extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(
+      margin: const EdgeInsetsDirectional.fromSTEB(
         AppSpacing.lg,
         0,
         AppSpacing.lg,

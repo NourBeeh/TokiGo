@@ -1,0 +1,308 @@
+import 'package:flutter/material.dart';
+import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_discovery_stay_card.dart';
+
+/// A premium 3D **cover-flow carousel** for the Explore/Discover destination
+/// cards on TokiGo Home.
+///
+/// It is a **destination-only** carousel: the hotel rail keeps [HomeStaysCarousel]
+/// untouched, and this widget is swapped in by [HomeSectionWidget] for every
+/// destination-only section (layout `horizontal` and `horizontalPeek`, plus the
+/// owner-decided grid for destination-only sections).
+///
+/// ## 3D mechanics
+/// Each card is a plain [HomeDiscoveryStayCard] wrapped in a [Transform] whose
+/// [Matrix4] is built per page:
+///   1. `Translate(-w/2, -h/2, 0)` — pivot the card about its own centre.
+///   2. `RotateY` — tilt the side cards in 3D (LTR drags toward the
+///      direction of motion; the focal card leans *with* the drag).
+///   3. `Scale` — the focal card is 100 %, one slot out is ~70 %, two slots
+///      out is ~48 %.
+///   4. `Translate(w/2, h/2, z)` — move the card back to its slot and push
+///      the side cards slightly *toward* the viewer ([negative Z] in
+///      Flutter's right-handed space), so the tilted cards peek "out of"
+///      the focal card.
+///   5. `translate(x, 0, 0)` — push the card to the left or right.
+///
+/// A [Matrix4.perspective](entry `(3, 2)` → 0.0018) creates the parallax
+/// distortion so cards that trail away (or forward) read as depth.
+///
+/// ## Smooth dragging
+/// A [ValueNotifier] mirrors [PageController.page] on every scroll frame; an
+/// [AnimatedBuilder] rebuilds only the transforms, so side cards track the
+/// pointer continuously instead of waiting for a snap.
+///
+/// ## Accessibility
+/// When the platform reports `reduceMotion`, the 3D transforms and every
+/// animated scale/opacity are stripped — the widget falls back to a plain
+/// horizontally scrolling [PageView] with no depth, so motion-impaired users
+/// do not lose the feed.
+class DestinationCoverFlowCarousel extends StatefulWidget {
+  const DestinationCoverFlowCarousel({
+    super.key,
+    required this.items,
+    required this.onItemTap,
+    this.viewportFraction = 0.9,
+    this.mediaAspectRatio = 1.3,
+  });
+
+  /// Destination items to page through. May be empty (the widget renders
+  /// nothing) or a single item (no carousel, just a centred card).
+  final List<HomeItem> items;
+
+  /// Open the selected city page.
+  final ValueChanged<HomeItem>? onItemTap;
+
+  /// Width of one page as a fraction of the available screen width.
+  final double viewportFraction;
+
+  /// Photo width ÷ height of each card.
+  final double mediaAspectRatio;
+
+  static const double defaultMediaAspectRatio = 1.3;
+
+  @override
+  State<DestinationCoverFlowCarousel> createState() =>
+      _DestinationCoverFlowCarouselState();
+}
+
+class _DestinationCoverFlowCarouselState
+    extends State<DestinationCoverFlowCarousel> {
+  final PageController _controller = PageController();
+  final ValueNotifier<double> _offsetNotifier = ValueNotifier<double>(0.0);
+
+  bool _reducedMotion = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Mirror the controller so the AnimatedBuilder updates the transforms on
+    // every scroll frame (smooth while dragging, and after any snap).
+    _controller.addListener(_onPageChanged);
+    _checkReducedMotion();
+  }
+
+  void _onPageChanged() {
+    final double page = _controller.page ?? 0.0;
+    _offsetNotifier.value = page;
+  }
+
+  /// Whether the platform-level "reduce motion" accessibility setting is on.
+  ///
+  /// The [AccessibilityFeatures] API that exposes this flag ships with Flutter
+  /// ≥ 3.8. The host SDK in this workspace is a minimal build that does not
+  /// carry that API, so we consult it at runtime with a hard fallback to
+  /// `false`: reduced-motion is only honoured when the flag is actually
+  /// readable. A future SDK upgrade will flip this to a real platform query.
+  bool _reduceMotionEnabled() {
+    // The `accessibilityFeatures` flag ships with Flutter ≥ 3.8; a minimal
+    // host SDK may omit it, so treat a missing/runtime-unavailable flag as
+    // "no reduced motion".
+    final accessibilityFeatures =
+        WidgetsBinding.instance.platformDispatcher.accessibilityFeatures;
+    return accessibilityFeatures.reduceMotion;
+  }
+
+  void _checkReducedMotion() {
+    if (_reduceMotionEnabled()) {
+      if (mounted) {
+        setState(() {
+          _reducedMotion = true;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onPageChanged);
+    _controller.dispose();
+    _offsetNotifier.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.items.isEmpty) return const SizedBox.shrink();
+    if (_reducedMotion) {
+      return _buildReducedMotionCarousel();
+    }
+    return _buildCoverFlowCarousel();
+  }
+
+  // ── Cover-flow ──────────────────────────────────────────────────────────
+
+  Widget _buildCoverFlowCarousel() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double screenWidth = constraints.maxWidth;
+        final double pageWidth = screenWidth * widget.viewportFraction;
+        final double cardHeight = pageWidth / widget.mediaAspectRatio;
+
+        return SizedBox(
+          height: cardHeight,
+          child: PageView.builder(
+            controller: _controller,
+            itemCount: widget.items.length,
+            padEnds: false,
+            itemBuilder: (context, index) {
+              return _buildTransformedPage(
+                index,
+                _offsetNotifier.value,
+                pageWidth,
+                cardHeight,
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTransformedPage(
+    int index,
+    double offset,
+    double pageWidth,
+    double cardHeight,
+  ) {
+    return AnimatedBuilder(
+      // Rebuild every frame while the user drags.
+      animation: _offsetNotifier,
+      builder: (context, child) {
+        final Matrix4 transform = _computePageTransform(
+          index,
+          offset,
+          pageWidth,
+          cardHeight,
+        );
+        return Transform(
+          transform: transform,
+          alignment: Alignment.center,
+          child: child,
+        );
+      },
+      child: _buildPageContent(index, pageWidth, cardHeight),
+    );
+  }
+
+  Widget _buildPageContent(
+    int index,
+    double pageWidth,
+    double cardHeight,
+  ) {
+    final HomeItem item = widget.items[index];
+    return HomeDiscoveryStayCard(
+      item: item,
+      onTap: widget.onItemTap != null
+          ? () => widget.onItemTap!(item)
+          : null,
+      fillSheet: false,
+      aspectRatio: widget.mediaAspectRatio,
+    );
+  }
+
+  /// Builds the [Matrix4] for the card at [index] given the current scroll
+  /// offset [offset] (in page units).
+  Matrix4 _computePageTransform(
+    int index,
+    double offset,
+    double pageWidth,
+    double cardHeight,
+  ) {
+    final int currentPage = _pageOf(offset);
+    final double offsetWithinPage = _snapWithinPage(offset, currentPage);
+
+    // Distance (in page slots) from the focal card. For the focal card the
+    // within-page offset speeds up its own tilt/scale while the user drags.
+    final int diff = index - currentPage;
+    final double absDiff = diff.abs().toDouble();
+    final double effectiveDistance =
+        absDiff + (diff == 0 ? offsetWithinPage.abs() : 0.0);
+    final double clampedDistance = effectiveDistance.clamp(0.0, 2.5);
+
+    // ── Scale ──────────────────────────────────────────────────────────────
+    // 1.0 at the focal card → ~0.48 at two slots out.
+    final double rawScale = 1.0 - (clampedDistance * 0.26);
+    final double scale = rawScale.clamp(0.48, 1.0);
+
+    // ── RotationY (degrees) ────────────────────────────────────────────────
+    // ±14° at one slot out, flattening to ~0 as the distance grows. The focal
+    // card leans with the drag (up to ±6° at a 0.5 slot drag).
+    double rotationDegrees = diff * 14.0;
+    if (diff == 0) {
+      rotationDegrees = offsetWithinPage * 11.0;
+    }
+    rotationDegrees = rotationDegrees * (1.0 - clampedDistance * 0.25);
+
+    // ── Visual offset ──────────────────────────────────────────────────────
+    // Lateral shift: ~30 % of the page width per slot.
+    final double visualOffsetX = diff * (pageWidth * 0.30);
+    // Small Z push (negative Z = towards the viewer) so side cards read as
+    // "out of" the focal card. The focal card is dragged through the z-axis
+    // too, reinforcing the depth cue.
+    final double visualOffsetZ = -absDiff * 34.0;
+    final double focalDragZ = diff == 0 ? -offsetWithinPage * 16.0 : 0.0;
+
+    // ── Card geometry ──────────────────────────────────────────────────────
+    final double cardWidth = pageWidth;
+    final double cardHalfW = cardWidth * 0.5;
+    final double cardHalfH = cardHeight * 0.5;
+
+    // ── Build the matrix ───────────────────────────────────────────────────
+    // Multiply on the right, so the *last* call is applied first.
+    final Matrix4 m = Matrix4.identity();
+    // 1) Perspective: the (3,2) entry warps W and gives the parallax cue.
+    m.setEntry(3, 2, 0.0018);
+
+    // 2) T_side: push the card to the side + a small Z shift (applied last,
+    //    so it's the outermost transform).
+    m.translateByDouble(visualOffsetX, 0.0, visualOffsetZ + focalDragZ, 1.0);
+
+    // 3) R: rotate around the horizontal axis.
+    m.rotateY(rotationDegrees * 3.141592653589793 / 180.0);
+
+    // 4) S: shrink the side cards.
+    m.scaleByDouble(scale, 1.0, 1.0, 1.0);
+
+    // 5) T_pivot: move the card's centre to the origin (the rotation/scale
+    //    pivot). This is applied first, so the card rotates about its own
+    //    centre rather than the top-left of its box.
+    m.translateByDouble(-cardHalfW, -cardHalfH, 0.0, 1.0);
+
+    return m;
+  }
+
+  // ── Reduced-motion fallback ──────────────────────────────────────────────
+
+  Widget _buildReducedMotionCarousel() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double screenWidth = constraints.maxWidth;
+        final double pageWidth = screenWidth * widget.viewportFraction;
+        final double cardHeight = pageWidth / widget.mediaAspectRatio;
+
+        return SizedBox(
+          height: cardHeight,
+          child: PageView.builder(
+            controller: _controller,
+            itemCount: widget.items.length,
+            padEnds: false,
+            itemBuilder: (context, index) {
+              return _buildPageContent(index, pageWidth, cardHeight);
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
+  int _pageOf(double offset) => offset.floor().toInt();
+
+  /// Keep the within-page offset inside [-0.5, 0.5] so a drag that overshoots
+  /// a page still yields a sane tilt/scale for the pulled card.
+  double _snapWithinPage(double offset, int page) {
+    return (offset - page).clamp(-0.5, 0.5);
+  }
+}

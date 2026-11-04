@@ -97,10 +97,10 @@ class HeroHeader extends StatelessWidget {
           heroImage,
 
           // Scrim overlay for text legibility over images
-          Positioned(
+          PositionedDirectional(
             bottom: 0,
-            left: 0,
-            right: 0,
+            start: 0,
+            end: 0,
             child: Container(
               height: 120,
               decoration: BoxDecoration(

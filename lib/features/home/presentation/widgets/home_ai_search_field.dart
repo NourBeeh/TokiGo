@@ -126,15 +126,8 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
           color: colors.surfaceElevated,
           borderRadius: AppRadius.lgBorder,
           border: Border.all(color: colors.hairline),
-          boxShadow: lightMode
-              ? <BoxShadow>[
-                  BoxShadow(
-                    color: widget.accentColor.withValues(alpha: 0.12),
-                    blurRadius: 18,
-                    offset: const Offset(0, 6),
-                  ),
-                ]
-              : const <BoxShadow>[],
+          // No elevation/shadow around the search box (audit requirement).
+          boxShadow: const <BoxShadow>[],
         ),
         child: Padding(
           // Slim pill: the vertical inset is one step below the horizontal one

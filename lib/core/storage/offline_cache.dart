@@ -62,3 +62,25 @@ class MemoryOfflineCache implements OfflineCache {
     // Nothing to reclaim: the store lives in memory.
   }
 }
+
+/// Sensible default 5-minute TTL for the offline Home snapshot. The value is
+/// configurable at startup so the same app can be hardened (shorter) or tuned
+/// (longer) without a code change. Reads the `HOME_CACHE_TTL_SECONDS` env var
+/// on first use; a non-numeric or negative value falls back to [kDefaultTtl].
+class HomeCacheConfig {
+  static const int kDefaultTtlSeconds = 300; // 5 minutes
+  static Duration? _cachedTtl;
+  static int get ttlSeconds =>
+      _cachedTtl?.inSeconds ?? _resolveTtlSeconds();
+  static Duration get ttl => Duration(seconds: ttlSeconds);
+
+  static int _resolveTtlSeconds() {
+    final env = String.fromEnvironment('HOME_CACHE_TTL_SECONDS');
+    try {
+      final value = int.parse(env);
+      return value > 0 ? value : kDefaultTtlSeconds;
+    } catch (_) {
+      return kDefaultTtlSeconds;
+    }
+  }
+}

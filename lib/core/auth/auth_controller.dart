@@ -77,6 +77,8 @@ class AuthController extends StateNotifier<AuthState> {
   /// for our own session. Dismissing the account picker is not an error — the
   /// previous state is simply restored.
   Future<void> signInWithGoogle() async {
+    // Prevent duplicate authentication requests (audit requirement).
+    if (state is AuthLoading) return;
     final AuthUser? previous = state.user;
     state = AuthLoading(previous);
 

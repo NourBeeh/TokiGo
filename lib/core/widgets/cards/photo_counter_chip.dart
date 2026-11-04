@@ -39,7 +39,6 @@ class PhotoCounterChip extends StatelessWidget {
           ),
           child: Text(
             text,
-            textDirection: TextDirection.ltr,
             style: typography.label.copyWith(
               color: context.tokigoColors.onMedia,
               fontWeight: FontWeight.w600,

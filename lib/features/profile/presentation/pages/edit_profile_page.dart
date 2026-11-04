@@ -199,9 +199,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                             ),
                             if (_avatarBytes != null ||
                                 _avatarCtrl.text.startsWith('data:'))
-                              const Positioned(
+                              const PositionedDirectional(
                                 bottom: 0,
-                                right: 0,
+                                start: 0,
                                 child: CircleAvatar(
                                   radius: 12,
                                   backgroundColor: Colors.green,

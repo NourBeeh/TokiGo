@@ -97,6 +97,7 @@ class _AdminHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
+    final TextDirection appTextDirection = Directionality.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
@@ -105,27 +106,67 @@ class _AdminHeader extends StatelessWidget {
         AppSpacing.md,
       ),
       child: Directionality(
-        textDirection: TextDirection.ltr,
+        textDirection: appTextDirection,
         child: Row(
-          textDirection: TextDirection.ltr,
           children: <Widget>[
-            const AppBackButton(),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textDirection: TextDirection.ltr,
-                style: typography.title.copyWith(
-                  color: context.tokigoColors.textPrimary,
-                ),
+            if (appTextDirection == TextDirection.rtl)
+              ..._rtlAdminHeaderChildren(
+                title: title,
+                typography: typography,
+                context: context,
+              )
+            else
+              ..._ltrAdminHeaderChildren(
+                title: title,
+                typography: typography,
+                context: context,
               ),
-            ),
           ],
         ),
       ),
     );
+  }
+
+  List<Widget> _ltrAdminHeaderChildren({
+    required String title,
+    required AppTypography typography,
+    required BuildContext context,
+  }) {
+    return <Widget>[
+      const AppBackButton(),
+      const SizedBox(width: AppSpacing.sm),
+      Expanded(
+        child: Text(
+          title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: typography.title.copyWith(
+            color: context.tokigoColors.textPrimary,
+          ),
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _rtlAdminHeaderChildren({
+    required String title,
+    required AppTypography typography,
+    required BuildContext context,
+  }) {
+    return <Widget>[
+      Expanded(
+        child: Text(
+          title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: typography.title.copyWith(
+            color: context.tokigoColors.textPrimary,
+          ),
+        ),
+      ),
+      const SizedBox(width: AppSpacing.sm),
+      const AppBackButton(),
+    ];
   }
 }
 

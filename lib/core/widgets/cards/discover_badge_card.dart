@@ -236,7 +236,6 @@ class _DiscoverBadgeCardState extends State<DiscoverBadgeCard> {
                             children: <Widget>[
                               Text(
                                 '$_money ${widget.currency}',
-                                textDirection: TextDirection.ltr,
                                 style: typography.titleMedium.copyWith(
                                   color:
                                       widget.priceColor ??
@@ -248,7 +247,6 @@ class _DiscoverBadgeCardState extends State<DiscoverBadgeCard> {
                                 const SizedBox(width: AppSpacing.sm),
                                 Text(
                                   '$_oldMoney ${widget.currency}',
-                                  textDirection: TextDirection.ltr,
                                   style: typography.body.copyWith(
                                     color: context.tokigoColors.textTertiary,
                                     decoration: TextDecoration.lineThrough,

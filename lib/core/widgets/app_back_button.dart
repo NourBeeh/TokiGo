@@ -37,8 +37,9 @@ class AppBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextDirection appTextDirection = Directionality.of(context);
     return Directionality(
-      textDirection: TextDirection.ltr,
+      textDirection: appTextDirection,
       child: AppIconAction(
         icon: Icons.arrow_back_ios_new_rounded,
         variant: variant,

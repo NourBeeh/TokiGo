@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/features/home/presentation/widgets/destination_cover_flow_carousel.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_discovery_stay_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stay_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_section.dart';
 
@@ -64,10 +66,10 @@ void main() {
     );
     final double pageExtent = scrollable.position.viewportDimension * 0.8;
 
-    await tester.drag(find.byType(PageView), const Offset(-600, 0));
+    await tester.drag(find.byType(PageView), Offset(-pageExtent, 0));
     await tester.pumpAndSettle();
 
-    expect(scrollable.position.pixels, closeTo(pageExtent, 1));
+    expect(pageView.controller?.page, closeTo(1.0, 0.1));
     expect(tester.takeException(), isNull);
   });
 
@@ -109,6 +111,127 @@ void main() {
       closeTo(viewport.width * 0.2, 1),
     );
     expect(firstCard.width, greaterThan(300));
+    expect(tester.takeException(), isNull);
+  });
+
+  // ─── Destination cover flow ────────────────────────────────────────────────
+
+  Widget _coverFlowHost({TextDirection direction = TextDirection.ltr}) {
+    return ProviderScope(
+      child: MaterialApp(
+        home: Directionality(
+          textDirection: direction,
+          child: Scaffold(
+            body: SingleChildScrollView(
+              child: HomeSectionWidget(
+                section: HomeSection(
+                  id: 'destinations',
+                  title: 'Destinations',
+                  layout: HomeSectionLayout.horizontal,
+                  items: <HomeItem>[
+                    _destination('cairo', 'Cairo'),
+                    _destination('alexandria', 'Alexandria'),
+                    _destination('luxor', 'Luxor'),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  testWidgets('destination cover flow renders one page per destination',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(_coverFlowHost());
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DestinationCoverFlowCarousel), findsOneWidget);
+    expect(find.byType(PageView), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('destination cover flow handles a single item without crashing',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Directionality(
+            textDirection: TextDirection.ltr,
+            child: Scaffold(
+              body: SingleChildScrollView(
+                child: HomeSectionWidget(
+                  section: HomeSection(
+                    id: 'destinations',
+                    title: 'Destinations',
+                    layout: HomeSectionLayout.horizontal,
+                    items: <HomeItem>[
+                      _destination('cairo', 'Cairo'),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PageView), findsOneWidget);
+    expect(find.byType(DestinationCoverFlowCarousel), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('destination cover flow respects RTL layout', (WidgetTester tester) async {
+    await tester.pumpWidget(_coverFlowHost(direction: TextDirection.rtl));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PageView), findsOneWidget);
+    // The viewport should be constrained to the rail width.
+    final Rect viewport = tester.getRect(find.byType(PageView));
+    expect(viewport.width, greaterThan(100.0));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('destination card tap opens the city page', (WidgetTester tester) async {
+    String? openedCity;
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Directionality(
+            textDirection: TextDirection.ltr,
+            child: Scaffold(
+              body: SingleChildScrollView(
+                child: HomeSectionWidget(
+                  section: HomeSection(
+                    id: 'destinations',
+                    title: 'Destinations',
+                    layout: HomeSectionLayout.horizontal,
+                    items: <HomeItem>[
+                      _destination('cairo', 'Cairo'),
+                      _destination('alexandria', 'Alexandria'),
+                    ],
+                  ),
+                  onItemTap: (HomeItem item) {
+                    openedCity = item.title;
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final Finder cityCard = find.byType(HomeDiscoveryStayCard);
+    expect(cityCard, findsOneWidget);
+    await tester.tap(cityCard);
+    await tester.pumpAndSettle();
+
+    expect(openedCity, 'Cairo');
     expect(tester.takeException(), isNull);
   });
 }

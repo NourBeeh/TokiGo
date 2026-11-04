@@ -39,7 +39,7 @@ Future<void> showLanguageSheet(BuildContext context) async {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Padding(
-            padding: const EdgeInsets.fromLTRB(
+            padding: const EdgeInsetsDirectional.fromSTEB(
               AppSpacing.lg,
               AppSpacing.lg,
               AppSpacing.lg,

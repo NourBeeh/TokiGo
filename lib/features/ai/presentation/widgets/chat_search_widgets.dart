@@ -136,7 +136,7 @@ class VoiceFailureBanner extends StatelessWidget {
       container: true,
       liveRegion: true,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
+        padding: const EdgeInsetsDirectional.fromSTEB(
           AppSpacing.lg,
           AppSpacing.sm,
           AppSpacing.md,

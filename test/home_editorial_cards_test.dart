@@ -141,7 +141,7 @@ void main() {
       );
       expect(
         decoration.boxShadow,
-        mode == ThemeMode.dark ? isEmpty : isNotEmpty,
+        isEmpty,
       );
     }
   });
@@ -403,7 +403,7 @@ void main() {
     }
   });
 
-  testWidgets('Arabic page headers translate titles while keeping LTR chrome', (
+  testWidgets('Arabic page headers mirror titles and back button position', (
     WidgetTester tester,
   ) async {
     _setPhoneSize(tester);
@@ -418,7 +418,9 @@ void main() {
 
     expect(find.text('الإعدادات'), findsOneWidget);
     final BuildContext backControl = tester.element(find.byType(AppIconAction));
-    expect(Directionality.of(backControl), TextDirection.ltr);
+    // Arabic RTL: back control sits on the right side of the title and reads
+    // right-to-left.
+    expect(Directionality.of(backControl), TextDirection.rtl);
     expect(find.byType(AppBackButton), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

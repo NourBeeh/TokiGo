@@ -191,9 +191,9 @@ class FlightRouteLine extends StatelessWidget {
     if (stops == 1) {
       return [
         // Single stop in the middle
-        Positioned(
-          left: 0,
-          right: 0,
+        PositionedDirectional(
+          start: 0,
+          end: 0,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

@@ -100,13 +100,19 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/',
                 name: 'home',
-                pageBuilder: (context, state) =>
-                    fadeThroughPage(name: 'home', child: const HomePage()),
+                pageBuilder: (context, state) => slideFromRightPage(
+                  key: state.pageKey,
+                  restorationId: state.pageKey.value,
+                  name: 'home',
+                  child: const HomePage(),
+                ),
                 routes: <GoRoute>[
                   GoRoute(
                     path: 'flights',
                     name: 'flights',
                     pageBuilder: (context, state) => slideFromRightPage(
+                      key: state.pageKey,
+                      restorationId: state.pageKey.value,
                       name: 'flights',
                       child: const SwipeFromRightToPop(
                         child: FlightSearchPage(),
@@ -117,6 +123,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: 'hotels',
                     name: 'hotels',
                     pageBuilder: (context, state) => slideFromRightPage(
+                      key: state.pageKey,
+                      restorationId: state.pageKey.value,
                       name: 'hotels',
                       child: const SwipeFromRightToPop(
                         child: HotelSearchPage(),
@@ -127,6 +135,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: 'cars',
                     name: 'cars',
                     pageBuilder: (context, state) => slideFromRightPage(
+                      key: state.pageKey,
+                      restorationId: state.pageKey.value,
                       name: 'cars',
                       child: const SwipeFromRightToPop(child: CarSearchPage()),
                     ),
@@ -135,6 +145,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: 'packages',
                     name: 'packages',
                     pageBuilder: (context, state) => slideFromRightPage(
+                      key: state.pageKey,
+                      restorationId: state.pageKey.value,
                       name: 'packages',
                       child: const SwipeFromRightToPop(
                         child: PackagesSearchPage(),
@@ -145,6 +157,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: 'offer-details',
                     name: 'offer_details',
                     pageBuilder: (context, state) => slideFromRightPage(
+                      key: state.pageKey,
+                      restorationId: state.pageKey.value,
                       name: 'offer_details',
                       child: SwipeFromRightToPop(
                         child: OfferDetailsPage(
@@ -161,6 +175,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: 'city',
                     name: 'city',
                     pageBuilder: (context, state) => slideFromRightPage(
+                      key: state.pageKey,
+                      restorationId: state.pageKey.value,
                       name: 'city',
                       child: SwipeFromRightToPop(
                         child: CityPage(
@@ -175,6 +191,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: 'explore',
                     name: 'explore_cities',
                     pageBuilder: (context, state) => slideFromRightPage(
+                      key: state.pageKey,
+                      restorationId: state.pageKey.value,
                       name: 'explore_cities',
                       child: const SwipeFromRightToPop(
                         child: ExploreCitiesPage(),
@@ -185,6 +203,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: 'bag',
                     name: 'bag',
                     pageBuilder: (context, state) => slideFromRightPage(
+                      key: state.pageKey,
+                      restorationId: state.pageKey.value,
                       name: 'bag',
                       child: SwipeFromRightToPop(
                         child: BagPage(
@@ -198,6 +218,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                         path: ':tripId',
                         name: 'trip_details',
                         pageBuilder: (context, state) => slideFromRightPage(
+                          key: state.pageKey,
+                          restorationId: state.pageKey.value,
                           name: 'trip_details',
                           child: SwipeFromRightToPop(
                             child: TripDetailsPage(
@@ -212,6 +234,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: 'notifications',
                     name: 'notifications',
                     pageBuilder: (context, state) => slideFromRightPage(
+                      key: state.pageKey,
+                      restorationId: state.pageKey.value,
                       name: 'notifications',
                       child: const SwipeFromRightToPop(
                         child: NotificationsPage(),
@@ -222,6 +246,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: 'wishlist',
                     name: 'wishlist',
                     pageBuilder: (context, state) => slideFromRightPage(
+                      key: state.pageKey,
+                      restorationId: state.pageKey.value,
                       name: 'wishlist',
                       child: const SwipeFromRightToPop(child: WishlistPage()),
                     ),
@@ -230,6 +256,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: 'profile',
                     name: 'profile',
                     pageBuilder: (context, state) => slideFromRightPage(
+                      key: state.pageKey,
+                      restorationId: state.pageKey.value,
                       name: 'profile',
                       child: const SwipeFromRightToPop(child: ProfilePage()),
                     ),
@@ -238,6 +266,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: 'edit-profile',
                     name: 'edit_profile',
                     pageBuilder: (context, state) => slideFromRightPage(
+                      key: state.pageKey,
+                      restorationId: state.pageKey.value,
                       name: 'edit_profile',
                       child: const SwipeFromRightToPop(
                         child: EditProfilePage(),
@@ -248,6 +278,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: 'settings',
                     name: 'settings',
                     pageBuilder: (context, state) => slideFromRightPage(
+                      key: state.pageKey,
+                      restorationId: state.pageKey.value,
                       name: 'settings',
                       child: const SwipeFromRightToPop(child: SettingsPage()),
                     ),
@@ -256,6 +288,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: 'auth',
                     name: 'auth',
                     pageBuilder: (context, state) => slideFromRightPage(
+                      key: state.pageKey,
+                      restorationId: state.pageKey.value,
                       name: 'auth',
                       child: const SwipeFromRightToPop(child: AuthPage()),
                     ),
@@ -264,6 +298,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: 'booking/review',
                     name: 'booking_review',
                     pageBuilder: (context, state) => slideFromRightPage(
+                      key: state.pageKey,
+                      restorationId: state.pageKey.value,
                       name: 'booking_review',
                       child: const SwipeFromRightToPop(
                         child: BookingReviewPage(),
@@ -274,6 +310,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                         path: 'passengers',
                         name: 'booking_passengers',
                         pageBuilder: (context, state) => slideFromRightPage(
+                          key: state.pageKey,
+                          restorationId: state.pageKey.value,
                           name: 'booking_passengers',
                           child: const SwipeFromRightToPop(
                             child: PassengerDetailsPage(),
@@ -284,6 +322,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                         path: 'add-ons',
                         name: 'booking_add_ons',
                         pageBuilder: (context, state) => slideFromRightPage(
+                          key: state.pageKey,
+                          restorationId: state.pageKey.value,
                           name: 'booking_add_ons',
                           child: const SwipeFromRightToPop(child: AddOnsPage()),
                         ),
@@ -292,6 +332,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                         path: 'checkout',
                         name: 'booking_checkout',
                         pageBuilder: (context, state) => slideFromRightPage(
+                          key: state.pageKey,
+                          restorationId: state.pageKey.value,
                           name: 'booking_checkout',
                           child: const SwipeFromRightToPop(
                             child: CheckoutPage(),
@@ -302,6 +344,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                         path: 'confirmation',
                         name: 'booking_confirmation',
                         pageBuilder: (context, state) => slideFromRightPage(
+                          key: state.pageKey,
+                          restorationId: state.pageKey.value,
                           name: 'booking_confirmation',
                           child: const SwipeFromRightToPop(
                             child: BookingConfirmationPage(),
@@ -316,6 +360,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: 'search',
                     name: 'search',
                     pageBuilder: (context, state) => slideFromRightPage(
+                      key: state.pageKey,
+                      restorationId: state.pageKey.value,
                       name: 'search',
                       child: const SwipeFromRightToPop(child: SearchHubPage()),
                     ),
@@ -324,6 +370,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                         path: 'transfers',
                         name: 'transfers',
                         pageBuilder: (context, state) => slideFromRightPage(
+                          key: state.pageKey,
+                          restorationId: state.pageKey.value,
                           name: 'transfers',
                           child: const PlaceholderPageScaffold(
                             routeName: 'transfers',
@@ -341,6 +389,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     redirect: (context, state) =>
                         AppConfig.groupsEnabled ? null : '/',
                     pageBuilder: (context, state) => slideFromRightPage(
+                      key: state.pageKey,
+                      restorationId: state.pageKey.value,
                       name: 'groups',
                       child: const SwipeFromRightToPop(child: GroupsPage()),
                     ),
@@ -349,6 +399,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: 'trip-builder',
                     name: 'trip_builder',
                     pageBuilder: (context, state) => slideFromRightPage(
+                      key: state.pageKey,
+                      restorationId: state.pageKey.value,
                       name: 'trip_builder',
                       child: const SwipeFromRightToPop(
                         child: TripBuilderPage(),
@@ -366,18 +418,25 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/onboarding',
         name: 'onboarding',
         parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) =>
-            fadeThroughPage(name: 'onboarding', child: const OnboardingPage()),
+        pageBuilder: (context, state) => slideFromRightPage(
+          key: state.pageKey,
+          restorationId: state.pageKey.value,
+          name: 'onboarding',
+          child: const OnboardingPage(),
+        ),
       ),
       // Full-screen AI chat — deliberately OUTSIDE the shell so the bottom
-      // bar does not render on top of it. Fade-through keeps the unified
-      // motion language; visible and system Back controls pop the route.
+      // bar does not render on top of it. The horizontal page transition
+      // keeps the unified motion language; visible and system Back controls
+      // pop the route.
       // Admin panel — root route outside the shell (ADM-A2).
       GoRoute(
         path: '/admin',
         name: 'admin',
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (context, state) => slideFromRightPage(
+          key: state.pageKey,
+          restorationId: state.pageKey.value,
           name: 'admin',
           child: const SwipeFromRightToPop(child: AdminPage()),
         ),
@@ -387,6 +446,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: 'ai_chat',
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (context, state) => slideFromRightPage(
+          key: state.pageKey,
+          restorationId: state.pageKey.value,
           name: 'ai_chat',
           child: AiChatPage(initialPrompt: state.extra as String?),
         ),
@@ -398,6 +459,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: 'ai_memory',
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (context, state) => slideFromRightPage(
+          key: state.pageKey,
+          restorationId: state.pageKey.value,
           name: 'ai_memory',
           child: const SwipeFromRightToPop(child: AiMemoryPage()),
         ),

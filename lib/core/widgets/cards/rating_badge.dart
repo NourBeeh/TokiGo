@@ -44,7 +44,6 @@ class RatingBadge extends StatelessWidget {
           ),
           child: Text(
             score,
-            textDirection: TextDirection.ltr,
             style: typography.label.copyWith(
               color: context.tokigoColors.onMedia,
               fontWeight: FontWeight.w800,

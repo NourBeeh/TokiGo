@@ -436,7 +436,7 @@ class _PinnedHomeSearchHeader extends SliverPersistentHeaderDelegate {
     bool overlapsContent,
   ) => Material(
     color: context.tokigoColors.background,
-    elevation: overlapsContent ? 2 : 0,
+    elevation: 0,
     child: SizedBox.expand(
       child: Center(
         child: Padding(

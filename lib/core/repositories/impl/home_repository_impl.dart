@@ -135,6 +135,30 @@ class HomeRepositoryImpl implements HomeRepository {
   }
 
   @override
+  Future<SnapshotState> snapshotState({required String audience}) async {
+    final cache = _offlineCache;
+    if (cache == null) return SnapshotState.unavailable;
+    try {
+      final map = await cache.read(homeSnapshotCacheKey(audience));
+      if (map == null) return SnapshotState.unavailable;
+      final savedAtStr = map['savedAt']?.toString();
+      if (savedAtStr == null || savedAtStr.isEmpty) {
+        // No parseable timestamp: treat as stale rather than guessing.
+        return SnapshotState.stale;
+      }
+      final savedAt = DateTime.tryParse(savedAtStr);
+      if (savedAt == null) return SnapshotState.stale;
+      final age = DateTime.now().difference(savedAt);
+      if (age <= HomeCacheConfig.ttl) {
+        return SnapshotState.fresh;
+      }
+      return SnapshotState.stale;
+    } catch (_) {
+      return SnapshotState.unavailable;
+    }
+  }
+
+  @override
   Future<ApiResult<List<HomeSection>>> getHomeSections() async {
     final result = await apiClient.get<List<dynamic>>('/home/sections');
     return result.when(
@@ -374,7 +398,28 @@ Map<String, dynamic> homeSectionToMap(HomeSection s) {
     if (s.metadata.isNotEmpty) 'metadata': s.metadata,
   };
 }
+  return <String, dynamic>{
+    'id': i.id,
+    'type': i.type.name,
+    'title': i.title,
+    'subtitle': i.subtitle,
+    'description': i.description,
+    'imageUrl': i.imageUrl,
+    if (i.price != null) 'price': i.price,
+    'currency': i.currency,
+    if (i.rating != null) 'rating': i.rating,
+    if (i.reviewCount != null) 'reviewCount': i.reviewCount,
+    'badge': i.badge,
+    'highlights': i.highlights,
+    'tags': i.tags,
+    'actionLabel': i.actionLabel,
+    // Phase 1B: keep item metadata (composer reason chips, provenance) in the
+    // snapshot round-trip. Optional on read — legacy entries keep working.
+    if (i.metadata.isNotEmpty) 'metadata': i.metadata,
+  };
+}
 
+/// JSON-safe snapshot of one item for the offline cache.
 Map<String, dynamic> homeItemToMap(HomeItem i) {
   return <String, dynamic>{
     'id': i.id,

@@ -19,6 +19,13 @@ class GoogleAuthConfig {
     defaultValue: '423433597936-erj0nejep60cs5g84s4goknhis6v8jle.apps.googleusercontent.com',
   );
 
+  /// Optional iOS OAuth client ID. On iOS, google_sign_in needs either this or
+  /// a GoogleService-Info.plist. Provided via --dart-define=GOOGLE_IOS_CLIENT_ID.
+  static const String iosClientId = String.fromEnvironment(
+    'GOOGLE_IOS_CLIENT_ID',
+    defaultValue: '',
+  );
+
   /// False until the ID above is supplied; the sign-in button stays hidden
   /// rather than opening a flow that cannot succeed.
   static bool get isConfigured => serverClientId.trim().isNotEmpty;

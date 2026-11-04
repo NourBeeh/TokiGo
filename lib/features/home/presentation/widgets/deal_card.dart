@@ -173,7 +173,6 @@ class _DealPrice extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
-      textDirection: TextDirection.ltr,
       children: <Widget>[
         Text(
           price!.toStringAsFixed(0),

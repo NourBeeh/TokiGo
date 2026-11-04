@@ -63,7 +63,12 @@ class NativeGoogleSignInService implements GoogleSignInService {
       // token is minted for, and the value the backend validates against.
       await signIn.initialize(
         serverClientId: GoogleAuthConfig.serverClientId,
-        clientId: kIsWeb ? GoogleAuthConfig.serverClientId : null,
+        clientId: kIsWeb
+            ? GoogleAuthConfig.serverClientId
+            : (defaultTargetPlatform == TargetPlatform.iOS &&
+                    GoogleAuthConfig.iosClientId.isNotEmpty
+                ? GoogleAuthConfig.iosClientId
+                : null),
       );
       _initialized = true;
     }

@@ -417,7 +417,6 @@ class _FlightPrice extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
-      textDirection: TextDirection.ltr,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Text(

@@ -430,11 +430,9 @@ class _PriceLine extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
-      textDirection: TextDirection.ltr,
       children: <Widget>[
         Text(
           amountText,
-          textDirection: TextDirection.ltr,
           maxLines: 1,
           style: typography.titleMedium.copyWith(
             color: context.tokigoColors.textPrimary,
@@ -447,7 +445,6 @@ class _PriceLine extends StatelessWidget {
           const SizedBox(width: AppSpacing.xs),
           Text(
             currency,
-            textDirection: TextDirection.ltr,
             style: typography.caption.copyWith(
               color: context.tokigoColors.textSecondary,
               fontWeight: FontWeight.w600,

@@ -46,13 +46,14 @@ class _DetachedBackButtonState extends State<DetachedBackButton> {
 
   @override
   Widget build(BuildContext context) {
+    final TextDirection appTextDirection = Directionality.of(context);
     return NotificationListener<ScrollNotification>(
       onNotification: _onScroll,
       child: Stack(
         children: <Widget>[
           widget.child,
-          Positioned(
-            left: AppSpacing.lg,
+          PositionedDirectional(
+            start: AppSpacing.lg,
             top: AppSpacing.sm,
             child: AppBackButton(
               variant: _detached

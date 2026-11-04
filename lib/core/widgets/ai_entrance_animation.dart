@@ -1,40 +1,21 @@
 import 'package:flutter/material.dart';
 
-/// The AI page entrance animation — a subtle scale+fade that plays once on
-/// mount. Extracted from the AI chat page so every pushed page can share the
-/// same content entrance flourish.
+/// Compatibility wrapper for the former AI page content entrance.
 ///
-/// The route transition itself stays native so iOS edge-swipe-back keeps
-/// working; this only animates the CONTENT inside the page.
+/// The route transition itself is strictly horizontal and is owned by the
+/// platform (native Cupertino on iOS, predictive back on Android). A content
+/// entrance on top of it used to scale the whole page from
+/// `Alignment.bottomRight`, which made every pushed page appear to grow
+/// diagonally out of the bottom-right corner (and put a second animation in
+/// the tree during the interactive back-swipe).
+///
+/// The wrapper therefore adds nothing: it renders [child] unchanged, keeping
+/// existing call sites compiling without reintroducing a zoom/corner entrance.
 class AiEntranceAnimation extends StatelessWidget {
   const AiEntranceAnimation({super.key, required this.child});
 
   final Widget child;
 
-  /// One shared tween instance for every build.
-  ///
-  /// [TweenAnimationBuilder] compares the tween by IDENTITY
-  /// (`widget.tween != oldWidget.tween`), and [Tween] does not override `==` —
-  /// so a tween built inside `build` is a new object on every rebuild. Keeping
-  /// one instance here means the builder never sees a "changed" tween, so the
-  /// flourish plays once on mount and is never re-armed by a rebuild.
-  static final Tween<double> _tween = Tween<double>(begin: 0, end: 1);
-
   @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: _tween,
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOut,
-      builder: (context, v, child) => Opacity(
-        opacity: v,
-        child: Transform.scale(
-          scale: 0.92 + 0.08 * v,
-          alignment: Alignment.bottomRight,
-          child: child,
-        ),
-      ),
-      child: child,
-    );
-  }
+  Widget build(BuildContext context) => child;
 }

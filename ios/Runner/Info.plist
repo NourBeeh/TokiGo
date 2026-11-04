@@ -16,12 +16,40 @@
 		<string>6.0</string>
 		<key>CFBundleName</key>
 		<string>tokigo</string>
-		<key>CFBundlePackageType</key>
-		<string>APPL</string>
+		<key>CFBundleIconName</key>
+		<string>AppIcon-Light</string>
+		<key>CFBundleAlternateIcons</key>
+		<dict>
+		    <key>AppIcon-Light</key>
+		    <dict>
+		        <key>CFBundleIconFiles</key>
+		        <array>
+		            <string>app_icon</string>
+		        </dict>
+		    </dict>
+		    <key>AppIcon-Dark</key>
+		    <dict>
+		        <key>CFBundleIconFiles</key>
+		        <array>
+		            <string>app_icon_dark</string>
+		        </dict>
+		    </dict>
+		</dict>
 		<key>CFBundleShortVersionString</key>
 		<string>$(FLUTTER_BUILD_NAME)</string>
 		<key>CFBundleSignature</key>
 		<string>????</string>
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleURLName</key>
+				<string>com.tokigo.tokigo</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>com.googleusercontent.apps.423433597936-uqb2274m2jk3eno1n41es30ssv44uau4</string>
+				</array>
+			</dict>
+		</array>
 		<key>CFBundleVersion</key>
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
 		<key>LSRequiresIPhoneOS</key>

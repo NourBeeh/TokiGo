@@ -19,6 +19,7 @@ class HomeState {
   final bool isRefreshing;
   final bool fromCache;
   final HomeGreeting? greeting;
+  final SnapshotState? snapshotState;
 
   const HomeState({
     this.status = HomeStatus.loading,
@@ -28,6 +29,7 @@ class HomeState {
     this.isRefreshing = false,
     this.fromCache = false,
     this.greeting,
+    this.snapshotState,
   });
 
   HomeState copyWith({
@@ -38,6 +40,7 @@ class HomeState {
     bool? isRefreshing,
     bool? fromCache,
     HomeGreeting? greeting,
+    SnapshotState? snapshotState,
   }) {
     return HomeState(
       status: status ?? this.status,
@@ -47,6 +50,7 @@ class HomeState {
       isRefreshing: isRefreshing ?? this.isRefreshing,
       fromCache: fromCache ?? this.fromCache,
       greeting: greeting ?? this.greeting,
+      snapshotState: snapshotState ?? this.snapshotState,
     );
   }
 }
@@ -116,6 +120,17 @@ class HomeController extends StateNotifier<HomeState> {
   Future<void> _startUp() async {
     await restoreFromSnapshot();
     await load();
+    // Swing the freshness check at the repository before the first frame so
+    // the UI can show "you're looking at stale data" instead of a stale
+    // banner that claims nothing has changed. A failed storage read still
+    // yields an honest unavailable verdict (no crash).
+    try {
+      final snapshotState =
+          await repository.snapshotState(audience: audience);
+      state = state.copyWith(snapshotState: snapshotState);
+    } catch (_) {
+      // Never let a storage read block UI startup.
+    }
   }
 
   /// Reads the audience snapshot and, when present, publishes it immediately

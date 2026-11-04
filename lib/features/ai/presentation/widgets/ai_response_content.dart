@@ -155,11 +155,11 @@ class _AiResponseBubble extends StatelessWidget {
               ),
               decoration: BoxDecoration(
                 color: scheme.surface,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(AppRadius.sm),
-                  topRight: Radius.circular(AppRadius.lg),
-                  bottomLeft: Radius.circular(AppRadius.lg),
-                  bottomRight: Radius.circular(AppRadius.lg),
+                borderRadius: const BorderRadiusDirectional.only(
+                  topStart: Radius.circular(AppRadius.sm),
+                  topEnd: Radius.circular(AppRadius.lg),
+                  bottomStart: Radius.circular(AppRadius.lg),
+                  bottomEnd: Radius.circular(AppRadius.lg),
                 ),
                 border: Border.all(color: scheme.outlineVariant),
               ),

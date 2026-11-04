@@ -7,6 +7,14 @@ on:
         description: 'Backend URL for a physical device (e.g. http://192.168.1.3:3000)'
         required: false
         default: ''
+      google_server_client_id:
+        description: 'Google OAuth web/server client ID (Android-compatible)'
+        required: false
+        default: '423433597936-erj0nejep60cs5g84s4goknhis6v8jle.apps.googleusercontent.com'
+      google_ios_client_id:
+        description: 'Google OAuth iOS client ID'
+        required: false
+        default: '423433597936-uqb2274m2jk3eno1n41es30ssv44uau4.apps.googleusercontent.com'
 
 jobs:
   build-ios:
@@ -52,6 +60,8 @@ jobs:
               ARGS+=(--dart-define=ALLOW_INSECURE_LOCAL_API=true)
             fi
           fi
+          ARGS+=(--dart-define=GOOGLE_SERVER_CLIENT_ID="${{ github.event.inputs.google_server_client_id }}")
+          ARGS+=(--dart-define=GOOGLE_IOS_CLIENT_ID="${{ github.event.inputs.google_ios_client_id }}")
           flutter "${ARGS[@]}" 
 
       - name: Package unsigned IPA
