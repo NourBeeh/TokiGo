@@ -57,6 +57,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiSearchHint => 'Where do you want to go?';
 
   @override
+  String get homeSearchHint => 'Search destinations, hotels & more';
+
+  @override
   String get aiSend => 'Send';
 
   @override
@@ -262,6 +265,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeNavActivities => 'Activities';
+
+  @override
+  String get homeNavTrips => 'Trips';
 
   @override
   String get searchTransfers => 'Airport transfer';
@@ -1029,6 +1035,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationUnread => 'Unread';
+
+  @override
+  String get notificationsPermissionTitle => 'Allow notifications';
+
+  @override
+  String get notificationsPermissionBody => 'We\'ll send booking updates, price alerts and check-in reminders. You can change this anytime in Settings.';
+
+  @override
+  String get notificationsPermissionAllow => 'Allow notifications';
+
+  @override
+  String get notificationsPermissionNotNow => 'Not now';
 
   @override
   String get wishlistEmptyTitle => 'Nothing saved yet';

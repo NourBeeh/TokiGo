@@ -15,6 +15,7 @@ import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
 import 'package:tokigo/features/home/presentation/home_controller.dart';
+import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_ai_search_field.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_discovery_stay_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_section.dart';
@@ -162,7 +163,7 @@ class _HomePageState extends ConsumerState<HomePage>
     final state = ref.watch(homeControllerProvider);
     _consumeScrollTarget();
     return Scaffold(
-      backgroundColor: context.tokigoColors.background,
+      backgroundColor: HomeDesignTokens.backgroundOf(context),
       // H1: pull-to-refresh removed by product decision — Home refreshes
       // prices/availability via live validation only (H2). The old
       // RefreshIndicator wrapper is gone; the SafeArea/Column tree is
@@ -346,7 +347,7 @@ class _HomePageState extends ConsumerState<HomePage>
     SliverPersistentHeader(
       pinned: true,
       delegate: _PinnedHomeSearchHeader(
-        accentColor: context.tokigoColors.brand,
+        accentColor: HomeDesignTokens.accentOf(context),
       ),
     ),
     SliverToBoxAdapter(
@@ -357,7 +358,7 @@ class _HomePageState extends ConsumerState<HomePage>
           AppSpacing.lg,
           AppSpacing.xl,
         ),
-        child: HomeNavButtons(compact: true, searchContext: _searchContext()),
+        child: HomeNavButtons(searchContext: _searchContext()),
       ),
     ),
     // In-context location explainer (owner decision: never on launch; the OS
@@ -435,7 +436,7 @@ class _PinnedHomeSearchHeader extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) => Material(
-    color: context.tokigoColors.background,
+    color: HomeDesignTokens.backgroundOf(context),
     elevation: 0,
     child: SizedBox.expand(
       child: Center(

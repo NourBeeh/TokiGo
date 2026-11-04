@@ -2,19 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
-import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
 import 'package:tokigo/features/search/domain/search_context.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
-/// Home shortcuts for travel services (flights, stays, cars, activities).
+/// Home shortcuts for travel services — the owner's spec: four equal cards on
+/// one row (Flights, Hotels, Cars, Trips), each a white 88dp tile with 16dp
+/// corners, a 1dp `#E0DCD6` border, a 25px accent glyph and a 12/600 accent
+/// label 6dp below it. No shadows.
+///
+/// Every tile keeps its real destination: the three search surfaces receive
+/// the traveller's travel context through the router `extra`, and Trips opens
+/// the existing My Trips bag.
 class HomeNavButtons extends StatelessWidget {
-  const HomeNavButtons({super.key, this.compact = false, this.searchContext});
-
-  /// Slightly shorter tiles for the pinned Home header on compact layouts.
-  final bool compact;
+  const HomeNavButtons({super.key, this.searchContext});
 
   /// Phase 4A — the traveller's travel context (mood, city, country, airport,
   /// budget) handed to the search surface the tile opens. Null keeps the
@@ -27,41 +30,35 @@ class HomeNavButtons extends StatelessWidget {
     final items = <_NavItemData>[
       _NavItemData(
         label: l10n.searchFlights,
-        icon: Icons.flight_rounded,
-        hue: AppColors.flightHue,
+        icon: Icons.flight_takeoff_rounded,
         path: '/flights',
       ),
       _NavItemData(
         label: l10n.searchHotels,
-        icon: Icons.home_rounded,
-        hue: AppColors.hotelHue,
+        icon: Icons.hotel_rounded,
         path: '/hotels',
       ),
       _NavItemData(
         label: l10n.searchCars,
         icon: Icons.directions_car_rounded,
-        hue: AppColors.carHue,
         path: '/cars',
       ),
       _NavItemData(
-        label: l10n.homeNavActivities,
-        icon: Icons.beach_access_rounded,
-        hue: AppColors.packageHue,
-        path: '/packages',
+        label: l10n.homeNavTrips,
+        icon: Icons.luggage_rounded,
+        path: '/bag',
       ),
     ];
 
-    return GridView.count(
-      crossAxisCount: 4,
-      mainAxisExtent: compact ? 56 : _NavTile.size,
-      padding: EdgeInsets.zero,
-      crossAxisSpacing: AppSpacing.sm,
-      mainAxisSpacing: AppSpacing.sm,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+    // Four equal, responsive tiles: `Expanded` shares whatever width the
+    // screen leaves after the gutters, so the row never overflows and the
+    // spacing stays balanced from 320pt phones up.
+    return Row(
       children: <Widget>[
-        for (final item in items)
-          _NavTile(item: item, compact: compact, searchContext: searchContext),
+        for (int i = 0; i < items.length; i++) ...<Widget>[
+          if (i > 0) const SizedBox(width: AppSpacing.sm),
+          Expanded(child: _NavTile(item: items[i], searchContext: searchContext)),
+        ],
       ],
     );
   }
@@ -71,28 +68,32 @@ class _NavItemData {
   const _NavItemData({
     required this.label,
     required this.icon,
-    required this.hue,
     required this.path,
   });
 
   final String label;
   final IconData icon;
-  final Color hue;
   final String path;
 }
 
-/// One restrained service shortcut: a glyph and a clear, single-line label.
+/// One restrained service shortcut: an accent glyph and a clear, single-line
+/// accent label, centred in the spec's bordered tile.
 class _NavTile extends StatefulWidget {
-  const _NavTile({
-    required this.item,
-    this.compact = false,
-    this.searchContext,
-  });
+  const _NavTile({required this.item, this.searchContext});
 
-  static const double size = 64;
+  /// The spec's tile height.
+  static const double height = 88;
+
+  /// Glyph size from the spec.
+  static const double iconSize = 25;
+
+  /// Gap between the glyph and its label.
+  static const double iconLabelGap = 6;
+
+  /// Label size from the spec (weight w600 comes from `captionSemibold`).
+  static const double labelSize = 12;
 
   final _NavItemData item;
-  final bool compact;
 
   /// Phase 4A — the travel context handed to the search surface this tile
   /// opens (null = an empty search form).
@@ -109,62 +110,66 @@ class _NavTileState extends State<_NavTile> {
   @override
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
-    final tc = context.tokigoColors;
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final double iconSize = widget.compact ? 24 : 26;
-    final Color iconInk = isDark ? tc.textPrimary : widget.item.hue;
+    final accent = HomeDesignTokens.accentOf(context);
 
     return Semantics(
       button: true,
       label: widget.item.label,
-      child: SizedBox.expand(
-        child: GestureDetector(
-          onTapDown: _tapDown,
-          onTapUp: (_) => setState(() => _pressed = false),
-          onTapCancel: () => setState(() => _pressed = false),
-          onTap: _tap,
-          behavior: HitTestBehavior.opaque,
-          child: AnimatedScale(
-            scale: _pressed ? 0.955 : 1.0,
-            duration: const Duration(milliseconds: 140),
+      child: GestureDetector(
+        onTapDown: _tapDown,
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
+        onTap: _tap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedScale(
+          scale: _pressed ? 0.955 : 1.0,
+          duration: const Duration(milliseconds: 140),
+          curve: Curves.easeOut,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
             curve: Curves.easeOut,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 160),
-              curve: Curves.easeOut,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? (_pressed ? tc.surface : tc.surfaceSecondary)
-                    : (_pressed ? const Color(0xFFF5F5F5) : Colors.white),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: _pressed ? tc.hairlineStrong : tc.hairline,
-                ),
+            height: _NavTile.height,
+            decoration: BoxDecoration(
+              color: _pressed
+                  ? HomeDesignTokens.pressedSurfaceOf(context)
+                  : HomeDesignTokens.surfaceOf(context),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: HomeDesignTokens.borderOf(context),
+                width: 1,
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Icon(widget.item.icon, size: iconSize, color: iconInk),
-                  SizedBox(height: widget.compact ? 2 : 4),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.xs,
-                    ),
-                    child: ExcludeSemantics(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          widget.item.label,
-                          maxLines: 1,
-                          textAlign: TextAlign.center,
-                          style: typography.captionSemibold.copyWith(
-                            color: tc.textPrimary,
-                          ),
+              // The spec's tiles carry no elevation.
+              boxShadow: const <BoxShadow>[],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Icon(
+                  widget.item.icon,
+                  size: _NavTile.iconSize,
+                  color: accent,
+                ),
+                const SizedBox(height: _NavTile.iconLabelGap),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xs,
+                  ),
+                  child: ExcludeSemantics(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        widget.item.label,
+                        maxLines: 1,
+                        textAlign: TextAlign.center,
+                        style: typography.captionSemibold.copyWith(
+                          fontSize: _NavTile.labelSize,
+                          color: accent,
                         ),
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

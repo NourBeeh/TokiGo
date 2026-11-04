@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
-import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
 /// Compact hit target for the trailing mic/search actions. It sits one step
@@ -14,22 +13,25 @@ import 'package:tokigo/l10n/app_localizations.dart';
 /// the actions remain a comfortable tap surface.
 const double _trailingActionSize = 40;
 
-/// The Home search field — a clean, Bunny-Search-style rounded rectangle: a
-/// crisp white fill, a 0.5px hairline border that never changes on focus, the
-/// TOKI AI mark on the leading edge and a quiet search affordance on the
-/// trailing edge. No rotating aura, no breathing glow, no typewriter — the
-/// field reads as a calm, premium search bar that opens the unified TokiGo AI
-/// chat.
+/// The Home search field — the owner's spec: a white pill (56dp tall, a fully
+/// rounded 32 radius, one 1dp `#E0DCD6` border, no shadow) with an accent
+/// search glyph on the leading edge and the localized placeholder
+/// (`Search destinations, hotels & more`) in `#757575`.
 ///
-/// The box is multiline: Enter inserts a newline. Submission happens only via
-/// the trailing search/send action (or the leading sparkle, which opens the
-/// chat empty). Both hand the exact trimmed query to [AiChatPage] via the
-/// established GoRouter `extra` mechanism, where it is submitted to the AI on
-/// open. The static hint always renders on ONE line — it auto-sizes to the
-/// room the field has instead of wrapping — see [_HomeAiSearchFieldState].
+/// The box is multiline: Enter inserts a newline. Submission happens via the
+/// keyboard's search action or the trailing send button; both hand the exact
+/// trimmed query to [AiChatPage] through the established GoRouter `extra`
+/// mechanism, where it is submitted to the AI on open. The trailing mic opens
+/// the same chat empty, where the live microphone lives. The static hint
+/// always renders on ONE line — it auto-sizes to the room the field has
+/// instead of wrapping — see [_HomeAiSearchFieldState].
 class HomeAiSearchField extends StatefulWidget {
-  const HomeAiSearchField({super.key, this.accentColor = AppColors.brand});
+  const HomeAiSearchField({
+    super.key,
+    this.accentColor = HomeDesignTokens.accent,
+  });
 
+  /// The spec's accent, resolved for the active brightness by the caller.
   final Color accentColor;
 
   @override
@@ -86,12 +88,10 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
   /// base size. The text is never wrapped, never elided and never painted
   /// outside the field, so the hint reads complete on every screen width.
   Widget _fittedHint(String text, AppTypography typography) {
-    // Full-opacity textSecondary (5.0:1 on the warm canvas). The previous
-    // `withValues(alpha: 0.7)` blended it to ≈#979797 — 2.9:1, below WCAG AA
-    // for body text. The placeholder must stay legible, not fade away.
+    // The spec's placeholder ink (#757575) at full opacity — never faded.
     // Doc 17 §3.2 — the placeholder is `body` 15/400.
     final baseStyle = typography.body.copyWith(
-      color: context.tokigoColors.textSecondary,
+      color: HomeDesignTokens.hintOf(context),
     );
     final baseSize = baseStyle.fontSize ?? 15;
 
@@ -115,17 +115,19 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
     final l10n = AppLocalizations.of(context)!;
-    final colors = context.tokigoColors;
-    final lightMode = Theme.of(context).brightness == Brightness.light;
 
     return TapRegion(
       onTapOutside: (_) => _focusNode.unfocus(),
       child: Container(
-        constraints: const BoxConstraints(minHeight: 46),
+        constraints: const BoxConstraints(minHeight: 56),
         decoration: BoxDecoration(
-          color: colors.surfaceElevated,
-          borderRadius: AppRadius.lgBorder,
-          border: Border.all(color: colors.hairline),
+          color: HomeDesignTokens.surfaceOf(context),
+          // Fully rounded: a 32 radius on a 56dp-tall box is a stadium.
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(
+            color: HomeDesignTokens.borderOf(context),
+            width: 1,
+          ),
           // No elevation/shadow around the search box (audit requirement).
           boxShadow: const <BoxShadow>[],
         ),
@@ -135,6 +137,13 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           child: Row(
             children: <Widget>[
+              // The spec's leading search glyph, in the Home accent.
+              Icon(
+                Icons.search_rounded,
+                size: 22,
+                color: widget.accentColor,
+              ),
+              const SizedBox(width: AppSpacing.sm),
               // The editable field with a static, localized hint. The trailing
               // search/send action submits the current query.
               Expanded(
@@ -145,7 +154,7 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                     // The static hint is a WIDGET, not hintText: it must always
                     // read as ONE line, so it scales with the room the field
                     // actually has (see [_fittedHint]).
-                    hint: _fittedHint(l10n.aiSearchHint, typography),
+                    hint: _fittedHint(l10n.homeSearchHint, typography),
                     // Fully opt out of the global inputDecorationTheme: its
                     // filled off-white fill and its state borders (the blue
                     // brand focusedBorder) must never repaint this pill.

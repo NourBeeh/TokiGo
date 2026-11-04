@@ -130,7 +130,7 @@ void main() {
         find.byWidgetPredicate(
           (widget) =>
               widget is Container &&
-              widget.constraints?.minHeight == 46 &&
+              widget.constraints?.minHeight == 56 &&
               widget.decoration is BoxDecoration,
         ),
       );
@@ -307,28 +307,31 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(GridView), findsOneWidget);
+    expect(find.byType(Expanded), findsNWidgets(4));
     expect(find.text('Flights'), findsOneWidget);
     expect(find.text('Stays'), findsOneWidget);
     expect(find.text('Cars Rental'), findsOneWidget);
-    expect(find.text('Activities'), findsOneWidget);
-    // Explore and My Trips were removed from Home's nav tiles.
-    expect(find.text('My Trips'), findsNothing);
+    expect(find.text('Trips'), findsOneWidget);
+    // Activities was replaced by the Trips tile; Explore was never a Home one.
+    expect(find.text('Activities'), findsNothing);
     expect(find.text('Explore'), findsNothing);
 
     final Offset flights = tester.getCenter(find.text('Flights'));
     final Offset stays = tester.getCenter(find.text('Stays'));
     final Offset cars = tester.getCenter(find.text('Cars Rental'));
-    final Offset activities = tester.getCenter(find.text('Activities'));
-    expect(flights.dy, stays.dy);
-    expect(stays.dy, cars.dy);
-    expect(cars.dy, activities.dy);
+    final Offset trips = tester.getCenter(find.text('Trips'));
+    // One row: the four labels share a baseline. Compared with a tolerance
+    // because a label long enough to be scaled by the FittedBox lands on a
+    // sub-pixel offset (the row itself is exact).
+    expect(flights.dy, closeTo(stays.dy, 0.01));
+    expect(stays.dy, closeTo(cars.dy, 0.01));
+    expect(cars.dy, closeTo(trips.dy, 0.01));
     expect(flights.dx, lessThan(stays.dx));
     expect(stays.dx, lessThan(cars.dx));
-    expect(cars.dx, lessThan(activities.dx));
+    expect(cars.dx, lessThan(trips.dx));
   });
 
-  testWidgets('Cars and Activities tiles open their pages', (
+  testWidgets('Cars and Trips tiles open their pages', (
     WidgetTester tester,
   ) async {
     _setPhoneSize(tester);
@@ -355,9 +358,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Activities'));
+    await tester.tap(find.text('Trips'));
     await tester.pumpAndSettle();
-    expect(find.text('Activities opened'), findsOneWidget);
+    expect(find.text('My trips opened'), findsOneWidget);
   });
 
   testWidgets('Stay price aligns to the start of the card', (

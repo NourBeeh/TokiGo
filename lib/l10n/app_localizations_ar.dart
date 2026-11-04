@@ -57,6 +57,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aiSearchHint => 'عايز تسافر فين؟';
 
   @override
+  String get homeSearchHint => 'ابحث عن وجهات وفنادق والمزيد';
+
+  @override
   String get aiSend => 'إرسال';
 
   @override
@@ -262,6 +265,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get homeNavActivities => 'أنشطة';
+
+  @override
+  String get homeNavTrips => 'رحلاتي';
 
   @override
   String get searchTransfers => ' transfére المطار';
@@ -1032,6 +1038,18 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get notificationUnread => 'غير مقروء';
+
+  @override
+  String get notificationsPermissionTitle => 'سماح إشعارات';
+
+  @override
+  String get notificationsPermissionBody => 'هسلم تحديثات الحجز وتنبيهات الأسعار وتذكيرات التسجيل. تقدر تدير هذا في الإعدادات في أي وقت.';
+
+  @override
+  String get notificationsPermissionAllow => 'سماح الإشعارات';
+
+  @override
+  String get notificationsPermissionNotNow => 'الآن لا';
 
   @override
   String get wishlistEmptyTitle => 'مفيش حاجة محفوظة لحد الآن';

@@ -191,6 +191,12 @@ abstract class AppLocalizations {
   /// **'Where do you want to go?'**
   String get aiSearchHint;
 
+  /// No description provided for @homeSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search destinations, hotels & more'**
+  String get homeSearchHint;
+
   /// No description provided for @aiSend.
   ///
   /// In en, this message translates to:
@@ -592,6 +598,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Activities'**
   String get homeNavActivities;
+
+  /// No description provided for @homeNavTrips.
+  ///
+  /// In en, this message translates to:
+  /// **'Trips'**
+  String get homeNavTrips;
 
   /// No description provided for @searchTransfers.
   ///
@@ -2098,6 +2110,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unread'**
   String get notificationUnread;
+
+  /// No description provided for @notificationsPermissionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow notifications'**
+  String get notificationsPermissionTitle;
+
+  /// No description provided for @notificationsPermissionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll send booking updates, price alerts and check-in reminders. You can change this anytime in Settings.'**
+  String get notificationsPermissionBody;
+
+  /// No description provided for @notificationsPermissionAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow notifications'**
+  String get notificationsPermissionAllow;
+
+  /// No description provided for @notificationsPermissionNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get notificationsPermissionNotNow;
 
   /// No description provided for @wishlistEmptyTitle.
   ///
