@@ -8,6 +8,7 @@ import 'app_spacing.dart';
 import 'app_tokens.dart';
 import 'app_typography.dart';
 import 'tokigo_colors.dart';
+import 'package:tokigo/core/navigation/app_transitions.dart';
 
 /// Builds the central light-only [ThemeData] for TokiGo.
 ///
@@ -200,6 +201,16 @@ abstract final class AppTheme {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: AppRadius.mdBorder),
       ),
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: <TargetPlatform, PageTransitionsBuilder>{
+          TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
+          TargetPlatform.iOS: SlideFromRightPageTransitionsBuilder(),
+          TargetPlatform.macOS: SlideFromRightPageTransitionsBuilder(),
+          TargetPlatform.linux: SlideFromRightPageTransitionsBuilder(),
+          TargetPlatform.windows: SlideFromRightPageTransitionsBuilder(),
+          TargetPlatform.fuchsia: SlideFromRightPageTransitionsBuilder(),
+        },
+      ),
     );
   }
 
@@ -358,6 +369,16 @@ abstract final class AppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: AppRadius.mdBorder),
+      ),
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: <TargetPlatform, PageTransitionsBuilder>{
+          TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
+          TargetPlatform.iOS: SlideFromRightPageTransitionsBuilder(),
+          TargetPlatform.macOS: SlideFromRightPageTransitionsBuilder(),
+          TargetPlatform.linux: SlideFromRightPageTransitionsBuilder(),
+          TargetPlatform.windows: SlideFromRightPageTransitionsBuilder(),
+          TargetPlatform.fuchsia: SlideFromRightPageTransitionsBuilder(),
+        },
       ),
     );
   }

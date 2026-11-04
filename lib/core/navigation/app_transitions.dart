@@ -95,7 +95,47 @@ CustomTransitionPage<void> fadeThroughPage({
   return FadeThroughTransition(child: child, arguments: arguments, name: name);
 }
 
-/// The app's push/pop transition — every pushed page uses the same slide.
+/// App's push/pop transition for iOS: Cupertino-style route that includes the
+/// native interactive back-gesture detector.
+///
+/// The [CupertinoPageTransitionsBuilder] is used for the visual transition.
+/// It wraps the child in [_CupertinoBackGestureDetector] which handles the
+/// edge-swipe back gesture and animates the route in the direction of the
+/// user's finger, including cancellation and completion.
+class CupertinoSlideFromRightRoute extends CupertinoPageRoute<void> {
+  CupertinoSlideFromRightRoute({
+    required super.builder,
+    super.settings,
+    super.requestFocus,
+    super.allowSnapshotting,
+    super.barrierDismissible,
+  });
+}
+
+/// App's push/pop transition for iOS: a Cupertino-style route that includes
+/// the native interactive back-gesture detector.
+///
+/// This route is used on iOS to restore native interactive back-swipe
+/// navigation while preserving the app's custom visual transition.
+class CupertinoSlideFromRightPage extends CupertinoPage<void> {
+  const CupertinoSlideFromRightPage({
+    required super.child,
+    super.key,
+    super.name,
+    super.arguments,
+    super.restorationId,
+  });
+
+  @override
+  CupertinoSlideFromRightRoute createRoute(BuildContext context) {
+    return CupertinoSlideFromRightRoute(
+      builder: (context) => child,
+    );
+  }
+}
+
+/// App's push/pop transition for other platforms (Android, etc.): the standard
+/// slide transition used by all non-iOS pushed pages.
 ///
 /// ONE simple slide, symmetric in both directions: the page travels in from the
 /// trailing edge on push and leaves by the same edge on pop, so opening and
@@ -104,12 +144,16 @@ CustomTransitionPage<void> fadeThroughPage({
 /// 2026-10-20: "سلايد بسيط … واللي تحتها ثابتة تمامًا").
 ///
 /// It always enters from the physical right, regardless of locale direction.
+/// App's push/pull transition for other platforms (Android, etc.): the standard
+/// slide transition used by all non-iOS pushed pages.
 ///
-/// It began as the AI-chat surface's transition and is now the language for the
-/// whole app: the verticals (flights / hotels / cars / packages), the offer
-/// detail, the booking funnel, Bag, Profile, settings, notifications, admin and
-/// the AI memory page all push this way. Only the shell root and the onboarding
-/// takeover keep [FadeThroughTransition].
+/// IMPORTANT: This class has been REPLACED. For Android, we must use
+/// [MaterialPage] (via [slideFromRightPage]) so that Flutter's native
+/// [ PredictiveBackPageTransitionsBuilder] / [_PredictiveBackGestureDetector]
+/// can connect the system back-gesture to the route animation for predictive
+/// back. The custom slide visual transition is applied by [AppTheme]'s
+/// PageTransitionsTheme, so it is **not** overridden here — doing so would
+/// break Android's system back-gesture & predictive-back.
 class SlideFromRightTransition extends CustomTransitionPage<void> {
   SlideFromRightTransition({
     required super.child,
@@ -122,29 +166,14 @@ class SlideFromRightTransition extends CustomTransitionPage<void> {
          transitionDuration: duration,
          reverseTransitionDuration: duration,
          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-           // `pageCurve` is symmetric and gentle at the start, so the page is
-           // watched travelling the whole way in from the edge — and the pop is
-           // the exact mirror of the push.
-           final curved = CurvedAnimation(
-             parent: animation,
-             curve: AppMotion.pageCurve,
-             reverseCurve: AppMotion.pageCurve,
-           );
-
-           // Reduced motion: no travel at all, just a quiet dissolve.
-           if (MediaQuery.disableAnimationsOf(context)) {
-             return FadeTransition(opacity: curved, child: child);
-           }
-
-           // One tween, both directions: in from the physical right on push,
-           // out to the same edge on pop. `secondaryAnimation` is deliberately
-           // IGNORED — the covered page must not move or dim.
-           return SlideTransition(
-             position: Tween<Offset>(
-               begin: const Offset(1, 0),
-               end: Offset.zero,
-             ).animate(curved),
-             child: child,
+           // DEPRECATED — this block is no longer used on Android. It exists only
+           // for historical reference. See [slideFromRightPage] for the correct
+           // Android implementation, which delegates to [MaterialPage] so that
+           // the PageTransitionsTheme + PredictiveBackPageTransitionsBuilder
+           // drive the gesture.
+           throw UnsupportedError(
+             'SlideFromRightTransition should not be used on Android. '
+             'Use slideFromRightPage() to get the MaterialPage-based transition.',
            );
          },
        );
@@ -152,21 +181,28 @@ class SlideFromRightTransition extends CustomTransitionPage<void> {
 
 /// Convenience wrapper: wraps [child] with the right-edge slide transition
 /// for go-router page builders.
+///
+/// On iOS the CupertinoPage implementation is used (enabling native
+/// interactive back-swipe). On other platforms the standard
+/// SlideFromRightTransition used to be used, but now Android uses
+/// [MaterialPage] so that Flutter's native predictive back works.
 Page<void> slideFromRightPage({
   required Widget child,
   Object? arguments,
   String? name,
+  String? restorationId,
 }) {
   if (defaultTargetPlatform == TargetPlatform.iOS) {
-    return CupertinoPage<void>(
-      name: name,
-      child: child,
-    );
+    return CupertinoSlideFromRightPage(child: child, name: name, arguments: arguments);
   }
-  return SlideFromRightTransition(
-    child: child,
-    arguments: arguments,
+  // Android: MaterialPage (uses PageTransitionsTheme → PredictiveBackPageTransitionsBuilder),
+  // so Android's native system back-gesture reaches the route animation for predictive back.
+  return MaterialPage<void>(
+    key: ValueKey<String>('slide-from-right-page'),
     name: name,
+    arguments: arguments,
+    restorationId: restorationId,
+    child: child,
   );
 }
 
@@ -289,4 +325,53 @@ CustomTransitionPage<void> containerTransformPage({
     arguments: arguments,
     name: name,
   );
+}
+
+/// Custom [PageTransitionsBuilder] that applies the app's custom slide
+/// transition (identical to [SlideFromRightTransition]) while retaining the
+/// Cupertino interactive back-gesture detector installed by
+/// [CupertinoPageTransition].
+///
+/// This builder is used by [CupertinoSlideFromRightPage] to preserve the
+/// native iOS back-swipe gesture semantics while keeping the app's unique
+/// visual transition.
+class SlideFromRightPageTransitionsBuilder extends PageTransitionsBuilder {
+  const SlideFromRightPageTransitionsBuilder();
+
+  @override
+  Duration get transitionDuration => AppMotion.page;
+
+  @override
+  Duration get reverseTransitionDuration => AppMotion.page;
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    // Reduced motion: quiet dissolve (same as the app's SlideFromRightTransition).
+    if (MediaQuery.disableAnimationsOf(context)) {
+      return FadeTransition(opacity: animation, child: child);
+    }
+
+    // Apply the app's custom slide transition, identical to the
+    // CupertinoPageTransition's slide animation, so both gesture handling
+    // and visual motion are consistent.
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: AppMotion.pageCurve,
+      reverseCurve: AppMotion.pageCurve,
+    );
+
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(1, 0),
+        end: Offset.zero,
+      ).animate(curved),
+      child: child,
+    );
+  }
 }
