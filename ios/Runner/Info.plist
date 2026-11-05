@@ -17,7 +17,7 @@
 		<key>CFBundleName</key>
 		<string>tokigo</string>
 		<key>CFBundleIconName</key>
-		<string>AppIcon-Light</string>
+		<string>AppIcon</string>
 		<key>CFBundleAlternateIcons</key>
 		<dict>
 		    <key>AppIcon-Light</key>
@@ -25,14 +25,14 @@
 		        <key>CFBundleIconFiles</key>
 		        <array>
 		            <string>app_icon</string>
-		        </dict>
+		        </array>
 		    </dict>
 		    <key>AppIcon-Dark</key>
 		    <dict>
 		        <key>CFBundleIconFiles</key>
 		        <array>
 		            <string>app_icon_dark</string>
-		        </dict>
+		        </array>
 		    </dict>
 		</dict>
 		<key>CFBundleShortVersionString</key>
