@@ -294,7 +294,7 @@ void main() {
     expect(find.text('Flight search opened'), findsOneWidget);
   });
 
-  testWidgets('Home navigation has four tiles in a single row', (
+  testWidgets('Home navigation has six tiles in a single row', (
     WidgetTester tester,
   ) async {
     _setPhoneSize(tester);
@@ -307,28 +307,35 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(Expanded), findsNWidgets(4));
+    expect(find.byType(Expanded), findsNWidgets(6));
     expect(find.text('Flights'), findsOneWidget);
     expect(find.text('Stays'), findsOneWidget);
     expect(find.text('Cars Rental'), findsOneWidget);
+    expect(find.text('Activities'), findsOneWidget);
+    expect(find.text('Groups'), findsOneWidget);
     expect(find.text('Trips'), findsOneWidget);
-    // Activities was replaced by the Trips tile; Explore was never a Home one.
-    expect(find.text('Activities'), findsNothing);
+    // Explore was never a Home tile.
     expect(find.text('Explore'), findsNothing);
 
     final Offset flights = tester.getCenter(find.text('Flights'));
     final Offset stays = tester.getCenter(find.text('Stays'));
     final Offset cars = tester.getCenter(find.text('Cars Rental'));
+    final Offset activities = tester.getCenter(find.text('Activities'));
+    final Offset groups = tester.getCenter(find.text('Groups'));
     final Offset trips = tester.getCenter(find.text('Trips'));
-    // One row: the four labels share a baseline. Compared with a tolerance
+    // One row: the six labels share a baseline. Compared with a tolerance
     // because a label long enough to be scaled by the FittedBox lands on a
     // sub-pixel offset (the row itself is exact).
     expect(flights.dy, closeTo(stays.dy, 0.01));
     expect(stays.dy, closeTo(cars.dy, 0.01));
-    expect(cars.dy, closeTo(trips.dy, 0.01));
+    expect(cars.dy, closeTo(activities.dy, 0.01));
+    expect(activities.dy, closeTo(groups.dy, 0.01));
+    expect(groups.dy, closeTo(trips.dy, 0.01));
     expect(flights.dx, lessThan(stays.dx));
     expect(stays.dx, lessThan(cars.dx));
-    expect(cars.dx, lessThan(trips.dx));
+    expect(cars.dx, lessThan(activities.dx));
+    expect(activities.dx, lessThan(groups.dx));
+    expect(groups.dx, lessThan(trips.dx));
   });
 
   testWidgets('Cars and Trips tiles open their pages', (

@@ -599,6 +599,12 @@ abstract class AppLocalizations {
   /// **'Activities'**
   String get homeNavActivities;
 
+  /// No description provided for @homeNavGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups'**
+  String get homeNavGroups;
+
   /// No description provided for @homeNavTrips.
   ///
   /// In en, this message translates to:

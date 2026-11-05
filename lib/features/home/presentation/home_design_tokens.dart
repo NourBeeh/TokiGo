@@ -11,9 +11,7 @@ import 'package:tokigo/core/theme/tokigo_colors.dart';
 ///
 /// The spec is a light-mode design. In dark mode each *role* resolves to the
 /// active [TokiGoColors] value instead, so Home stays legible on the dark
-/// canvas rather than painting light-mode beige over it — a 12pt label in the
-/// spec red (#B22234) only reaches 2.6:1 on the dark surface, while the app's
-/// dark accent clears 5:1.
+/// canvas rather than painting light-mode beige over it.
 @immutable
 abstract final class HomeDesignTokens {
   /// Home canvas.
@@ -23,7 +21,11 @@ abstract final class HomeDesignTokens {
   static const Color surface = Color(0xFFFFFFFF);
 
   /// Home accent — the leading search glyph, the card icons and their labels.
-  static const Color accent = Color(0xFFB22234);
+  ///
+  /// Action Ink `#111111` (the DESIGN.md action-ink token), NOT a red: the
+  /// service shortcuts are monochrome, and the same near-black keeps a 12pt
+  /// label above 4.5:1 on the white tile in both themes.
+  static const Color accent = Color(0xFF111111);
 
   /// Search placeholder ink.
   static const Color hint = Color(0xFF757575);
@@ -50,9 +52,10 @@ abstract final class HomeDesignTokens {
   /// The spec's placeholder ink in both modes.
   static Color hintOf(BuildContext context) => hint;
 
-  /// Pressed fill for a quick-action card.
+  /// Pressed fill for a quick-action card — a neutral grey, so the pressed
+  /// state never reintroduces a coloured tint.
   static Color pressedSurfaceOf(BuildContext context) =>
-      isDark(context) ? context.tokigoColors.surfaceSecondary : const Color(0xFFF5F2EE);
+      isDark(context) ? context.tokigoColors.surfaceSecondary : const Color(0xFFF5F5F5);
 
   static bool isDark(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark;

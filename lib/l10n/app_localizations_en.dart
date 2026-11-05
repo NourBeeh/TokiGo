@@ -267,6 +267,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeNavActivities => 'Activities';
 
   @override
+  String get homeNavGroups => 'Groups';
+
+  @override
   String get homeNavTrips => 'Trips';
 
   @override

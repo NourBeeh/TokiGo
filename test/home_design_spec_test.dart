@@ -14,7 +14,7 @@ import 'package:tokigo/l10n/app_localizations.dart';
 void main() {
   const Color background = Color(0xFFFAF8F5);
   const Color surface = Color(0xFFFFFFFF);
-  const Color accent = Color(0xFFB22234);
+  const Color accent = Color(0xFF111111);
   const Color hint = Color(0xFF757575);
   const Color border = Color(0xFFE0DCD6);
 
@@ -142,7 +142,7 @@ void main() {
   });
 
   group('quick action cards', () {
-    testWidgets('four spec tiles on one row', (tester) async {
+    testWidgets('six spec tiles on one row', (tester) async {
       phoneSize(tester);
       await tester.pumpWidget(
         app(const SizedBox(width: 360, child: HomeNavButtons())),
@@ -153,30 +153,34 @@ void main() {
         of: find.byType(HomeNavButtons),
         matching: find.byType(AnimatedContainer),
       );
-      expect(tiles, findsNWidgets(4));
+      expect(tiles, findsNWidgets(6));
 
       final List<String> labels = <String>[
         'Flights',
         'Stays',
         'Cars Rental',
+        'Activities',
+        'Groups',
         'Trips',
       ];
       final List<IconData> icons = <IconData>[
         Icons.flight_takeoff_rounded,
         Icons.hotel_rounded,
         Icons.directions_car_rounded,
+        Icons.beach_access_rounded,
+        Icons.groups_rounded,
         Icons.luggage_rounded,
       ];
 
       double previousRight = double.negativeInfinity;
-      for (int i = 0; i < 4; i++) {
+      for (int i = 0; i < 6; i++) {
         final Finder tileFinder = tiles.at(i);
         final AnimatedContainer tile = tester.widget<AnimatedContainer>(
           tileFinder,
         );
         final BoxDecoration decoration = tile.decoration! as BoxDecoration;
 
-        expect(tester.getSize(tileFinder).height, 88);
+        expect(tester.getSize(tileFinder).height, 68);
         expect(decoration.color, surface);
         expect(decoration.boxShadow, isEmpty);
         expect(
@@ -219,7 +223,7 @@ void main() {
 
       // Equal, responsive widths.
       final List<double> widths = <double>[
-        for (int i = 0; i < 4; i++) tester.getRect(tiles.at(i)).width,
+        for (int i = 0; i < 6; i++) tester.getRect(tiles.at(i)).width,
       ];
       for (final double width in widths) {
         expect(width, closeTo(widths.first, 0.01));
@@ -240,6 +244,8 @@ void main() {
       expect(find.text('طيران'), findsOneWidget);
       expect(find.text('إقامات'), findsOneWidget);
       expect(find.text('تأجير سيارات'), findsOneWidget);
+      expect(find.text('أنشطة'), findsOneWidget);
+      expect(find.text('الجروبات'), findsOneWidget);
       expect(find.text('رحلاتي'), findsOneWidget);
       expect(
         Directionality.of(tester.element(find.byType(HomeNavButtons))),

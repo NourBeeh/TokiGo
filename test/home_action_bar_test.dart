@@ -8,7 +8,7 @@ import 'package:tokigo/features/home/domain/home_action.dart';
 import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
-Widget _app(Widget child, {Locale locale = const Locale('en')}) {
+Widget _app(Widget child, {Locale locale = const Locale('en'), double width = 320}) {
   return MaterialApp(
     theme: AppTheme.light(),
     locale: locale,
@@ -20,7 +20,7 @@ Widget _app(Widget child, {Locale locale = const Locale('en')}) {
       GlobalCupertinoLocalizations.delegate,
     ],
     home: Scaffold(
-      body: Center(child: SizedBox(width: 320, child: child)),
+      body: Center(child: SizedBox(width: width, child: child)),
     ),
   );
 }
@@ -46,34 +46,42 @@ List<AnimatedContainer> _tiles(WidgetTester tester) {
 void main() {
   testWidgets('keeps the original card design at a fixed size', (tester) async {
     _phoneSize(tester);
-    await tester.pumpWidget(_app(HomeActionBar(onActionSelected: (_) {})));
+    // Wide enough to lay out all six tiles at once (the real Home row is a
+    // lazy horizontal list, so a 320dp viewport builds only the first five).
+    await tester.pumpWidget(
+      _app(HomeActionBar(onActionSelected: (_) {}), width: 640),
+    );
     await tester.pumpAndSettle();
 
     final Finder tileFinders = find.descendant(
       of: find.byType(HomeActionBar),
       matching: find.byType(AnimatedContainer),
     );
-    expect(tileFinders, findsNWidgets(4));
+    expect(tileFinders, findsNWidgets(6));
 
     final List<String> labels = <String>[
       'Flights',
       'Stays',
       'Cars Rental',
+      'Activities',
+      'Groups',
       'Trips',
     ];
     final List<IconData> icons = <IconData>[
       Icons.flight_takeoff_rounded,
       Icons.hotel_rounded,
       Icons.directions_car_rounded,
+      Icons.beach_access_rounded,
+      Icons.groups_rounded,
       Icons.luggage_rounded,
     ];
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 6; i++) {
       final Finder tile = tileFinders.at(i);
       final BoxDecoration decoration =
           tester.widget<AnimatedContainer>(tile).decoration! as BoxDecoration;
 
-      expect(tester.getSize(tile).height, 88);
+      expect(tester.getSize(tile).height, 68);
       expect(tester.getSize(tile).width, HomeActionBar.cardWidth);
       expect(decoration.color, HomeDesignTokens.surface);
       expect(decoration.boxShadow, isEmpty);
@@ -114,7 +122,7 @@ void main() {
     final ListView list = tester.widget<ListView>(bar);
     expect(list.scrollDirection, Axis.horizontal);
 
-    // Four fixed-width cards exceed the 320dp viewport, so the trailing cue is
+    // Six fixed-width cards exceed the 320dp viewport, so the trailing cue is
     // shown and the row can travel.
     expect(
       find.byKey(const ValueKey<String>('home-action-bar-overflow')),
@@ -137,7 +145,12 @@ void main() {
   testWidgets('a wide viewport shows every card without a hint', (
     tester,
   ) async {
-    _phoneSize(tester);
+    // A genuinely wide viewport (700dp logical): the six cards plus their gaps
+    // total 448dp, so they all fit and the trailing cue must disappear.
+    tester.view.physicalSize = const Size(1400, 1400);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
@@ -165,9 +178,9 @@ void main() {
       find.byKey(const ValueKey<String>('home-action-bar-overflow')),
       findsNothing,
     );
-    // Cards keep the same 88dp width instead of stretching.
+    // Cards keep the same 68dp width instead of stretching.
     for (final AnimatedContainer tile in _tiles(tester)) {
-      expect(tester.getSize(find.byWidget(tile)).width, 88);
+      expect(tester.getSize(find.byWidget(tile)).width, 68);
     }
   });
 
@@ -185,7 +198,7 @@ void main() {
       tester.element(find.byType(HomeActionBar)),
     )!;
     final List<HomeActionDefinition> definitions = homeActionDefinitions(l10n);
-    expect(definitions.length, 4);
+    expect(definitions.length, 6);
     expect(
       definitions.map((definition) => definition.action).toList(),
       HomeAction.values,
@@ -217,6 +230,8 @@ void main() {
 
     expect(find.text('طيران'), findsOneWidget);
     expect(find.text('إقامات'), findsOneWidget);
+    expect(find.text('أنشطة'), findsOneWidget);
+    expect(find.text('الجروبات'), findsOneWidget);
     expect(
       Directionality.of(tester.element(find.byType(HomeActionBar))),
       TextDirection.rtl,
@@ -239,6 +254,8 @@ void main() {
     await tester.drag(bar, const Offset(220, 0));
     await tester.pumpAndSettle();
     expect(scrollable.position.pixels, greaterThan(0));
+    // The lazy row builds the last tile only once the row travels.
+    expect(find.text('رحلاتي'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

@@ -38,7 +38,8 @@ class HomeActionDefinition {
 
 /// The single source of truth for Home's service shortcuts.
 ///
-/// Order is intentional: Flights, Hotels (labelled "Stays"), Cars, Trips.
+/// Order is intentional: Flights, Hotels (labelled "Stays"), Cars,
+/// Activities, Groups, Trips.
 List<HomeActionDefinition> homeActionDefinitions(AppLocalizations l10n) {
   return <HomeActionDefinition>[
     HomeActionDefinition(
@@ -60,6 +61,18 @@ List<HomeActionDefinition> homeActionDefinitions(AppLocalizations l10n) {
       path: '/cars',
     ),
     HomeActionDefinition(
+      action: HomeAction.activities,
+      label: l10n.homeNavActivities,
+      icon: Icons.beach_access_rounded,
+      path: '/packages',
+    ),
+    HomeActionDefinition(
+      action: HomeAction.groups,
+      label: l10n.homeNavGroups,
+      icon: Icons.groups_rounded,
+      path: '/groups',
+    ),
+    HomeActionDefinition(
       action: HomeAction.trips,
       label: l10n.homeNavTrips,
       icon: Icons.luggage_rounded,
@@ -68,10 +81,10 @@ List<HomeActionDefinition> homeActionDefinitions(AppLocalizations l10n) {
   ];
 }
 
-/// Home shortcuts for travel services — the owner's spec: four equal cards on
-/// one row (Flights, Hotels, Cars, Trips), each a white 88dp tile with 16dp
-/// corners, a 1dp `#E0DCD6` border, a 25px accent glyph and a 12/600 accent
-/// label 6dp below it. No shadows.
+/// Home shortcuts for travel services — the owner's spec: a horizontal row of
+/// equal white tiles (Flights, Stays, Cars, Activities, Groups, Trips), each a
+/// 68dp white tile with 16dp corners, a 1dp `#E0DCD6` border, a 25px accent
+/// glyph and a 12/600 accent label 6dp below it. No shadows.
 ///
 /// On Home these tiles are a CONTENT SWITCHER, not navigation: when
 /// [onActionSelected] is supplied the tile reports the tapped [HomeAction] and
@@ -140,7 +153,7 @@ class HomeActionBar extends StatefulWidget {
   });
 
   /// Fixed tile width: square with [HomeActionTile.height], matching the
-  /// original card proportions without shrinking the 88dp card.
+  /// tile's own proportions.
   static const double cardWidth = HomeActionTile.height;
 
   /// Space between two cards.
@@ -271,8 +284,9 @@ class HomeActionTile extends StatefulWidget {
     this.onActionSelected,
   });
 
-  /// The spec's tile height.
-  static const double height = 88;
+  /// The tile height. Compact by design (23% shorter than the original 88dp
+  /// card) while staying far above the 44dp minimum tap target.
+  static const double height = 68;
 
   /// Glyph size from the spec.
   static const double iconSize = 25;

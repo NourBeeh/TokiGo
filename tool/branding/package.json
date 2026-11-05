@@ -1,0 +1,8 @@
+{
+  "name": "tokigo-branding-tools",
+  "private": true,
+  "description": "Rasterizer for the generated TokiGo brand artwork (SVG -> PNG).",
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2"
+  }
+}

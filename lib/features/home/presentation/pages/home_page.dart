@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tokigo/app/widgets/home_nav_buttons.dart';
-import 'package:tokigo/core/geo/location_prompt.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -14,6 +13,7 @@ import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
 import 'package:tokigo/features/bag/presentation/pages/bag_page.dart';
+import 'package:tokigo/features/groups/presentation/pages/groups_page.dart';
 import 'package:tokigo/features/home/domain/home_action.dart';
 import 'package:tokigo/features/home/presentation/home_controller.dart';
 import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
@@ -30,6 +30,7 @@ import 'package:tokigo/features/search/application/providers/offer_selection_pro
 import 'package:tokigo/features/search/presentation/pages/car_search_page.dart';
 import 'package:tokigo/features/search/presentation/pages/flight_search_page.dart';
 import 'package:tokigo/features/search/presentation/pages/hotel_search_page.dart';
+import 'package:tokigo/features/search/presentation/pages/packages_search_page.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 import 'package:tokigo/shared/providers/locale_provider.dart';
 
@@ -55,26 +56,10 @@ class _HomePageState extends ConsumerState<HomePage>
   final GlobalKey _discoverKey = GlobalKey();
   bool _scrollScheduled = false;
 
-  /// True once the dashboard has scrolled far enough that its content is
-  /// leaving the viewport. The persistent AI composer then renders compact.
-  bool _composerCompact = false;
-
-  /// Scroll offset past which the composer switches to its compact shape.
-  static const double _compactAfter = 72;
-
-  /// Bottom space reserved for the persistent composer (expanded height +
-  /// vertical padding). It is deliberately based on the EXPANDED field so the
-  /// page content never shifts when the composer compacts.
+  /// Bottom space reserved for the persistent composer (fixed field height +
+  /// vertical padding). The composer never changes size, so the page content
+  /// never shifts either.
   static const double _composerReserve = 56 + AppSpacing.sm * 2;
-
-  /// Bottom space reserved for the horizontal action bar (card height + the
-  /// gap above the composer). Both live in the same pinned interaction area.
-  static const double _actionBarReserve = HomeActionTile.height + AppSpacing.sm;
-
-  /// Total pinned footprint: action bar + composer. The page's scrollable
-  /// content reserves this so no card is ever hidden behind the interaction
-  /// area.
-  static const double _bottomAreaReserve = _actionBarReserve + _composerReserve;
 
   @override
   void initState() {
@@ -189,124 +174,117 @@ class _HomePageState extends ConsumerState<HomePage>
       // prices/availability via live validation only (H2).
       body: SafeArea(
         top: true,
-        // The feed stays edge-to-edge under the navigation bar; the persistent
+        // The feed stays edge-to-edge under the navigation bar; the pinned
         // composer below owns (and reserves) that inset itself.
         bottom: false,
-        child: Stack(
+        child: Column(
           children: <Widget>[
-            Positioned.fill(
+            // Pinned top: the header and the quick-action row. Neither moves,
+            // resizes or animates while the feed scrolls beneath them.
+            _buildTopArea(context, selectedAction),
+            Expanded(
               child: Padding(
                 // Reserve the composer's footprint so cards are never hidden
-                // behind it. The reserve is based on the EXPANDED field height
-                // so compacting the composer never shifts the page.
+                // behind it. The composer never changes size, so the page
+                // never shifts either.
                 padding: EdgeInsets.only(
                   bottom:
-                      _bottomAreaReserve + MediaQuery.paddingOf(context).bottom,
+                      _composerReserve + MediaQuery.paddingOf(context).bottom,
                 ),
-                child: NotificationListener<ScrollNotification>(
-                  onNotification: _onScrollNotification,
-                  child: selectedAction == null
-                      ? _buildDashboard(state, ref)
-                      : _buildSelectedAction(selectedAction),
-                ),
+                child: selectedAction == null
+                    ? _buildDashboard(state, ref)
+                    : _buildSelectedAction(selectedAction),
               ),
             ),
-            PositionedDirectional(
-              start: 0,
-              end: 0,
-              bottom: 0,
-              child: _buildBottomInteractionArea(context, selectedAction),
-            ),
+            _buildBottomComposerArea(context),
           ],
         ),
       ),
     );
   }
 
-  /// Drives the composer's compact presentation from the active vertical
-  /// scrollable. `depth == 0` ignores the horizontal card rails (Discover,
-  /// Stays), which would otherwise compact the composer while swiping.
-  bool _onScrollNotification(ScrollNotification notification) {
-    if (notification.depth != 0) return false;
-    final bool compact = notification.metrics.pixels > _compactAfter;
-    if (compact != _composerCompact) {
-      setState(() => _composerCompact = compact);
-    }
-    return false;
+  /// Home's pinned top: the header (wordmark, notifications, profile) with the
+  /// quick-action row directly beneath it. Both stay fixed while the feed
+  /// scrolls, so the traveller's service switcher is always reachable and the
+  /// location-explainer slot it replaced is gone without leaving a gap.
+  Widget _buildTopArea(BuildContext context, HomeAction? selectedAction) {
+    return ColoredBox(
+      color: HomeDesignTokens.backgroundOf(context),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          const Padding(
+            padding: EdgeInsetsDirectional.fromSTEB(
+              AppSpacing.lg,
+              AppSpacing.xs,
+              AppSpacing.lg,
+              0,
+            ),
+            child: _HomeTopBar(),
+          ),
+          Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(
+              AppSpacing.lg,
+              AppSpacing.md,
+              AppSpacing.lg,
+              AppSpacing.md,
+            ),
+            child: HomeActionBar(
+              searchContext: _searchContext(),
+              selectedAction: selectedAction,
+              onActionSelected: _selectAction,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  /// The pinned Home interaction area: the horizontal service switcher
-  /// directly above the persistent AI composer. Both share one canvas and one
-  /// [SafeArea] so the system navigation inset is honored once, and the
-  /// Scaffold's keyboard resize lifts the whole group above the keyboard.
-  Widget _buildBottomInteractionArea(
-    BuildContext context,
-    HomeAction? selectedAction,
-  ) {
+  /// The pinned AI composer. It owns (and reserves) the bottom system inset,
+  /// and its size is fixed at every scroll position — no compaction, no
+  /// animation, no hint swap.
+  Widget _buildBottomComposerArea(BuildContext context) {
     return ColoredBox(
       color: HomeDesignTokens.backgroundOf(context),
       child: SafeArea(
         top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(
-                AppSpacing.lg,
-                AppSpacing.sm,
-                AppSpacing.lg,
-                0,
-              ),
-              child: HomeActionBar(
-                searchContext: _searchContext(),
-                selectedAction: selectedAction,
-                onActionSelected: _selectAction,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(
-                AppSpacing.lg,
-                AppSpacing.sm,
-                AppSpacing.lg,
-                AppSpacing.sm,
-              ),
-              child: HomeAiSearchField(
-                compact: _composerCompact,
-                accentColor: HomeDesignTokens.accentOf(context),
-              ),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(
+            AppSpacing.lg,
+            AppSpacing.sm,
+            AppSpacing.lg,
+            AppSpacing.sm,
+          ),
+          child: HomeAiSearchField(
+            accentColor: HomeDesignTokens.accentOf(context),
+          ),
         ),
       ),
     );
   }
 
   /// Switches the in-page Home content. Tapping the already-selected action
-  /// returns to the full dashboard (the four tiles are the only Home switcher).
+  /// returns to the full dashboard (the quick-action tiles are the only Home
+  /// switcher).
   void _selectAction(HomeAction action) {
     final HomeAction? current = ref.read(homeSelectedActionProvider);
     final HomeAction? next = current == action ? null : action;
-    if (_composerCompact) {
-      setState(() => _composerCompact = false);
-    }
     ref.read(homeSelectedActionProvider.notifier).state = next;
   }
 
-  /// The normal Home dashboard: chrome + the composed feed, all inside ONE
-  /// vertical scrollable owned by Home.
+  /// The normal Home dashboard: the composed feed inside ONE vertical
+  /// scrollable owned by Home. The header and quick-action row are pinned
+  /// above it, the composer below.
   Widget _buildDashboard(HomeState state, WidgetRef ref) {
     return CustomScrollView(
       controller: _feedController,
-      slivers: <Widget>[
-        ..._dashboardChromeSlivers(),
-        ..._feedSlivers(state, ref),
-      ],
+      slivers: _feedSlivers(state, ref),
     );
   }
 
   /// The selected service's existing page, embedded in Home's Scaffold.
   ///
-  /// The bottom action bar stays pinned so the traveller can switch services
+  /// The top action bar stays pinned so the traveller can switch services
   /// at any time; the service itself keeps its own feature widgets, Riverpod
   /// controllers and scroll behaviour.
   Widget _buildSelectedAction(HomeAction action) {
@@ -333,6 +311,15 @@ class _HomePageState extends ConsumerState<HomePage>
           key: ValueKey<String>('home-cars-content'),
           embedded: true,
         );
+      case HomeAction.activities:
+        // The old Activities tile opened the packages/tour-programs search.
+        return const PackagesSearchPage(
+          key: ValueKey<String>('home-activities-content'),
+        );
+      case HomeAction.groups:
+        return const GroupsPage(
+          key: ValueKey<String>('home-groups-content'),
+        );
       case HomeAction.trips:
         return const BagPage(
           key: ValueKey<String>('home-trips-content'),
@@ -341,35 +328,14 @@ class _HomePageState extends ConsumerState<HomePage>
     }
   }
 
-  /// Dashboard chrome that scrolls away with the feed (top bar and the
-  /// in-context location explainer). The service switcher is pinned at the
-  /// bottom, above the composer, so the feed starts one step higher.
-  List<Widget> _dashboardChromeSlivers() => <Widget>[
-    const SliverToBoxAdapter(
-      child: Padding(
-        padding: EdgeInsetsDirectional.fromSTEB(
-          AppSpacing.lg,
-          AppSpacing.xs,
-          AppSpacing.lg,
-          AppSpacing.xs,
-        ),
-        child: _HomeTopBar(),
-      ),
-    ),
-    // In-context location explainer (owner decision: never on launch; the OS
-    // dialog is raised only from the card's own "Allow" tap). Hides itself
-    // once access is granted or the card is dismissed for the session.
-    const SliverToBoxAdapter(child: LocationPermissionCard()),
-  ];
-
   /// A section whose items are all destinations is Home's Discover section
   /// (DS-6) — the anchor the results page scrolls to.
   static bool _isDiscoverSection(HomeSection section) =>
       section.items.isNotEmpty &&
       section.items.every((item) => item.type == HomeCardType.destination);
 
-  /// The dashboard's feed content as slivers (chrome lives in
-  /// [_dashboardChromeSlivers], so everything scrolls in ONE scroll view).
+  /// The dashboard's feed content as slivers. The header and quick-action row
+  /// are pinned above this scroll view and the composer below it.
   List<Widget> _feedSlivers(HomeState state, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final List<HomeSection> visibleSections = state.sections
@@ -454,29 +420,37 @@ class _HomePageState extends ConsumerState<HomePage>
         ];
       case HomeStatus.empty:
         return <Widget>[
-          SliverToBoxAdapter(
-            child: AppMessageState(
-              icon: Icons.explore_off_outlined,
-              title: l10n.homeEmptyTitle,
-              body: l10n.homeEmptyBody,
-              actionLabel: l10n.retry,
-              onAction: () => ref.read(homeControllerProvider.notifier).load(),
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: _CenteredFeedState(
+              child: AppMessageState(
+                icon: Icons.explore_off_outlined,
+                title: l10n.homeEmptyTitle,
+                body: l10n.homeEmptyBody,
+                actionLabel: l10n.retry,
+                onAction: () =>
+                    ref.read(homeControllerProvider.notifier).load(),
+              ),
             ),
           ),
         ];
       case HomeStatus.error:
         return <Widget>[
-          SliverToBoxAdapter(
-            child: AppMessageState(
-              icon: Icons.wifi_off_rounded,
-              hue: context.tokigoColors.danger,
-              title: l10n.homeErrorTitle,
-              // Deliberately NOT `state.errorMessage`: that string comes from
-              // the network layer in English and would be the only English
-              // sentence an Arabic user ever sees.
-              body: l10n.homeErrorBody,
-              actionLabel: l10n.retry,
-              onAction: () => ref.read(homeControllerProvider.notifier).load(),
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: _CenteredFeedState(
+              child: AppMessageState(
+                icon: Icons.wifi_off_rounded,
+                hue: context.tokigoColors.danger,
+                title: l10n.homeErrorTitle,
+                // Deliberately NOT `state.errorMessage`: that string comes from
+                // the network layer in English and would be the only English
+                // sentence an Arabic user ever sees.
+                body: l10n.homeErrorBody,
+                actionLabel: l10n.retry,
+                onAction: () =>
+                    ref.read(homeControllerProvider.notifier).load(),
+              ),
             ),
           ),
         ];
@@ -637,6 +611,38 @@ class _HomeAvatar extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ─── Centered honest states (empty / offline) ───────────────────────────────
+
+/// Centers an honest state (empty / offline) in the feed's remaining
+/// viewport, between the pinned quick-action row and the pinned composer.
+///
+/// The state scrolls only when its content genuinely cannot fit — a very
+/// small screen or a large system type scale — so the message is never
+/// clipped and never overlaps the pinned chrome.
+class _CenteredFeedState extends StatelessWidget {
+  const _CenteredFeedState({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double? viewportHeight = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : null;
+        if (viewportHeight == null) return child;
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: viewportHeight),
+            child: Center(child: child),
+          ),
+        );
+      },
     );
   }
 }

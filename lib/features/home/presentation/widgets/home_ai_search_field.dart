@@ -8,25 +8,19 @@ import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
-/// Compact hit target for the trailing mic/send actions. It sits one step
-/// below [AppSpacing.minimumTapTarget] (48) so the pill can stay slim while
-/// the actions remain a comfortable tap surface.
+/// Hit target for the trailing mic/send actions. It sits one step below
+/// [AppSpacing.minimumTapTarget] (48) so the pill can stay slim while the
+/// actions remain a comfortable tap surface.
 const double _trailingActionSize = 40;
-
-/// The placeholder the composer switches to once the Home dashboard has
-/// scrolled away. Deliberately a product string, not a translated hint: it is
-/// the compact AI composer's required label.
-const String kHomeCompactSearchHint = 'ASK OR SEARCH ANY THING';
 
 /// The Home search field — the owner's spec: a white pill (56dp tall, a fully
 /// rounded 32 radius, one 1dp `#E0DCD6` border, no shadow) with an accent
 /// search glyph on the leading edge and the localized placeholder
 /// (`Search destinations, hotels & more`) in `#757575`.
 ///
-/// [compact] is the persistent composer's scrolled state: the same pill,
-/// slightly shorter and tighter, with the fixed `ASK OR SEARCH ANY THING`
-/// placeholder. Both states keep the same white card language and the same
-/// submission path.
+/// The pill is deliberately FIXED: it keeps its height, radius, padding, glyph
+/// sizes and placeholder at every scroll position — Home no longer compacts its
+/// composer when the feed scrolls away.
 ///
 /// The box is multiline: the Enter/keyboard action and the trailing send
 /// button both hand the exact trimmed query to [AiChatPage] through the
@@ -37,14 +31,10 @@ class HomeAiSearchField extends StatefulWidget {
   const HomeAiSearchField({
     super.key,
     this.accentColor = HomeDesignTokens.accent,
-    this.compact = false,
   });
 
   /// The spec's accent, resolved for the active brightness by the caller.
   final Color accentColor;
-
-  /// Compact presentation used when the Home dashboard has scrolled away.
-  final bool compact;
 
   @override
   State<HomeAiSearchField> createState() => _HomeAiSearchFieldState();
@@ -127,8 +117,6 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
     final l10n = AppLocalizations.of(context)!;
-    final compact = widget.compact;
-    final hint = compact ? kHomeCompactSearchHint : l10n.homeSearchHint;
 
     return TapRegion(
       onTapOutside: (_) => _focusNode.unfocus(),
@@ -136,11 +124,11 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
         key: const ValueKey<String>('home-ai-composer'),
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOutCubic,
-        constraints: BoxConstraints(minHeight: compact ? 48 : 56),
+        constraints: const BoxConstraints(minHeight: 56),
         decoration: BoxDecoration(
           color: HomeDesignTokens.surfaceOf(context),
           // Fully rounded: a 32 radius on a 56dp-tall box is a stadium.
-          borderRadius: BorderRadius.circular(compact ? 24 : 32),
+          borderRadius: BorderRadius.circular(32),
           border: Border.all(
             color: HomeDesignTokens.borderOf(context),
             width: 1,
@@ -151,19 +139,16 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
         child: Padding(
           // Slim pill: the vertical inset is one step below the horizontal one
           // so the bar reads as a thin, premium search field.
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? AppSpacing.sm + 2 : AppSpacing.md,
-            vertical: compact ? AppSpacing.xxs : 0,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           child: Row(
             children: <Widget>[
               // The spec's leading search glyph, in the Home accent.
               Icon(
                 Icons.search_rounded,
-                size: compact ? 19 : 22,
+                size: 22,
                 color: widget.accentColor,
               ),
-              SizedBox(width: compact ? AppSpacing.xs : AppSpacing.sm),
+              const SizedBox(width: AppSpacing.sm),
               // The editable field with a static, localized hint. The trailing
               // send action submits the current query.
               Expanded(
@@ -175,7 +160,7 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                     // The static hint is a WIDGET, not hintText: it must always
                     // read as ONE line, so it scales with the room the field
                     // actually has (see [_fittedHint]).
-                    hint: _fittedHint(hint, typography),
+                    hint: _fittedHint(l10n.homeSearchHint, typography),
                     // Fully opt out of the global inputDecorationTheme: its
                     // filled off-white fill and its state borders (the blue
                     // brand focusedBorder) must never repaint this pill.
@@ -187,9 +172,9 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                     focusedErrorBorder: InputBorder.none,
                     filled: false,
                     isDense: true,
-                    contentPadding: EdgeInsets.symmetric(
+                    contentPadding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.sm,
-                      vertical: compact ? AppSpacing.xxs : AppSpacing.xs,
+                      vertical: AppSpacing.xs,
                     ),
                   ),
                   keyboardType: TextInputType.text,
@@ -198,7 +183,7 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                   minLines: 1,
                   // Multiline where the text needs it; the pill grows in place
                   // (the composer is an overlay, so the page never jumps).
-                  maxLines: compact ? 3 : 4,
+                  maxLines: 4,
                   style: typography.bodyLarge.copyWith(
                     color: context.tokigoColors.textPrimary,
                   ),
@@ -215,8 +200,8 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                   customBorder: const CircleBorder(),
                   radius: 22,
                   child: SizedBox(
-                    width: compact ? 34 : _trailingActionSize,
-                    height: compact ? 34 : _trailingActionSize,
+                    width: _trailingActionSize,
+                    height: _trailingActionSize,
                     child: Center(
                       child: DecoratedBox(
                         decoration: BoxDecoration(
@@ -224,12 +209,12 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                           shape: BoxShape.circle,
                         ),
                         child: SizedBox(
-                          width: compact ? 30 : 34,
-                          height: compact ? 30 : 34,
+                          width: 34,
+                          height: 34,
                           child: Center(
                             child: Icon(
                               Icons.mic_rounded,
-                              size: compact ? 17 : 19,
+                              size: 19,
                               color: widget.accentColor,
                             ),
                           ),
@@ -239,9 +224,9 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                   ),
                 ),
               ),
-              // Send is the solid season-colored primary action. It uses the
-              // send glyph (not a second magnifier) because the job here is to
-              // submit the typed message to the AI, not to open a picker.
+              // Send is the solid ink primary action. It uses the send glyph
+              // (not a second magnifier) because the job here is to submit the
+              // typed message to the AI, not to open a picker.
               Semantics(
                 button: true,
                 label: l10n.aiSend,
@@ -251,21 +236,21 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                   customBorder: const CircleBorder(),
                   radius: 22,
                   child: SizedBox(
-                    width: compact ? 34 : _trailingActionSize,
-                    height: compact ? 34 : _trailingActionSize,
+                    width: _trailingActionSize,
+                    height: _trailingActionSize,
                     child: Center(
                       child: DecoratedBox(
                         decoration: BoxDecoration(
                           color: widget.accentColor,
                           shape: BoxShape.circle,
                         ),
-                        child: SizedBox(
-                          width: compact ? 30 : 34,
-                          height: compact ? 30 : 34,
+                        child: const SizedBox(
+                          width: 34,
+                          height: 34,
                           child: Center(
                             child: Icon(
                               Icons.send_rounded,
-                              size: compact ? 17 : 20,
+                              size: 20,
                               color: Colors.white,
                             ),
                           ),

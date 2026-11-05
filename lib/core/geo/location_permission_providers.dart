@@ -12,12 +12,6 @@ final locationAccessProvider = FutureProvider<LocationAccess>((ref) {
   return ref.watch(locationPermissionServiceProvider).check();
 });
 
-/// Session-scoped dismissal of the Home explainer. A refusal is not a
-/// permanent preference: the OS keeps the real decision, and a new session
-/// may ask again. Persisting a "never ask" flag would silently strand
-/// travellers who dismissed the card by accident.
-final locationPromptDismissedProvider = StateProvider<bool>((ref) => false);
-
 /// Incremented when the traveller grants location access, so the country is
 /// re-resolved with GPS instead of the IP fallback. An unchanged counter keeps
 /// the session-scoped result — no repeated lookups.

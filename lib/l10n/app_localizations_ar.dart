@@ -267,6 +267,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeNavActivities => 'أنشطة';
 
   @override
+  String get homeNavGroups => 'الجروبات';
+
+  @override
   String get homeNavTrips => 'رحلاتي';
 
   @override

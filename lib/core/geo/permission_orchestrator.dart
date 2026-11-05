@@ -10,9 +10,6 @@ import 'package:permission_handler/permission_handler.dart';
 ///
 /// - [locationAccess] and [notificationAccess] are the **authoritative**
 ///   permission truth (what the OS answered, not what the user dismissed);
-/// - [locationExplainerDismissed] is the **session-scoped** explanation
-///   decision — a refusal is not a permanent preference (see
-///   [locationPromptDismissedProvider]);
 /// - [locationResolved] is incremented the first time location is granted,
 ///   so the country is re-resolved with GPS once.
 ///

@@ -49,6 +49,12 @@ backend/.env
 backend/.env.local
 backend/.env.*.local
 
+# Branding rasterizer (npm install in tool/branding)
+tool/branding/node_modules/
+
+# Gradle/Kotlin build cache
+android/.kotlin/
+
 # iOS build artifacts
 ios/Pods/
 ios/.symlinks/

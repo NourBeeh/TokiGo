@@ -151,7 +151,19 @@ Finder _content(HomeAction action) =>
     find.byKey(ValueKey<String>('home-${action.id}-content'));
 
 Future<void> _tapAction(WidgetTester tester, HomeAction action) async {
-  await tester.tap(find.byKey(ValueKey<String>('home-action-${action.id}')));
+  final Finder tile = find.byKey(ValueKey<String>('home-action-${action.id}'));
+  // The quick-action row is a lazy horizontal list: on a phone the later
+  // tiles (Activities, Groups, Trips) start off-screen, so bring the target
+  // into view before tapping it.
+  await tester.scrollUntilVisible(
+    tile,
+    80,
+    scrollable: find.descendant(
+      of: find.byKey(const ValueKey<String>('home-action-bar')),
+      matching: find.byType(Scrollable),
+    ),
+  );
+  await tester.tap(tile);
   await tester.pumpAndSettle();
 }
 
@@ -211,37 +223,36 @@ void main() {
     );
   });
 
-  testWidgets('scrolling compacts only the persistent AI composer', (
+  testWidgets('the composer and quick-action row keep a fixed size while scrolling', (
     tester,
   ) async {
     _setPhoneSize(tester);
     await tester.pumpWidget(_app(router: _router()));
     await tester.pumpAndSettle();
 
-    expect(find.text(kHomeCompactSearchHint), findsNothing);
+    final Finder composer = find.byKey(
+      const ValueKey<String>('home-ai-composer'),
+    );
+    final Finder bar = find.byKey(const ValueKey<String>('home-action-bar'));
+    final Rect composerBefore = tester.getRect(composer);
+    final Rect barBefore = tester.getRect(bar);
+    final Size tileBefore = tester.getSize(
+      find.byKey(const ValueKey<String>('home-action-flights')),
+    );
     expect(find.text('Search destinations, hotels & more'), findsOneWidget);
 
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -320));
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -600));
     await tester.pumpAndSettle();
 
-    // The exact compact product string is now shown by the same composer.
-    expect(find.text(kHomeCompactSearchHint), findsOneWidget);
-    expect(find.text('Search destinations, hotels & more'), findsNothing);
+    // Nothing about the pinned chrome changes with scroll: same size, same
+    // position, same placeholder. There is no compact state any more.
+    expect(tester.getRect(composer), composerBefore);
+    expect(tester.getRect(bar), barBefore);
     expect(
-      find.byKey(const ValueKey<String>('home-ai-composer')),
-      findsOneWidget,
+      tester.getSize(find.byKey(const ValueKey<String>('home-action-flights'))),
+      tileBefore,
     );
-
-    // Return to the top so the fixed quick-action row is in the viewport, then
-    // switch services: the composer survives the in-page content change and is
-    // expanded again because the dashboard is no longer scrolled away.
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, 320));
-    await tester.pumpAndSettle();
-    expect(find.text(kHomeCompactSearchHint), findsNothing);
-
-    await _tapAction(tester, HomeAction.hotels);
-    expect(_content(HomeAction.hotels), findsOneWidget);
-    expect(find.text(kHomeCompactSearchHint), findsNothing);
+    expect(find.text('Search destinations, hotels & more'), findsOneWidget);
     expect(
       find.byKey(const ValueKey<String>('home-ai-composer')),
       findsOneWidget,
@@ -316,7 +327,7 @@ void main() {
   });
 
   testWidgets(
-    'bottom action bar stays above the composer while the dashboard scrolls',
+    'the quick-action row is pinned under the header and never moves',
     (tester) async {
       _setPhoneSize(tester);
       await tester.pumpWidget(_app(router: _router()));
@@ -328,28 +339,23 @@ void main() {
       );
       expect(bar, findsOneWidget);
       expect(composer, findsOneWidget);
+
+      final Rect barBefore = tester.getRect(bar);
+      // The row sits directly under the header, at the very top of the screen,
+      // with the scrolling feed starting below it.
+      expect(barBefore.top, greaterThan(0));
       expect(
-        tester.getRect(bar).bottom,
-        lessThanOrEqualTo(tester.getRect(composer).top),
+        tester.getRect(find.byType(CustomScrollView)).top,
+        greaterThanOrEqualTo(barBefore.bottom),
       );
 
-      // The dashboard is the only vertical scrollable; the pinned interaction
-      // area must not move with it.
+      // The dashboard is the only vertical scrollable; the pinned row must not
+      // move with it.
       await tester.drag(find.byType(CustomScrollView), const Offset(0, -600));
       await tester.pumpAndSettle();
 
-      expect(bar, findsOneWidget);
-      expect(composer, findsOneWidget);
-      expect(
-        tester.getRect(bar).bottom,
-        lessThanOrEqualTo(tester.getRect(composer).top),
-      );
-      // The feed reserves the area's footprint: its viewport ends exactly
-      // where the action bar begins, so no card is hidden behind it.
-      expect(
-        tester.getRect(find.byType(CustomScrollView)).bottom,
-        lessThanOrEqualTo(tester.getRect(bar).top + 0.5),
-      );
+      expect(tester.getRect(bar), barBefore);
+      expect(tester.getRect(composer).bottom, greaterThan(barBefore.bottom));
     },
   );
 

@@ -3,35 +3,28 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:tokigo/core/geo/location_permission_providers.dart';
 import 'package:tokigo/core/geo/location_permission_service.dart';
-import 'package:tokigo/core/theme/app_radius.dart';
-import 'package:tokigo/core/theme/app_spacing.dart';
-import 'package:tokigo/core/theme/app_typography.dart';
-import 'package:tokigo/core/theme/tokigo_colors.dart';
-import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
-/// Asks for location from an EXPLICIT user tap and routes the outcome:
-/// granted → re-resolve the country with GPS; blocked/service-off → an
-/// in-app prompt that opens the right system settings; declined → nothing
-/// (the caller keeps its explainer so the traveller can try again).
-Future<void> requestLocationAccess(BuildContext context, WidgetRef ref) async {
-  final svc = ref.read(locationPermissionServiceProvider);
-  final access = await svc.request();
-  if (!context.mounted) return;
-
-  switch (access) {
-    case LocationAccess.granted:
-      ref.read(geoRefreshProvider.notifier).state++;
-      ref.invalidate(locationAccessProvider);
-    case LocationAccess.deniedForever:
-      await showLocationSettingsPrompt(context, ref, serviceOff: false);
-    case LocationAccess.serviceDisabled:
-      await showLocationSettingsPrompt(context, ref, serviceOff: true);
-    case LocationAccess.denied:
-    case LocationAccess.unavailable:
-      // Not a permanent answer: refresh the (non-prompting) state so the
-      // explainer reflects reality, and leave the choice to the traveller.
-      ref.invalidate(locationAccessProvider);
+/// Asks the OS for "when in use" location access and, when it is granted,
+/// re-resolves the traveller's country so the departure-airport suggestion can
+/// use GPS instead of the IP fallback.
+///
+/// A denial is NOT an error and never blocks the caller: the traveller can
+/// still pick a departure airport manually later (Settings → Country). That is
+/// why the first-launch intro asks here without gating the flow.
+///
+/// Only [LocationAccess.granted] has a side effect. `denied` / `unavailable`
+/// simply leave the country to the IP fallback; `deniedForever` /
+/// `serviceDisabled` are surfaced to the traveller from Settings, which owns
+/// the "open the system settings" prompt.
+Future<void> requestLocationAccess(WidgetRef ref) async {
+  final LocationPermissionService svc = ref.read(
+    locationPermissionServiceProvider,
+  );
+  final LocationAccess access = await svc.request();
+  if (access == LocationAccess.granted) {
+    ref.read(geoRefreshProvider.notifier).state++;
+    ref.invalidate(locationAccessProvider);
   }
 }
 
@@ -79,98 +72,4 @@ Future<void> showLocationSettingsPrompt(
     await svc.openSettings();
   }
   ref.invalidate(locationAccessProvider);
-}
-
-/// Dismissible, in-context explainer shown on Home when location is not yet
-/// granted. The OS dialog is raised ONLY from the "Allow" tap — never on
-/// launch — and dismissing the card is session-scoped (a refusal is not a
-/// permanent preference).
-class LocationPermissionCard extends ConsumerWidget {
-  const LocationPermissionCard({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Never show on platforms/tests that cannot answer the permission query,
-    // and never once access is granted.
-    final LocationAccess access = ref
-        .watch(locationAccessProvider)
-        .maybeWhen(
-          data: (value) => value,
-          orElse: () => LocationAccess.unavailable,
-        );
-    if (access == LocationAccess.granted ||
-        access == LocationAccess.unavailable ||
-        ref.watch(locationPromptDismissedProvider)) {
-      return const SizedBox.shrink();
-    }
-
-    final l10n = AppLocalizations.of(context)!;
-    final typography = AppTypography.forLight();
-    final tc = context.tokigoColors;
-
-    return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(
-        AppSpacing.lg,
-        0,
-        AppSpacing.lg,
-        AppSpacing.lg,
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: tc.surfaceSecondary,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: tc.hairline),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Icon(Icons.location_on_rounded, size: 22, color: tc.brand),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    l10n.locationPromptTitle,
-                    style: typography.bodyLargeMedium.copyWith(
-                      color: tc.textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xxs),
-                  Text(
-                    l10n.locationPromptBody,
-                    style: typography.caption.copyWith(
-                      color: tc.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Row(
-                    children: <Widget>[
-                      Pressable.wrap(
-                        child: TextButton(
-                          onPressed: () => ref
-                              .read(locationPromptDismissedProvider.notifier)
-                              .state = true,
-                          child: Text(l10n.locationPromptNotNow),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                      Pressable.wrap(
-                        child: TextButton(
-                          onPressed: () => requestLocationAccess(context, ref),
-                          child: Text(l10n.locationPromptAllow),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

@@ -8,6 +8,7 @@ import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_button.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:tokigo/core/geo/location_prompt.dart';
 import 'package:tokigo/core/ui/app_wordmark.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
@@ -71,9 +72,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     ),
     _Slide(
       title: l10n.localeName == 'ar' ? 'الأذونات' : 'Permissions',
-      body: l10n.localeName == 'ar'
-          ? 'نستخدم موقعك لاقتراح مطار المغادرة، والإشعارات لتذكيرك برحلاتك.'
-          : 'We use your location to suggest a departure airport, and notifications to remind you of trips.',
+      body: l10n.locationPromptBody,
       icons: const <IconData>[Icons.location_on_rounded, Icons.notifications_rounded],
     ),
   ];
@@ -91,10 +90,15 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   }
 
   Future<void> _requestPermissions() async {
-    // Notifications only. Location is intentionally NOT requested here: the
-    // owner decision is that it is asked from the Home explainer card, in
-    // context and on an explicit tap (see `LocationPermissionCard`), so the
-    // user meets one plain-language ask instead of a bulk permission wall.
+    // Location first, from this dedicated intro step: the OS dialog is raised
+    // here and nowhere else on launch. "When in use" only (the app's
+    // Info.plist carries NSLocationWhenInUseUsageDescription and the Android
+    // manifest has no background location), and a denial never blocks —
+    // `requestLocationAccess` simply leaves the country to the IP fallback so
+    // the traveller can pick a departure airport manually later.
+    await requestLocationAccess(ref);
+
+    // Notifications follow, as before.
     try {
       await Permission.notification.request();
     } catch (_) {}
