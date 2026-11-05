@@ -91,6 +91,12 @@ class _CacheRepository implements HomeRepository {
   @override
   Future<ApiResult<void>> refresh() async => const ApiResult<void>.success(null);
 
+  @override
+  Future<SnapshotState> snapshotState({required String audience}) async {
+    // The mock stores only sections, never the v2 envelope with savedAt.
+    return SnapshotState.unavailable;
+  }
+
   ApiResult<List<HomeSection>> _resultFor(String path) {
     if (path == '/home/sections') {
       return ApiResult.success(_data['sections'] as List<HomeSection>);
@@ -139,6 +145,30 @@ void main() {
     });
   });
 
+  group('Online → offline transition (home UI)', () {
+    test('HomeController keeps cached sections when backend goes offline', () async {
+      final repo = _CacheRepositoryWithFailingSecondCall(
+        <String, dynamic>{'sections': _fakeSections},
+      );
+      final controller = HomeController(repo, audience: 'anon');
+      await Future.delayed(const Duration(milliseconds: 60));
+      expect(controller.state.status, HomeStatus.success);
+      expect(controller.state.sections, isNotEmpty);
+
+      final client = HttpClient();
+      NetworkStatus.instance.reportOffline();
+      final api = HttpApiClient(
+        client: client,
+        baseUrlOverride: 'http://127.0.0.1:1',
+      );
+
+      controller.load();
+      await Future.delayed(const Duration(milliseconds: 60));
+      expect(controller.state.status, HomeStatus.partial);
+      expect(controller.state.sections, isNotEmpty);
+    });
+  });
+
   group('NetworkStatus — backend reachability', () {
     test('reportOffline marks offline and reports announcedOffline', () {
       NetworkStatus.instance.reportOffline();
@@ -147,7 +177,6 @@ void main() {
     });
 
     test('a successful call clears offline', () {
-      // Start offline, then let the API client reportOnline on a successful response.
       NetworkStatus.instance.reportOffline();
       expect(NetworkStatus.instance.online, false);
       NetworkStatus.instance.reportOnline();

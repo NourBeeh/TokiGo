@@ -41,6 +41,8 @@ class SearchScaffold extends StatelessWidget {
     this.headerActions,
     this.bottomContent,
     this.bodySlivers,
+    this.embedded = false,
+    this.bottomPadding = 0,
   });
 
   /// Big header title ("Flights", "Hotels"…).
@@ -68,46 +70,60 @@ class SearchScaffold extends StatelessWidget {
   /// Optional content pinned under the form (sort/filter row).
   final Widget? bottomContent;
 
+  /// Renders the page body without its own [Scaffold]/[SafeArea]/back
+  /// control, so Home can display the existing search content inside its own
+  /// single-page Scaffold.
+  final bool embedded;
+
+  /// Extra space reserved under the scroll content (e.g. for Home's persistent
+  /// AI composer) so cards are never hidden behind it.
+  final double bottomPadding;
+
   @override
   Widget build(BuildContext context) {
     final tc = context.tokigoColors;
+    final Widget scrollView = AiEntranceAnimation(
+      child: CustomScrollView(
+        slivers: <Widget>[
+          SliverToBoxAdapter(
+            child: AppPageHeader(
+              title: title,
+              subtitle: subtitle,
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[?headerActions],
+              ),
+              showBackButton: false,
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            sliver: SliverToBoxAdapter(child: form),
+          ),
+          if (bottomContent != null) SliverToBoxAdapter(child: bottomContent!),
+          if (bodySlivers != null)
+            ...bodySlivers!
+          else
+            SliverToBoxAdapter(child: body),
+          if (bottomPadding > 0)
+            SliverToBoxAdapter(child: SizedBox(height: bottomPadding)),
+        ],
+      ),
+    );
+
+    // Embedded inside Home: no competing Scaffold, no second SafeArea and no
+    // back control (Home owns the route and its chrome).
+    if (embedded) return scrollView;
+
     return Scaffold(
-      backgroundColor: context.tokigoColors.background,
+      backgroundColor: tc.background,
       body: SafeArea(
         // `bottom: false` left the results' last row under the Android
         // navigation bar (the pill it was written for is gone).
         child: DetachedBackButton(
           // The header no longer draws the back control: the detaching one does,
           // and it stays reachable once the header scrolls away.
-          child: AiEntranceAnimation(
-            child: CustomScrollView(
-              slivers: <Widget>[
-                SliverToBoxAdapter(
-                  child: AppPageHeader(
-                    title: title,
-                    subtitle: subtitle,
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[?headerActions],
-                    ),
-                    showBackButton: false,
-                  ),
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                  ),
-                  sliver: SliverToBoxAdapter(child: form),
-                ),
-                if (bottomContent != null)
-                  SliverToBoxAdapter(child: bottomContent!),
-                if (bodySlivers != null)
-                  ...bodySlivers!
-                else
-                  SliverToBoxAdapter(child: body),
-              ],
-            ),
-          ),
+          child: scrollView,
         ),
       ),
     );
@@ -173,71 +189,71 @@ class SearchFieldInput extends StatelessWidget {
               vertical: AppSpacing.sm + 4,
             ),
             child: Row(
-            children: <Widget>[
-              Icon(icon, size: 20, color: context.tokigoColors.brand),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    if (label != null) ...<Widget>[
-                      Text(
-                        label,
-                        style: typography.caption.copyWith(
-                          color: context.tokigoColors.textTertiary,
+              children: <Widget>[
+                Icon(icon, size: 20, color: context.tokigoColors.brand),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      if (label != null) ...<Widget>[
+                        Text(
+                          label,
+                          style: typography.caption.copyWith(
+                            color: context.tokigoColors.textTertiary,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                    ],
-                    if (value != null)
-                      Text(
-                        value,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: typography.bodyLarge.copyWith(
-                          color: context.tokigoColors.textPrimary,
-                        ),
-                      )
-                    else
-                      // A read-only field with a picker behind it must not
-                      // swallow the tap: the embedded TextField's own gesture
-                      // would win and the card's onTap would never fire (the
-                      // field looked dead on the device).
-                      IgnorePointer(
-                        ignoring: readOnly && onTap != null,
-                        child: TextField(
-                          controller: controller,
-                          readOnly: readOnly,
-                          keyboardType: keyboardType,
+                        const SizedBox(height: 2),
+                      ],
+                      if (value != null)
+                        Text(
+                          value,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: typography.bodyLarge.copyWith(
                             color: context.tokigoColors.textPrimary,
                           ),
-                          decoration: InputDecoration(
-                            isCollapsed: true,
-                            // The card itself is the field chrome: the
-                            // embedded input must not re-draw the theme's
-                            // filled box.
-                            filled: false,
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            contentPadding: EdgeInsets.zero,
-                            hintText: hint,
-                            hintStyle: typography.bodyLarge.copyWith(
-                              color: context.tokigoColors.textTertiary,
+                        )
+                      else
+                        // A read-only field with a picker behind it must not
+                        // swallow the tap: the embedded TextField's own gesture
+                        // would win and the card's onTap would never fire (the
+                        // field looked dead on the device).
+                        IgnorePointer(
+                          ignoring: readOnly && onTap != null,
+                          child: TextField(
+                            controller: controller,
+                            readOnly: readOnly,
+                            keyboardType: keyboardType,
+                            style: typography.bodyLarge.copyWith(
+                              color: context.tokigoColors.textPrimary,
+                            ),
+                            decoration: InputDecoration(
+                              isCollapsed: true,
+                              // The card itself is the field chrome: the
+                              // embedded input must not re-draw the theme's
+                              // filled box.
+                              filled: false,
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              contentPadding: EdgeInsets.zero,
+                              hintText: hint,
+                              hintStyle: typography.bodyLarge.copyWith(
+                                color: context.tokigoColors.textTertiary,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              ?suffix,
-            ],
+                ?suffix,
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -422,7 +438,9 @@ class SearchChoiceChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
-    final foreground = selected ? context.tokigoColors.onBrand : context.tokigoColors.textSecondary;
+    final foreground = selected
+        ? context.tokigoColors.onBrand
+        : context.tokigoColors.textSecondary;
     final icon = this.icon;
     return Pressable.wrap(
       child: Material(

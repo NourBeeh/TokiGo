@@ -45,7 +45,19 @@ enum _TripType { oneWay, roundTrip, multiCity }
 enum _FlightSort { recommended, cheapest, fastest, longest }
 
 class FlightSearchPage extends ConsumerStatefulWidget {
-  const FlightSearchPage({super.key});
+  const FlightSearchPage({
+    super.key,
+    this.embedded = false,
+    this.searchContext,
+  });
+
+  /// Renders the existing flight content inside Home's single Scaffold
+  /// instead of its own route-level Scaffold.
+  final bool embedded;
+
+  /// Home's travel context, passed directly for the embedded case (a pushed
+  /// route still receives the same value through the router `extra`).
+  final SearchContext? searchContext;
 
   @override
   ConsumerState<FlightSearchPage> createState() => _FlightSearchPageState();
@@ -152,8 +164,13 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
     if (_prefilled) return;
     _prefilled = true;
     // Pre-fill from navigation extras — must read the router AFTER
-    // initState completes (inherited widgets are legal here).
-    final extra = GoRouterState.of(context).extra as Map<String, dynamic>?;
+    // initState completes (inherited widgets are legal here). Embedded Home
+    // content may have no router state at all, in which case the page simply
+    // starts with Home's explicit [searchContext] (or an empty form).
+    final router = GoRouter.maybeOf(context);
+    final extra = router == null
+        ? null
+        : GoRouterState.of(context).extra as Map<String, dynamic>?;
     if (extra != null) {
       _originCtrl.text = extra['origin']?.toString() ?? '';
       _destCtrl.text = extra['destination']?.toString() ?? '';
@@ -167,9 +184,9 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
     // Phase 4A — the traveller's travel context: the departure airport
     // suggested for their country prefills the origin, and the budget
     // arrives with the page.
-    final searchContext = SearchContext.fromMap(
-      extra?['context'] as Map<String, dynamic>?,
-    );
+    final searchContext =
+        widget.searchContext ??
+        SearchContext.fromMap(extra?['context'] as Map<String, dynamic>?);
     if (_originCtrl.text.trim().isEmpty) {
       final airport = searchContext?.airport;
       if (airport != null && airport.isNotEmpty) {
@@ -513,6 +530,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
     return SearchScaffold(
       title: l10n.searchFlights,
       subtitle: l10n.flightSearchSubtitle,
+      embedded: widget.embedded,
       form: _buildForm(l10n),
       // Sorting and filtering only make sense once there is something to sort.
       bottomContent: hasResults

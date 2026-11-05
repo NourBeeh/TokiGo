@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
-import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/widgets/cards/card.dart';
+import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
 
 /// Discovery product card for cars and packages in the Home feed.
 ///
@@ -15,8 +15,12 @@ import 'package:tokigo/core/widgets/cards/card.dart';
 ///
 /// Loading mirrors the exact geometry via [DiscoveryProductCard.loading].
 class DiscoveryProductCard extends StatelessWidget {
-  const DiscoveryProductCard({super.key, required this.item, this.onTap})
-    : _loading = false;
+  const DiscoveryProductCard({
+    super.key,
+    required this.item,
+    this.onTap,
+    bool? loading,
+  }) : _loading = loading ?? false;
 
   const DiscoveryProductCard.loading({super.key})
     : item = const HomeItem(id: '', type: HomeCardType.hotel, title: ''),
@@ -30,19 +34,38 @@ class DiscoveryProductCard extends StatelessWidget {
   static const double kWidth = 220;
   static const double kHeight = 276;
 
+  /// The one shell both the loaded card and its skeleton share: corner radius,
+  /// hairline, padding and press behaviour live here and nowhere else, so a
+  /// skeleton cannot drift from the real card's chrome.
+  Widget _shell(
+    BuildContext context, {
+    required Widget child,
+    required String semanticsLabel,
+    VoidCallback? onTap,
+    bool enabled = true,
+    bool loading = false,
+  }) {
+    return BaseCard(
+      onTap: onTap,
+      enabled: enabled,
+      loading: loading,
+      showBorder: true,
+      borderColor: TravelCardStyle.borderColor(context),
+      showShadow: false,
+      semanticsLabel: semanticsLabel,
+      padding: EdgeInsets.zero,
+      borderRadius: HomeCardDimensions.borderRadius,
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return BaseCard(
-        onTap: null,
-        enabled: false,
+      return _shell(
+        context,
         loading: true,
-        showBorder: true,
-        borderColor: TravelCardStyle.borderColor(context),
-        showShadow: false,
         semanticsLabel: 'Loading',
-        padding: EdgeInsets.zero,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: cardLoadingSemantics(
           LayoutBuilder(
             builder: (context, constraints) {
@@ -94,15 +117,11 @@ class DiscoveryProductCard extends StatelessWidget {
     final price = item.price;
     final currency = item.currency;
 
-    return BaseCard(
+    return _shell(
+      context,
       onTap: onTap,
-      showBorder: true,
-      borderColor: TravelCardStyle.borderColor(context),
-      showShadow: false,
       semanticsLabel:
           '${item.type.name} ${item.title}${price != null ? ', price ${currency ?? ''} $price' : ''}',
-      padding: EdgeInsets.zero,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final bounded =

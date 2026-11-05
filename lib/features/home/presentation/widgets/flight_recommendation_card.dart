@@ -38,6 +38,31 @@ class FlightRecommendationCard extends StatelessWidget {
   /// Skeleton state — renders the same tile geometry with no data.
   final bool loading;
 
+  /// The one shell both the loaded card and its skeleton share: corner radius,
+  /// hairline, padding and press behaviour live here and nowhere else, so a
+  /// skeleton cannot drift from the real card's chrome.
+  Widget _shell(
+    BuildContext context, {
+    required Widget child,
+    required String semanticsLabel,
+    VoidCallback? onTap,
+    bool enabled = true,
+    bool loading = false,
+  }) {
+    return BaseCard(
+      onTap: onTap,
+      enabled: enabled,
+      loading: loading,
+      showBorder: true,
+      borderColor: TravelCardStyle.borderColor(context),
+      showShadow: false,
+      semanticsLabel: semanticsLabel,
+      padding: EdgeInsets.zero,
+      borderRadius: HomeCardDimensions.borderRadius,
+      child: child,
+    );
+  }
+
   DateTime? _parseTime(dynamic value) {
     if (value == null) return null;
     if (value is DateTime) return value;
@@ -131,16 +156,10 @@ class FlightRecommendationCard extends StatelessWidget {
     final AppLocalizations? l10n = AppLocalizations.of(context);
 
     if (loading) {
-      return BaseCard(
-        onTap: null,
-        enabled: false,
+      return _shell(
+        context,
         loading: true,
-        showBorder: true,
-        borderColor: TravelCardStyle.borderColor(context),
-        showShadow: false,
         semanticsLabel: l10n?.offerLoadingFlight ?? 'Loading flight',
-        padding: EdgeInsets.zero,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: cardLoadingSemantics(
           _LoadingSkeleton(width: targetWidth, height: targetHeight),
         ),
@@ -210,14 +229,10 @@ class FlightRecommendationCard extends StatelessWidget {
       if (baggage != null && baggage.isNotEmpty) baggage,
     ];
 
-    return BaseCard(
+    return _shell(
+      context,
       onTap: onTap,
       semanticsLabel: semanticParts.join(', '),
-      showBorder: true,
-      borderColor: TravelCardStyle.borderColor(context),
-      showShadow: false,
-      padding: EdgeInsets.zero,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: ConstrainedBox(
         constraints: BoxConstraints(
           minWidth: targetWidth,

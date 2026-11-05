@@ -6,6 +6,7 @@ import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/widgets/cards/card.dart';
+import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
 /// Deal discovery card.
@@ -35,19 +36,38 @@ class DealCard extends StatelessWidget {
     return int.tryParse(raw?.toString() ?? '');
   }
 
+  /// The one shell both the loaded card and its skeleton share: corner radius,
+  /// hairline, padding and press behaviour live here and nowhere else, so a
+  /// skeleton cannot drift from the real card's chrome.
+  Widget _shell(
+    BuildContext context, {
+    required Widget child,
+    required String semanticsLabel,
+    VoidCallback? onTap,
+    bool enabled = true,
+    bool loading = false,
+  }) {
+    return BaseCard(
+      onTap: onTap,
+      enabled: enabled,
+      loading: loading,
+      showBorder: true,
+      borderColor: TravelCardStyle.borderColor(context),
+      showShadow: false,
+      semanticsLabel: semanticsLabel,
+      padding: EdgeInsets.zero,
+      borderRadius: HomeCardDimensions.borderRadius,
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (loading) {
-      return BaseCard(
-        onTap: null,
-        enabled: false,
+      return _shell(
+        context,
         loading: true,
-        showBorder: true,
-        borderColor: TravelCardStyle.borderColor(context),
-        showShadow: false,
         semanticsLabel: 'Loading deal',
-        padding: EdgeInsets.zero,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: const _LoadingSkeleton(),
       );
     }
@@ -64,14 +84,10 @@ class DealCard extends StatelessWidget {
         'Price ${price.toStringAsFixed(0)} ${item.currency ?? ''}',
     ];
 
-    return BaseCard(
+    return _shell(
+      context,
       onTap: onTap,
       semanticsLabel: semanticParts.join(', '),
-      showBorder: true,
-      borderColor: TravelCardStyle.borderColor(context),
-      showShadow: false,
-      padding: EdgeInsets.zero,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: AspectRatio(
         aspectRatio: _aspectRatio,
         child: Padding(

@@ -35,9 +35,13 @@ import 'package:tokigo/l10n/app_localizations.dart';
 /// cancellation flow can produce that state, and a filter that can never fill
 /// is decoration.
 class BagPage extends ConsumerStatefulWidget {
-  const BagPage({super.key, this.initialLikes = false});
+  const BagPage({super.key, this.initialLikes = false, this.embedded = false});
 
   final bool initialLikes;
+
+  /// Renders the existing trips content inside Home's single Scaffold instead
+  /// of its own route-level Scaffold.
+  final bool embedded;
 
   @override
   ConsumerState<BagPage> createState() => _BagPageState();
@@ -93,82 +97,85 @@ class _BagPageState extends ConsumerState<BagPage> {
             : bDate.compareTo(aDate);
       });
 
+    final Widget content = AiEntranceAnimation(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          AppPageHeader(
+            title: _section == _BagSection.trips ? l10n.myTrips : l10n.wishlist,
+            // Home owns the route/back affordance when this page is embedded.
+            showBackButton: !widget.embedded,
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.sm,
+              AppSpacing.lg,
+              AppSpacing.md,
+            ),
+            child: SearchSegmentedControl<_BagSection>(
+              options: const <_BagSection>[
+                _BagSection.trips,
+                _BagSection.likes,
+              ],
+              selected: _section,
+              labelOf: (section) => switch (section) {
+                _BagSection.trips => l10n.myTrips,
+                _BagSection.likes => l10n.wishlist,
+              },
+              onSelected: (section) => setState(() => _section = section),
+            ),
+          ),
+          if (_section == _BagSection.trips)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.md,
+              ),
+              child: SearchSegmentedControl<_TripPeriod>(
+                options: const <_TripPeriod>[
+                  _TripPeriod.upcoming,
+                  _TripPeriod.past,
+                  _TripPeriod.cancelled,
+                ],
+                selected: _period,
+                labelOf: (period) => switch (period) {
+                  _TripPeriod.upcoming => l10n.upcoming,
+                  _TripPeriod.past => l10n.past,
+                  _TripPeriod.cancelled => l10n.cancelled,
+                },
+                onSelected: (period) => setState(() => _period = period),
+              ),
+            ),
+          Expanded(
+            child: _section == _BagSection.likes
+                ? const WishlistPage(embedded: true)
+                : trips.isEmpty
+                ? _EmptyTrips(period: _period)
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      AppSpacing.xs,
+                      AppSpacing.lg,
+                      AppSpacing.xxxl,
+                    ),
+                    itemCount: trips.length,
+                    itemBuilder: (context, index) =>
+                        _TripCard(trip: trips[index]),
+                  ),
+          ),
+        ],
+      ),
+    );
+
+    // Embedded inside Home: no competing Scaffold or second SafeArea.
+    if (widget.embedded) return content;
+
     return Scaffold(
       backgroundColor: context.tokigoColors.background,
-      body: SafeArea(
-        child: AiEntranceAnimation(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              AppPageHeader(
-                title: _section == _BagSection.trips
-                    ? l10n.myTrips
-                    : l10n.wishlist,
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.sm,
-                  AppSpacing.lg,
-                  AppSpacing.md,
-                ),
-                child: SearchSegmentedControl<_BagSection>(
-                  options: const <_BagSection>[
-                    _BagSection.trips,
-                    _BagSection.likes,
-                  ],
-                  selected: _section,
-                  labelOf: (section) => switch (section) {
-                    _BagSection.trips => l10n.myTrips,
-                    _BagSection.likes => l10n.wishlist,
-                  },
-                  onSelected: (section) => setState(() => _section = section),
-                ),
-              ),
-              if (_section == _BagSection.trips)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
-                    0,
-                    AppSpacing.lg,
-                    AppSpacing.md,
-                  ),
-                  child: SearchSegmentedControl<_TripPeriod>(
-                    options: const <_TripPeriod>[
-                      _TripPeriod.upcoming,
-                      _TripPeriod.past,
-                      _TripPeriod.cancelled,
-                    ],
-                    selected: _period,
-                    labelOf: (period) => switch (period) {
-                      _TripPeriod.upcoming => l10n.upcoming,
-                      _TripPeriod.past => l10n.past,
-                      _TripPeriod.cancelled => l10n.cancelled,
-                    },
-                    onSelected: (period) => setState(() => _period = period),
-                  ),
-                ),
-              Expanded(
-                child: _section == _BagSection.likes
-                    ? const WishlistPage(embedded: true)
-                    : trips.isEmpty
-                    ? _EmptyTrips(period: _period)
-                    : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.lg,
-                          AppSpacing.xs,
-                          AppSpacing.lg,
-                          AppSpacing.xxxl,
-                        ),
-                        itemCount: trips.length,
-                        itemBuilder: (context, index) =>
-                            _TripCard(trip: trips[index]),
-                      ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      body: SafeArea(child: content),
     );
   }
 }
@@ -236,136 +243,136 @@ class _TripCard extends StatelessWidget {
           child: InkWell(
             onTap: () => context.push('/bag/${trip.tripId}'),
             child: Container(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: context.tokigoColors.outline),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  child: SizedBox(
-                    width: 56,
-                    height: 56,
-                    child: CardImage(
-                      url: trip.imageUrl,
-                      fallbackIcon: tripTypeIcon(trip.type),
-                      semanticLabel: headline ?? typeLabel,
-                      fit: BoxFit.cover,
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(color: context.tokigoColors.outline),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    child: SizedBox(
+                      width: 56,
+                      height: 56,
+                      child: CardImage(
+                        url: trip.imageUrl,
+                        fallbackIcon: tripTypeIcon(trip.type),
+                        semanticLabel: headline ?? typeLabel,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Row(
-                        children: <Widget>[
-                          Icon(
-                            tripTypeIcon(trip.type),
-                            size: 13,
-                            color: context.tokigoColors.brand,
-                          ),
-                          const SizedBox(width: AppSpacing.xxs),
-                          Flexible(
-                            child: Text(
-                              typeLabel,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: typography.captionSemibold.copyWith(
-                                color: context.tokigoColors.brand,
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Row(
+                          children: <Widget>[
+                            Icon(
+                              tripTypeIcon(trip.type),
+                              size: 13,
+                              color: context.tokigoColors.brand,
+                            ),
+                            const SizedBox(width: AppSpacing.xxs),
+                            Flexible(
+                              child: Text(
+                                typeLabel,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: typography.captionSemibold.copyWith(
+                                  color: context.tokigoColors.brand,
+                                ),
                               ),
                             ),
-                          ),
-                          const Spacer(),
-                          StatusChip(
-                            label: tripStatusLabel(l10n, trip.status),
-                            color: tripStatusColor(trip.status),
+                            const Spacer(),
+                            StatusChip(
+                              label: tripStatusLabel(l10n, trip.status),
+                              color: tripStatusColor(trip.status),
+                            ),
+                          ],
+                        ),
+                        if (headline != null) ...<Widget>[
+                          const SizedBox(height: AppSpacing.xxs),
+                          Text(
+                            headline,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: typography.bodyLargeMedium.copyWith(
+                              color: context.tokigoColors.textPrimary,
+                            ),
                           ),
                         ],
-                      ),
-                      if (headline != null) ...<Widget>[
-                        const SizedBox(height: AppSpacing.xxs),
-                        Text(
-                          headline,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: typography.bodyLargeMedium.copyWith(
-                            color: context.tokigoColors.textPrimary,
+                        if (showPlace) ...<Widget>[
+                          const SizedBox(height: AppSpacing.xxs),
+                          Text(
+                            place,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: typography.caption.copyWith(
+                              color: context.tokigoColors.textTertiary,
+                            ),
                           ),
-                        ),
-                      ],
-                      if (showPlace) ...<Widget>[
-                        const SizedBox(height: AppSpacing.xxs),
+                        ],
+                        if (dates != null) ...<Widget>[
+                          const SizedBox(height: AppSpacing.sm),
+                          Row(
+                            children: <Widget>[
+                              Icon(
+                                Icons.calendar_today_rounded,
+                                size: 13,
+                                color: context.tokigoColors.textTertiary,
+                              ),
+                              const SizedBox(width: AppSpacing.xs),
+                              Expanded(
+                                child: Text(
+                                  dates,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: typography.caption.copyWith(
+                                    color: context.tokigoColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: AppSpacing.sm),
+                        // The reference gets the full line: a truncated booking
+                        // reference is useless, so the money sits on its own
+                        // end-aligned line instead of squeezing it.
                         Text(
-                          place,
+                          trip.bookingReference.isEmpty
+                              ? trip.providerName
+                              : '${l10n.bookingReferenceLabel} · '
+                                    '${trip.bookingReference}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: typography.caption.copyWith(
                             color: context.tokigoColors.textTertiary,
                           ),
                         ),
-                      ],
-                      if (dates != null) ...<Widget>[
-                        const SizedBox(height: AppSpacing.sm),
-                        Row(
-                          children: <Widget>[
-                            Icon(
-                              Icons.calendar_today_rounded,
-                              size: 13,
-                              color: context.tokigoColors.textTertiary,
+                        const SizedBox(height: AppSpacing.xxs),
+                        Align(
+                          alignment: AlignmentDirectional.centerEnd,
+                          child: Text(
+                            '${trip.currency} '
+                            '${trip.total.toStringAsFixed(2)}',
+                            style: typography.bodyLargeMedium.copyWith(
+                              color: context.tokigoColors.textPrimary,
                             ),
-                            const SizedBox(width: AppSpacing.xs),
-                            Expanded(
-                              child: Text(
-                                dates,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: typography.caption.copyWith(
-                                  color: context.tokigoColors.textSecondary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                      const SizedBox(height: AppSpacing.sm),
-                      // The reference gets the full line: a truncated booking
-                      // reference is useless, so the money sits on its own
-                      // end-aligned line instead of squeezing it.
-                      Text(
-                        trip.bookingReference.isEmpty
-                            ? trip.providerName
-                            : '${l10n.bookingReferenceLabel} · '
-                                  '${trip.bookingReference}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: typography.caption.copyWith(
-                          color: context.tokigoColors.textTertiary,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xxs),
-                      Align(
-                        alignment: AlignmentDirectional.centerEnd,
-                        child: Text(
-                          '${trip.currency} '
-                          '${trip.total.toStringAsFixed(2)}',
-                          style: typography.bodyLargeMedium.copyWith(
-                            color: context.tokigoColors.textPrimary,
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }

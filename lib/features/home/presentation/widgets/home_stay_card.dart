@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
 import 'package:tokigo/core/domain/models/offers/display_price.dart';
 import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
@@ -27,7 +28,18 @@ class HomeStayCard extends ConsumerWidget {
     this.margin,
     this.onTap,
     this.aspectRatio = 4 / 3,
+    this.loading = false,
   });
+
+  /// Skeleton entry point — no item needed; the card renders its own
+  /// placeholder state at the same geometry.
+  const HomeStayCard.loading({
+    super.key,
+    this.margin,
+    this.aspectRatio = 4 / 3,
+  }) : item = const HomeItem(id: '', type: HomeCardType.hotel, title: ''),
+       onTap = null,
+       loading = true;
 
   final HomeItem item;
 
@@ -42,9 +54,20 @@ class HomeStayCard extends ConsumerWidget {
   /// The Home rail uses a wider image than other stay surfaces.
   final double aspectRatio;
 
+  /// Skeleton state — same geometry, no data. The card delegates to
+  /// [OverlapStayCard]'s loading state, so the placeholder is the same card.
+  final bool loading;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    if (loading) {
+      return OverlapStayCard.skeleton(
+        margin: margin,
+        aspectRatio: aspectRatio,
+        semanticsLabel: l10n?.hotelLoading ?? 'Loading hotel',
+      );
+    }
     final String city = (item.metadata['city'] ?? '').toString().trim();
     final String country = (item.metadata['country'] ?? '').toString().trim();
     final String location = <String>[

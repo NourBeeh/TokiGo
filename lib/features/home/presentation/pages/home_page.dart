@@ -8,23 +8,28 @@ import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_message_state.dart';
 import 'package:tokigo/core/ui/app_wordmark.dart';
-import 'package:tokigo/core/widgets/cards/card.dart';
 import 'package:tokigo/core/widgets/section_header.dart';
 import 'package:tokigo/core/widgets/shimmer.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/features/bag/presentation/pages/bag_page.dart';
+import 'package:tokigo/features/home/domain/home_action.dart';
 import 'package:tokigo/features/home/presentation/home_controller.dart';
 import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_ai_search_field.dart';
-import 'package:tokigo/features/home/presentation/widgets/home_discovery_stay_card.dart';
+import 'package:tokigo/features/home/presentation/widgets/destination_cover_flow_carousel.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_section.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stays_carousel.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart';
+import 'package:tokigo/features/notifications/presentation/widgets/notification_bell.dart';
 import 'package:tokigo/features/search/domain/country_airport_suggestions.dart';
 import 'package:tokigo/features/search/domain/search_context.dart';
 import 'package:tokigo/features/search/application/providers/offer_selection_provider.dart';
+import 'package:tokigo/features/search/presentation/pages/car_search_page.dart';
+import 'package:tokigo/features/search/presentation/pages/flight_search_page.dart';
+import 'package:tokigo/features/search/presentation/pages/hotel_search_page.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 import 'package:tokigo/shared/providers/locale_provider.dart';
 
@@ -50,11 +55,26 @@ class _HomePageState extends ConsumerState<HomePage>
   final GlobalKey _discoverKey = GlobalKey();
   bool _scrollScheduled = false;
 
-  /// Owner decision (2026-10-24): the mood feature was removed and the home
-  /// feed restored mood-free — the composed Home feed (Discover + stays +
-  /// other rails) renders again, with no mood rails or mood-matched products.
-  /// Mirrors [HomeComposer.showsViewedRail].
-  static const bool _homeFeedEnabled = true;
+  /// True once the dashboard has scrolled far enough that its content is
+  /// leaving the viewport. The persistent AI composer then renders compact.
+  bool _composerCompact = false;
+
+  /// Scroll offset past which the composer switches to its compact shape.
+  static const double _compactAfter = 72;
+
+  /// Bottom space reserved for the persistent composer (expanded height +
+  /// vertical padding). It is deliberately based on the EXPANDED field so the
+  /// page content never shifts when the composer compacts.
+  static const double _composerReserve = 56 + AppSpacing.sm * 2;
+
+  /// Bottom space reserved for the horizontal action bar (card height + the
+  /// gap above the composer). Both live in the same pinned interaction area.
+  static const double _actionBarReserve = HomeActionTile.height + AppSpacing.sm;
+
+  /// Total pinned footprint: action bar + composer. The page's scrollable
+  /// content reserves this so no card is ever hidden behind the interaction
+  /// area.
+  static const double _bottomAreaReserve = _actionBarReserve + _composerReserve;
 
   @override
   void initState() {
@@ -161,35 +181,186 @@ class _HomePageState extends ConsumerState<HomePage>
       }
     });
     final state = ref.watch(homeControllerProvider);
+    final selectedAction = ref.watch(homeSelectedActionProvider);
     _consumeScrollTarget();
     return Scaffold(
       backgroundColor: HomeDesignTokens.backgroundOf(context),
       // H1: pull-to-refresh removed by product decision — Home refreshes
-      // prices/availability via live validation only (H2). The old
-      // RefreshIndicator wrapper is gone; the SafeArea/Column tree is
-      // unchanged.
+      // prices/availability via live validation only (H2).
       body: SafeArea(
         top: true,
-        // `bottom: false` left the feed's last card under the Android
-        // navigation bar (the pill it was written for is gone).
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        // The feed stays edge-to-edge under the navigation bar; the persistent
+        // composer below owns (and reserves) that inset itself.
+        bottom: false,
+        child: Stack(
           children: <Widget>[
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(
-                AppSpacing.lg,
-                AppSpacing.xs,
-                AppSpacing.lg,
-                AppSpacing.xs,
+            Positioned.fill(
+              child: Padding(
+                // Reserve the composer's footprint so cards are never hidden
+                // behind it. The reserve is based on the EXPANDED field height
+                // so compacting the composer never shifts the page.
+                padding: EdgeInsets.only(
+                  bottom:
+                      _bottomAreaReserve + MediaQuery.paddingOf(context).bottom,
+                ),
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: _onScrollNotification,
+                  child: selectedAction == null
+                      ? _buildDashboard(state, ref)
+                      : _buildSelectedAction(selectedAction),
+                ),
               ),
-              child: const _HomeTopBar(),
             ),
-            Expanded(child: _buildBody(state, ref)),
+            PositionedDirectional(
+              start: 0,
+              end: 0,
+              bottom: 0,
+              child: _buildBottomInteractionArea(context, selectedAction),
+            ),
           ],
         ),
       ),
     );
   }
+
+  /// Drives the composer's compact presentation from the active vertical
+  /// scrollable. `depth == 0` ignores the horizontal card rails (Discover,
+  /// Stays), which would otherwise compact the composer while swiping.
+  bool _onScrollNotification(ScrollNotification notification) {
+    if (notification.depth != 0) return false;
+    final bool compact = notification.metrics.pixels > _compactAfter;
+    if (compact != _composerCompact) {
+      setState(() => _composerCompact = compact);
+    }
+    return false;
+  }
+
+  /// The pinned Home interaction area: the horizontal service switcher
+  /// directly above the persistent AI composer. Both share one canvas and one
+  /// [SafeArea] so the system navigation inset is honored once, and the
+  /// Scaffold's keyboard resize lifts the whole group above the keyboard.
+  Widget _buildBottomInteractionArea(
+    BuildContext context,
+    HomeAction? selectedAction,
+  ) {
+    return ColoredBox(
+      color: HomeDesignTokens.backgroundOf(context),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                0,
+              ),
+              child: HomeActionBar(
+                searchContext: _searchContext(),
+                selectedAction: selectedAction,
+                onActionSelected: _selectAction,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                AppSpacing.sm,
+              ),
+              child: HomeAiSearchField(
+                compact: _composerCompact,
+                accentColor: HomeDesignTokens.accentOf(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Switches the in-page Home content. Tapping the already-selected action
+  /// returns to the full dashboard (the four tiles are the only Home switcher).
+  void _selectAction(HomeAction action) {
+    final HomeAction? current = ref.read(homeSelectedActionProvider);
+    final HomeAction? next = current == action ? null : action;
+    if (_composerCompact) {
+      setState(() => _composerCompact = false);
+    }
+    ref.read(homeSelectedActionProvider.notifier).state = next;
+  }
+
+  /// The normal Home dashboard: chrome + the composed feed, all inside ONE
+  /// vertical scrollable owned by Home.
+  Widget _buildDashboard(HomeState state, WidgetRef ref) {
+    return CustomScrollView(
+      controller: _feedController,
+      slivers: <Widget>[
+        ..._dashboardChromeSlivers(),
+        ..._feedSlivers(state, ref),
+      ],
+    );
+  }
+
+  /// The selected service's existing page, embedded in Home's Scaffold.
+  ///
+  /// The bottom action bar stays pinned so the traveller can switch services
+  /// at any time; the service itself keeps its own feature widgets, Riverpod
+  /// controllers and scroll behaviour.
+  Widget _buildSelectedAction(HomeAction action) {
+    final SearchContext searchContext = _searchContext();
+    return _buildFeatureContent(action, searchContext);
+  }
+
+  Widget _buildFeatureContent(HomeAction action, SearchContext searchContext) {
+    switch (action) {
+      case HomeAction.flights:
+        return FlightSearchPage(
+          key: const ValueKey<String>('home-flights-content'),
+          embedded: true,
+          searchContext: searchContext,
+        );
+      case HomeAction.hotels:
+        return HotelSearchPage(
+          key: const ValueKey<String>('home-hotels-content'),
+          embedded: true,
+          searchContext: searchContext,
+        );
+      case HomeAction.cars:
+        return const CarSearchPage(
+          key: ValueKey<String>('home-cars-content'),
+          embedded: true,
+        );
+      case HomeAction.trips:
+        return const BagPage(
+          key: ValueKey<String>('home-trips-content'),
+          embedded: true,
+        );
+    }
+  }
+
+  /// Dashboard chrome that scrolls away with the feed (top bar and the
+  /// in-context location explainer). The service switcher is pinned at the
+  /// bottom, above the composer, so the feed starts one step higher.
+  List<Widget> _dashboardChromeSlivers() => <Widget>[
+    const SliverToBoxAdapter(
+      child: Padding(
+        padding: EdgeInsetsDirectional.fromSTEB(
+          AppSpacing.lg,
+          AppSpacing.xs,
+          AppSpacing.lg,
+          AppSpacing.xs,
+        ),
+        child: _HomeTopBar(),
+      ),
+    ),
+    // In-context location explainer (owner decision: never on launch; the OS
+    // dialog is raised only from the card's own "Allow" tap). Hides itself
+    // once access is granted or the card is dismissed for the session.
+    const SliverToBoxAdapter(child: LocationPermissionCard()),
+  ];
 
   /// A section whose items are all destinations is Home's Discover section
   /// (DS-6) — the anchor the results page scrolls to.
@@ -197,20 +368,9 @@ class _HomePageState extends ConsumerState<HomePage>
       section.items.isNotEmpty &&
       section.items.every((item) => item.type == HomeCardType.destination);
 
-  Widget _buildBody(HomeState state, WidgetRef ref) {
-    // Owner decision (2026-10-24): clean home — only the chrome (pinned
-    // search + nav buttons) renders by default. The mood feature was removed;
-    // the mood-free feed below stays behind the [_homeFeedEnabled] flag.
-    if (_homeFeedEnabled) {
-      return _buildFeed(state, ref);
-    }
-    return CustomScrollView(
-      controller: _feedController,
-      slivers: _homeHeaderSlivers(ref),
-    );
-  }
-
-  Widget _buildFeed(HomeState state, WidgetRef ref) {
+  /// The dashboard's feed content as slivers (chrome lives in
+  /// [_dashboardChromeSlivers], so everything scrolls in ONE scroll view).
+  List<Widget> _feedSlivers(HomeState state, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final List<HomeSection> visibleSections = state.sections
         .where(_isDiscoverSection)
@@ -241,131 +401,87 @@ class _HomePageState extends ConsumerState<HomePage>
               const <HomeItem>[]);
     switch (state.status) {
       case HomeStatus.loading:
-        return CustomScrollView(
-          controller: _feedController,
-          slivers: <Widget>[
-            ..._homeHeaderSlivers(ref),
-            const SliverToBoxAdapter(child: _DiscoverSkeletonList()),
-            const SliverToBoxAdapter(child: _StaysSkeletonList()),
-          ],
-        );
+        return const <Widget>[
+          SliverToBoxAdapter(child: _DiscoverSkeletonList()),
+          SliverToBoxAdapter(child: _StaysSkeletonList()),
+        ];
       case HomeStatus.success:
       case HomeStatus.partial:
       case HomeStatus.developmentPreview:
-        return CustomScrollView(
-          controller: _feedController,
-          slivers: [
-            ..._homeHeaderSlivers(ref),
-            // Owner decision (2026-10-26): Discover leads the feed — the city
-            // rail is the traveller's first "where next?" cue, and Stays
-            // follows it.
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => HomeSectionWidget(
-                  // ONE anchor for the Discover section — a GlobalKey may only
-                  // ever sit on a single widget.
-                  key: index == 0 ? _discoverKey : null,
-                  section: visibleSections[index],
-                  onFlightTap: (HomeItem flight) =>
-                      _selectFlightForBooking(ref, flight),
-                  onViewAllFlights: () => context.push('/flights'),
-                  onFavorite: (flightId, value) {
-                    // Handle wishlist change
-                  },
+        return <Widget>[
+          // Owner decision (2026-10-26): Discover leads the feed — the city
+          // rail is the traveller's first "where next?" cue, and Stays
+          // follows it.
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => HomeSectionWidget(
+                // ONE anchor for the Discover section — a GlobalKey may only
+                // ever sit on a single widget.
+                key: index == 0 ? _discoverKey : null,
+                section: visibleSections[index],
+                onFlightTap: (HomeItem flight) =>
+                    _selectFlightForBooking(ref, flight),
+                onViewAllFlights: () => context.push('/flights'),
+                onFavorite: (flightId, value) {
+                  // Handle wishlist change
+                },
+              ),
+              childCount: visibleSections.length,
+            ),
+          ),
+          // Recommended stays (doc 17 §3.5): section header + card A, paged
+          // horizontally — one stay per swipe (owner decision, 2026-10-25).
+          // Phase 1B: the composer renders these as "Picked for You" for
+          // authenticated users — show the standalone rail ONLY when no
+          // composed section carries that semantic id, so stays are never
+          // repeated.
+          if (visibleHotels.isNotEmpty) ...<Widget>[
+            SliverToBoxAdapter(
+              child: SectionHeader(
+                title: l10n.homeStaysTitle,
+                // Same step as every other Home section heading so Discover
+                // and Stays read as one rhythm (owner decision, 2026-10-26).
+                titleStyle: AppTypography.forLight().titleMedium.copyWith(
+                  color: context.tokigoColors.textPrimary,
                 ),
-                childCount: visibleSections.length,
               ),
             ),
-            // Recommended stays (doc 17 §3.5): section header + card A, paged
-            // horizontally — one stay per swipe (owner decision, 2026-10-25).
-            // Phase 1B: the composer renders these as "Picked for You" for
-            // authenticated users — show the standalone rail ONLY when no
-            // composed section carries that semantic id, so stays are never
-            // repeated.
-            if (visibleHotels.isNotEmpty) ...<Widget>[
-              SliverToBoxAdapter(
-                child: SectionHeader(
-                  title: l10n.homeStaysTitle,
-                  // Same step as every other Home section heading so Discover
-                  // and Stays read as one rhythm (owner decision, 2026-10-26).
-                  titleStyle: AppTypography.forLight().titleMedium.copyWith(
-                    color: context.tokigoColors.textPrimary,
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: HomeStaysCarousel(items: visibleHotels),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
-            ],
-            // Breathing room under the last card / section.
-            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xl)),
+            SliverToBoxAdapter(child: HomeStaysCarousel(items: visibleHotels)),
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
           ],
-        );
+          // Breathing room under the last card / section.
+          const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xl)),
+        ];
       case HomeStatus.empty:
-        return CustomScrollView(
-          controller: _feedController,
-          slivers: <Widget>[
-            ..._homeHeaderSlivers(ref),
-            SliverToBoxAdapter(
-              child: AppMessageState(
-                icon: Icons.explore_off_outlined,
-                title: l10n.homeEmptyTitle,
-                body: l10n.homeEmptyBody,
-                actionLabel: l10n.retry,
-                onAction: () =>
-                    ref.read(homeControllerProvider.notifier).load(),
-              ),
+        return <Widget>[
+          SliverToBoxAdapter(
+            child: AppMessageState(
+              icon: Icons.explore_off_outlined,
+              title: l10n.homeEmptyTitle,
+              body: l10n.homeEmptyBody,
+              actionLabel: l10n.retry,
+              onAction: () => ref.read(homeControllerProvider.notifier).load(),
             ),
-          ],
-        );
+          ),
+        ];
       case HomeStatus.error:
-        return CustomScrollView(
-          controller: _feedController,
-          slivers: <Widget>[
-            ..._homeHeaderSlivers(ref),
-            SliverToBoxAdapter(
-              child: AppMessageState(
-                icon: Icons.wifi_off_rounded,
-                hue: context.tokigoColors.danger,
-                title: l10n.homeErrorTitle,
-                // Deliberately NOT `state.errorMessage`: that string comes from
-                // the network layer in English and would be the only English
-                // sentence an Arabic user ever sees.
-                body: l10n.homeErrorBody,
-                actionLabel: l10n.retry,
-                onAction: () =>
-                    ref.read(homeControllerProvider.notifier).load(),
-              ),
+        return <Widget>[
+          SliverToBoxAdapter(
+            child: AppMessageState(
+              icon: Icons.wifi_off_rounded,
+              hue: context.tokigoColors.danger,
+              title: l10n.homeErrorTitle,
+              // Deliberately NOT `state.errorMessage`: that string comes from
+              // the network layer in English and would be the only English
+              // sentence an Arabic user ever sees.
+              body: l10n.homeErrorBody,
+              actionLabel: l10n.retry,
+              onAction: () => ref.read(homeControllerProvider.notifier).load(),
             ),
-          ],
-        );
+          ),
+        ];
     }
   }
-
-  List<Widget> _homeHeaderSlivers(WidgetRef ref) => <Widget>[
-    SliverPersistentHeader(
-      pinned: true,
-      delegate: _PinnedHomeSearchHeader(
-        accentColor: HomeDesignTokens.accentOf(context),
-      ),
-    ),
-    SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(
-          AppSpacing.lg,
-          AppSpacing.md,
-          AppSpacing.lg,
-          AppSpacing.xl,
-        ),
-        child: HomeNavButtons(searchContext: _searchContext()),
-      ),
-    ),
-    // In-context location explainer (owner decision: never on launch; the OS
-    // dialog is raised only from the card's own "Allow" tap). Hides itself
-    // once access is granted or the card is dismissed for the session.
-    const SliverToBoxAdapter(child: LocationPermissionCard()),
-  ];
 
   /// Phase 4A — the traveller's travel context for the search tiles.
   ///
@@ -417,44 +533,6 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 }
 
-/// The search field scrolls with the hero until it reaches the Home wordmark,
-/// then stays pinned there while the discovery feed moves underneath it.
-class _PinnedHomeSearchHeader extends SliverPersistentHeaderDelegate {
-  const _PinnedHomeSearchHeader({required this.accentColor});
-
-  final Color accentColor;
-
-  @override
-  double get minExtent => 64;
-
-  @override
-  double get maxExtent => 64;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) => Material(
-    color: HomeDesignTokens.backgroundOf(context),
-    elevation: 0,
-    child: SizedBox.expand(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsetsDirectional.symmetric(
-            horizontal: AppSpacing.lg,
-          ),
-          child: HomeAiSearchField(accentColor: accentColor),
-        ),
-      ),
-    ),
-  );
-
-  @override
-  bool shouldRebuild(covariant _PinnedHomeSearchHeader oldDelegate) =>
-      oldDelegate.accentColor != accentColor;
-}
-
 /// Home's top bar — the TokiGo wordmark, notifications and profile avatar.
 ///
 /// The wordmark is the brand mark, so it is built ONLY through [AppWordmark]
@@ -467,7 +545,6 @@ class _HomeTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final typography = AppTypography.forLight();
 
     return LayoutBuilder(
@@ -501,10 +578,8 @@ class _HomeTopBar extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              _TopAction(
-                icon: Icons.notifications_none_rounded,
-                semanticLabel: l10n.notifications,
-                color: context.tokigoColors.textPrimary,
+              AnimatedNotificationBell(
+                normalColor: context.tokigoColors.textPrimary,
                 onTap: () => context.push('/notifications'),
               ),
               const _HomeAvatar(),
@@ -512,41 +587,6 @@ class _HomeTopBar extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-/// A header icon action: 22px glyph inside the stock 48px touch target, so the
-/// three trailing actions never crowd each other on a narrow phone.
-class _TopAction extends StatelessWidget {
-  const _TopAction({
-    required this.icon,
-    required this.semanticLabel,
-    required this.onTap,
-    required this.color,
-  });
-
-  final IconData icon;
-  final String semanticLabel;
-  final VoidCallback onTap;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: semanticLabel,
-      child: Material(
-        color: Colors.transparent,
-        child: Pressable(
-          onTap: onTap,
-          child: SizedBox(
-            width: 42,
-            height: 42,
-            child: Center(child: Icon(icon, size: 25, color: color)),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -573,29 +613,29 @@ class _HomeAvatar extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         borderRadius: BorderRadius.circular(size / 2),
         child: Pressable(
-            onTap: () => context.push('/profile'),
-            child: ClipOval(
-              child: SizedBox(
-                width: size,
-                height: size,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: context.tokigoColors.surfaceSecondary,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: context.tokigoColors.hairlineStrong,
-                    ),
+          onTap: () => context.push('/profile'),
+          child: ClipOval(
+            child: SizedBox(
+              width: size,
+              height: size,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: context.tokigoColors.surfaceSecondary,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: context.tokigoColors.hairlineStrong,
                   ),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    Icons.person_rounded,
-                    size: 22,
-                    color: context.tokigoColors.textPrimary,
-                  ),
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.person_rounded,
+                  size: 22,
+                  color: context.tokigoColors.textPrimary,
                 ),
               ),
             ),
           ),
+        ),
       ),
     );
   }
@@ -605,22 +645,16 @@ class _HomeAvatar extends StatelessWidget {
 
 /// The loading state of the Discover rail.
 ///
-/// Discover leads the feed, so its placeholder leads the loading feed too: the
-/// same page width and rail height [HomeStaysCarousel] computes, with a photo
-/// block and the city-name line under it. One page only — the skeleton never
-/// pretends there are cities to swipe before any has arrived.
+/// Discover leads the feed, so its placeholder leads the loading feed too. It
+/// is the SAME [DestinationCoverFlowCarousel] the loaded feed uses, in its
+/// loading state: the rail height, page width and photo ratio are the rail's
+/// own, so nothing moves when the first city lands. One page only — the
+/// skeleton never pretends there are cities to swipe before any has arrived.
 class _DiscoverSkeletonList extends StatelessWidget {
   const _DiscoverSkeletonList();
 
   @override
   Widget build(BuildContext context) {
-    final double railWidth = MediaQuery.sizeOf(context).width;
-    final double cardWidth =
-        railWidth * _StaysSkeletonList._skeletonViewportFraction;
-    final double height = HomeStaysCarousel.railHeight(
-      context,
-      sheetTextHeight: HomeStaysCarousel.destinationSheetTextHeight,
-    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -636,18 +670,10 @@ class _DiscoverSkeletonList extends StatelessWidget {
             child: ShimmerBox(height: 24, width: 150),
           ),
         ),
-        SizedBox(
-          height: height,
-          child: Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: SizedBox(
-              width: cardWidth,
-              child: HomeDiscoveryStayCardSkeleton(
-                aspectRatio: HomeStaysCarousel.mediaAspectRatio,
-                semanticsLabel: 'Loading destination',
-              ),
-            ),
-          ),
+        DestinationCoverFlowCarousel(
+          items: const <HomeItem>[],
+          onItemTap: null,
+          loading: true,
         ),
       ],
     );
@@ -658,25 +684,21 @@ class _DiscoverSkeletonList extends StatelessWidget {
 
 /// The loading state of the recommended-stays rail.
 ///
-/// It mirrors the loaded layout — a horizontal rail of card-A skeletons at the
-/// same width and height [HomeStaysCarousel] computes — so the feed does not
-/// jump when the real stays land. The skeletons never scroll: pretending there
-/// are pages to swipe before any stay exists would be a lie.
+/// It is the SAME [HomeStaysCarousel] the loaded feed uses, in its loading
+/// state: same page fraction, same rail height, same trailing gap, one
+/// placeholder card at the exact width and height a real stay will occupy — so
+/// the feed does not jump when the real stays land. The skeleton never scrolls:
+/// pretending there are pages to swipe before any stay exists would be a lie.
 class _StaysSkeletonList extends StatelessWidget {
   const _StaysSkeletonList();
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final double railWidth = MediaQuery.sizeOf(context).width;
-    final double height = HomeStaysCarousel.railHeight(context);
-    // Keep skeleton pages at the same width and photo ratio as the loaded rail.
-    final double cardWidth = railWidth * _skeletonViewportFraction;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
+        const Padding(
+          padding: EdgeInsetsDirectional.fromSTEB(
             AppSpacing.lg,
             AppSpacing.xl,
             AppSpacing.lg,
@@ -687,28 +709,8 @@ class _StaysSkeletonList extends StatelessWidget {
             child: ShimmerBox(height: 24, width: 180),
           ),
         ),
-        SizedBox(
-          height: height,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: EdgeInsets.zero,
-            itemCount: 2,
-            separatorBuilder: (_, _) => const SizedBox.shrink(),
-            itemBuilder: (_, _) => SizedBox(
-              width: cardWidth,
-              child: OverlapStayCard.skeleton(
-                margin: EdgeInsets.zero,
-                aspectRatio: HomeStaysCarousel.mediaAspectRatio,
-                semanticsLabel: l10n.hotelLoading,
-              ),
-            ),
-          ),
-        ),
+        HomeStaysCarousel(items: const <HomeItem>[], loading: true),
       ],
     );
   }
-
-  /// Keep in step with [HomeStaysCarousel.viewportFraction]'s default.
-  static const double _skeletonViewportFraction = 0.8;
 }

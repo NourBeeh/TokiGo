@@ -19,8 +19,14 @@ import 'package:tokigo/core/widgets/cards/travel_card_style.dart';
 /// `HomeItem`). Keeping the drawing here means the user meets the same card in
 /// both places. The legacy class name remains to avoid changing its callers.
 ///
-/// The photo is supplied by the caller so each surface keeps its own image
-/// pipeline (Home reads the Hive-backed hotel cache; results use `CardImage`).
+/// ## Loading is a state of THIS widget
+///
+/// [loading] replaces the sheet's facts with shimmer placeholders and the
+/// photo with a shimmer box. Both states build the SAME `_StayBody` — same
+/// `AspectRatio`, same sheet padding, same row order, same divider, same
+/// corner radius — so the placeholder cannot drift from the real card when the
+/// design changes. The skeleton is never inferred from empty data: pass
+/// [loading] (or use [OverlapStayCard.skeleton]).
 class OverlapStayCard extends StatelessWidget {
   const OverlapStayCard({
     super.key,
@@ -43,10 +49,37 @@ class OverlapStayCard extends StatelessWidget {
     this.margin,
     this.aspectRatio = 4 / 3,
     this.heartSize = 40,
+    this.loading = false,
   });
 
+  /// Skeleton at the identical geometry — the list must not jump when the real
+  /// data lands. Delegates to the same widget with [loading] on.
+  const OverlapStayCard.skeleton({
+    super.key,
+    this.margin,
+    this.semanticsLabel = 'Loading',
+    this.aspectRatio = 4 / 3,
+  }) : media = const SizedBox.shrink(),
+       title = '',
+       amountText = '',
+       currency = '',
+       unit = null,
+       starClass = null,
+       rating = null,
+       reviewCount = null,
+       location = null,
+       onLocationTap = null,
+       distanceText = null,
+       onTap = null,
+       onFavorite = null,
+       isFavorite = false,
+       enabled = false,
+       heartSize = 40,
+       loading = true;
+
   /// The photo alone — the heart and the class pill are drawn by this card on
-  /// top of it.
+  /// top of it. In the loading state this is ignored and a shimmer box is
+  /// painted in its place.
   final Widget media;
 
   final String title;
@@ -87,31 +120,8 @@ class OverlapStayCard extends StatelessWidget {
   final double aspectRatio;
   final double heartSize;
 
-  /// Skeleton at the identical geometry — the list must not jump when the
-  /// real data lands.
-  const OverlapStayCard.skeleton({
-    super.key,
-    this.margin,
-    this.semanticsLabel = 'Loading',
-    this.aspectRatio = 4 / 3,
-  }) : media = const SizedBox.shrink(),
-       title = '',
-       amountText = '',
-       currency = '',
-       unit = null,
-       starClass = null,
-       rating = null,
-       reviewCount = null,
-       location = null,
-       onLocationTap = null,
-       distanceText = null,
-       onTap = null,
-       onFavorite = null,
-       isFavorite = false,
-       enabled = false,
-       heartSize = 32;
-
-  bool get _isSkeleton => title.isEmpty && amountText.isEmpty;
+  /// Skeleton state — same geometry, no data. See the class comment.
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
@@ -124,132 +134,58 @@ class OverlapStayCard extends StatelessWidget {
           AppSpacing.md,
         );
 
-    if (_isSkeleton) {
-      return BaseCard(
-        onTap: null,
-        enabled: false,
-        loading: true,
-        showBorder: true,
-        borderColor: TravelCardStyle.borderColor(context),
-        showShadow: false,
-        padding: EdgeInsets.zero,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        margin: margin,
-        semanticsLabel: semanticsLabel,
-        child: cardLoadingSemantics(
-          _SkeletonBody(aspectRatio: aspectRatio),
-          label: semanticsLabel,
-        ),
-      );
-    }
+    final String semanticsLabel =
+        this.semanticsLabel ?? (loading ? 'Loading' : _autoSemantics);
 
     return BaseCard(
-      onTap: onTap,
-      enabled: enabled,
+      onTap: loading ? null : onTap,
+      enabled: !loading && enabled,
+      loading: loading,
       showBorder: true,
       borderColor: TravelCardStyle.borderColor(context),
       showShadow: false,
       padding: EdgeInsets.zero,
       borderRadius: BorderRadius.circular(AppRadius.lg),
       margin: margin,
-      semanticsLabel: semanticsLabel ?? _autoSemantics,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          AspectRatio(
-            aspectRatio: aspectRatio,
-            child: Stack(
-              fit: StackFit.expand,
-              children: <Widget>[
-                media,
-                const Positioned.fill(
-                  child: IgnorePointer(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: <Color>[Color(0x33000000), Color(0x00000000)],
-                          stops: <double>[0, 0.36],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                if (starClass case final int stars)
-                  PositionedDirectional(
-                    top: AppSpacing.md,
-                    start: AppSpacing.md,
-                    child: _ClassPill(stars: stars),
-                  ),
-                if (onFavorite != null)
-                  PositionedDirectional(
-                    top: AppSpacing.md,
-                    end: AppSpacing.md,
-                    child: CardFavorite(
-                      value: isFavorite,
-                      onChanged: onFavorite,
-                      size: heartSize,
-                      onImage: true,
-                    ),
-                  ),
-              ],
+      semanticsLabel: semanticsLabel,
+      child: loading
+          ? cardLoadingSemantics(
+              _StayBody(
+                loading: loading,
+                aspectRatio: aspectRatio,
+                media: media,
+                starClass: starClass,
+                onFavorite: onFavorite,
+                isFavorite: isFavorite,
+                heartSize: heartSize,
+                title: title,
+                rating: rating,
+                location: location,
+                onLocationTap: onLocationTap,
+                distanceText: distanceText,
+                amountText: amountText,
+                currency: currency,
+                unit: unit,
+              ),
+              label: semanticsLabel,
+            )
+          : _StayBody(
+              loading: loading,
+              aspectRatio: aspectRatio,
+              media: media,
+              starClass: starClass,
+              onFavorite: onFavorite,
+              isFavorite: isFavorite,
+              heartSize: heartSize,
+              title: title,
+              rating: rating,
+              location: location,
+              onLocationTap: onLocationTap,
+              distanceText: distanceText,
+              amountText: amountText,
+              currency: currency,
+              unit: unit,
             ),
-          ),
-          Padding(
-            padding: TravelCardStyle.sheetPadding,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.forLight().bodyLargeMedium.copyWith(
-                    color: context.tokigoColors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                    height: 1.3,
-                  ),
-                ),
-                if (rating != null) ...<Widget>[
-                  const SizedBox(height: AppSpacing.xs),
-                  _RatingLine(rating: rating!),
-                ],
-                if (location case final String place) ...<Widget>[
-                  const SizedBox(height: AppSpacing.xs),
-                  _LocationLine(text: place, onTap: onLocationTap),
-                ],
-                if (distanceText case final String distance) ...<Widget>[
-                  const SizedBox(height: AppSpacing.xxs),
-                  _DistanceLine(text: distance),
-                ],
-                if (amountText.isNotEmpty) ...<Widget>[
-                  const SizedBox(height: AppSpacing.md),
-                  Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: context.tokigoColors.hairline,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  // Start-aligned: the nightly price sits on the LEFT in English
-                  // (LTR) and on the right in Arabic (RTL), the side the eye
-                  // reaches first in each language.
-                  Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: _PriceLine(
-                      amountText: amountText,
-                      currency: currency,
-                      unit: unit,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -262,6 +198,226 @@ class OverlapStayCard extends StatelessWidget {
     if (distanceText case final String distance) parts.add(distance);
     parts.add('$amountText $currency${unit == null ? '' : ' / $unit'}');
     return parts.join(', ');
+  }
+}
+
+/// The photo-above-information body shared by the loaded and loading card.
+///
+/// Row order, the [AspectRatio] photo box, the sheet padding and the divider
+/// are identical in both states; only the sheet's slot content switches.
+class _StayBody extends StatelessWidget {
+  const _StayBody({
+    required this.loading,
+    required this.aspectRatio,
+    required this.media,
+    required this.starClass,
+    required this.onFavorite,
+    required this.isFavorite,
+    required this.heartSize,
+    required this.title,
+    required this.rating,
+    required this.location,
+    required this.onLocationTap,
+    required this.distanceText,
+    required this.amountText,
+    required this.currency,
+    required this.unit,
+  });
+
+  final bool loading;
+  final double aspectRatio;
+  final Widget media;
+  final int? starClass;
+  final ValueChanged<bool>? onFavorite;
+  final bool isFavorite;
+  final double heartSize;
+  final String title;
+  final double? rating;
+  final String? location;
+  final VoidCallback? onLocationTap;
+  final String? distanceText;
+  final String amountText;
+  final String currency;
+  final String? unit;
+
+  @override
+  Widget build(BuildContext context) {
+    // Local copies so the skeleton guards below read as plain booleans and
+    // Dart can promote the class fields.
+    final int? starClass = loading ? null : this.starClass;
+    final ValueChanged<bool>? onFavorite = loading ? null : this.onFavorite;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        AspectRatio(
+          aspectRatio: aspectRatio,
+          child: Stack(
+            fit: StackFit.expand,
+            children: <Widget>[
+              if (loading) CardSkeleton.image() else media,
+              const Positioned.fill(
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: <Color>[Color(0x33000000), Color(0x00000000)],
+                        stops: <double>[0, 0.36],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Overlays are data-driven: they never appear in the skeleton.
+              if (starClass != null)
+                PositionedDirectional(
+                  top: AppSpacing.md,
+                  start: AppSpacing.md,
+                  child: _ClassPill(stars: starClass),
+                ),
+              if (onFavorite != null)
+                PositionedDirectional(
+                  top: AppSpacing.md,
+                  end: AppSpacing.md,
+                  child: CardFavorite(
+                    value: isFavorite,
+                    onChanged: onFavorite,
+                    size: heartSize,
+                    onImage: true,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        _StaySheet(
+          loading: loading,
+          title: title,
+          rating: rating,
+          location: location,
+          onLocationTap: onLocationTap,
+          distanceText: distanceText,
+          amountText: amountText,
+          currency: currency,
+          unit: unit,
+        ),
+      ],
+    );
+  }
+}
+
+/// The information sheet shared by the loaded and loading card.
+///
+/// Every slot is guarded by `loading || <data present>`, so the placeholder
+/// reserves exactly the room a fully-populated card uses while a sparse real
+/// card keeps its own (smaller) footprint. Placeholder heights mirror the text
+/// style of the slot they stand in for.
+class _StaySheet extends StatelessWidget {
+  const _StaySheet({
+    required this.loading,
+    required this.title,
+    required this.rating,
+    required this.location,
+    required this.onLocationTap,
+    required this.distanceText,
+    required this.amountText,
+    required this.currency,
+    required this.unit,
+  });
+
+  final bool loading;
+  final String title;
+  final double? rating;
+  final String? location;
+  final VoidCallback? onLocationTap;
+  final String? distanceText;
+  final String amountText;
+  final String currency;
+  final String? unit;
+
+  // Placeholder geometry mirrors the loaded slot it stands in for:
+  // two-line title (2 × 22), rating/location/distance captions (17 each),
+  // price (24). See AppTypography for the styles these derive from.
+  static const double _titleWidth = 170;
+  static const double _titleHeight = 44;
+  static const double _ratingWidth = 96;
+  static const double _ratingHeight = 17;
+  static const double _locationWidth = 120;
+  static const double _locationHeight = 17;
+  static const double _distanceWidth = 100;
+  static const double _distanceHeight = 17;
+  static const double _priceWidth = 88;
+  static const double _priceHeight = 24;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool showRating = loading || rating != null;
+    final bool showLocation = loading || location != null;
+    final bool showDistance = loading || distanceText != null;
+    final bool showPrice = loading || amountText.isNotEmpty;
+
+    return Padding(
+      padding: TravelCardStyle.sheetPadding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          if (loading)
+            CardSkeleton.title(width: _titleWidth, height: _titleHeight)
+          else
+            Text(
+              title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.forLight().bodyLargeMedium.copyWith(
+                color: context.tokigoColors.textPrimary,
+                fontWeight: FontWeight.w700,
+                height: 1.3,
+              ),
+            ),
+          if (showRating) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            if (loading)
+              CardSkeleton.text(width: _ratingWidth, height: _ratingHeight)
+            else
+              _RatingLine(rating: rating!),
+          ],
+          if (showLocation) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            if (loading)
+              CardSkeleton.text(width: _locationWidth, height: _locationHeight)
+            else
+              _LocationLine(text: location!, onTap: onLocationTap),
+          ],
+          if (showDistance) ...<Widget>[
+            const SizedBox(height: AppSpacing.xxs),
+            if (loading)
+              CardSkeleton.text(width: _distanceWidth, height: _distanceHeight)
+            else
+              _DistanceLine(text: distanceText!),
+          ],
+          if (showPrice) ...<Widget>[
+            const SizedBox(height: AppSpacing.md),
+            Divider(height: 1, thickness: 1, color: context.tokigoColors.hairline),
+            const SizedBox(height: AppSpacing.md),
+            // Start-aligned: the nightly price sits on the LEFT in English
+            // (LTR) and on the right in Arabic (RTL), the side the eye reaches
+            // first in each language.
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: loading
+                  ? CardSkeleton.price(width: _priceWidth, height: _priceHeight)
+                  : _PriceLine(
+                      amountText: amountText,
+                      currency: currency,
+                      unit: unit,
+                    ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }
 
@@ -286,11 +442,7 @@ class _ClassPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          const Icon(
-            Icons.star_rounded,
-            size: 13,
-            color: Colors.amber,
-          ),
+          const Icon(Icons.star_rounded, size: 13, color: Colors.amber),
           if (safe > 0) ...<Widget>[
             const SizedBox(width: AppSpacing.xxs),
             Text(
@@ -465,49 +617,6 @@ class _PriceLine extends StatelessWidget {
             ),
           ),
         ],
-      ],
-    );
-  }
-}
-
-/// Skeleton body mirrors the photo-above-information geometry of the card.
-class _SkeletonBody extends StatelessWidget {
-  const _SkeletonBody({required this.aspectRatio});
-
-  final double aspectRatio;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        AspectRatio(
-          aspectRatio: aspectRatio,
-          child: KeyedSubtree(
-            key: const Key('overlap-skeleton-media'),
-            child: CardSkeleton.image(),
-          ),
-        ),
-        Padding(
-          padding: TravelCardStyle.sheetPadding,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              CardSkeleton.title(width: 170, height: 20),
-              CardSkeleton.gap(height: AppSpacing.xs),
-              CardSkeleton.text(width: 96, height: 19),
-              CardSkeleton.gap(height: AppSpacing.md),
-              CardSkeleton.text(width: 120, height: 16),
-              CardSkeleton.gap(height: AppSpacing.md),
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: CardSkeleton.price(width: 88),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }

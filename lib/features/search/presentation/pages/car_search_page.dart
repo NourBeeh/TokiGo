@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -29,7 +28,11 @@ final carFiltersProvider = StateProvider<SearchFilters>(
 );
 
 class CarSearchPage extends ConsumerStatefulWidget {
-  const CarSearchPage({super.key});
+  const CarSearchPage({super.key, this.embedded = false});
+
+  /// Renders the existing car content inside Home's single Scaffold instead
+  /// of its own route-level Scaffold.
+  final bool embedded;
 
   @override
   ConsumerState<CarSearchPage> createState() => _CarSearchPageState();
@@ -67,8 +70,12 @@ class _CarSearchPageState extends ConsumerState<CarSearchPage> {
     if (_prefilled) return;
     _prefilled = true;
     // Pre-fill from navigation extras — must read the router AFTER
-    // initState completes (inherited widgets are legal here).
-    final extra = GoRouterState.of(context).extra as Map<String, dynamic>?;
+    // initState completes (inherited widgets are legal here). Embedded Home
+    // content may have no router state at all.
+    final router = GoRouter.maybeOf(context);
+    final extra = router == null
+        ? null
+        : GoRouterState.of(context).extra as Map<String, dynamic>?;
     if (extra != null) {
       _pickupCtrl.text = extra['pickupLocation']?.toString() ?? '';
       _dropoffCtrl.text = extra['dropoffLocation']?.toString() ?? '';
@@ -213,7 +220,6 @@ class _CarSearchPageState extends ConsumerState<CarSearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    final tc = context.tokigoColors;
     final l10n = AppLocalizations.of(context)!;
 
     // ── Honest gate (owner decision, 2026-10-18/19) ────────────────────────
@@ -230,6 +236,7 @@ class _CarSearchPageState extends ConsumerState<CarSearchPage> {
       return SearchScaffold(
         title: l10n.searchCars,
         subtitle: l10n.carsSubtitle,
+        embedded: widget.embedded,
         form: const SizedBox.shrink(),
         body: Column(
           children: <Widget>[
@@ -274,6 +281,7 @@ class _CarSearchPageState extends ConsumerState<CarSearchPage> {
     return SearchScaffold(
       title: l10n.searchCars,
       subtitle: l10n.carsLiveSubtitle,
+      embedded: widget.embedded,
       form: _buildForm(),
       bottomContent: _buildSortAndFilters(),
       body: lazyResults ? const SizedBox.shrink() : _buildResults(state),

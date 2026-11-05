@@ -207,4 +207,8 @@ class _TestHomeRepository implements HomeRepository {
     List<HomeSection> sections, {
     required String audience,
   }) async {}
+
+  @override
+  Future<SnapshotState> snapshotState({required String audience}) async =>
+      SnapshotState.fresh;
 }

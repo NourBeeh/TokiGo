@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/network/user_facing_message.dart';
+import 'package:tokigo/core/network/network_status.dart';
 import 'package:tokigo/core/repositories/contracts/home_repository.dart';
 import 'package:tokigo/features/home/application/home_live_validation_service.dart';
 import 'package:tokigo/features/home/domain/home_composer.dart';
@@ -115,9 +116,15 @@ class HomeController extends StateNotifier<HomeState> {
   /// between network rounds.
   HomeCompositionContext? _lastContext;
 
+  /// The NetworkStatus listener registered in [_startUp]. Removed in
+  /// [dispose] to prevent a memory leak and late-triggered loads.
+  void Function()? _networkStatusListener;
+
   /// Phase 1A startup: render the persisted snapshot instantly, then refresh
   /// from the network in the background without ever blocking the UI.
+  /// Idempotent: safe to call when the controller is already disposed.
   Future<void> _startUp() async {
+    if (_networkStatusListener != null) return; // Already started.
     await restoreFromSnapshot();
     await load();
     // Swing the freshness check at the repository before the first frame so
@@ -131,6 +138,16 @@ class HomeController extends StateNotifier<HomeState> {
     } catch (_) {
       // Never let a storage read block UI startup.
     }
+    // Watch for backend online events — a return to online triggers a
+    // full load() to refresh content, not just clearing the offline banner.
+    // The listener is removed in [dispose] so the controller cannot
+    // trigger a late load after disposal.
+    _networkStatusListener = () {
+      if (mounted && NetworkStatus.instance.online && state.status == HomeStatus.success) {
+        load();
+      }
+    };
+    NetworkStatus.instance.addListener(_networkStatusListener!);
   }
 
   /// Reads the audience snapshot and, when present, publishes it immediately
@@ -613,4 +630,14 @@ class HomeController extends StateNotifier<HomeState> {
   // HomeRepository contract and used elsewhere); `load()` remains the
   // automatic startup/background refresh path, and H2 routes price and
   // availability updates through the live-validation service instead.
+  @override
+  void dispose() {
+    // Remove the NetworkStatus listener to prevent a memory leak and
+    // late-triggered loads after disposal.
+    if (_networkStatusListener != null) {
+      NetworkStatus.instance.removeListener(_networkStatusListener!);
+      _networkStatusListener = null;
+    }
+    super.dispose();
+  }
 }

@@ -13,6 +13,7 @@ import 'package:tokigo/features/home/presentation/widgets/destination_discovery_
 import 'package:tokigo/features/home/presentation/widgets/discovery_product_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/flight_recommendation_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/flight_recommendation_list.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_card_loading.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_section_titles.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stay_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stays_carousel.dart';
@@ -117,11 +118,9 @@ class HomeSectionWidget extends StatelessWidget {
 
   /// True when the item carries no data at all (empty title, no image, no
   /// price) — i.e. a development-preview/skeleton entry. Such items render
-  /// the approved cards in their skeleton/loading state.
-  static bool _isSkeletonItem(HomeItem item) =>
-      item.title.trim().isEmpty &&
-      item.price == null &&
-      (item.imageUrl == null || item.imageUrl!.isEmpty);
+  /// the approved cards in their skeleton/loading state. Shared with every
+  /// other Home surface through [isHomeSkeletonItem].
+  static bool _isSkeletonItem(HomeItem item) => isHomeSkeletonItem(item);
 
   /// Renders the correct card for [item] across every layout.
   ///
@@ -146,12 +145,14 @@ class HomeSectionWidget extends StatelessWidget {
           item: item,
           margin: EdgeInsets.zero,
           onTap: onItemTap != null ? () => onItemTap!(item) : null,
+          loading: isSkeleton,
         );
       case HomeCardType.car:
       case HomeCardType.package:
         return DiscoveryProductCard(
           item: item,
           onTap: onItemTap != null ? () => onItemTap!(item) : null,
+          loading: isSkeleton,
         );
       case HomeCardType.deal:
         // Offer cards have their own price-and-discount hierarchy.
@@ -186,6 +187,7 @@ class HomeSectionWidget extends StatelessWidget {
         return DestinationDiscoveryCard(
           item: item,
           onTap: () => _openCity(context, item),
+          loading: isSkeleton,
         );
     }
   }

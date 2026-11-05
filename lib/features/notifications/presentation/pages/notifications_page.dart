@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
 import 'package:tokigo/features/notifications/domain/app_notification.dart';
+import 'package:tokigo/features/notifications/providers/notifications_providers.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
 /// Notifications surface — booking updates, offers and trip alerts.
@@ -34,18 +35,19 @@ import 'package:tokigo/l10n/app_localizations.dart';
 ///
 /// **No swipe to dismiss** (doc 23 §4): a destructive gesture with no undo is
 /// not adopted.
-class NotificationsPage extends StatelessWidget {
-  const NotificationsPage({
-    super.key,
-    this.notifications = const <AppNotification>[],
-  });
+class NotificationsPage extends ConsumerWidget {
+  const NotificationsPage({super.key, this.notifications});
 
-  /// The feed. Empty by design until a real notification source exists.
-  final List<AppNotification> notifications;
+  /// Optional explicit feed (tests/standalone hosts). When null the page reads
+  /// the live [notificationsProvider] — the same source as Home's bell — so
+  /// the page never invents or duplicates notification business logic.
+  final List<AppNotification>? notifications;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final List<AppNotification> feed =
+        notifications ?? ref.watch(notificationsProvider);
     // Doc 23 §0 — the page ends with `xxl` 32 plus the safe area.
     final double bottom = AppSpacing.xxl + MediaQuery.paddingOf(context).bottom;
 
@@ -60,13 +62,13 @@ class NotificationsPage extends StatelessWidget {
               SliverToBoxAdapter(
                 child: AppPageHeader(title: l10n.notifications),
               ),
-              if (notifications.isEmpty)
+              if (feed.isEmpty)
                 const SliverFillRemaining(
                   hasScrollBody: false,
                   child: _NotificationsEmptyState(),
                 )
               else ...<Widget>[
-                ..._feedSlivers(context, l10n),
+                ..._feedSlivers(context, l10n, feed),
                 SliverToBoxAdapter(child: SizedBox(height: bottom)),
               ],
             ],
@@ -79,11 +81,15 @@ class NotificationsPage extends StatelessWidget {
   /// The feed, split into the two real groups: what happened today and what
   /// happened earlier. The split is derived from the timestamps, never from a
   /// hardcoded list.
-  List<Widget> _feedSlivers(BuildContext context, AppLocalizations l10n) {
+  List<Widget> _feedSlivers(
+    BuildContext context,
+    AppLocalizations l10n,
+    List<AppNotification> feed,
+  ) {
     final DateTime now = DateTime.now();
     final List<AppNotification> today = <AppNotification>[];
     final List<AppNotification> earlier = <AppNotification>[];
-    for (final AppNotification notification in notifications) {
+    for (final AppNotification notification in feed) {
       if (_isSameDay(notification.timestamp, now)) {
         today.add(notification);
       } else {
@@ -142,7 +148,9 @@ class _GroupHeader extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: typography.label.copyWith(color: context.tokigoColors.textTertiary),
+          style: typography.label.copyWith(
+            color: context.tokigoColors.textTertiary,
+          ),
         ),
       ),
     );
@@ -227,7 +235,9 @@ class _NotificationRow extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             Text(
               _timeLabel(context),
-              style: typography.caption.copyWith(color: context.tokigoColors.textTertiary),
+              style: typography.caption.copyWith(
+                color: context.tokigoColors.textTertiary,
+              ),
             ),
           ],
         ),
@@ -284,7 +294,9 @@ class _NotificationsEmptyState extends StatelessWidget {
             Text(
               l10n.notificationsEmptyBody,
               textAlign: TextAlign.center,
-              style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
+              style: typography.body.copyWith(
+                color: context.tokigoColors.textSecondary,
+              ),
             ),
           ],
         ),

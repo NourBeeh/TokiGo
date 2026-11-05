@@ -29,23 +29,20 @@ class DestinationDiscoveryCard extends StatelessWidget {
   /// Skeleton state — renders the same editorial geometry with no data.
   final bool loading;
 
-  static const double _mediaAspectRatio = 1.5;
+  /// The rail's destination ratio, shared with the Discover cover flow so the
+  /// grid/vertical presentation and the rail never disagree.
+  static const double _mediaAspectRatio =
+      HomeDiscoveryStayCard.defaultAspectRatio;
 
   @override
   Widget build(BuildContext context) {
-    if (loading) {
-      return HomeDiscoveryStayCardSkeleton(
-        aspectRatio: _mediaAspectRatio,
-        semanticsLabel: 'Loading destination',
-        fillSheet: false,
-      );
-    }
-
     return HomeDiscoveryStayCard(
       item: item,
-      onTap: onTap,
+      onTap: loading ? null : onTap,
       aspectRatio: _mediaAspectRatio,
       fillSheet: false,
+      loading: loading,
+      semanticsLabel: loading ? 'Loading destination' : null,
     );
   }
 }

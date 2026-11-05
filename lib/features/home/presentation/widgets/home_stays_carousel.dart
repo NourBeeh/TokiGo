@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stay_card.dart';
 
 /// Home's "Hotels recommended for you" rail (owner decision, 2026-10-25).
@@ -20,13 +21,15 @@ class HomeStaysCarousel extends StatefulWidget {
   const HomeStaysCarousel({
     super.key,
     required this.items,
-    this.viewportFraction = 0.8,
+    this.viewportFraction = HomeCardDimensions.stayViewportFraction,
     this.onItemTap,
     this.itemBuilder,
     this.sheetTextHeight = staysSheetTextHeight,
+    this.loading = false,
   });
 
-  /// The stays to page through. The caller guarantees this is not empty.
+  /// The stays to page through. The caller guarantees this is not empty
+  /// unless [loading] is set.
   final List<HomeItem> items;
 
   /// Width of one page as a fraction of the rail's width. A little under the
@@ -46,13 +49,23 @@ class HomeStaysCarousel extends StatefulWidget {
   /// space the city card can never fill.
   final double sheetTextHeight;
 
+  /// Skeleton state — the SAME rail with placeholder cards.
+  ///
+  /// The rail's height, page width, page fraction and trailing gap are read
+  /// from the same fields the loaded rail uses, so a loading feed occupies
+  /// exactly the space the real stays will. One page only: pretending there
+  /// are stays to swipe before any exists would be a lie.
+  final bool loading;
+
   /// A city sheet's content budget at the default text scale: name, place,
   /// one description line and the pinned action row.
-  static const double destinationSheetTextHeight = 60;
+  static const double destinationSheetTextHeight =
+      HomeCardDimensions.destinationSheetTextHeight;
 
   /// Hotel image ratio in the Home rail: wide enough for a clear property
   /// photograph, with a separate information panel beneath it.
-  static const double mediaAspectRatio = 1.6;
+  static const double mediaAspectRatio =
+      HomeCardDimensions.stayMediaAspectRatio;
 
   /// The sheet's own vertical padding (top + bottom).
   static const double _sheetPadding = AppSpacing.md * 2;
@@ -61,7 +74,8 @@ class HomeStaysCarousel extends StatefulWidget {
   /// score, location, distance, price and their gaps — including a two-line
   /// stay name — grown with the traveller's text scale. The city rail passes
   /// [destinationSheetTextHeight] instead, because its sheet is shorter.
-  static const double staysSheetTextHeight = 188;
+  static const double staysSheetTextHeight =
+      HomeCardDimensions.staySheetTextHeight;
 
   /// Breathing room so rounding never turns into a clipped price.
   static const double _sheetSlack = 8;
@@ -80,7 +94,7 @@ class HomeStaysCarousel extends StatefulWidget {
   /// skeleton so the feed does not jump when the real stays land.
   static double railHeight(
     BuildContext context, {
-    double viewportFraction = 0.8,
+    double viewportFraction = HomeCardDimensions.stayViewportFraction,
     double sheetTextHeight = staysSheetTextHeight,
   }) {
     final double width = MediaQuery.sizeOf(context).width;
@@ -129,29 +143,37 @@ class _HomeStaysCarouselState extends State<HomeStaysCarousel> {
               height: height,
               child: PageView.builder(
                 controller: _controller,
-                itemCount: widget.items.length,
+                itemCount: widget.loading ? 1 : widget.items.length,
                 padEnds: false,
                 itemBuilder: (BuildContext context, int index) {
                   // The page box is already the card's exact width, and the
                   // card fills it; the height is the rail height, so every
                   // card in the rail ends on the same line.
-                  final HomeItem item = widget.items[index];
-                  return KeyedSubtree(
-                    key: ValueKey<String>(item.id),
-                    child: Padding(
-                      padding: const EdgeInsetsDirectional.only(
-                        end: AppSpacing.md,
-                      ),
-                      child:
-                          widget.itemBuilder?.call(context, item) ??
+                  final Widget card = widget.loading
+                      ? HomeStayCard.loading(
+                          margin: EdgeInsets.zero,
+                          aspectRatio: HomeStaysCarousel.mediaAspectRatio,
+                        )
+                      : widget.itemBuilder?.call(context, widget.items[index]) ??
                           HomeStayCard(
-                            item: item,
+                            item: widget.items[index],
                             margin: EdgeInsets.zero,
                             aspectRatio: HomeStaysCarousel.mediaAspectRatio,
                             onTap: widget.onItemTap == null
                                 ? null
-                                : () => widget.onItemTap!(item),
-                          ),
+                                : () => widget.onItemTap!(widget.items[index]),
+                          );
+                  return KeyedSubtree(
+                    key: ValueKey<String>(
+                      widget.loading
+                          ? 'home-stays-skeleton'
+                          : widget.items[index].id,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.only(
+                        end: AppSpacing.md,
+                      ),
+                      child: card,
                     ),
                   );
                 },

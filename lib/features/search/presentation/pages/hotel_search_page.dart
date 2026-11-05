@@ -58,7 +58,15 @@ const List<int?> _classChips = <int?>[null, 5, 4, 3];
 /// form again. Below it: the class pill row, a results bar with the real count
 /// and the sort control (decision D5), then card A for every stay.
 class HotelSearchPage extends ConsumerStatefulWidget {
-  const HotelSearchPage({super.key});
+  const HotelSearchPage({super.key, this.embedded = false, this.searchContext});
+
+  /// Renders the existing hotel content inside Home's single Scaffold instead
+  /// of its own route-level Scaffold.
+  final bool embedded;
+
+  /// Home's travel context, passed directly for the embedded case (a pushed
+  /// route still receives the same value through the router `extra`).
+  final SearchContext? searchContext;
 
   @override
   ConsumerState<HotelSearchPage> createState() => _HotelSearchPageState();
@@ -124,8 +132,13 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
     if (_prefilled) return;
     _prefilled = true;
     // Pre-fill from navigation extras — must read the router AFTER
-    // initState completes (inherited widgets are legal here).
-    final extra = GoRouterState.of(context).extra as Map<String, dynamic>?;
+    // initState completes (inherited widgets are legal here). Embedded Home
+    // content may have no router state at all, in which case the page simply
+    // starts with Home's explicit [searchContext] (or an empty form).
+    final router = GoRouter.maybeOf(context);
+    final extra = router == null
+        ? null
+        : GoRouterState.of(context).extra as Map<String, dynamic>?;
     if (extra != null) {
       _destination = extra['city']?.toString() ?? '';
       _checkIn = extra['checkIn'] as DateTime? ?? _checkIn;
@@ -133,9 +146,9 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
     }
     // Phase 4A — the traveller's travel context: the mood's real city
     // prefills the destination (the traveller sees it and can change it).
-    final searchContext = SearchContext.fromMap(
-      extra?['context'] as Map<String, dynamic>?,
-    );
+    final searchContext =
+        widget.searchContext ??
+        SearchContext.fromMap(extra?['context'] as Map<String, dynamic>?);
     if (_destination.isEmpty) {
       final city = searchContext?.destination;
       if (city != null && city.isNotEmpty) _destination = city;
@@ -327,33 +340,33 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
                     _selectSort(sort);
                   },
                   child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                    vertical: AppSpacing.md,
-                  ),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          _sortLabel(l10n, sort),
-                          style: typography.body.copyWith(
-                            color: context.tokigoColors.textPrimary,
-                            fontWeight: sort == _sort
-                                ? FontWeight.w600
-                                : FontWeight.w400,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.md,
+                    ),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(
+                            _sortLabel(l10n, sort),
+                            style: typography.body.copyWith(
+                              color: context.tokigoColors.textPrimary,
+                              fontWeight: sort == _sort
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
+                            ),
                           ),
                         ),
-                      ),
-                      if (sort == _sort)
-                        Icon(
-                          Icons.check_rounded,
-                          size: 20,
-                          color: context.tokigoColors.brand,
-                        ),
-                    ],
+                        if (sort == _sort)
+                          Icon(
+                            Icons.check_rounded,
+                            size: 20,
+                            color: context.tokigoColors.brand,
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
               ),
             const SizedBox(height: AppSpacing.sm),
           ],
@@ -387,6 +400,7 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
     return SearchScaffold(
       title: l10n.searchHotels,
       subtitle: _summary(l10n),
+      embedded: widget.embedded,
       headerActions: const SearchViewToggle(),
       // Collapsed after a search: the reference's floating summary card.
       form: showSummary ? _buildSummaryCard(l10n) : _buildForm(l10n),
@@ -462,65 +476,65 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
           ),
         ),
         child: Material(
-        color: Colors.transparent,
-        borderRadius: AppRadius.lgBorder,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () => setState(() => _editing = true),
-          child: Semantics(
-            button: true,
-            label: '${l10n.editSearch}: $place, $meta',
-            child: Padding(
-              padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: AppSpacing.lg,
-                vertical: AppSpacing.md,
-              ),
-              child: Row(
-                children: <Widget>[
-                  Icon(
-                    Icons.search_rounded,
-                    size: 20,
-                    color: context.tokigoColors.textPrimary,
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Text(
-                          place.isEmpty ? _summary(l10n) : place,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: typography.bodyLargeMedium.copyWith(
-                            color: context.tokigoColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          meta,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: typography.caption.copyWith(
-                            color: context.tokigoColors.textSecondary,
-                          ),
-                        ),
-                      ],
+          color: Colors.transparent,
+          borderRadius: AppRadius.lgBorder,
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => setState(() => _editing = true),
+            child: Semantics(
+              button: true,
+              label: '${l10n.editSearch}: $place, $meta',
+              child: Padding(
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.md,
+                ),
+                child: Row(
+                  children: <Widget>[
+                    Icon(
+                      Icons.search_rounded,
+                      size: 20,
+                      color: context.tokigoColors.textPrimary,
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  IconButton(
-                    onPressed: _showFilters,
-                    tooltip: l10n.filtersAction,
-                    iconSize: 20,
-                    color: context.tokigoColors.textPrimary,
-                    icon: const Icon(Icons.tune_rounded),
-                  ),
-                ],
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Text(
+                            place.isEmpty ? _summary(l10n) : place,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: typography.bodyLargeMedium.copyWith(
+                              color: context.tokigoColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            meta,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: typography.caption.copyWith(
+                              color: context.tokigoColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    IconButton(
+                      onPressed: _showFilters,
+                      tooltip: l10n.filtersAction,
+                      iconSize: 20,
+                      color: context.tokigoColors.textPrimary,
+                      icon: const Icon(Icons.tune_rounded),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
         ),
       ),
     );
@@ -879,40 +893,40 @@ class _ResultsBarAction extends StatelessWidget {
                 horizontal: AppSpacing.sm,
                 vertical: AppSpacing.sm,
               ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Icon(icon, size: 18, color: context.tokigoColors.textPrimary),
-                if (label != null) ...<Widget>[
-                  const SizedBox(width: AppSpacing.xxs),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 120),
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: typography.captionSemibold.copyWith(
-                        color: context.tokigoColors.textPrimary,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(icon, size: 18, color: context.tokigoColors.textPrimary),
+                  if (label != null) ...<Widget>[
+                    const SizedBox(width: AppSpacing.xxs),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 120),
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: typography.captionSemibold.copyWith(
+                          color: context.tokigoColors.textPrimary,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-                if (active) ...<Widget>[
-                  const SizedBox(width: AppSpacing.xxs),
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: context.tokigoColors.brand,
-                      shape: BoxShape.circle,
+                  ],
+                  if (active) ...<Widget>[
+                    const SizedBox(width: AppSpacing.xxs),
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: context.tokigoColors.brand,
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }

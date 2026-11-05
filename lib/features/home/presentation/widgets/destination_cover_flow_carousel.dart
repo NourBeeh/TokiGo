@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_discovery_stay_card.dart';
 
 /// A premium 3D **cover-flow carousel** for the Explore/Discover destination
@@ -42,12 +44,14 @@ class DestinationCoverFlowCarousel extends StatefulWidget {
     super.key,
     required this.items,
     required this.onItemTap,
-    this.viewportFraction = 0.9,
-    this.mediaAspectRatio = 1.3,
+    this.viewportFraction = HomeCardDimensions.destinationViewportFraction,
+    this.mediaAspectRatio = HomeCardDimensions.destinationMediaAspectRatio,
+    this.loading = false,
   });
 
   /// Destination items to page through. May be empty (the widget renders
-  /// nothing) or a single item (no carousel, just a centred card).
+  /// nothing) or a single item (no carousel, just a centred card). Empty is
+  /// also how the [loading] skeleton is hosted.
   final List<HomeItem> items;
 
   /// Open the selected city page.
@@ -59,7 +63,15 @@ class DestinationCoverFlowCarousel extends StatefulWidget {
   /// Photo width ÷ height of each card.
   final double mediaAspectRatio;
 
-  static const double defaultMediaAspectRatio = 1.3;
+  /// Skeleton state — the SAME carousel with one placeholder card.
+  ///
+  /// The rail height, page width and photo ratio come from the same fields the
+  /// loaded carousel reads, so the loading Discover rail occupies exactly the
+  /// space the real cities will.
+  final bool loading;
+
+  static const double defaultMediaAspectRatio =
+      HomeCardDimensions.destinationMediaAspectRatio;
 
   @override
   State<DestinationCoverFlowCarousel> createState() =>
@@ -123,11 +135,44 @@ class _DestinationCoverFlowCarouselState
 
   @override
   Widget build(BuildContext context) {
+    if (widget.loading) return _buildLoadingPage();
     if (widget.items.isEmpty) return const SizedBox.shrink();
     if (_reducedMotion) {
       return _buildReducedMotionCarousel();
     }
     return _buildCoverFlowCarousel();
+  }
+
+  // ── Loading ──────────────────────────────────────────────────────────
+
+  /// One placeholder page through the SAME layout pipeline as the loaded
+  /// carousel: identical [SizedBox] height, identical page width, identical
+  /// `_buildTransformedPage` → `_buildPageContent` chain. The focal page's
+  /// transform is the identity, so the skeleton lands exactly where the real
+  /// focal card will.
+  Widget _buildLoadingPage() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double screenWidth = constraints.maxWidth;
+        final double pageWidth = screenWidth * widget.viewportFraction;
+        final double cardHeight = pageWidth / widget.mediaAspectRatio;
+
+        return SizedBox(
+          height: cardHeight,
+          child: PageView.builder(
+            controller: _controller,
+            itemCount: 1,
+            padEnds: false,
+            itemBuilder: (context, index) => _buildTransformedPage(
+              index,
+              0.0,
+              pageWidth,
+              cardHeight,
+            ),
+          ),
+        );
+      },
+    );
   }
 
   // ── Cover-flow ──────────────────────────────────────────────────────────
@@ -190,14 +235,22 @@ class _DestinationCoverFlowCarouselState
     double pageWidth,
     double cardHeight,
   ) {
-    final HomeItem item = widget.items[index];
+    final HomeItem? item = widget.loading
+        ? null
+        : widget.items[index.clamp(0, widget.items.length - 1)];
     return HomeDiscoveryStayCard(
-      item: item,
-      onTap: widget.onItemTap != null
-          ? () => widget.onItemTap!(item)
-          : null,
+      item: item ??
+          const HomeItem(
+            id: 'loading-destination',
+            type: HomeCardType.destination,
+            title: '',
+          ),
+      onTap: widget.loading || widget.onItemTap == null || item == null
+          ? null
+          : () => widget.onItemTap!(item),
       fillSheet: false,
       aspectRatio: widget.mediaAspectRatio,
+      loading: widget.loading,
     );
   }
 

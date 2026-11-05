@@ -1,0 +1,409 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+
+import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/domain/models/home/home_section.dart';
+import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/network/api_result.dart';
+import 'package:tokigo/core/repositories/contracts/home_repository.dart';
+import 'package:tokigo/core/theme/app_theme.dart';
+import 'package:tokigo/features/home/domain/home_action.dart';
+import 'package:tokigo/features/home/domain/home_composer.dart';
+import 'package:tokigo/features/home/presentation/home_controller.dart';
+import 'package:tokigo/features/home/presentation/pages/home_page.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_ai_search_field.dart';
+import 'package:tokigo/features/home/providers/home_providers.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
+
+/// Dashboard data that is tall enough to scroll but needs no network images.
+List<HomeSection> _sections() => <HomeSection>[
+  HomeSection(
+    id: 'discover',
+    title: 'Discover',
+    layout: HomeSectionLayout.grid,
+    items: const <HomeItem>[
+      HomeItem(
+        id: 'cairo',
+        type: HomeCardType.destination,
+        title: 'Cairo',
+        subtitle: 'Egypt',
+      ),
+    ],
+  ),
+];
+
+List<HomeItem> _recommendedHotels() => const <HomeItem>[
+  HomeItem(
+    id: 'hotel-1',
+    type: HomeCardType.hotel,
+    title: 'Nile Hotel',
+    subtitle: 'Cairo, Egypt',
+    price: 2400,
+    currency: 'EGP',
+  ),
+  HomeItem(
+    id: 'hotel-2',
+    type: HomeCardType.hotel,
+    title: 'Desert Palm',
+    subtitle: 'Luxor, Egypt',
+    price: 1800,
+    currency: 'EGP',
+  ),
+];
+
+/// A repository that serves the dashboard without a real HTTP request.
+class _DashboardRepository implements HomeRepository {
+  @override
+  Future<List<HomeSection>?> readHomeSnapshot({
+    required String audience,
+  }) async => null;
+
+  @override
+  Future<void> clearHomeSnapshot({required String audience}) async {}
+
+  @override
+  Future<void> saveHomeSnapshot(
+    List<HomeSection> sections, {
+    required String audience,
+  }) async {}
+
+  @override
+  Future<ApiResult<List<HomeSection>>> getHomeSections() async =>
+      ApiResult<List<HomeSection>>.success(_sections());
+
+  @override
+  Future<ApiResult<List<HomeItem>>> getRecommendedHotels({
+    int limit = 6,
+    String? countryCode,
+    String languageCode = 'en',
+    String? currency,
+  }) async => ApiResult<List<HomeItem>>.success(_recommendedHotels());
+
+  @override
+  Future<ApiResult<void>> refresh() async =>
+      const ApiResult<void>.success(null);
+
+  @override
+  Future<SnapshotState> snapshotState({required String audience}) async =>
+      SnapshotState.unavailable;
+}
+
+HomeController _controller() => HomeController(
+  _DashboardRepository(),
+  audience: 'anon',
+  contextBuilder: (_) async =>
+      const HomeCompositionContext(userState: HomeUserState.freshAnonymous),
+  liveValidation: null,
+  countryCode: null,
+  languageCode: null,
+  currencyCode: null,
+);
+
+Widget _app({required GoRouter router, Locale locale = const Locale('en')}) {
+  return ProviderScope(
+    overrides: [
+      homeControllerProvider.overrideWith((ref) => _controller()),
+      geoCountryProvider.overrideWith((ref) async => null),
+    ],
+    child: MaterialApp.router(
+      routerConfig: router,
+      theme: AppTheme.light(),
+      locale: locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+    ),
+  );
+}
+
+GoRouter _router() {
+  return GoRouter(
+    initialLocation: '/',
+    routes: <RouteBase>[
+      GoRoute(path: '/', builder: (context, state) => const HomePage()),
+      GoRoute(
+        path: '/ai-chat',
+        builder: (context, state) {
+          final Object? extra = state.extra;
+          return Scaffold(body: Text(extra == null ? 'AI:empty' : 'AI:$extra'));
+        },
+      ),
+    ],
+  );
+}
+
+void _setPhoneSize(WidgetTester tester) {
+  tester.view.physicalSize = const Size(780, 1400);
+  tester.view.devicePixelRatio = 2;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}
+
+Finder _content(HomeAction action) =>
+    find.byKey(ValueKey<String>('home-${action.id}-content'));
+
+Future<void> _tapAction(WidgetTester tester, HomeAction action) async {
+  await tester.tap(find.byKey(ValueKey<String>('home-action-${action.id}')));
+  await tester.pumpAndSettle();
+}
+
+void main() {
+  testWidgets('quick actions switch Home content in place', (tester) async {
+    _setPhoneSize(tester);
+    final GoRouter router = _router();
+    await tester.pumpWidget(_app(router: router));
+    await tester.pumpAndSettle();
+
+    // The dashboard is the initial Home surface.
+    expect(find.byType(HomePage), findsOneWidget);
+    expect(_content(HomeAction.flights), findsNothing);
+    expect(router.state.matchedLocation, '/');
+
+    for (final HomeAction action in HomeAction.values) {
+      await _tapAction(tester, action);
+
+      // The feature is rendered INSIDE Home: same route, same page.
+      expect(_content(action), findsOneWidget);
+      expect(find.byType(HomePage), findsOneWidget);
+      expect(router.state.matchedLocation, '/');
+
+      // The quick-action row stays available and marks the active tile.
+      final SemanticsNode semantics = tester.getSemantics(
+        find.byKey(ValueKey<String>('home-action-${action.id}')),
+      );
+      expect(
+        semantics.flagsCollection.isSelected.toBoolOrNull(),
+        isTrue,
+        reason: '${action.id} tile must read as selected',
+      );
+
+      // The persistent AI composer is not replaced by the feature content.
+      expect(
+        find.byKey(const ValueKey<String>('home-ai-composer')),
+        findsOneWidget,
+      );
+    }
+
+    // Tapping the active action again returns to the dashboard and clears its
+    // selected state.
+    await _tapAction(tester, HomeAction.trips);
+    expect(_content(HomeAction.trips), findsNothing);
+    expect(
+      find.byKey(const ValueKey<String>('home-ai-composer')),
+      findsOneWidget,
+    );
+    expect(router.state.matchedLocation, '/');
+    expect(
+      tester
+          .getSemantics(find.byKey(const ValueKey<String>('home-action-trips')))
+          .flagsCollection
+          .isSelected
+          .toBoolOrNull(),
+      isFalse,
+    );
+  });
+
+  testWidgets('scrolling compacts only the persistent AI composer', (
+    tester,
+  ) async {
+    _setPhoneSize(tester);
+    await tester.pumpWidget(_app(router: _router()));
+    await tester.pumpAndSettle();
+
+    expect(find.text(kHomeCompactSearchHint), findsNothing);
+    expect(find.text('Search destinations, hotels & more'), findsOneWidget);
+
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -320));
+    await tester.pumpAndSettle();
+
+    // The exact compact product string is now shown by the same composer.
+    expect(find.text(kHomeCompactSearchHint), findsOneWidget);
+    expect(find.text('Search destinations, hotels & more'), findsNothing);
+    expect(
+      find.byKey(const ValueKey<String>('home-ai-composer')),
+      findsOneWidget,
+    );
+
+    // Return to the top so the fixed quick-action row is in the viewport, then
+    // switch services: the composer survives the in-page content change and is
+    // expanded again because the dashboard is no longer scrolled away.
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, 320));
+    await tester.pumpAndSettle();
+    expect(find.text(kHomeCompactSearchHint), findsNothing);
+
+    await _tapAction(tester, HomeAction.hotels);
+    expect(_content(HomeAction.hotels), findsOneWidget);
+    expect(find.text(kHomeCompactSearchHint), findsNothing);
+    expect(
+      find.byKey(const ValueKey<String>('home-ai-composer')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('send submits the trimmed query through the AI chat route', (
+    tester,
+  ) async {
+    _setPhoneSize(tester);
+    final GoRouter router = _router();
+    await tester.pumpWidget(_app(router: router));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey<String>('home-ai-composer-field')),
+      '  find me a hotel  ',
+    );
+    await tester.tap(
+      find.byKey(const ValueKey<String>('home-ai-composer-send')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('AI:find me a hotel'), findsOneWidget);
+    expect(router.state.matchedLocation, '/ai-chat');
+  });
+
+  testWidgets('the keyboard send action also submits and ignores empty input', (
+    tester,
+  ) async {
+    _setPhoneSize(tester);
+    final GoRouter router = _router();
+    await tester.pumpWidget(_app(router: router));
+    await tester.pumpAndSettle();
+
+    // Empty input opens the chat without submitting an empty message.
+    await tester.tap(
+      find.byKey(const ValueKey<String>('home-ai-composer-send')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('AI:empty'), findsOneWidget);
+
+    // Return to Home and submit with the keyboard action.
+    router.pop();
+    await tester.pumpAndSettle();
+
+    final Finder field = find.byKey(
+      const ValueKey<String>('home-ai-composer-field'),
+    );
+    await tester.enterText(field, 'weekend in Cairo');
+    await tester.testTextInput.receiveAction(TextInputAction.send);
+    await tester.pumpAndSettle();
+
+    expect(find.text('AI:weekend in Cairo'), findsOneWidget);
+  });
+
+  testWidgets('the composer keeps clear of the system navigation inset', (
+    tester,
+  ) async {
+    _setPhoneSize(tester);
+    tester.view.padding = const FakeViewPadding(bottom: 68);
+    addTearDown(tester.view.resetPadding);
+
+    await tester.pumpWidget(_app(router: _router()));
+    await tester.pumpAndSettle();
+
+    final Rect composer = tester.getRect(
+      find.byKey(const ValueKey<String>('home-ai-composer')),
+    );
+    // 700dp tall view - 34dp system inset - 8dp composer padding.
+    expect(composer.bottom, closeTo(658, 1));
+  });
+
+  testWidgets(
+    'bottom action bar stays above the composer while the dashboard scrolls',
+    (tester) async {
+      _setPhoneSize(tester);
+      await tester.pumpWidget(_app(router: _router()));
+      await tester.pumpAndSettle();
+
+      final Finder bar = find.byKey(const ValueKey<String>('home-action-bar'));
+      final Finder composer = find.byKey(
+        const ValueKey<String>('home-ai-composer'),
+      );
+      expect(bar, findsOneWidget);
+      expect(composer, findsOneWidget);
+      expect(
+        tester.getRect(bar).bottom,
+        lessThanOrEqualTo(tester.getRect(composer).top),
+      );
+
+      // The dashboard is the only vertical scrollable; the pinned interaction
+      // area must not move with it.
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -600));
+      await tester.pumpAndSettle();
+
+      expect(bar, findsOneWidget);
+      expect(composer, findsOneWidget);
+      expect(
+        tester.getRect(bar).bottom,
+        lessThanOrEqualTo(tester.getRect(composer).top),
+      );
+      // The feed reserves the area's footprint: its viewport ends exactly
+      // where the action bar begins, so no card is hidden behind it.
+      expect(
+        tester.getRect(find.byType(CustomScrollView)).bottom,
+        lessThanOrEqualTo(tester.getRect(bar).top + 0.5),
+      );
+    },
+  );
+
+  testWidgets('keyboard inset lifts the whole bottom interaction area', (
+    tester,
+  ) async {
+    _setPhoneSize(tester);
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    addTearDown(tester.view.resetViewInsets);
+
+    await tester.pumpWidget(_app(router: _router()));
+    await tester.pumpAndSettle();
+
+    final Finder bar = find.byKey(const ValueKey<String>('home-action-bar'));
+    final Finder composer = find.byKey(
+      const ValueKey<String>('home-ai-composer'),
+    );
+    final Rect barRect = tester.getRect(bar);
+    final Rect composerRect = tester.getRect(composer);
+
+    // 700dp view - 150dp keyboard = 550dp body; the composer keeps its 8dp
+    // inner padding and the action bar sits directly above it.
+    expect(composerRect.bottom, lessThanOrEqualTo(550));
+    expect(barRect.bottom, lessThanOrEqualTo(composerRect.top));
+    expect(barRect.top, greaterThan(0));
+  });
+
+  testWidgets('Arabic Home keeps the composer and switches content in RTL', (
+    tester,
+  ) async {
+    _setPhoneSize(tester);
+    final GoRouter router = _router();
+    await tester.pumpWidget(_app(router: router, locale: const Locale('ar')));
+    await tester.pumpAndSettle();
+
+    expect(
+      Directionality.of(
+        tester.element(find.byKey(const ValueKey<String>('home-ai-composer'))),
+      ),
+      TextDirection.rtl,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('home-ai-composer')),
+      findsOneWidget,
+    );
+    expect(
+      Directionality.of(
+        tester.element(find.byKey(const ValueKey<String>('home-action-bar'))),
+      ),
+      TextDirection.rtl,
+    );
+
+    await _tapAction(tester, HomeAction.flights);
+    expect(_content(HomeAction.flights), findsOneWidget);
+    expect(router.state.matchedLocation, '/');
+  });
+}

@@ -6,6 +6,7 @@ import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
 import 'package:tokigo/features/home/presentation/widgets/flight_recommendation_card.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_card_loading.dart';
 
 /// Flight recommendation section for Home.
 ///
@@ -41,10 +42,7 @@ class FlightRecommendationList extends StatelessWidget {
   final bool loading;
 
   /// True when an item carries no data at all — a skeleton entry.
-  static bool _isSkeletonItem(HomeItem item) =>
-      item.title.trim().isEmpty &&
-      item.price == null &&
-      (item.imageUrl == null || item.imageUrl!.isEmpty);
+  static bool _isSkeletonItem(HomeItem item) => isHomeSkeletonItem(item);
 
   @override
   Widget build(BuildContext context) {
