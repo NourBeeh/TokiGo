@@ -49,6 +49,8 @@ BRAND_RED = "#FF2D2D"  # AppColors.brandRed
 WHITE = "#FFFFFF"
 
 CANVAS = 1024
+# Android adaptive icons guarantee only the central 66% is visible.
+SAFE_FRACTION = 0.66
 
 OUT_DIR = Path("assets/icon")
 IOS_SVG = OUT_DIR / "app_icon.svg"
@@ -57,34 +59,36 @@ MONO_SVG = OUT_DIR / "app_icon_adaptive_mono.svg"
 RENDER_HELPER = Path("tool/branding/render_svg.js")
 
 # iOS composition: the group may use most of the full-bleed square.
+# The umbrella leads the upper half, "Go" is sized to stay legible at 29px.
 IOS = {
-    "canopy_half_width": 270,
+    "canopy_half_width": 300,
     "hem_y": 400,
-    "dome_height": 250,
-    "scallop": 30,
+    "dome_height": 210,
+    "scallop": 32,
     "pole_bottom": 520,
-    "pole_width": 24,
-    "finial_above": 32,
+    "pole_width": 26,
+    "finial_above": 30,
     "finial_below": 26,
-    "finial_half": 14,
-    "font_size": 390,
-    "baseline": 890,
+    "finial_half": 15,
+    "font_size": 430,
+    "baseline": 950,
 }
 
 # Android composition: the whole group must fit the central safe zone
 # (diagonal <= 66% of the canvas == 676px, matching generate_wordmark.py).
+# "Go" is as large as that zone allows.
 ADAPTIVE = {
-    "canopy_half_width": 175,
-    "hem_y": 410,
+    "canopy_half_width": 194,
+    "hem_y": 325,
     "dome_height": 170,
-    "scallop": 22,
-    "pole_bottom": 490,
+    "scallop": 20,
+    "pole_bottom": 405,
     "pole_width": 20,
     "finial_above": 26,
     "finial_below": 22,
     "finial_half": 12,
-    "font_size": 250,
-    "baseline": 755,
+    "font_size": 285,
+    "baseline": 660,
 }
 
 # Manrope ExtraBold cap height, measured from the font's own outlines at
@@ -221,7 +225,58 @@ def build_svg(spec, glyph_set, g_glyph, o_glyph, upm, adv_g, adv_o):
   </g>
 </svg>
 """
-    return svg, bbox
+    return svg, bbox, g_bbox, dy
+
+
+def validate(
+    label: str,
+    bbox,
+    go_bbox,
+    dy: float,
+    *,
+    safe_zone: bool,
+) -> None:
+    """Fail loudly rather than ship an icon whose "Go" silently vanished.
+
+    Every check here is a regression guard for the failure this script had:
+    an icon that rendered the umbrella and dropped the word.
+    """
+    go_x0, go_x1, go_y0, go_y1 = go_bbox
+    go_w = go_x1 - go_x0
+    go_h = go_y1 - go_y0
+    if go_w <= 0 or go_h <= 0:
+        raise SystemExit(f"{label}: the 'Go' outlines are empty")
+    # The word is shifted by the same group transform, so check the shift too.
+    for name, value, low, high in (
+        ("Go left", go_x0, 0, CANVAS),
+        ("Go right", go_x1, 0, CANVAS),
+        ("Go top", go_y0 + dy, 0, CANVAS),
+        ("Go baseline", go_y1 + dy, 0, CANVAS),
+    ):
+        if not low <= value <= high:
+            raise SystemExit(
+                f"{label}: {name} = {value:.1f} falls outside the viewBox"
+            )
+    # Legibility floor: a cap height under ~17% of the canvas stops reading at
+    # the 29pt iOS settings size.
+    cap_ratio = go_h / CANVAS
+    if cap_ratio < 0.17:
+        raise SystemExit(
+            f"{label}: 'Go' cap height is only {cap_ratio:.1%} of the canvas — "
+            f"too small to read at 29pt"
+        )
+    w = bbox[1] - bbox[0]
+    h = bbox[3] - bbox[2]
+    diagonal = (w * w + h * h) ** 0.5
+    if safe_zone and diagonal > CANVAS * SAFE_FRACTION:
+        raise SystemExit(
+            f"{label}: group diagonal {diagonal:.0f}px exceeds the "
+            f"{SAFE_FRACTION:.0%} adaptive-icon safe zone ({CANVAS * SAFE_FRACTION:.0f}px)"
+        )
+    print(
+        f"{label}: ink {w:.0f}x{h:.0f}, diagonal {diagonal:.0f}, "
+        f"'Go' {go_w:.0f}x{go_h:.0f} ({cap_ratio:.1%} of the canvas)"
+    )
 
 
 def render(svg_path: Path, out_path: Path, size: int) -> None:
@@ -244,18 +299,16 @@ def main() -> int:
 
     glyph_set, g_glyph, o_glyph, upm, adv_g, adv_o = load_go()
 
-    for spec, svg_path in ((IOS, IOS_SVG), (ADAPTIVE, ADAPTIVE_SVG)):
-        svg, bbox = build_svg(
+    for spec, svg_path, safe_zone in (
+        (IOS, IOS_SVG, False),
+        (ADAPTIVE, ADAPTIVE_SVG, True),
+    ):
+        svg, bbox, go_bbox, dy = build_svg(
             spec, glyph_set, g_glyph, o_glyph, upm, adv_g, adv_o
         )
         svg_path.parent.mkdir(parents=True, exist_ok=True)
         svg_path.write_text(svg, encoding="utf-8")
-        w = bbox[1] - bbox[0]
-        h = bbox[3] - bbox[2]
-        print(
-            f"{svg_path}: ink {w:.0f}x{h:.0f}, "
-            f"diagonal {(w * w + h * h) ** 0.5:.0f}"
-        )
+        validate(str(svg_path), bbox, go_bbox, dy, safe_zone=safe_zone)
 
     if args.no_render:
         return 0

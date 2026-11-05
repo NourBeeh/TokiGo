@@ -36,22 +36,29 @@ Last updated: 2026-11-05 (session: Home UX + app icon pass)
 
 ## App icon (this pass)
 
-- Master artwork: `assets/icon/app_icon.svg` (1024×1024, full-bleed).
+- Master artwork: `assets/icon/app_icon.svg` (1024x1024, full-bleed).
 - Generator: `tool/branding/generate_app_icon.py` (fontTools → outlines) and
   `tool/branding/render_svg.js` (npm `@resvg/resvg-js`; `npm install` in
-  `tool/branding`).
-- Brand red `#FF2D2D` (= `AppColors.brandRed`, the "Go" in the logotype);
-  umbrella + "Go" white `#FFFFFF`; "Go" is Manrope ExtraBold (wght 800) converted
-  to SVG paths, tracking −0.012em (matches `AppWordmark`).
-- Exports: `app_icon_1024.png` (iOS, opaque),
+  `tool/branding`). The generator now self-checks: non-empty "Go" outlines,
+  everything inside the viewBox, a cap-height floor for 29pt legibility, and
+  the adaptive safe-zone diagonal.
+- Brand red `#FF2D2D` (= `AppColors.brandRed`, sampled from the "Go" of
+  `assets/branding/logo_wordmark.png`); umbrella + "Go" white `#FFFFFF`;
+  "Go" is Manrope ExtraBold (wght 800) converted to SVG paths, tracking
+  −0.012em (matches `AppWordmark`).
+- Exports: `app_icon_1024.png` (iOS, opaque, "Go" cap = 30.9% of the canvas),
   `app_icon_adaptive_foreground_1024.png` (group inside the central 66% safe
-  zone, diagonal 644 ≤ 676), `app_icon_adaptive_monochrome_1024.png`
-  (transparent background, white artwork, for Android 13+ themed icons).
+  zone, diagonal 658 ≤ 676, "Go" cap = 20.5%),
+  `app_icon_adaptive_monochrome_1024.png` (transparent background, white
+  artwork, for Android 13+ themed icons).
 - `flutter_launcher_icons` regenerated every `mipmap-*`/`drawable-*` icon and
   `ios/Runner/Assets.xcassets/AppIcon.appiconset`. The stale
   `drawable-night/ic_launcher_foreground.png` was removed.
 - Display name is now "Toki Go" everywhere: iOS `CFBundleDisplayName` and
   Android `android:label`.
+- Verified by pixel analysis: every final asset has exactly two white blobs in
+  its lower half (the `G` and the `o`), and no white touches the outer edge
+  (nothing clipped). "Go" reads at 29px and 60px.
 
 ## iOS Local Network prompt (investigated)
 
