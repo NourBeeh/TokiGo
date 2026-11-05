@@ -53,7 +53,7 @@ jobs:
           API_BASE_URL: ${{ github.event.inputs.api_base_url }}
         run: |
           set -euo pipefail
-          ARGS=(build ios --release --no-codesign)
+          ARGS=(build ios --release --no-codesign -v)
           if [ -n "${API_BASE_URL}" ]; then
             ARGS+=(--dart-define=API_BASE_URL="${API_BASE_URL}")
             if [[ "${API_BASE_URL}" =~ ^http://10\.[0-9]+\.[0-9]+\.[0-9]+(:[0-9]+)?(/.*)?$ ]] || [[ "${API_BASE_URL}" =~ ^http://172\.(1[6-9]|2[0-9]|3[0-1])\.[0-9]+\.[0-9]+(:[0-9]+)?(/.*)?$ ]] || [[ "${API_BASE_URL}" =~ ^http://192\.168\.[0-9]+\.[0-9]+(:[0-9]+)?(/.*)?$ ]]; then
@@ -62,7 +62,20 @@ jobs:
           fi
           ARGS+=(--dart-define=GOOGLE_SERVER_CLIENT_ID="${{ github.event.inputs.google_server_client_id }}")
           ARGS+=(--dart-define=GOOGLE_IOS_CLIENT_ID="${{ github.event.inputs.google_ios_client_id }}")
-          flutter "${ARGS[@]}" 
+          flutter "${ARGS[@]}" 2>&1 | tee build-ios.log
+
+      - name: Upload build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-diagnostics
+          path: |
+            build-ios.log
+            build/**/*.xcresult
+            ios/**/*.xcresult
+            *.xcresult
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Package unsigned IPA
         run: |
