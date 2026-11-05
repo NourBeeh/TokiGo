@@ -1,0 +1,77 @@
+name: vulnerability-db
+
+on:
+  schedule:
+    - cron: "17 4 * * *"   # every day 04:17 UTC
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Re-download the full Android CVE set from NVD (slow)"
+        type: boolean
+        default: false
+  push:
+    paths:
+      - pubspec.lock
+      - backend/package-lock.json
+      - android/**
+      - tool/vuln/**
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Cache vulnerability DB between runs
+        uses: actions/cache@v4
+        with:
+          path: tool/vuln/data/tokigo-vuln.db
+          key: tokigo-vuln-db-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            tokigo-vuln-db-${{ runner.os }}-
+
+      - name: Collect vulnerabilities
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.full }}" = "true" ]; then
+            node tool/vuln/collect.mjs --full
+          elif [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            node tool/vuln/collect.mjs
+          else
+            # push: dependencies only, no 3-minute NVD download
+            node tool/vuln/collect.mjs --skip-nvd
+          fi
+
+      - name: Generate report
+        run: node tool/vuln/report.mjs
+
+      - name: Commit refreshed report
+        if: github.event_name != 'push'
+        run: |
+          set -euo pipefail
+          git config user.name "tokigo-vuln-bot"
+          git config user.email "security@tokigo.app"
+          git add docs/security/vuln-report-*.md
+          if git diff --cached --quiet; then
+            echo "No report changes."
+            exit 0
+          fi
+          git commit -m "chore(security): refresh vulnerability database"
+          git push
+
+      - name: Upload report artifact
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: vuln-report
+          path: docs/security/vuln-report-*.md
+          if-no-files-found: error

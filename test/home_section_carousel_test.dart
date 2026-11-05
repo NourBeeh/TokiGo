@@ -226,8 +226,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final Finder cityCard = find.byType(HomeDiscoveryStayCard);
-    expect(cityCard, findsOneWidget);
+    // The focal card is the leading page; with the 90 % viewport the next
+    // city peeks in too, so target the focal one explicitly.
+    final Finder cityCard = find.byType(HomeDiscoveryStayCard).first;
+    expect(find.byType(HomeDiscoveryStayCard), findsWidgets);
     await tester.tap(cityCard);
     await tester.pumpAndSettle();
 

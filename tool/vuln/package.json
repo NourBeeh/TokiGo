@@ -1,0 +1,16 @@
+{
+  "name": "tokigo-vuln-db",
+  "private": true,
+  "type": "module",
+  "description": "Continuously updated vulnerability database for TokiGo (Android + dependencies).",
+  "scripts": {
+    "collect": "node collect.mjs",
+    "collect:fast": "node collect.mjs --skip-nvd",
+    "collect:full": "node collect.mjs --full",
+    "report": "node report.mjs",
+    "refresh": "node collect.mjs && node report.mjs"
+  },
+  "engines": {
+    "node": ">=22.5"
+  }
+}

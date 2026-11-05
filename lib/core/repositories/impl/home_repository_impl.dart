@@ -398,26 +398,6 @@ Map<String, dynamic> homeSectionToMap(HomeSection s) {
     if (s.metadata.isNotEmpty) 'metadata': s.metadata,
   };
 }
-  return <String, dynamic>{
-    'id': i.id,
-    'type': i.type.name,
-    'title': i.title,
-    'subtitle': i.subtitle,
-    'description': i.description,
-    'imageUrl': i.imageUrl,
-    if (i.price != null) 'price': i.price,
-    'currency': i.currency,
-    if (i.rating != null) 'rating': i.rating,
-    if (i.reviewCount != null) 'reviewCount': i.reviewCount,
-    'badge': i.badge,
-    'highlights': i.highlights,
-    'tags': i.tags,
-    'actionLabel': i.actionLabel,
-    // Phase 1B: keep item metadata (composer reason chips, provenance) in the
-    // snapshot round-trip. Optional on read — legacy entries keep working.
-    if (i.metadata.isNotEmpty) 'metadata': i.metadata,
-  };
-}
 
 /// JSON-safe snapshot of one item for the offline cache.
 Map<String, dynamic> homeItemToMap(HomeItem i) {

@@ -14,17 +14,16 @@ import 'package:tokigo/features/home/presentation/widgets/home_discovery_stay_ca
 ///
 /// ## 3D mechanics
 /// Each card is a plain [HomeDiscoveryStayCard] wrapped in a [Transform] whose
-/// [Matrix4] is built per page:
-///   1. `Translate(-w/2, -h/2, 0)` — pivot the card about its own centre.
-///   2. `RotateY` — tilt the side cards in 3D (LTR drags toward the
+/// [Matrix4] is built per page. The [Transform.alignment] is
+/// [Alignment.center], so the rotation/scale pivot is the card's own centre —
+/// the matrix itself only carries the slot offset, the tilt and the scale:
+///   1. `RotateY` — tilt the side cards in 3D (LTR drags toward the
 ///      direction of motion; the focal card leans *with* the drag).
-///   3. `Scale` — the focal card is 100 %, one slot out is ~70 %, two slots
+///   2. `Scale` — the focal card is 100 %, one slot out is ~70 %, two slots
 ///      out is ~48 %.
-///   4. `Translate(w/2, h/2, z)` — move the card back to its slot and push
-///      the side cards slightly *toward* the viewer ([negative Z] in
-///      Flutter's right-handed space), so the tilted cards peek "out of"
-///      the focal card.
-///   5. `translate(x, 0, 0)` — push the card to the left or right.
+///   3. `translate(x, 0, z)` — move the card to its slot and push the side
+///      cards slightly *toward* the viewer ([negative Z] in Flutter's
+///      right-handed space), so the tilted cards peek "out of" the focal card.
 ///
 /// A [Matrix4.perspective](entry `(3, 2)` → 0.0018) creates the parallax
 /// distortion so cards that trail away (or forward) read as depth.
@@ -80,7 +79,11 @@ class DestinationCoverFlowCarousel extends StatefulWidget {
 
 class _DestinationCoverFlowCarouselState
     extends State<DestinationCoverFlowCarousel> {
-  final PageController _controller = PageController();
+  /// The pager. Its [PageController.viewportFraction] is the rail's own
+  /// [DestinationCoverFlowCarousel.viewportFraction], so one page is 90 % of
+  /// the rail and the neighbouring city stays visible as a 10 % peek — the
+  /// only affordance that says "swipe me".
+  late PageController _controller;
   final ValueNotifier<double> _offsetNotifier = ValueNotifier<double>(0.0);
 
   bool _reducedMotion = false;
@@ -88,10 +91,25 @@ class _DestinationCoverFlowCarouselState
   @override
   void initState() {
     super.initState();
+    _controller = PageController(viewportFraction: widget.viewportFraction);
     // Mirror the controller so the AnimatedBuilder updates the transforms on
     // every scroll frame (smooth while dragging, and after any snap).
     _controller.addListener(_onPageChanged);
     _checkReducedMotion();
+  }
+
+  @override
+  void didUpdateWidget(covariant DestinationCoverFlowCarousel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // The viewport fraction is baked into the PageController at construction;
+    // a changed fraction needs a new controller (the same is true of the
+    // PageView's own viewport, which is derived from it).
+    if (oldWidget.viewportFraction != widget.viewportFraction) {
+      _controller.removeListener(_onPageChanged);
+      _controller.dispose();
+      _controller = PageController(viewportFraction: widget.viewportFraction);
+      _controller.addListener(_onPageChanged);
+    }
   }
 
   void _onPageChanged() {
@@ -163,12 +181,8 @@ class _DestinationCoverFlowCarouselState
             controller: _controller,
             itemCount: 1,
             padEnds: false,
-            itemBuilder: (context, index) => _buildTransformedPage(
-              index,
-              0.0,
-              pageWidth,
-              cardHeight,
-            ),
+            itemBuilder: (context, index) =>
+                _buildTransformedPage(index, pageWidth, cardHeight),
           ),
         );
       },
@@ -191,12 +205,7 @@ class _DestinationCoverFlowCarouselState
             itemCount: widget.items.length,
             padEnds: false,
             itemBuilder: (context, index) {
-              return _buildTransformedPage(
-                index,
-                _offsetNotifier.value,
-                pageWidth,
-                cardHeight,
-              );
+              return _buildTransformedPage(index, pageWidth, cardHeight);
             },
           ),
         );
@@ -206,7 +215,6 @@ class _DestinationCoverFlowCarouselState
 
   Widget _buildTransformedPage(
     int index,
-    double offset,
     double pageWidth,
     double cardHeight,
   ) {
@@ -214,11 +222,15 @@ class _DestinationCoverFlowCarouselState
       // Rebuild every frame while the user drags.
       animation: _offsetNotifier,
       builder: (context, child) {
+        // Read the CURRENT scroll offset here, inside the builder. Capturing
+        // it when the page was built would freeze every transform at the
+        // offset of the first layout, so the focal card would never hand over
+        // to the next one and the rail would keep a stale tilt after a swipe.
         final Matrix4 transform = _computePageTransform(
           index,
-          offset,
+          _offsetNotifier.value,
           pageWidth,
-          cardHeight,
+          Directionality.of(context),
         );
         return Transform(
           transform: transform,
@@ -260,7 +272,7 @@ class _DestinationCoverFlowCarouselState
     int index,
     double offset,
     double pageWidth,
-    double cardHeight,
+    TextDirection direction,
   ) {
     final int currentPage = _pageOf(offset);
     final double offsetWithinPage = _snapWithinPage(offset, currentPage);
@@ -288,8 +300,16 @@ class _DestinationCoverFlowCarouselState
     rotationDegrees = rotationDegrees * (1.0 - clampedDistance * 0.25);
 
     // ── Visual offset ──────────────────────────────────────────────────────
-    // Lateral shift: ~30 % of the page width per slot.
-    final double visualOffsetX = diff * (pageWidth * 0.30);
+    // A side card is scaled about its OWN centre, which pulls its inner edge
+    // away from the focal card by half the shrink. Compensate by exactly that
+    // amount so a side card stays flush against the focal card's edge and the
+    // 10 % peek the pager leaves is actually visible. Without it the scaled
+    // side card floats in the middle of the viewport and no neighbour shows.
+    // Page +1 is to the RIGHT in LTR and to the LEFT in RTL, so the sign of
+    // the correction follows the reading direction.
+    final double directionSign = direction == TextDirection.rtl ? -1.0 : 1.0;
+    final double visualOffsetX =
+        -directionSign * diff * (pageWidth * (1.0 - scale)) / 2.0;
     // Small Z push (negative Z = towards the viewer) so side cards read as
     // "out of" the focal card. The focal card is dragged through the z-axis
     // too, reinforcing the depth cue.
@@ -297,9 +317,11 @@ class _DestinationCoverFlowCarouselState
     final double focalDragZ = diff == 0 ? -offsetWithinPage * 16.0 : 0.0;
 
     // ── Card geometry ──────────────────────────────────────────────────────
-    final double cardWidth = pageWidth;
-    final double cardHalfW = cardWidth * 0.5;
-    final double cardHalfH = cardHeight * 0.5;
+    // The card is laid out at the page's own box (pageWidth × cardHeight) and
+    // [Transform.alignment] is Alignment.center, so the pivot for the
+    // rotation/scale is already the card's centre. The matrix must NOT carry
+    // a `translate(-w/2, -h/2)` pivot term: that would double the pivot and
+    // shift every card half a page up-left, out of the viewport.
 
     // ── Build the matrix ───────────────────────────────────────────────────
     // Multiply on the right, so the *last* call is applied first.
@@ -307,20 +329,16 @@ class _DestinationCoverFlowCarouselState
     // 1) Perspective: the (3,2) entry warps W and gives the parallax cue.
     m.setEntry(3, 2, 0.0018);
 
-    // 2) T_side: push the card to the side + a small Z shift (applied last,
+    // 2) T_slot: move the card to its slot + a small Z shift (applied last,
     //    so it's the outermost transform).
     m.translateByDouble(visualOffsetX, 0.0, visualOffsetZ + focalDragZ, 1.0);
 
-    // 3) R: rotate around the horizontal axis.
+    // 3) R: rotate about the card's own centre (supplied by the Transform's
+    //    alignment, so the pivot term lives there and not in this matrix).
     m.rotateY(rotationDegrees * 3.141592653589793 / 180.0);
 
     // 4) S: shrink the side cards.
     m.scaleByDouble(scale, 1.0, 1.0, 1.0);
-
-    // 5) T_pivot: move the card's centre to the origin (the rotation/scale
-    //    pivot). This is applied first, so the card rotates about its own
-    //    centre rather than the top-left of its box.
-    m.translateByDouble(-cardHalfW, -cardHalfH, 0.0, 1.0);
 
     return m;
   }
