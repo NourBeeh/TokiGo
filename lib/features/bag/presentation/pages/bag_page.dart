@@ -35,13 +35,22 @@ import 'package:tokigo/l10n/app_localizations.dart';
 /// cancellation flow can produce that state, and a filter that can never fill
 /// is decoration.
 class BagPage extends ConsumerStatefulWidget {
-  const BagPage({super.key, this.initialLikes = false, this.embedded = false});
+  const BagPage({
+    super.key,
+    this.initialLikes = false,
+    this.embedded = false,
+    this.bottomPadding = 0,
+  });
 
   final bool initialLikes;
 
   /// Renders the existing trips content inside Home's single Scaffold instead
   /// of its own route-level Scaffold.
   final bool embedded;
+
+  /// Extra space reserved under the scroll content, e.g. Home's floating AI
+  /// composer, so the last trip card is never hidden behind it.
+  final double bottomPadding;
 
   @override
   ConsumerState<BagPage> createState() => _BagPageState();
@@ -102,7 +111,9 @@ class _BagPageState extends ConsumerState<BagPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           AppPageHeader(
-            title: _section == _BagSection.trips ? l10n.myTrips : l10n.wishlist,
+            subtitle: _section == _BagSection.trips
+                ? l10n.bagSubtitle
+                : l10n.wishlistSubtitle,
             // Home owns the route/back affordance when this page is embedded.
             showBackButton: !widget.embedded,
           ),
@@ -166,6 +177,8 @@ class _BagPageState extends ConsumerState<BagPage> {
                         _TripCard(trip: trips[index]),
                   ),
           ),
+          if (widget.bottomPadding > 0)
+            SizedBox(height: widget.bottomPadding),
         ],
       ),
     );

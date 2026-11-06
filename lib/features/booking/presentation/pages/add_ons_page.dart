@@ -46,7 +46,7 @@ class AddOnsPage extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               AppPageHeader(
-                title: l10n.addOns,
+                subtitle: l10n.addOnsSubtitle,
                 steps: const StepProgress(current: 2, total: 4),
                 backFallbackLocation: '/booking/review',
               ),

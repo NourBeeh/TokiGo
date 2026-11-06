@@ -52,7 +52,7 @@ class ProfilePage extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               AppPageHeader(
-                title: l10n.profile,
+                subtitle: l10n.profileSubtitle,
                 trailing: Pressable.wrap(
                   child: IconButton(
                     tooltip: l10n.settings,

@@ -201,7 +201,7 @@ class _FlowHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppPageHeader(
-      title: title,
+      subtitle: title,
       steps: StepProgress(current: step, total: 4),
       backFallbackLocation: '/booking/review',
     );

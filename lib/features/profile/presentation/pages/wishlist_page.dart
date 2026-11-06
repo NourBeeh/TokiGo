@@ -78,7 +78,7 @@ class WishlistPage extends ConsumerWidget {
       child: CustomScrollView(
         slivers: <Widget>[
           if (!embedded)
-            SliverToBoxAdapter(child: AppPageHeader(title: l10n.wishlist)),
+            SliverToBoxAdapter(child: AppPageHeader(subtitle: l10n.wishlistSubtitle)),
           // The count reads as a caption under the title ("12 saved").
           SliverToBoxAdapter(
             child: Padding(

@@ -139,9 +139,15 @@ void main() {
         decoration.color,
         mode == ThemeMode.dark ? const Color(0xFF1A2338) : Colors.white,
       );
+      // The pill floats, so its halo follows the active theme.
+      final BoxShadow halo = decoration.boxShadow!.single;
+      expect(halo.blurRadius, 20);
+      expect(halo.offset, const Offset(0, 4));
       expect(
-        decoration.boxShadow,
-        isEmpty,
+        halo.color,
+        mode == ThemeMode.dark
+            ? const Color(0x59000000)
+            : const Color(0x1A111111),
       );
     }
   });
@@ -294,7 +300,7 @@ void main() {
     expect(find.text('Flight search opened'), findsOneWidget);
   });
 
-  testWidgets('Home navigation has six tiles in a single row', (
+  testWidgets('Home navigation has five tiles in a single row', (
     WidgetTester tester,
   ) async {
     _setPhoneSize(tester);
@@ -307,14 +313,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(Expanded), findsNWidgets(6));
+    expect(find.byType(Expanded), findsNWidgets(5));
     expect(find.text('Flights'), findsOneWidget);
     expect(find.text('Stays'), findsOneWidget);
     expect(find.text('Cars Rental'), findsOneWidget);
     expect(find.text('Activities'), findsOneWidget);
     expect(find.text('Groups'), findsOneWidget);
-    expect(find.text('Trips'), findsOneWidget);
-    // Explore was never a Home tile.
+    // Trips left the quick-action bar (owner decision, 2026-11); My Trips is
+    // reached from Profile. Explore was never a Home tile.
+    expect(find.text('Trips'), findsNothing);
     expect(find.text('Explore'), findsNothing);
 
     final Offset flights = tester.getCenter(find.text('Flights'));
@@ -322,25 +329,20 @@ void main() {
     final Offset cars = tester.getCenter(find.text('Cars Rental'));
     final Offset activities = tester.getCenter(find.text('Activities'));
     final Offset groups = tester.getCenter(find.text('Groups'));
-    final Offset trips = tester.getCenter(find.text('Trips'));
-    // One row: the six labels share a baseline. Compared with a tolerance
+    // One row: the five labels share a baseline. Compared with a tolerance
     // because a label long enough to be scaled by the FittedBox lands on a
     // sub-pixel offset (the row itself is exact).
     expect(flights.dy, closeTo(stays.dy, 0.01));
     expect(stays.dy, closeTo(cars.dy, 0.01));
     expect(cars.dy, closeTo(activities.dy, 0.01));
     expect(activities.dy, closeTo(groups.dy, 0.01));
-    expect(groups.dy, closeTo(trips.dy, 0.01));
     expect(flights.dx, lessThan(stays.dx));
     expect(stays.dx, lessThan(cars.dx));
     expect(cars.dx, lessThan(activities.dx));
     expect(activities.dx, lessThan(groups.dx));
-    expect(groups.dx, lessThan(trips.dx));
   });
 
-  testWidgets('Cars and Trips tiles open their pages', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('Cars tile opens its page', (WidgetTester tester) async {
     _setPhoneSize(tester);
     await tester.pumpWidget(
       _app(
@@ -354,20 +356,6 @@ void main() {
     await tester.tap(find.text('Cars Rental'));
     await tester.pumpAndSettle();
     expect(find.text('Car search opened'), findsOneWidget);
-
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pumpAndSettle();
-    await tester.pumpWidget(
-      _app(
-        themeMode: ThemeMode.light,
-        locale: const Locale('en'),
-        child: const SizedBox(width: 360, child: HomeNavButtons()),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Trips'));
-    await tester.pumpAndSettle();
-    expect(find.text('My trips opened'), findsOneWidget);
   });
 
   testWidgets('Stay price aligns to the start of the card', (
@@ -421,7 +409,7 @@ void main() {
       _app(
         themeMode: ThemeMode.light,
         locale: const Locale('ar'),
-        child: const AppPageHeader(title: 'الإعدادات'),
+        child: const AppPageHeader(subtitle: 'الإعدادات'),
       ),
     );
     await tester.pumpAndSettle();

@@ -229,7 +229,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 AppPageHeader(
-                  title: l10n.payment,
+                  subtitle: l10n.paymentSubtitle,
                   backFallbackLocation: '/booking/review',
                 ),
                 Expanded(
@@ -265,7 +265,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               AppPageHeader(
-                title: l10n.payment,
+                subtitle: l10n.paymentSubtitle,
                 // Doc 21 §1 — the funnel is 4 steps; checkout is the last.
                 steps: const StepProgress(current: 3, total: 4),
                 backFallbackLocation: '/booking/review',

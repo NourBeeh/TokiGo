@@ -31,7 +31,7 @@ class SearchHubPage extends StatelessWidget {
         child: AiEntranceAnimation(
           child: CustomScrollView(
             slivers: <Widget>[
-              SliverToBoxAdapter(child: AppPageHeader(title: l10n.navSearch)),
+              SliverToBoxAdapter(child: AppPageHeader(subtitle: l10n.searchPromptSubtitle)),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(

@@ -57,6 +57,20 @@ abstract final class HomeDesignTokens {
   static Color pressedSurfaceOf(BuildContext context) =>
       isDark(context) ? context.tokigoColors.surfaceSecondary : const Color(0xFFF5F5F5);
 
+  /// Soft halo under the floating AI composer.
+  ///
+  /// A single low-opacity stop (blur 20, offset y 4) that works on both
+  /// canvases: ink at 10% on the light page, black at 35% on the dark one.
+  static List<BoxShadow> composerShadowOf(BuildContext context) => <BoxShadow>[
+    BoxShadow(
+      color: isDark(context)
+          ? const Color(0x59000000)
+          : const Color(0x1A111111),
+      blurRadius: 20,
+      offset: const Offset(0, 4),
+    ),
+  ];
+
   static bool isDark(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark;
 }

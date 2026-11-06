@@ -30,10 +30,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get bag => 'رحلاتي';
 
   @override
+  String get bagSubtitle => 'حجوزاتك المؤكدة وحالتها وأرقامها المرجعية.';
+
+  @override
   String get notifications => 'الإشعارات';
 
   @override
+  String get notificationsSubtitle => 'تحديثات الحجز وتنبيهات الأسعار والتذكيرات.';
+
+  @override
   String get profile => 'الملف الشخصي';
+
+  @override
+  String get profileSubtitle => 'حسابك ورحلاتك وتفضيلاتك.';
 
   @override
   String get profileGuestTitle => 'أنت تتصفّح كضيف';
@@ -291,6 +300,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get signIn => 'تسجيل الدخول';
 
   @override
+  String get authSubtitle => 'احفظ رحلاتك ومفضلتك وتفضيلاتك في حساب واحد.';
+
+  @override
   String get continueWithGoogle => 'المتابعة باستخدام Google';
 
   @override
@@ -324,6 +336,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settings => 'الإعدادات';
 
   @override
+  String get settingsSubtitle => 'اللغة والمظهر والعملة والحساب.';
+
+  @override
   String get language => 'اللغة';
 
   @override
@@ -333,10 +348,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get wishlist => 'المفضلة';
 
   @override
+  String get wishlistSubtitle => 'الإقامات اللي حفظتها بسعر المزوّد.';
+
+  @override
   String get myTrips => 'رحلاتي';
 
   @override
   String get tripDetails => 'تفاصيل الرحلة';
+
+  @override
+  String get tripDetailsSubtitle => 'كل اللي الحجز بيحمله فعلًا.';
 
   @override
   String get upcoming => 'القادمة';
@@ -413,10 +434,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get reviewBooking => 'مراجعة الحجز';
 
   @override
+  String get reviewBookingSubtitle => 'راجع العرض والمسافرين والإجمالي قبل الدفع.';
+
+  @override
   String get passengerDetails => 'بيانات المسافرين';
 
   @override
+  String get passengerDetailsSubtitle => 'مين اللي مسافر وازاي نوصل لك.';
+
+  @override
   String get addOns => 'إضافات';
+
+  @override
+  String get addOnsSubtitle => 'شنط إضافية ومقاعد ووجبات بيعها المزوّد.';
 
   @override
   String bookingStepOf(String current, String total) {
@@ -443,6 +473,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get payment => 'الدفع';
+
+  @override
+  String get paymentSubtitle => 'ادفع إجمالي المزوّد للرحلة دي.';
 
   @override
   String get confirmation => 'التأكيد';
@@ -1103,6 +1136,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get tripBuilderEmpty => 'اختار فندقًا أو رحلة طيران أو سيارة لإضافتها هنا.';
+
+  @override
+  String get tripBuilderSubtitle => 'اجمع فنادق ورحلات طيران وسيارات في مخطط واحد.';
 
   @override
   String get tripBuilderRemove => 'إزالة من الرحلة';
@@ -1880,6 +1916,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get editProfile => 'تعديل البروفايل';
+
+  @override
+  String get editProfileSubtitle => 'اسمك وبيانات اتصالك وجنسيتك.';
 
   @override
   String get firstName => 'الاسم الأول';

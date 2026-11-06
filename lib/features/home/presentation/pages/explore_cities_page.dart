@@ -189,7 +189,6 @@ class _ExploreCitiesPageState extends ConsumerState<ExploreCitiesPage> {
         child: Column(
           children: <Widget>[
             AppPageHeader(
-              title: l10n.navExplore,
               subtitle: l10n.exploreCitiesTitle,
             ),
             Padding(

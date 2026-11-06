@@ -9,18 +9,22 @@ import 'package:tokigo/core/widgets/app_icon_action.dart';
 /// The unified pushed-page header — one identity for every discovery and
 /// search surface (Groups, Flights/Hotels/Cars/Packages).
 ///
-/// One UI app-bar rhythm: a control row (back control + optional trailing
-/// action) over the headline title, then a muted subtitle — title and subtitle
-/// on the page gutter, so the header's type lines up with the page's own
-/// content column. Extracting this keeps every surface from drifting apart.
+/// **Owner decision (2026-11): the page NAME is gone.** The header carries one
+/// line only — the page's small description — sitting in the control row's
+/// title slot, beside the back control. A second, larger line of type was
+/// redundant with that description and pushed every page's content down.
 ///
-/// The title uses [AppTypography.headline] (28/800) — deliberately NOT
-/// `display` (36/800): every reference page title measures 27–29px, and a 36px
-/// title would collide with Home's greeting, which owns the display size.
+/// One UI app-bar rhythm: a control row (back control + the description +
+/// optional trailing action), then an optional progress affordance. Type and
+/// controls share the page gutter, so the header lines up with the page's own
+/// content column.
+///
+/// The description uses [AppTypography.body] (15/400) in `textTertiary` —
+/// deliberately NOT `headline` (28/800): it stays the quiet supporting line it
+/// always was, now promoted to the only identifying text in the header.
 class AppPageHeader extends StatelessWidget {
   const AppPageHeader({
     super.key,
-    this.title,
     this.subtitle,
     this.trailing,
     this.steps,
@@ -29,14 +33,11 @@ class AppPageHeader extends StatelessWidget {
     this.backEnabled = true,
   });
 
-  /// Big page title ("Groups", "Flights"…).
+  /// The page's supporting line — the ONLY identifying text in the header.
   ///
-  /// Optional: a surface that already carries its own hero heading (the booking
-  /// confirmation's success mark, the AI chat) renders the control row alone
-  /// rather than repeating the title.
-  final String? title;
-
-  /// Optional supporting line under the title.
+  /// Every surface supplies one (owner decision, 2026-11): with the title gone,
+  /// a missing description leaves the header as a bare back control and the
+  /// page unnamed.
   final String? subtitle;
 
   /// Optional action pinned to the end of the control row (e.g. a view toggle).
@@ -66,6 +67,10 @@ class AppPageHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
     final TextDirection appTextDirection = Directionality.of(context);
+    final TextStyle description = typography.body.copyWith(
+      color: context.tokigoColors.textTertiary,
+    );
+    final bool rtl = appTextDirection == TextDirection.rtl;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
@@ -78,42 +83,21 @@ class AppPageHeader extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            if (title case final String line)
-              _buildControlRow(
-                context: context,
-                line: line,
-                showBackButton: showBackButton,
-                trailing: trailing,
-                backFallbackLocation: backFallbackLocation,
-                backEnabled: backEnabled,
-                appTextDirection: appTextDirection,
-              )
-            else
-              _buildControlRowNoTitle(
-                context: context,
-                showBackButton: showBackButton,
-                trailing: trailing,
-                backFallbackLocation: backFallbackLocation,
-                backEnabled: backEnabled,
-                appTextDirection: appTextDirection,
-              ),
-            if (subtitle case final String line) ...<Widget>[
-              const SizedBox(height: AppSpacing.xs),
-              Align(
-                alignment: appTextDirection == TextDirection.rtl
-                    ? Alignment.centerRight
-                    : Alignment.centerLeft,
-                child: Directionality(
-                  textDirection: appTextDirection,
-                  child: Text(
-                    line,
-                    style: typography.body.copyWith(
-                      color: context.tokigoColors.textTertiary,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            Row(
+              children: <Widget>[
+                if (rtl) ...<Widget>[
+                  if (trailing != null) trailing!,
+                  Expanded(child: _descriptionBlock(description)),
+                  const SizedBox(width: AppSpacing.sm),
+                  _backControl(),
+                ] else ...<Widget>[
+                  _backControl(),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(child: _descriptionBlock(description)),
+                  if (trailing != null) trailing!,
+                ],
+              ],
+            ),
             if (steps case final Widget progress) ...<Widget>[
               const SizedBox(height: AppSpacing.md),
               Directionality(textDirection: appTextDirection, child: progress),
@@ -124,160 +108,36 @@ class AppPageHeader extends StatelessWidget {
     );
   }
 
-  /// Builds the control row (back control + optional trailing action) over the
-  /// headline title, ordered for the ambient text direction:
-  ///
-  ///  * **LTR (English):** back control on the left, title in the middle, trailing
-  ///    action on the right.
-  ///  * **RTL (Arabic):** trailing action on the left, title in the middle, back
-  ///    control on the right.
-  Widget _buildControlRow({
-    required BuildContext context,
-    required String line,
-    required bool showBackButton,
-    required Widget? trailing,
-    required String backFallbackLocation,
-    required bool backEnabled,
-    required TextDirection appTextDirection,
-  }) {
-    final headline = AppTypography.forLight().headline.copyWith(
-      color: context.tokigoColors.textPrimary,
-    );
-    final bool rtl = appTextDirection == TextDirection.rtl;
-    return Row(
-      children: <Widget>[
-        if (rtl) ..._rtlTitleRowChildren(
-          line: line,
-          headline: headline,
-          showBackButton: showBackButton,
-          trailing: trailing,
-          backFallbackLocation: backFallbackLocation,
-          backEnabled: backEnabled,
-        )
-        else ..._ltrTitleRowChildren(
-          line: line,
-          headline: headline,
-          showBackButton: showBackButton,
-          trailing: trailing,
-          backFallbackLocation: backFallbackLocation,
-          backEnabled: backEnabled,
-        ),
-      ],
-    );
-  }
-
-  /// Builds the control row for surfaces that have no page title (an existing
-  /// hero heading already occupies the title slot). Mirrors
-  /// [_buildControlRow] in layout behaviour, but uses a [Spacer] rather than an
-  /// expanded [Text] for the title.
-  Widget _buildControlRowNoTitle({
-    required BuildContext context,
-    required bool showBackButton,
-    required Widget? trailing,
-    required String backFallbackLocation,
-    required bool backEnabled,
-    required TextDirection appTextDirection,
-  }) {
-    final bool rtl = appTextDirection == TextDirection.rtl;
-    return Row(
-      children: <Widget>[
-        if (rtl) ..._rtlNoTitleRowChildren(
-          showBackButton: showBackButton,
-          trailing: trailing,
-          backFallbackLocation: backFallbackLocation,
-          backEnabled: backEnabled,
-        )
-        else ..._ltrNoTitleRowChildren(
-          showBackButton: showBackButton,
-          trailing: trailing,
-          backFallbackLocation: backFallbackLocation,
-          backEnabled: backEnabled,
-        ),
-      ],
-    );
-  }
-
-  List<Widget> _ltrTitleRowChildren({
-    required String line,
-    required TextStyle headline,
-    required bool showBackButton,
-    required Widget? trailing,
-    required String backFallbackLocation,
-    required bool backEnabled,
-  }) {
-    return <Widget>[
-      if (showBackButton)
-        AppBackButton(fallbackLocation: backFallbackLocation, enabled: backEnabled)
-      else
-        const SizedBox(width: AppIconAction.tapTarget, height: AppIconAction.tapTarget),
-      const SizedBox(width: AppSpacing.sm),
-      Expanded(
+  /// The description, in the control row's title slot. `Semantics.header` keeps
+  /// the surface announced as a named page even though the visible type is
+  /// small.
+  Widget _descriptionBlock(TextStyle style) {
+    final String? line = subtitle;
+    if (line == null) return const SizedBox.shrink();
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: Semantics(
+        header: true,
         child: Text(
           line,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: headline,
+          style: style,
         ),
       ),
-      if (trailing != null) trailing,
-    ];
+    );
   }
 
-  List<Widget> _rtlTitleRowChildren({
-    required String line,
-    required TextStyle headline,
-    required bool showBackButton,
-    required Widget? trailing,
-    required String backFallbackLocation,
-    required bool backEnabled,
-  }) {
-    return <Widget>[
-      if (trailing != null) trailing,
-      Expanded(
-        child: Text(
-          line,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: headline,
-        ),
-      ),
-      const SizedBox(width: AppSpacing.sm),
-      if (showBackButton)
-        AppBackButton(fallbackLocation: backFallbackLocation, enabled: backEnabled)
-      else
-        const SizedBox(width: AppIconAction.tapTarget, height: AppIconAction.tapTarget),
-    ];
-  }
-
-  List<Widget> _ltrNoTitleRowChildren({
-    required bool showBackButton,
-    required Widget? trailing,
-    required String backFallbackLocation,
-    required bool backEnabled,
-  }) {
-    return <Widget>[
-      if (showBackButton)
-        AppBackButton(fallbackLocation: backFallbackLocation, enabled: backEnabled)
-      else
-        const SizedBox(width: AppIconAction.tapTarget, height: AppIconAction.tapTarget),
-      const Spacer(),
-      if (trailing != null) trailing,
-    ];
-  }
-
-  List<Widget> _rtlNoTitleRowChildren({
-    required bool showBackButton,
-    required Widget? trailing,
-    required String backFallbackLocation,
-    required bool backEnabled,
-  }) {
-    return <Widget>[
-      if (trailing != null) trailing,
-      const Spacer(),
-      if (showBackButton)
-        AppBackButton(fallbackLocation: backFallbackLocation, enabled: backEnabled)
-      else
-        const SizedBox(width: AppIconAction.tapTarget, height: AppIconAction.tapTarget),
-    ];
+  Widget _backControl() {
+    if (showBackButton) {
+      return AppBackButton(
+        fallbackLocation: backFallbackLocation,
+        enabled: backEnabled,
+      );
+    }
+    return const SizedBox(
+      width: AppIconAction.tapTarget,
+      height: AppIconAction.tapTarget,
+    );
   }
 }

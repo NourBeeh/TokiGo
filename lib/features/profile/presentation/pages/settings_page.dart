@@ -72,7 +72,7 @@ class SettingsPage extends ConsumerWidget {
         child: AiEntranceAnimation(
           child: CustomScrollView(
             slivers: <Widget>[
-              SliverToBoxAdapter(child: AppPageHeader(title: l10n.settings)),
+              SliverToBoxAdapter(child: AppPageHeader(subtitle: l10n.settingsSubtitle)),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsetsDirectional.fromSTEB(
