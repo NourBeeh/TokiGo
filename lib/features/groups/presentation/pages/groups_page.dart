@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:tokigo/app/widgets/app_chrome.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
@@ -31,6 +32,13 @@ class GroupsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    // Under the persistent shell chrome Groups has no header of its own (the
+    // navigation bar identifies it) and reserves the floating composer.
+    final bool chromeVisible = AppChromeScope.visibleOf(context);
+    final double reserve = chromeVisible
+        ? AppChrome.composerReserve(context)
+        : 0;
+    final double effectiveBottomPadding = bottomPadding + reserve;
 
     return Scaffold(
       backgroundColor: context.tokigoColors.background,
@@ -40,6 +48,7 @@ class GroupsPage extends StatelessWidget {
             slivers: <Widget>[
               SliverToBoxAdapter(
                 child: AppPageHeader(
+                  visible: !chromeVisible,
                   subtitle: l10n.groupsSubtitle,
                 ),
               ),
@@ -85,8 +94,10 @@ class GroupsPage extends StatelessWidget {
                   ),
                 ),
               ],
-              if (bottomPadding > 0)
-                SliverToBoxAdapter(child: SizedBox(height: bottomPadding)),
+              if (effectiveBottomPadding > 0)
+                SliverToBoxAdapter(
+                  child: SizedBox(height: effectiveBottomPadding),
+                ),
             ],
           ),
         ),

@@ -20,7 +20,6 @@ import 'package:tokigo/features/home/application/hotel_image_memory_cache.dart';
 import 'package:tokigo/features/home/application/home_personalization_orchestrator.dart';
 import 'package:tokigo/features/home/application/local_behavior_store.dart';
 import 'package:tokigo/features/home/application/recommendation_service.dart';
-import 'package:tokigo/features/home/domain/home_action.dart';
 import 'package:tokigo/features/home/domain/home_composer.dart';
 import 'package:tokigo/features/home/domain/personalization_context.dart';
 import 'package:tokigo/features/home/presentation/home_controller.dart';
@@ -347,16 +346,6 @@ final homeControllerProvider = StateNotifierProvider<HomeController, HomeState>(
     );
   },
 );
-
-/// The travel service currently displayed inside Home, or `null` while the
-/// normal dashboard feed is showing.
-///
-/// This is deliberately a UI-selection provider (not router state): selecting
-/// an action must never push a route, and the selected content keeps sharing
-/// the same Home `Scaffold`. Feature data (search controllers, filters,
-/// wishlist, trips) lives in its own providers and is therefore untouched when
-/// the selection changes.
-final homeSelectedActionProvider = StateProvider<HomeAction?>((ref) => null);
 
 /// A one-shot request to bring a Home section into view.
 ///

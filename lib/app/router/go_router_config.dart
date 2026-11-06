@@ -88,7 +88,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     routes: <RouteBase>[
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
-          return TokiGoShell(navigationShell: navigationShell);
+          return TokiGoShell(
+            navigationShell: navigationShell,
+            location: state.matchedLocation,
+          );
         },
         branches: <StatefulShellBranch>[
           // ---- Home tab ----
@@ -97,7 +100,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/',
                 name: 'home',
-                pageBuilder: (context, state) => slideFromRightPage(
+                pageBuilder: (context, state) => noTransitionPage(
                   key: state.pageKey,
                   restorationId: state.pageKey.value,
                   name: 'home',
@@ -107,47 +110,41 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'flights',
                     name: 'flights',
-                    pageBuilder: (context, state) => slideFromRightPage(
+                    pageBuilder: (context, state) => noTransitionPage(
                       key: state.pageKey,
                       restorationId: state.pageKey.value,
                       name: 'flights',
-                      child: const SwipeFromRightToPop(
-                        child: FlightSearchPage(),
-                      ),
+                      child: const FlightSearchPage(),
                     ),
                   ),
                   GoRoute(
                     path: 'hotels',
                     name: 'hotels',
-                    pageBuilder: (context, state) => slideFromRightPage(
+                    pageBuilder: (context, state) => noTransitionPage(
                       key: state.pageKey,
                       restorationId: state.pageKey.value,
                       name: 'hotels',
-                      child: const SwipeFromRightToPop(
-                        child: HotelSearchPage(),
-                      ),
+                      child: const HotelSearchPage(),
                     ),
                   ),
                   GoRoute(
                     path: 'cars',
                     name: 'cars',
-                    pageBuilder: (context, state) => slideFromRightPage(
+                    pageBuilder: (context, state) => noTransitionPage(
                       key: state.pageKey,
                       restorationId: state.pageKey.value,
                       name: 'cars',
-                      child: const SwipeFromRightToPop(child: CarSearchPage()),
+                      child: const CarSearchPage(),
                     ),
                   ),
                   GoRoute(
                     path: 'packages',
                     name: 'packages',
-                    pageBuilder: (context, state) => slideFromRightPage(
+                    pageBuilder: (context, state) => noTransitionPage(
                       key: state.pageKey,
                       restorationId: state.pageKey.value,
                       name: 'packages',
-                      child: const SwipeFromRightToPop(
-                        child: PackagesSearchPage(),
-                      ),
+                      child: const PackagesSearchPage(),
                     ),
                   ),
                   GoRoute(
@@ -385,11 +382,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     // link or a stale in-app link cannot open it.
                     redirect: (context, state) =>
                         AppConfig.groupsEnabled ? null : '/',
-                    pageBuilder: (context, state) => slideFromRightPage(
+                    pageBuilder: (context, state) => noTransitionPage(
                       key: state.pageKey,
                       restorationId: state.pageKey.value,
                       name: 'groups',
-                      child: const SwipeFromRightToPop(child: GroupsPage()),
+                      child: const GroupsPage(),
                     ),
                   ),
                   GoRoute(

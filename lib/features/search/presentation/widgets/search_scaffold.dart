@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:tokigo/app/widgets/app_chrome.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
@@ -79,11 +80,20 @@ class SearchScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tc = context.tokigoColors;
+    // Alongside the persistent shell chrome the section owns no header of its
+    // own (no back control, no description) and must reserve the floating
+    // composer's footprint at the end of its scroll view.
+    final bool chromeVisible = AppChromeScope.visibleOf(context);
+    final double reserve = chromeVisible
+        ? AppChrome.composerReserve(context)
+        : 0;
+    final double effectiveBottomPadding = bottomPadding + reserve;
     final Widget scrollView = AiEntranceAnimation(
       child: CustomScrollView(
         slivers: <Widget>[
           SliverToBoxAdapter(
             child: AppPageHeader(
+              visible: !chromeVisible,
               subtitle: subtitle,
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -101,8 +111,10 @@ class SearchScaffold extends StatelessWidget {
             ...bodySlivers!
           else
             SliverToBoxAdapter(child: body),
-          if (bottomPadding > 0)
-            SliverToBoxAdapter(child: SizedBox(height: bottomPadding)),
+          if (effectiveBottomPadding > 0)
+            SliverToBoxAdapter(
+              child: SizedBox(height: effectiveBottomPadding),
+            ),
         ],
       ),
     );
@@ -116,11 +128,16 @@ class SearchScaffold extends StatelessWidget {
       body: SafeArea(
         // `bottom: false` left the results' last row under the Android
         // navigation bar (the pill it was written for is gone).
-        child: DetachedBackButton(
-          // The header no longer draws the back control: the detaching one does,
-          // and it stays reachable once the header scrolls away.
-          child: scrollView,
-        ),
+        child: chromeVisible
+            // Section routes are reached through the shell chrome; a detached
+            // back control here would contradict the no-back navigation.
+            ? scrollView
+            : DetachedBackButton(
+                // The header no longer draws the back control: the detaching
+                // one does, and it stays reachable once the header scrolls
+                // away.
+                child: scrollView,
+              ),
       ),
     );
   }

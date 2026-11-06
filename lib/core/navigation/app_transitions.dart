@@ -162,6 +162,32 @@ CustomTransitionPage<void> fadeThroughPage({
   );
 }
 
+/// A page transition that performs **no animation** — the incoming page
+/// simply takes the place of the outgoing one. Useful for the six
+/// top-level sections (`/`, `/flights`, `/hotels`, `/cars`, `/packages`,
+/// `/groups`) where the owner wants a content-changed feel without a slide.
+CustomTransitionPage<void> noTransitionPage({
+  required Widget child,
+  LocalKey? key,
+  Object? arguments,
+  String? name,
+  String? restorationId,
+}) {
+  return CustomTransitionPage<void>(
+    key: key,
+    child: child,
+    arguments: arguments,
+    name: name,
+    restorationId: restorationId,
+    transitionDuration: Duration.zero,
+    reverseTransitionDuration: Duration.zero,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      // No travel — the child is placed immediately at its final position.
+      return child;
+    },
+  );
+}
+
 /// App's push/pop route for iOS: a Cupertino route that includes the native
 /// interactive back-gesture detector.
 ///

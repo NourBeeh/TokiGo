@@ -7,6 +7,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:tokigo/app/widgets/app_chrome.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/network/api_result.dart';
@@ -111,22 +112,29 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('the empty state keeps clear of the floating pill', (
-    tester,
-  ) async {
+  testWidgets('the empty state honours the composer reserve when the chrome '
+      'is on screen', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(_app(controller: _controller()));
+    await tester.pumpWidget(
+      AppChromeScope(
+        visible: true,
+        child: _app(controller: _controller()),
+      ),
+    );
     await tester.pumpAndSettle();
 
-    final Rect message = tester.getRect(find.text('No recommendations right now'));
-    final Rect pill = tester.getRect(
-      find.byKey(const ValueKey<String>('home-ai-composer')),
+    final Rect message = tester.getRect(
+      find.text('No recommendations right now'),
     );
-    expect(message.bottom, lessThan(pill.top));
+    // The shell's floating composer is 56dp + 12dp margin + the bottom inset;
+    // the empty message must stay above that footprint.
+    final double reserve =
+        AppChrome.composerReserve(tester.element(find.byType(Scaffold)));
+    expect(message.bottom, lessThan(844 - reserve));
     expect(tester.takeException(), isNull);
   });
 }

@@ -279,6 +279,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeNavGroups => 'Groups';
 
   @override
+  String get homeNavToday => 'Today';
+
+  @override
   String get homeNavTrips => 'Trips';
 
   @override

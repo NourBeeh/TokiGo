@@ -623,6 +623,12 @@ abstract class AppLocalizations {
   /// **'Groups'**
   String get homeNavGroups;
 
+  /// No description provided for @homeNavToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get homeNavToday;
+
   /// No description provided for @homeNavTrips.
   ///
   /// In en, this message translates to:

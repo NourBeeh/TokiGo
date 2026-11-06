@@ -1,37 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tokigo/app/widgets/home_nav_buttons.dart';
+
+import 'package:tokigo/app/widgets/app_chrome.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_message_state.dart';
-import 'package:tokigo/core/ui/app_wordmark.dart';
 import 'package:tokigo/core/widgets/section_header.dart';
 import 'package:tokigo/core/widgets/shimmer.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
-import 'package:tokigo/features/bag/presentation/pages/bag_page.dart';
-import 'package:tokigo/features/groups/presentation/pages/groups_page.dart';
-import 'package:tokigo/features/home/domain/home_action.dart';
 import 'package:tokigo/features/home/presentation/home_controller.dart';
 import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
-import 'package:tokigo/features/home/presentation/widgets/home_ai_search_field.dart';
-import 'package:tokigo/features/home/presentation/widgets/home_top_bar.dart';
 import 'package:tokigo/features/home/presentation/widgets/destination_cover_flow_carousel.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_section.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stays_carousel.dart';
-import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart';
-import 'package:tokigo/features/notifications/presentation/widgets/notification_bell.dart';
-import 'package:tokigo/features/search/domain/country_airport_suggestions.dart';
-import 'package:tokigo/features/search/domain/search_context.dart';
 import 'package:tokigo/features/search/application/providers/offer_selection_provider.dart';
-import 'package:tokigo/features/search/presentation/pages/car_search_page.dart';
-import 'package:tokigo/features/search/presentation/pages/flight_search_page.dart';
-import 'package:tokigo/features/search/presentation/pages/hotel_search_page.dart';
-import 'package:tokigo/features/search/presentation/pages/packages_search_page.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 import 'package:tokigo/shared/providers/locale_provider.dart';
 
@@ -57,18 +44,15 @@ class _HomePageState extends ConsumerState<HomePage>
   final GlobalKey _discoverKey = GlobalKey();
   bool _scrollScheduled = false;
 
-  /// The AI composer pill: a fixed 56dp tall at every scroll position.
-  static const double _pillHeight = 56;
-
-  /// Gap between the pill and the bottom edge of the screen.
-  static const double _pillBottomMargin = AppSpacing.md;
-
-  /// Space the scrollables reserve so the last card is never hidden behind
-  /// the floating pill. Reserved ONCE, by each scrollable — never by the
-  /// layout around it, which is what used to leave a dead empty band above
-  /// the pill.
-  static double composerReserve(BuildContext context) =>
-      _pillHeight + _pillBottomMargin + MediaQuery.paddingOf(context).bottom;
+  /// Space the feed reserves at its end so the shell's floating AI composer
+  /// never covers the last card. Zero when the chrome (and therefore the
+  /// composer) is not on screen — e.g. when HomePage is hosted standalone in
+  /// tests.
+  double _composerReserve(BuildContext context) => AppChromeScope.visibleOf(
+    context,
+  )
+      ? AppChrome.composerReserve(context)
+      : 0;
 
   @override
   void initState() {
@@ -175,195 +159,33 @@ class _HomePageState extends ConsumerState<HomePage>
       }
     });
     final state = ref.watch(homeControllerProvider);
-    final selectedAction = ref.watch(homeSelectedActionProvider);
     _consumeScrollTarget();
     return Scaffold(
       backgroundColor: HomeDesignTokens.backgroundOf(context),
       // H1: pull-to-refresh removed by product decision — Home refreshes
       // prices/availability via live validation only (H2).
       //
-      // The keyboard resizes this body, so the floating pill (bottom: 0 of the
-      // Stack) rides up with it and is never covered.
+      // The keyboard resizes this body; the floating composer lives in the
+      // shell and rides up with the keyboard there.
       body: SafeArea(
         top: true,
-        // The feed stays edge-to-edge under the navigation bar; the pill owns
-        // (and reserves) that inset itself.
+        // The feed stays edge-to-edge under the navigation bar; the composer
+        // (in the shell) reserves its own inset.
         bottom: false,
-        child: Stack(
-          children: <Widget>[
-            // Bottom layer: the pinned top area and the scrolling content. The
-            // content reserves the pill's footprint ITSELF (each scrollable
-            // does), so cards can scroll beneath the floating pill and nothing
-            // is cut off.
-            Column(
-              children: <Widget>[
-                // Pinned top: the header and the quick-action row. Neither
-                // moves, resizes or animates while the feed scrolls beneath.
-                _buildTopArea(context, selectedAction),
-                Expanded(
-                  child: selectedAction == null
-                      ? _buildDashboard(state, ref)
-                      : _buildSelectedAction(selectedAction),
-                ),
-              ],
-            ),
-            // Top layer: ONLY the pill. No full-width background — the canvas
-            // shows through, so there is no dead band above it.
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(
-                  AppSpacing.lg,
-                  0,
-                  AppSpacing.lg,
-                  _pillBottomMargin + MediaQuery.paddingOf(context).bottom,
-                ),
-                child: HomeAiSearchField(
-                  accentColor: HomeDesignTokens.accentOf(context),
-                ),
+        child: CustomScrollView(
+          controller: _feedController,
+          slivers: <Widget>[
+            ..._feedSlivers(state, ref),
+            // Reserve space for the shell's floating composer (only when the
+            // chrome is on screen — zero for standalone test hosts).
+            if (_composerReserve(context) > 0)
+              SliverToBoxAdapter(
+                child: SizedBox(height: _composerReserve(context)),
               ),
-            ),
           ],
         ),
       ),
     );
-  }
-
-  /// Home's pinned top: the header (wordmark, notifications, profile) with the
-  /// quick-action row directly beneath it. Both stay fixed while the feed
-  /// scrolls, so the traveller's service switcher is always reachable and the
-  /// location-explainer slot it replaced is gone without leaving a gap.
-  Widget _buildTopArea(BuildContext context, HomeAction? selectedAction) {
-    return ColoredBox(
-      color: HomeDesignTokens.backgroundOf(context),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          const Padding(
-            padding: EdgeInsetsDirectional.fromSTEB(
-              AppSpacing.lg,
-              AppSpacing.xs,
-              AppSpacing.lg,
-              0,
-            ),
-            child: HomeTopBar(),
-          ),
-          Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(
-              AppSpacing.lg,
-              AppSpacing.md,
-              AppSpacing.lg,
-              AppSpacing.md,
-            ),
-            child: HomeActionBar(
-              searchContext: _searchContext(),
-              selectedAction: selectedAction,
-              onActionSelected: _selectAction,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Switches the in-page Home content. Tapping the already-selected action
-  /// returns to the full dashboard (the quick-action tiles are the only Home
-  /// switcher).
-  void _selectAction(HomeAction action) {
-    final HomeAction? current = ref.read(homeSelectedActionProvider);
-    final HomeAction? next = current == action ? null : action;
-    ref.read(homeSelectedActionProvider.notifier).state = next;
-  }
-
-  /// The normal Home dashboard: the composed feed inside ONE vertical
-  /// scrollable owned by Home. The header and quick-action row are pinned
-  /// above it; the floating pill is the feed's own bottom padding.
-  Widget _buildDashboard(HomeState state, WidgetRef ref) {
-    // The pill's footprint is appended INSIDE the same sliver list as the
-    // feed's own bottom spacer (never as a SliverPadding around a group):
-    // `SliverFillRemaining` measures its child's intrinsic height, and a
-    // `SliverMainAxisGroup` cannot supply intrinsics — the empty/offline state
-    // crashed the layout with "LayoutBuilder does not support returning
-    // intrinsic dimensions".
-    final List<Widget> slivers = _feedSlivers(state, ref);
-    // The fill states (empty / offline) subtract the pill's footprint inside
-    // `_CenteredFeedState` itself, so they must not reserve it again here —
-    // that would leave the scroll view an extra reserve's worth of dead extent.
-    // Keyed on the status, not on the trailing widget: the success feed also
-    // ends in a spacer (its own breathing room), and it DOES need the reserve.
-    final bool fillsViewport =
-        state.status == HomeStatus.empty || state.status == HomeStatus.error;
-    return CustomScrollView(
-      controller: _feedController,
-      slivers: <Widget>[
-        ...slivers,
-        // Reserved ONCE, inside the scrollable, so the last card scrolls up
-        // past the pill instead of being clipped by a gap in the layout — and
-        // the empty/offline state centres between the pinned row and the pill
-        // instead of the bottom of the screen.
-        if (!fillsViewport)
-          SliverToBoxAdapter(child: SizedBox(height: composerReserve(context))),
-      ],
-    );
-  }
-
-  /// The selected service's existing page, embedded in Home's Scaffold.
-  ///
-  /// The top action bar stays pinned so the traveller can switch services
-  /// at any time; the service itself keeps its own feature widgets, Riverpod
-  /// controllers and scroll behaviour.
-  Widget _buildSelectedAction(HomeAction action) {
-    final SearchContext searchContext = _searchContext();
-    return _buildFeatureContent(action, searchContext);
-  }
-
-  Widget _buildFeatureContent(HomeAction action, SearchContext searchContext) {
-    // Each embedded page reserves the pill's footprint in its OWN scrollable,
-    // so its last field/button is never hidden behind the floating pill and
-    // its own canvas fills the reserve.
-    final double reserve = composerReserve(context);
-    switch (action) {
-      case HomeAction.flights:
-        return FlightSearchPage(
-          key: const ValueKey<String>('home-flights-content'),
-          embedded: true,
-          searchContext: searchContext,
-          bottomPadding: reserve,
-        );
-      case HomeAction.hotels:
-        return HotelSearchPage(
-          key: const ValueKey<String>('home-hotels-content'),
-          embedded: true,
-          searchContext: searchContext,
-          bottomPadding: reserve,
-        );
-      case HomeAction.cars:
-        return CarSearchPage(
-          key: const ValueKey<String>('home-cars-content'),
-          embedded: true,
-          bottomPadding: reserve,
-        );
-      case HomeAction.activities:
-        // The old Activities tile opened the packages/tour-programs search.
-        return PackagesSearchPage(
-          key: const ValueKey<String>('home-activities-content'),
-          embedded: true,
-          bottomPadding: reserve,
-        );
-      case HomeAction.groups:
-        return GroupsPage(
-          key: const ValueKey<String>('home-groups-content'),
-          bottomPadding: reserve,
-        );
-      case HomeAction.trips:
-        return BagPage(
-          key: const ValueKey<String>('home-trips-content'),
-          embedded: true,
-          bottomPadding: reserve,
-        );
-    }
   }
 
   /// A section whose items are all destinations is Home's Discover section
@@ -372,8 +194,11 @@ class _HomePageState extends ConsumerState<HomePage>
       section.items.isNotEmpty &&
       section.items.every((item) => item.type == HomeCardType.destination);
 
-  /// The dashboard's feed content as slivers. The header and quick-action row
-  /// are pinned above this scroll view and the composer below it.
+  /// The dashboard's feed content as slivers.
+  ///
+  /// The header and quick-action row are provided by the persistent shell
+  /// chrome; the floating composer lives there too. This scroll view only
+  /// carries the feed content and reserves the composer's footprint.
   List<Widget> _feedSlivers(HomeState state, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final List<HomeSection> visibleSections = state.sections
@@ -461,9 +286,9 @@ class _HomePageState extends ConsumerState<HomePage>
           SliverFillRemaining(
             hasScrollBody: false,
             child: _CenteredFeedState(
-              // The pill's footprint stays reserved for this state too, so the
-              // message centres between the pinned row and the pill.
-              reserveBottom: composerReserve(context),
+              // The composer's footprint stays reserved for this state too, so
+              // the message centres between the shell chrome and the composer.
+              reserveBottom: _composerReserve(context),
               child: AppMessageState(
                 icon: Icons.explore_off_outlined,
                 title: l10n.homeEmptyTitle,
@@ -480,7 +305,7 @@ class _HomePageState extends ConsumerState<HomePage>
           SliverFillRemaining(
             hasScrollBody: false,
             child: _CenteredFeedState(
-              reserveBottom: composerReserve(context),
+              reserveBottom: _composerReserve(context),
               child: AppMessageState(
                 icon: Icons.wifi_off_rounded,
                 hue: context.tokigoColors.danger,
@@ -497,38 +322,6 @@ class _HomePageState extends ConsumerState<HomePage>
           ),
         ];
     }
-  }
-
-  /// Phase 4A — the traveller's travel context for the search tiles.
-  ///
-  /// The destination prefills from the first published Discover city; the
-  /// traveller sees it and can change it. Context only — never a filter.
-  SearchContext _searchContext() {
-    final countryCode = ref
-        .watch(geoCountryProvider)
-        .asData
-        ?.value
-        ?.countryCode
-        ?.trim()
-        .toUpperCase();
-    final destinations = ref
-        .watch(homeControllerProvider)
-        .sections
-        .expand((HomeSection section) => section.items)
-        .where((HomeItem item) => item.type == HomeCardType.destination)
-        .toList();
-    final String? destination = destinations.isEmpty
-        ? null
-        : destinations.first.title.trim();
-    return SearchContext(
-      destination: destination == null || destination.isEmpty
-          ? null
-          : destination,
-      countryCode: countryCode == null || countryCode.isEmpty
-          ? null
-          : countryCode,
-      airport: suggestedAirportCodeForCountry(countryCode),
-    );
   }
 
   void _selectFlightForBooking(WidgetRef ref, HomeItem flight) {
@@ -549,17 +342,8 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 }
 
-/// Home's top bar — the TokiGo wordmark, notifications and profile avatar.
-///
-/// The wordmark is the brand mark, so it is built ONLY through [AppWordmark]
-/// (a hand-rolled pair of text halves would mirror into "GoToki" in Arabic).
-/// It carries no greeting line: the logotype is Home's identity, and a
-/// personalized greeting lives in the composition contract (home_greeting)
-/// rather than occupying the page's loudest slot.
-// ─── Centered honest states (empty / offline) ───────────────────────────────
-
 /// Centers an honest state (empty / offline) in the feed's remaining
-/// viewport, between the pinned quick-action row and the pinned composer.
+/// viewport, between the pinned shell chrome and the pinned composer.
 ///
 /// The state scrolls only when its content genuinely cannot fit — a very
 /// small screen or a large system type scale — so the message is never
