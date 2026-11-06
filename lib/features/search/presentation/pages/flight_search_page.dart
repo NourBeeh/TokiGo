@@ -41,6 +41,10 @@ final flightFiltersProvider = StateProvider<SearchFilters>(
 /// capability.
 enum _TripType { oneWay, roundTrip, multiCity }
 
+/// Cabin classes sent with the search. Economy is the default, like the
+/// original form; the rest are switchable through the cabin segment.
+enum _Cabin { economy, premiumEconomy, business, first }
+
 /// Sort choices actually applied to the provider's results.
 enum _FlightSort { recommended, cheapest, fastest, longest }
 
@@ -77,6 +81,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
   DateTime _departure = DateTime.now().add(const Duration(days: 7));
   DateTime? _returnDate;
   _TripType _tripType = _TripType.oneWay;
+  _Cabin _cabin = _Cabin.economy;
   int _passengers = 1;
 
   /// The legs of a multi-city itinerary (owner decision, 2026-10-20). Empty
@@ -407,6 +412,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
         legs: legs,
         market: _marketCountryCode,
         currency: ref.read(currencyProvider),
+        cabinClass: _cabinToken,
       );
       _lastParams = params;
       ref.read(flightSearchControllerProvider.notifier).search(params);
@@ -429,6 +435,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
       adults: _passengers,
       market: _marketCountryCode,
       currency: ref.read(currencyProvider),
+      cabinClass: _cabinToken,
     );
     _lastParams = params;
     ref.read(flightSearchControllerProvider.notifier).search(params);
@@ -599,6 +606,40 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
     return _applySort(applyFlightFilters(state.results, filters));
   }
 
+  String _cabinLabel(AppLocalizations l10n) => switch (_cabin) {
+    _Cabin.economy => l10n.cabinEconomy,
+    _Cabin.premiumEconomy => l10n.cabinPremiumEconomy,
+    _Cabin.business => l10n.cabinBusiness,
+    _Cabin.first => l10n.cabinFirst,
+  };
+
+  /// The cabin token the search request and the cache key carry.
+  String get _cabinToken => switch (_cabin) {
+    _Cabin.economy => 'economy',
+    _Cabin.premiumEconomy => 'premium_economy',
+    _Cabin.business => 'business',
+    _Cabin.first => 'first',
+  };
+
+  Widget _buildCabinRow(AppLocalizations l10n) {
+    return SearchSegmentedControl<_Cabin>(
+      options: const <_Cabin>[
+        _Cabin.economy,
+        _Cabin.premiumEconomy,
+        _Cabin.business,
+        _Cabin.first,
+      ],
+      selected: _cabin,
+      labelOf: (_Cabin cabin) => switch (cabin) {
+        _Cabin.economy => l10n.cabinEconomy,
+        _Cabin.premiumEconomy => l10n.cabinPremiumEconomy,
+        _Cabin.business => l10n.cabinBusiness,
+        _Cabin.first => l10n.cabinFirst,
+      },
+      onSelected: (_Cabin cabin) => setState(() => _cabin = cabin),
+    );
+  }
+
   // ── Form ────────────────────────────────────────────────────────────────
   Widget _buildForm(AppLocalizations l10n) {
     return Column(
@@ -618,6 +659,8 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
           },
           onSelected: _setTripType,
         ),
+        const SizedBox(height: AppSpacing.md),
+        _buildCabinRow(l10n),
         const SizedBox(height: AppSpacing.md),
         if (_multiCity)
           ..._buildMultiCity(l10n)
@@ -807,7 +850,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
 
   Widget _buildPassengersRow(AppLocalizations l10n) {
     // The cabin shown is the cabin actually sent with the search.
-    final label = '${l10n.passengersCount(_passengers)} · ${l10n.cabinEconomy}';
+    final label = '${l10n.passengersCount(_passengers)} · ${_cabinLabel(l10n)}';
     return SearchStepperInput(
       icon: Icons.people_outline_rounded,
       label: label,

@@ -103,7 +103,6 @@
   "searchPackages": "إجازات",
   "homeNavActivities": "أنشطة",
   "homeNavGroups": "الجروبات",
-  "homeNavToday": "اليوم",
   "homeNavTrips": "رحلاتي",
   "searchTransfers": " transfére المطار",
   "groupsTitle": "الجروبات",
@@ -446,6 +445,9 @@
   "pickDateHint": "اختر التاريخ",
   "swapRoute": "تبديل نقطة الانطلاق والوصول",
   "cabinEconomy": "اقتصادية",
+  "cabinPremiumEconomy": "بريميوم",
+  "cabinBusiness": "أعمال",
+  "cabinFirst": "أولى",
   "passengersCount": "{count, plural, zero{لا مسافرين} one{مسافر واحد} two{مسافران} few{{count} مسافرين} many{{count} مسافرًا} other{{count} مسافر}}",
   "@passengersCount": {
     "placeholders": {

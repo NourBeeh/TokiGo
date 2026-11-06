@@ -17,6 +17,7 @@ class SearchFlightsUseCase {
     DateTime? returnDate,
     int? passengers,
     List<FlightSearchLeg>? legs,
+    String? cabinClass,
   }) {
     return repository.search(
       origin: origin,
@@ -25,6 +26,7 @@ class SearchFlightsUseCase {
       returnDate: returnDate,
       passengers: passengers,
       legs: legs,
+      cabinClass: cabinClass,
     );
   }
 }

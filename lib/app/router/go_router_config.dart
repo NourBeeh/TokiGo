@@ -225,18 +225,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     ],
                   ),
                   GoRoute(
-                    path: 'notifications',
-                    name: 'notifications',
-                    pageBuilder: (context, state) => slideFromRightPage(
-                      key: state.pageKey,
-                      restorationId: state.pageKey.value,
-                      name: 'notifications',
-                      child: const SwipeFromRightToPop(
-                        child: NotificationsPage(),
-                      ),
-                    ),
-                  ),
-                  GoRoute(
                     path: 'wishlist',
                     name: 'wishlist',
                     pageBuilder: (context, state) => slideFromRightPage(
@@ -244,16 +232,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                       restorationId: state.pageKey.value,
                       name: 'wishlist',
                       child: const SwipeFromRightToPop(child: WishlistPage()),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'profile',
-                    name: 'profile',
-                    pageBuilder: (context, state) => slideFromRightPage(
-                      key: state.pageKey,
-                      restorationId: state.pageKey.value,
-                      name: 'profile',
-                      child: const SwipeFromRightToPop(child: ProfilePage()),
                     ),
                   ),
                   GoRoute(
@@ -406,6 +384,33 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+      // Profile and Notifications — full, standalone pages. They are
+      // deliberately OUTSIDE the shell so they stack above every section with
+      // their own header and back control, never under the chrome.
+      GoRoute(
+        path: '/profile',
+        name: 'profile',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) => slideFromRightPage(
+          key: state.pageKey,
+          restorationId: state.pageKey.value,
+          name: 'profile',
+          child: const SwipeFromRightToPop(child: ProfilePage()),
+        ),
+      ),
+      GoRoute(
+        path: '/notifications',
+        name: 'notifications',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) => slideFromRightPage(
+          key: state.pageKey,
+          restorationId: state.pageKey.value,
+          name: 'notifications',
+          child: const SwipeFromRightToPop(
+            child: NotificationsPage(),
+          ),
+        ),
       ),
       // First-launch onboarding — shown when the Hive flag is unset.
       GoRoute(

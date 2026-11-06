@@ -211,16 +211,6 @@ void _setPhoneSize(WidgetTester tester) {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
-/// The shell's floating composer, identified by its [IgnorePointer] key.
-Finder _composer() => find.byKey(const ValueKey<String>('shell-ai-composer'));
-
-/// The [AnimatedOpacity] that hides/reveals the floating composer.
-Finder _composerOpacity() =>
-    find.byKey(const ValueKey<String>('shell-composer-opacity'));
-
-double _composerOpacityOf(WidgetTester tester) =>
-    tester.widget<AnimatedOpacity>(_composerOpacity()).opacity;
-
 Future<void> _scrollList(WidgetTester tester, double offset) async {
   await tester.drag(
     find.byKey(const ValueKey<String>('section-content-list')),
@@ -272,11 +262,9 @@ void main() {
     expect(router.state.matchedLocation, '/hotels');
     expect(find.text('Section: hotels 0'), findsOneWidget);
 
-    // Back to the dashboard through the Today tile.
-    await _tapAction(tester, HomeAction.today);
-    expect(router.state.matchedLocation, '/');
-    expect(find.byType(HomePage), findsOneWidget);
-    expect(find.text('Section: flights 0'), findsNothing);
+    // Tapping a section navigates; the dashboard itself has no tile any more,
+    // so '/' is reached only through app navigation (back or deep links).
+    expect(find.byKey(const ValueKey<String>('home-action-today')), findsNothing);
   });
 
   testWidgets('tapping the active section tile is a no-op', (tester) async {
@@ -311,7 +299,7 @@ void main() {
     expect(router.state.matchedLocation, '/flights');
   });
 
-  testWidgets('the composer hides on scroll-down and shows on scroll-up', (
+  testWidgets('the AI composer stays visible while scrolling', (
     tester,
   ) async {
     _setPhoneSize(tester);
@@ -319,35 +307,16 @@ void main() {
     await tester.pumpWidget(_app(router: router));
     await tester.pumpAndSettle();
 
-    expect(_composerOpacityOf(tester), 1);
+    expect(find.byKey(const ValueKey<String>('home-ai-composer')), findsOneWidget);
 
-    // Six sections: the feed may not scroll, so drive the same behaviour on a
-    // section route with an overflowing list.
+    // A section with an overflowing list: the composer never moves, even
+    // after scrolling down and back up.
     await _tapAction(tester, HomeAction.flights);
-    expect(_composerOpacityOf(tester), 1);
-
-    // Scroll down: the pill slides away and fades out.
     await _scrollList(tester, -600);
-    expect(_composerOpacityOf(tester), 0);
+    expect(find.byKey(const ValueKey<String>('home-ai-composer')), findsOneWidget);
 
-    // Scroll up: it comes back.
     await _scrollList(tester, 600);
-    expect(_composerOpacityOf(tester), 1);
-  });
-
-  testWidgets('the composer is visible at the top even while scrolling down', (
-    tester,
-  ) async {
-    _setPhoneSize(tester);
-    final GoRouter router = _router();
-    await tester.pumpWidget(_app(router: router));
-    await tester.pumpAndSettle();
-
-    await _tapAction(tester, HomeAction.flights);
-    // A tiny downward nudge does not hide the pill: it only hides once the
-    // user has clearly scrolled away.
-    await _scrollList(tester, -8);
-    expect(_composerOpacityOf(tester), 1);
+    expect(find.byKey(const ValueKey<String>('home-ai-composer')), findsOneWidget);
   });
 
   testWidgets('the chrome stays pinned and the pill floats while scrolling', (
@@ -360,7 +329,7 @@ void main() {
 
     final Finder bar = find.byKey(const ValueKey<String>('home-action-bar'));
     expect(bar, findsOneWidget);
-    expect(_composer(), findsOneWidget);
+    expect(find.byKey(const ValueKey<String>('home-ai-composer')), findsOneWidget);
 
     final Rect barBefore = tester.getRect(bar);
     expect(barBefore.top, greaterThan(0));
@@ -375,9 +344,9 @@ void main() {
 
     await _scrollList(tester, -600);
 
-    // The pinned chrome does not move; the pill itself slides away.
+    // The pinned chrome does not move; the pill stays put too.
     expect(tester.getRect(bar), barBefore);
-    expect(_composerOpacityOf(tester), 0);
+    expect(find.byKey(const ValueKey<String>('home-ai-composer')), findsOneWidget);
   });
 
   testWidgets('the composer floats with no full-width bar and no dead band', (
@@ -519,12 +488,11 @@ void main() {
     expect(router.state.matchedLocation, '/flights');
     expect(find.byType(HomePage), findsNothing);
 
-    await _tapAction(tester, HomeAction.today);
-    expect(router.state.matchedLocation, '/');
-    expect(find.byType(HomePage), findsOneWidget);
+    // No Today tile any more — the user returns to Home via back navigation.
+    expect(find.byKey(const ValueKey<String>('home-action-today')), findsNothing);
   });
 
-  testWidgets('Today tile is the first navigation tile and reads as selected', (
+  testWidgets('Home shows no active tile and the section route selects its own', (
     tester,
   ) async {
     _setPhoneSize(tester);
@@ -532,16 +500,13 @@ void main() {
     await tester.pumpWidget(_app(router: router));
     await tester.pumpAndSettle();
 
-    // Today reads as the selected section while on `/`.
-    expect(
-      _selectedOf(tester, HomeAction.today),
-      isTrue,
-      reason: 'the Today tile must read as selected on /',
-    );
+    // `/` has no tile of its own any more — nothing reads as selected.
+    expect(_selectedOf(tester, HomeAction.flights), isFalse);
 
     await _tapAction(tester, HomeAction.activities);
     expect(router.state.matchedLocation, '/packages');
-    // Today is no longer the active tile.
-    expect(_selectedOf(tester, HomeAction.today), isFalse);
+    // The packages route marks its own Activities tile as selected.
+    expect(_selectedOf(tester, HomeAction.activities), isTrue);
+    expect(_selectedOf(tester, HomeAction.flights), isFalse);
   });
 }

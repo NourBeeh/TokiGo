@@ -623,12 +623,6 @@ abstract class AppLocalizations {
   /// **'Groups'**
   String get homeNavGroups;
 
-  /// No description provided for @homeNavToday.
-  ///
-  /// In en, this message translates to:
-  /// **'Today'**
-  String get homeNavToday;
-
   /// No description provided for @homeNavTrips.
   ///
   /// In en, this message translates to:
@@ -2590,6 +2584,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Economy'**
   String get cabinEconomy;
+
+  /// No description provided for @cabinPremiumEconomy.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium'**
+  String get cabinPremiumEconomy;
+
+  /// No description provided for @cabinBusiness.
+  ///
+  /// In en, this message translates to:
+  /// **'Business'**
+  String get cabinBusiness;
+
+  /// No description provided for @cabinFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'First'**
+  String get cabinFirst;
 
   /// No description provided for @passengersCount.
   ///

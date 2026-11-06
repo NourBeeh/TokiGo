@@ -279,9 +279,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeNavGroups => 'الجروبات';
 
   @override
-  String get homeNavToday => 'اليوم';
-
-  @override
   String get homeNavTrips => 'رحلاتي';
 
   @override
@@ -1290,6 +1287,15 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cabinEconomy => 'اقتصادية';
+
+  @override
+  String get cabinPremiumEconomy => 'بريميوم';
+
+  @override
+  String get cabinBusiness => 'أعمال';
+
+  @override
+  String get cabinFirst => 'أولى';
 
   @override
   String passengersCount(int count) {

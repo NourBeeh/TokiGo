@@ -106,6 +106,7 @@ export class DuffelService implements FlightProvider {
     departure: Date;
     returnDate?: Date;
     passengers?: number;
+    cabinClass?: string;
   }): Promise<ProviderResult<any[]>> {
     if (!this.duffelClient) {
       return {
@@ -149,10 +150,17 @@ export class DuffelService implements FlightProvider {
             ];
 
       // Create offer request with Duffel API
+      const cabinClass = params.cabinClass?.trim().toLowerCase();
       const request = await this.duffelClient?.offerRequests.create({
         slices: slices as any[],
         passengers: Array(passengersCount).fill({ type: 'adult' }),
         return_offers: true,
+        // Cabin class the traveller picked in the Flights form; Duffel
+        // honours it verbatim and prices/offers accordingly. Absent ⇒ Duffel
+        // default (economy), matching the client-side default.
+        ...(cabinClass
+          ? { cabin_class: cabinClass as any }
+          : {}),
       });
 
       // Map Duffel's response to the shared flight offer format matching Flutter contract
@@ -176,6 +184,8 @@ export class DuffelService implements FlightProvider {
         const flightNum = firstSegment?.marketing_carrier_flight_number
           ? `${firstSegment?.marketing_carrier?.iata_code ?? ''}${firstSegment.marketing_carrier_flight_number}`
           : '';
+        const offerCabin =
+          firstSegment?.cabin_class ?? params.cabinClass ?? undefined;
         // Duffel sends `number_of_bookable_seats` on the offer when the
         // airline exposes it. It is carried through verbatim; when Duffel
         // omits it the field stays absent (never invented, never guessed).
@@ -202,6 +212,8 @@ export class DuffelService implements FlightProvider {
           currency: offer.total_currency ?? offer.currency ?? 'USD',
           duration: firstSlice?.duration,
           stops: Math.max(0, (firstSlice?.segments?.length ?? 1) - 1),
+          // Cabin class verbatim from the provider's segment; absent stays absent.
+          cabinClass: offerCabin,
           // Price provenance (spec point 7): search prices are provisional.
           // `expiresAt` is only carried when Duffel actually sent one — an
           // invented "30 minutes from now" window would be fabricated data.
@@ -215,6 +227,8 @@ export class DuffelService implements FlightProvider {
             baggage: offer.baggage ?? undefined,
             // Availability is only ever the provider's own count.
             ...(seatsLeft !== undefined ? { seatsLeft } : {}),
+            // Cabin class the traveller picked — verbatim from the provider.
+            ...(offerCabin ? { cabinClass: offerCabin } : {}),
           },
         };
       });

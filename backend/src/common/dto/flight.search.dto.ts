@@ -75,6 +75,20 @@ export class FlightSearchDto {
   @Matches(/^[A-Za-z]{3}$/, { message: 'currency must be an ISO-4217 code' })
   currency?: string;
 
+  /**
+   * Cabin class for the flight search (owner decision, 2026-11): the travel
+   * class the traveller picks in the Flights form. Duffel honours it verbatim
+   * (economy / premium_economy / business / first); providers without cabin
+   * support simply ignore it, and the traveller's intent is never silently
+   * narrowed.
+   */
+  @IsOptional()
+  @IsString()
+  @IsIn(['economy', 'premium_economy', 'business', 'first'], {
+    message: 'cabinClass must be one of economy, premium_economy, business, first',
+  })
+  cabinClass?: string;
+
   /** Informational traveller context; providers do not receive this field. */
   @IsOptional()
   @IsIn([...TRAVEL_MOODS])

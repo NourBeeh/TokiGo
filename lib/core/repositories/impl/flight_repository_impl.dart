@@ -26,6 +26,7 @@ class FlightRepositoryImpl implements FlightRepository {
     DateTime? returnDate,
     int? passengers,
     List<FlightSearchLeg>? legs,
+    String? cabinClass,
   }) async {
     final result = await apiClient.post<Map<String, dynamic>>(
       '/search/flights',
@@ -38,6 +39,7 @@ class FlightRepositoryImpl implements FlightRepository {
         legs: legs,
         market: _nextMarket,
         currency: _nextCurrency,
+        cabinClass: cabinClass,
       ),
     );
 
@@ -70,6 +72,7 @@ class FlightRepositoryImpl implements FlightRepository {
     List<FlightSearchLeg>? legs,
     String? market,
     String? currency,
+    String? cabinClass,
   }) => <String, dynamic>{
     'origin': origin,
     'destination': destination,
@@ -87,6 +90,7 @@ class FlightRepositoryImpl implements FlightRepository {
       ],
     if (market != null && market.isNotEmpty) 'market': market,
     if (currency != null && currency.isNotEmpty) 'currency': currency,
+    if (cabinClass != null && cabinClass.isNotEmpty) 'cabinClass': cabinClass,
   };
 
   @override

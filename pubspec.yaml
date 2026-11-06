@@ -83,7 +83,7 @@ flutter_launcher_icons:
   # iOS masks the icon itself: the master must be a full-bleed opaque square.
   remove_alpha_ios: true
   image_path: assets/icon/app_icon_1024.png
-  adaptive_icon_background: "#FF2D2D"
+  adaptive_icon_background: "#FFFFFF"
   adaptive_icon_foreground: assets/icon/app_icon_adaptive_foreground_1024.png
   adaptive_icon_monochrome: assets/icon/app_icon_adaptive_monochrome_1024.png
 

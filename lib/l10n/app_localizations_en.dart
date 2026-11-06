@@ -279,9 +279,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeNavGroups => 'Groups';
 
   @override
-  String get homeNavToday => 'Today';
-
-  @override
   String get homeNavTrips => 'Trips';
 
   @override
@@ -1287,6 +1284,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cabinEconomy => 'Economy';
+
+  @override
+  String get cabinPremiumEconomy => 'Premium';
+
+  @override
+  String get cabinBusiness => 'Business';
+
+  @override
+  String get cabinFirst => 'First';
 
   @override
   String passengersCount(int count) {

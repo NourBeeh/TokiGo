@@ -60,9 +60,6 @@ class AppChrome extends StatelessWidget {
   /// Gap between the pill and the bottom edge of the screen.
   static const double composerBottomMargin = AppSpacing.md;
 
-  /// Motion for hiding / revealing the composer with the scroll direction.
-  static const Duration composerTransition = Duration(milliseconds: 220);
-
   /// Space a routed scroll view must reserve so its last card is never hidden
   /// behind the floating composer.
   static double composerReserve(BuildContext context) =>
@@ -76,20 +73,10 @@ class AppChrome extends StatelessWidget {
   /// The current router location, used to mark the active navigation tile.
   final String location;
 
-  HomeActionDefinition _today(AppLocalizations l10n) => HomeActionDefinition(
-    action: HomeAction.today,
-    label: l10n.homeNavToday,
-    icon: Icons.home_rounded,
-    path: '/',
-  );
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final List<HomeActionDefinition> definitions = <HomeActionDefinition>[
-      _today(l10n),
-      ...homeActionDefinitions(l10n),
-    ];
+    final List<HomeActionDefinition> definitions = homeActionDefinitions(l10n);
     final Map<HomeAction, String> paths = <HomeAction, String>{
       for (final HomeActionDefinition definition in definitions)
         definition.action: definition.path,

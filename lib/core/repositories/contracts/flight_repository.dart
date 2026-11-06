@@ -10,6 +10,7 @@ abstract interface class FlightRepository {
     DateTime? returnDate,
     int? passengers,
     List<FlightSearchLeg>? legs,
+    String? cabinClass,
   });
 
   Future<ApiResult<FlightOffer>> getById(String id);

@@ -51,13 +51,13 @@ List<HomeActionDefinition> homeActionDefinitions(AppLocalizations l10n) {
     HomeActionDefinition(
       action: HomeAction.flights,
       label: l10n.searchFlights,
-      icon: Icons.flight_takeoff_rounded,
+      icon: Icons.flight_rounded,
       path: '/flights',
     ),
     HomeActionDefinition(
       action: HomeAction.hotels,
       label: l10n.searchHotels,
-      icon: Icons.hotel_rounded,
+      icon: Icons.home_rounded,
       path: '/hotels',
     ),
     HomeActionDefinition(
@@ -182,6 +182,9 @@ class _HomeActionBarState extends State<HomeActionBar> {
   /// True while the row has more content past its trailing edge.
   bool _hasMoreAfter = false;
 
+  /// True while earlier items in the row are scrolled off the leading edge.
+  bool _hasMoreBefore = false;
+
   @override
   void initState() {
     super.initState();
@@ -198,10 +201,15 @@ class _HomeActionBarState extends State<HomeActionBar> {
 
   void _updateOverflowHint() {
     if (!mounted || !_controller.hasClients) return;
-    final bool hasMore = _controller.position.extentAfter > 0.5;
-    if (hasMore != _hasMoreAfter) {
-      setState(() => _hasMoreAfter = hasMore);
+    final bool hasMoreBefore = _controller.position.extentBefore > 0.5;
+    final bool hasMoreAfter = _controller.position.extentAfter > 0.5;
+    if (hasMoreBefore == _hasMoreBefore && hasMoreAfter == _hasMoreAfter) {
+      return;
     }
+    setState(() {
+      _hasMoreBefore = hasMoreBefore;
+      _hasMoreAfter = hasMoreAfter;
+    });
   }
 
   @override
@@ -244,6 +252,28 @@ class _HomeActionBarState extends State<HomeActionBar> {
               );
             },
           ),
+          // The "more actions before" cue: the same fade mirrored to the
+          // leading edge once the row is scrolled away from its start, so the
+          // edge the content exits through fades in both directions.
+          if (_hasMoreBefore)
+            PositionedDirectional(
+              top: 0,
+              bottom: 0,
+              start: 0,
+              width: 28,
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  key: const ValueKey<String>('home-action-bar-overflow-start'),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: AlignmentDirectional.centerStart,
+                      end: AlignmentDirectional.centerEnd,
+                      colors: <Color>[canvas, canvas.withValues(alpha: 0)],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           // The "more actions" cue: a narrow fade in the canvas colour at the
           // trailing edge. It is purely visual and never intercepts a tap.
           if (_hasMoreAfter)

@@ -67,8 +67,8 @@ void main() {
       'Groups',
     ];
     final List<IconData> icons = <IconData>[
-      Icons.flight_takeoff_rounded,
-      Icons.hotel_rounded,
+      Icons.flight_rounded,
+      Icons.home_rounded,
       Icons.directions_car_rounded,
       Icons.beach_access_rounded,
       Icons.groups_rounded,

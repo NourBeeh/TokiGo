@@ -103,7 +103,6 @@
   "searchPackages": "Holidays",
   "homeNavActivities": "Activities",
   "homeNavGroups": "Groups",
-  "homeNavToday": "Today",
   "homeNavTrips": "Trips",
   "searchTransfers": "Airport transfer",
   "groupsTitle": "Groups",
@@ -454,6 +453,9 @@
   "pickDateHint": "Select date",
   "swapRoute": "Swap origin and destination",
   "cabinEconomy": "Economy",
+  "cabinPremiumEconomy": "Premium",
+  "cabinBusiness": "Business",
+  "cabinFirst": "First",
   "passengersCount": "{count, plural, =1{1 passenger} other{{count} passengers}}",
   "@passengersCount": {
     "placeholders": {

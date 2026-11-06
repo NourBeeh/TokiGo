@@ -106,10 +106,12 @@ String flightSearchCacheKey({
   List<FlightSearchLeg>? legs,
   String? market,
   String? currency,
+  String? cabinClass,
 }) {
   final sb = StringBuffer();
   sb.write('flight|');
   final String currencyKey = currency?.toUpperCase() ?? '';
+  final String cabinKey = cabinClass?.trim().toLowerCase() ?? '';
   // A multi-city itinerary is its own search: its legs are part of the key,
   // so a DXB→FCO→JFK result can never be served for a DXB→FCO query.
   if (legs != null && legs.isNotEmpty) {
@@ -123,7 +125,7 @@ String flightSearchCacheKey({
     }
     sb.write('|');
     sb.write((passengers ?? 1).toString());
-    sb.write('|${market?.toUpperCase() ?? ''}|$currencyKey');
+    sb.write('|${market?.toUpperCase() ?? ''}|$currencyKey|$cabinKey');
     return sb.toString();
   }
   sb.write(origin.toLowerCase());
@@ -139,7 +141,7 @@ String flightSearchCacheKey({
     sb.write('|');
     sb.write(passengers);
   }
-  sb.write('|${market?.toUpperCase() ?? ''}|$currencyKey');
+  sb.write('|${market?.toUpperCase() ?? ''}|$currencyKey|$cabinKey');
   return sb.toString();
 }
 

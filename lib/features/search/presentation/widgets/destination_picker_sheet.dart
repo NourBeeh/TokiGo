@@ -267,46 +267,56 @@ class _PickerSheetState extends State<_PickerSheet> {
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
     final l10n = AppLocalizations.of(context);
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final MediaQueryData media = MediaQuery.of(context);
+    final double bottomInset = media.viewInsets.bottom;
     final results = _filtered;
 
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
-      child: Container(
+      child: ConstrainedBox(
+        // Cap the sheet at 85% of the screen height and give the suggestion
+        // list the REST of that height, strictly (tight fit) — with
+        // `mainAxisSize.min` + a loose `Flexible` the list used to collapse
+        // to zero height when the keyboard pushed the sheet up, hiding every
+        // airport.
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.75,
+          maxHeight: media.size.height * 0.85,
         ),
-        decoration: BoxDecoration(
+        child: Material(
           color: context.tokigoColors.surface,
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(AppRadius.xl),
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    widget.title,
-                    style: typography.title.copyWith(
-                      color: context.tokigoColors.textPrimary,
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.sm,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      widget.title,
+                      style: typography.title.copyWith(
+                        color: context.tokigoColors.textPrimary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  TextField(
-                    controller: _searchController,
-                    onChanged: (v) => setState(() => _query = v),
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.search_rounded),
-                      hintText: l10n?.pickerSearchHint ?? 'Search…',
-                      suffixIcon: _query.isNotEmpty
-                          ? Pressable.wrap(
-                              child: IconButton(
+                    const SizedBox(height: AppSpacing.md),
+                    TextField(
+                      controller: _searchController,
+                      onChanged: (v) => setState(() => _query = v),
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        hintText: l10n?.pickerSearchHint ?? 'Search…',
+                        suffixIcon: _query.isNotEmpty
+                            ? IconButton(
                                 icon: const Icon(
                                   Icons.close_rounded,
                                   size: 18,
@@ -315,42 +325,46 @@ class _PickerSheetState extends State<_PickerSheet> {
                                   _searchController.clear();
                                   setState(() => _query = '');
                                 },
-                              ),
-                            )
-                          : null,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Flexible(
-              child: results.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.all(AppSpacing.xxxl),
-                      child: Text(
-                        l10n?.pickerNoMatches ?? 'No matches',
-                        style: typography.body.copyWith(
-                          color: context.tokigoColors.textTertiary,
-                        ),
+                              )
+                            : null,
                       ),
-                    )
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: results.length,
-                      itemBuilder: (context, index) {
-                        final entry = results[index];
-                        return _PickerTile(
-                          entry: entry,
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            widget.onSelected(entry);
-                          },
-                        );
-                      },
                     ),
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom),
-          ],
+                  ],
+                ),
+              ),
+              // Tight fit: the list always takes every pixel the header leaves,
+              // so it can never collapse — keyboard or not.
+              Expanded(
+                child: results.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.all(AppSpacing.xxxl),
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: Text(
+                            l10n?.pickerNoMatches ?? 'No matches',
+                            style: typography.body.copyWith(
+                              color: context.tokigoColors.textTertiary,
+                            ),
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: results.length,
+                        itemBuilder: (context, index) {
+                          final entry = results[index];
+                          return _PickerTile(
+                            entry: entry,
+                            onTap: () {
+                              Navigator.of(context).pop();
+                              widget.onSelected(entry);
+                            },
+                          );
+                        },
+                      ),
+              ),
+              SizedBox(height: media.padding.bottom),
+            ],
+          ),
         ),
       ),
     );

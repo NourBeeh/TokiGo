@@ -78,6 +78,7 @@ class FlightSearchController extends StateNotifier<FlightSearchState> {
           : const <FlightSearchLeg>[],
       market: params.market,
       currency: params.currency,
+      cabinClass: params.cabinClass,
     );
 
     // Try to load from cache first (for instant UI)
@@ -109,6 +110,7 @@ class FlightSearchController extends StateNotifier<FlightSearchState> {
       passengers: params.adults,
       // A multi-city trip travels as its own legs; one-way and round-trip keep
       // the single leg they always had.
+      cabinClass: params.cabinClass,
       legs: params.tripType == 'multicity'
           ? params.effectiveLegs
           : const <FlightSearchLeg>[],
