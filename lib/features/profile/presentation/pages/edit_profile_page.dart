@@ -169,7 +169,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       body: SafeArea(
         child: Column(
           children: <Widget>[
-            AppPageHeader(title: l10n.editProfile),
+            AppPageHeader(subtitle: l10n.editProfileSubtitle),
             Expanded(
               child: Form(
                 key: _formKey,

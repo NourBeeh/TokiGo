@@ -46,8 +46,8 @@ List<AnimatedContainer> _tiles(WidgetTester tester) {
 void main() {
   testWidgets('keeps the original card design at a fixed size', (tester) async {
     _phoneSize(tester);
-    // Wide enough to lay out all six tiles at once (the real Home row is a
-    // lazy horizontal list, so a 320dp viewport builds only the first five).
+    // Wide enough to lay out all five tiles at once (the real Home row is a
+    // lazy horizontal list, so a 320dp viewport builds only the first four).
     await tester.pumpWidget(
       _app(HomeActionBar(onActionSelected: (_) {}), width: 640),
     );
@@ -57,7 +57,7 @@ void main() {
       of: find.byType(HomeActionBar),
       matching: find.byType(AnimatedContainer),
     );
-    expect(tileFinders, findsNWidgets(6));
+    expect(tileFinders, findsNWidgets(5));
 
     final List<String> labels = <String>[
       'Flights',
@@ -65,7 +65,6 @@ void main() {
       'Cars Rental',
       'Activities',
       'Groups',
-      'Trips',
     ];
     final List<IconData> icons = <IconData>[
       Icons.flight_takeoff_rounded,
@@ -73,10 +72,9 @@ void main() {
       Icons.directions_car_rounded,
       Icons.beach_access_rounded,
       Icons.groups_rounded,
-      Icons.luggage_rounded,
     ];
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 5; i++) {
       final Finder tile = tileFinders.at(i);
       final BoxDecoration decoration =
           tester.widget<AnimatedContainer>(tile).decoration! as BoxDecoration;
@@ -198,10 +196,12 @@ void main() {
       tester.element(find.byType(HomeActionBar)),
     )!;
     final List<HomeActionDefinition> definitions = homeActionDefinitions(l10n);
-    expect(definitions.length, 6);
+    // The Trips tile is removed from the bar (owner decision, 2026-11): My
+    // Trips stays reachable from Profile. The enum value itself is kept.
+    expect(definitions.length, 5);
     expect(
       definitions.map((definition) => definition.action).toList(),
-      HomeAction.values,
+      isNot(contains(HomeAction.trips)),
     );
 
     final ListView list = tester.widget<ListView>(
@@ -255,7 +255,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(scrollable.position.pixels, greaterThan(0));
     // The lazy row builds the last tile only once the row travels.
-    expect(find.text('رحلاتي'), findsOneWidget);
+    expect(find.text('الجروبات'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

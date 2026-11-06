@@ -133,8 +133,9 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
             color: HomeDesignTokens.borderOf(context),
             width: 1,
           ),
-          // No elevation/shadow around the search box (audit requirement).
-          boxShadow: const <BoxShadow>[],
+          // The pill floats over the feed, so it carries its own soft halo
+          // instead of the flat "no shadow" treatment a card gets.
+          boxShadow: HomeDesignTokens.composerShadowOf(context),
         ),
         child: Padding(
           // Slim pill: the vertical inset is one step below the horizontal one

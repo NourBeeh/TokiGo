@@ -41,7 +41,7 @@ class AiMemoryPage extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              AppPageHeader(title: l10n.aiMemoryTitle),
+              AppPageHeader(subtitle: l10n.aiMemorySubtitle),
               Expanded(
                 child: signedIn.maybeWhen(
                   loading: () =>

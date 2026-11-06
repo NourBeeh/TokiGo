@@ -22,15 +22,28 @@ import 'package:tokigo/l10n/app_localizations.dart';
 /// The route, the scaffold identity and [PackageSearchCard] are kept intact —
 /// a real package provider plugs straight back in here.
 class PackagesSearchPage extends StatelessWidget {
-  const PackagesSearchPage({super.key});
+  const PackagesSearchPage({
+    super.key,
+    this.embedded = false,
+    this.bottomPadding = 0,
+  });
+
+  /// Renders the existing content inside Home's single Scaffold instead of
+  /// its own route-level Scaffold.
+  final bool embedded;
+
+  /// Extra space reserved under the scroll content, e.g. Home's floating AI
+  /// composer, so the actions are never hidden behind it.
+  final double bottomPadding;
 
   @override
   Widget build(BuildContext context) {
     final tc = context.tokigoColors;
     final l10n = AppLocalizations.of(context)!;
     return SearchScaffold(
-      title: l10n.searchPackages,
       subtitle: l10n.packagesSubtitle,
+      embedded: embedded,
+      bottomPadding: bottomPadding,
       form: const SizedBox.shrink(),
       body: Column(
         children: <Widget>[

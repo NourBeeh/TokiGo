@@ -21,7 +21,7 @@ class TripBuilderPage extends ConsumerWidget {
         body: SafeArea(
           child: Column(
             children: [
-              AppPageHeader(title: l10n.tripBuilderTitle, subtitle: ''),
+              AppPageHeader(subtitle: l10n.tripBuilderSubtitle),
               Text(l10n.tripBuilderStartFromHome),
             ],
           ),
@@ -36,8 +36,9 @@ class TripBuilderPage extends ConsumerWidget {
           slivers: [
             SliverToBoxAdapter(
               child: AppPageHeader(
-                title: l10n.tripBuilderTitle,
-                subtitle: draft.destination,
+                subtitle: draft.destination.isEmpty
+                    ? l10n.tripBuilderSubtitle
+                    : draft.destination,
                 trailing: Pressable.wrap(
                   child: IconButton(
                     tooltip: l10n.tripBuilderCancel,

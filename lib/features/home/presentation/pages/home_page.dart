@@ -56,10 +56,18 @@ class _HomePageState extends ConsumerState<HomePage>
   final GlobalKey _discoverKey = GlobalKey();
   bool _scrollScheduled = false;
 
-  /// Bottom space reserved for the persistent composer (fixed field height +
-  /// vertical padding). The composer never changes size, so the page content
-  /// never shifts either.
-  static const double _composerReserve = 56 + AppSpacing.sm * 2;
+  /// The AI composer pill: a fixed 56dp tall at every scroll position.
+  static const double _pillHeight = 56;
+
+  /// Gap between the pill and the bottom edge of the screen.
+  static const double _pillBottomMargin = AppSpacing.md;
+
+  /// Space the scrollables reserve so the last card is never hidden behind
+  /// the floating pill. Reserved ONCE, by each scrollable — never by the
+  /// layout around it, which is what used to leave a dead empty band above
+  /// the pill.
+  static double composerReserve(BuildContext context) =>
+      _pillHeight + _pillBottomMargin + MediaQuery.paddingOf(context).bottom;
 
   @override
   void initState() {
@@ -172,31 +180,50 @@ class _HomePageState extends ConsumerState<HomePage>
       backgroundColor: HomeDesignTokens.backgroundOf(context),
       // H1: pull-to-refresh removed by product decision — Home refreshes
       // prices/availability via live validation only (H2).
+      //
+      // The keyboard resizes this body, so the floating pill (bottom: 0 of the
+      // Stack) rides up with it and is never covered.
       body: SafeArea(
         top: true,
-        // The feed stays edge-to-edge under the navigation bar; the pinned
-        // composer below owns (and reserves) that inset itself.
+        // The feed stays edge-to-edge under the navigation bar; the pill owns
+        // (and reserves) that inset itself.
         bottom: false,
-        child: Column(
+        child: Stack(
           children: <Widget>[
-            // Pinned top: the header and the quick-action row. Neither moves,
-            // resizes or animates while the feed scrolls beneath them.
-            _buildTopArea(context, selectedAction),
-            Expanded(
-              child: Padding(
-                // Reserve the composer's footprint so cards are never hidden
-                // behind it. The composer never changes size, so the page
-                // never shifts either.
-                padding: EdgeInsets.only(
-                  bottom:
-                      _composerReserve + MediaQuery.paddingOf(context).bottom,
+            // Bottom layer: the pinned top area and the scrolling content. The
+            // content reserves the pill's footprint ITSELF (each scrollable
+            // does), so cards can scroll beneath the floating pill and nothing
+            // is cut off.
+            Column(
+              children: <Widget>[
+                // Pinned top: the header and the quick-action row. Neither
+                // moves, resizes or animates while the feed scrolls beneath.
+                _buildTopArea(context, selectedAction),
+                Expanded(
+                  child: selectedAction == null
+                      ? _buildDashboard(state, ref)
+                      : _buildSelectedAction(selectedAction),
                 ),
-                child: selectedAction == null
-                    ? _buildDashboard(state, ref)
-                    : _buildSelectedAction(selectedAction),
+              ],
+            ),
+            // Top layer: ONLY the pill. No full-width background — the canvas
+            // shows through, so there is no dead band above it.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Padding(
+                padding: EdgeInsetsDirectional.fromSTEB(
+                  AppSpacing.lg,
+                  0,
+                  AppSpacing.lg,
+                  _pillBottomMargin + MediaQuery.paddingOf(context).bottom,
+                ),
+                child: HomeAiSearchField(
+                  accentColor: HomeDesignTokens.accentOf(context),
+                ),
               ),
             ),
-            _buildBottomComposerArea(context),
           ],
         ),
       ),
@@ -240,29 +267,6 @@ class _HomePageState extends ConsumerState<HomePage>
     );
   }
 
-  /// The pinned AI composer. It owns (and reserves) the bottom system inset,
-  /// and its size is fixed at every scroll position — no compaction, no
-  /// animation, no hint swap.
-  Widget _buildBottomComposerArea(BuildContext context) {
-    return ColoredBox(
-      color: HomeDesignTokens.backgroundOf(context),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(
-            AppSpacing.lg,
-            AppSpacing.sm,
-            AppSpacing.lg,
-            AppSpacing.sm,
-          ),
-          child: HomeAiSearchField(
-            accentColor: HomeDesignTokens.accentOf(context),
-          ),
-        ),
-      ),
-    );
-  }
-
   /// Switches the in-page Home content. Tapping the already-selected action
   /// returns to the full dashboard (the quick-action tiles are the only Home
   /// switcher).
@@ -274,11 +278,33 @@ class _HomePageState extends ConsumerState<HomePage>
 
   /// The normal Home dashboard: the composed feed inside ONE vertical
   /// scrollable owned by Home. The header and quick-action row are pinned
-  /// above it, the composer below.
+  /// above it; the floating pill is the feed's own bottom padding.
   Widget _buildDashboard(HomeState state, WidgetRef ref) {
+    // The pill's footprint is appended INSIDE the same sliver list as the
+    // feed's own bottom spacer (never as a SliverPadding around a group):
+    // `SliverFillRemaining` measures its child's intrinsic height, and a
+    // `SliverMainAxisGroup` cannot supply intrinsics — the empty/offline state
+    // crashed the layout with "LayoutBuilder does not support returning
+    // intrinsic dimensions".
+    final List<Widget> slivers = _feedSlivers(state, ref);
+    // The fill states (empty / offline) subtract the pill's footprint inside
+    // `_CenteredFeedState` itself, so they must not reserve it again here —
+    // that would leave the scroll view an extra reserve's worth of dead extent.
+    // Keyed on the status, not on the trailing widget: the success feed also
+    // ends in a spacer (its own breathing room), and it DOES need the reserve.
+    final bool fillsViewport =
+        state.status == HomeStatus.empty || state.status == HomeStatus.error;
     return CustomScrollView(
       controller: _feedController,
-      slivers: _feedSlivers(state, ref),
+      slivers: <Widget>[
+        ...slivers,
+        // Reserved ONCE, inside the scrollable, so the last card scrolls up
+        // past the pill instead of being clipped by a gap in the layout — and
+        // the empty/offline state centres between the pinned row and the pill
+        // instead of the bottom of the screen.
+        if (!fillsViewport)
+          SliverToBoxAdapter(child: SizedBox(height: composerReserve(context))),
+      ],
     );
   }
 
@@ -293,37 +319,48 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 
   Widget _buildFeatureContent(HomeAction action, SearchContext searchContext) {
+    // Each embedded page reserves the pill's footprint in its OWN scrollable,
+    // so its last field/button is never hidden behind the floating pill and
+    // its own canvas fills the reserve.
+    final double reserve = composerReserve(context);
     switch (action) {
       case HomeAction.flights:
         return FlightSearchPage(
           key: const ValueKey<String>('home-flights-content'),
           embedded: true,
           searchContext: searchContext,
+          bottomPadding: reserve,
         );
       case HomeAction.hotels:
         return HotelSearchPage(
           key: const ValueKey<String>('home-hotels-content'),
           embedded: true,
           searchContext: searchContext,
+          bottomPadding: reserve,
         );
       case HomeAction.cars:
-        return const CarSearchPage(
-          key: ValueKey<String>('home-cars-content'),
+        return CarSearchPage(
+          key: const ValueKey<String>('home-cars-content'),
           embedded: true,
+          bottomPadding: reserve,
         );
       case HomeAction.activities:
         // The old Activities tile opened the packages/tour-programs search.
-        return const PackagesSearchPage(
-          key: ValueKey<String>('home-activities-content'),
+        return PackagesSearchPage(
+          key: const ValueKey<String>('home-activities-content'),
+          embedded: true,
+          bottomPadding: reserve,
         );
       case HomeAction.groups:
-        return const GroupsPage(
-          key: ValueKey<String>('home-groups-content'),
+        return GroupsPage(
+          key: const ValueKey<String>('home-groups-content'),
+          bottomPadding: reserve,
         );
       case HomeAction.trips:
-        return const BagPage(
-          key: ValueKey<String>('home-trips-content'),
+        return BagPage(
+          key: const ValueKey<String>('home-trips-content'),
           embedded: true,
+          bottomPadding: reserve,
         );
     }
   }
@@ -423,6 +460,9 @@ class _HomePageState extends ConsumerState<HomePage>
           SliverFillRemaining(
             hasScrollBody: false,
             child: _CenteredFeedState(
+              // The pill's footprint stays reserved for this state too, so the
+              // message centres between the pinned row and the pill.
+              reserveBottom: composerReserve(context),
               child: AppMessageState(
                 icon: Icons.explore_off_outlined,
                 title: l10n.homeEmptyTitle,
@@ -439,6 +479,7 @@ class _HomePageState extends ConsumerState<HomePage>
           SliverFillRemaining(
             hasScrollBody: false,
             child: _CenteredFeedState(
+              reserveBottom: composerReserve(context),
               child: AppMessageState(
                 icon: Icons.wifi_off_rounded,
                 hue: context.tokigoColors.danger,
@@ -623,26 +664,41 @@ class _HomeAvatar extends StatelessWidget {
 /// The state scrolls only when its content genuinely cannot fit — a very
 /// small screen or a large system type scale — so the message is never
 /// clipped and never overlaps the pinned chrome.
+///
+/// [reserveBottom] is subtracted from the viewport height the message centres
+/// in, so the pill's footprint is honoured without a trailing spacer sliver
+/// (a second sliver after `SliverFillRemaining` forces it to measure its
+/// child's intrinsics, which [LayoutBuilder] cannot provide).
 class _CenteredFeedState extends StatelessWidget {
-  const _CenteredFeedState({required this.child});
+  const _CenteredFeedState({required this.child, this.reserveBottom = 0});
 
   final Widget child;
 
+  /// Space kept clear at the bottom of the state's own viewport (the floating
+  /// AI composer's footprint).
+  final double reserveBottom;
+
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        final double? viewportHeight = constraints.maxHeight.isFinite
-            ? constraints.maxHeight
-            : null;
-        if (viewportHeight == null) return child;
-        return SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: viewportHeight),
-            child: Center(child: child),
-          ),
-        );
-      },
+    // `SliverFillRemaining` fills the viewport and hands this child TIGHT
+    // constraints, so the reserve is simply subtracted here — and `Padding` +
+    // `Center` are both intrinsics-safe.
+    //
+    // This used to be a `LayoutBuilder`, which cannot answer intrinsic
+    // dimensions: `RenderSliverFillRemaining.performLayout` always asks its
+    // child for `getMaxIntrinsicHeight`, so every debug build of the
+    // empty/offline state threw "LayoutBuilder does not support returning
+    // intrinsic dimensions". `Padding`/`Center` implement intrinsics, so the
+    // question is answered instead of crashing.
+    //
+    // No `SingleChildScrollView` either: it would give `Center` an UNBOUNDED
+    // height, which makes `Center` top-align the message. `SliverFillRemaining`
+    // already sizes itself to `max(viewport, child intrinsic)`, so a message
+    // that genuinely cannot fit grows the sliver and the outer feed scrolls —
+    // the message is never clipped and never overlaps the pill.
+    return Padding(
+      padding: EdgeInsets.only(bottom: reserveBottom),
+      child: Center(child: child),
     );
   }
 }

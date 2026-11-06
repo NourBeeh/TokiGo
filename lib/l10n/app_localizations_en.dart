@@ -30,10 +30,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bag => 'My Trips';
 
   @override
+  String get bagSubtitle => 'Your confirmed bookings, their status and references.';
+
+  @override
   String get notifications => 'Notifications';
 
   @override
+  String get notificationsSubtitle => 'Booking updates, price alerts and reminders.';
+
+  @override
   String get profile => 'Profile';
+
+  @override
+  String get profileSubtitle => 'Your account, trips and preferences.';
 
   @override
   String get profileGuestTitle => 'You\'re browsing as a guest';
@@ -291,6 +300,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signIn => 'Sign in';
 
   @override
+  String get authSubtitle => 'Keep your trips, wishlist and preferences in one account.';
+
+  @override
   String get continueWithGoogle => 'Continue with Google';
 
   @override
@@ -324,6 +336,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings => 'Settings';
 
   @override
+  String get settingsSubtitle => 'Language, theme, currency and account.';
+
+  @override
   String get language => 'Language';
 
   @override
@@ -333,10 +348,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wishlist => 'Wishlist';
 
   @override
+  String get wishlistSubtitle => 'The stays you kept, at the provider\'s own price.';
+
+  @override
   String get myTrips => 'My trips';
 
   @override
   String get tripDetails => 'Trip details';
+
+  @override
+  String get tripDetailsSubtitle => 'Everything this booking really carries.';
 
   @override
   String get upcoming => 'Upcoming';
@@ -410,10 +431,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reviewBooking => 'Review booking';
 
   @override
+  String get reviewBookingSubtitle => 'Check the offer, travellers and total before paying.';
+
+  @override
   String get passengerDetails => 'Passenger details';
 
   @override
+  String get passengerDetailsSubtitle => 'Who is travelling and how to reach you.';
+
+  @override
   String get addOns => 'Add-ons';
+
+  @override
+  String get addOnsSubtitle => 'Extra bags, seats and meals sold by the provider.';
 
   @override
   String bookingStepOf(String current, String total) {
@@ -440,6 +470,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get payment => 'Payment';
+
+  @override
+  String get paymentSubtitle => 'Pay the provider\'s total for this trip.';
 
   @override
   String get confirmation => 'Confirmation';
@@ -1100,6 +1133,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tripBuilderEmpty => 'Choose a hotel, flight, or car to add it here.';
+
+  @override
+  String get tripBuilderSubtitle => 'Collect hotels, flights and cars into one plan.';
 
   @override
   String get tripBuilderRemove => 'Remove from trip';
@@ -1849,6 +1885,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get editProfile => 'Edit profile';
+
+  @override
+  String get editProfileSubtitle => 'Your name, contact details and nationality.';
 
   @override
   String get firstName => 'First name';

@@ -72,7 +72,7 @@ class BookingReviewPage extends ConsumerWidget {
                 // The empty state is still a pushed page: it keeps the same
                 // header (and therefore the same back contract) as the loaded
                 // one instead of stranding the user with no way back.
-                AppPageHeader(title: l10n.reviewBooking),
+                AppPageHeader(subtitle: l10n.reviewBookingSubtitle),
                 Expanded(
                   child: Center(
                     child: Text(
@@ -148,7 +148,7 @@ class BookingReviewPage extends ConsumerWidget {
             // Seamless merged header. The step bar lives in the header's own
             // slot (doc 21 §1.1), not in a hand-rolled row under it.
             AppPageHeader(
-              title: l10n.reviewBooking,
+              subtitle: l10n.reviewBookingSubtitle,
               steps: const StepProgress(current: 0, total: 4),
             ),
             Expanded(

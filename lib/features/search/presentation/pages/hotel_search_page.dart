@@ -58,7 +58,12 @@ const List<int?> _classChips = <int?>[null, 5, 4, 3];
 /// form again. Below it: the class pill row, a results bar with the real count
 /// and the sort control (decision D5), then card A for every stay.
 class HotelSearchPage extends ConsumerStatefulWidget {
-  const HotelSearchPage({super.key, this.embedded = false, this.searchContext});
+  const HotelSearchPage({
+    super.key,
+    this.embedded = false,
+    this.searchContext,
+    this.bottomPadding = 0,
+  });
 
   /// Renders the existing hotel content inside Home's single Scaffold instead
   /// of its own route-level Scaffold.
@@ -67,6 +72,10 @@ class HotelSearchPage extends ConsumerStatefulWidget {
   /// Home's travel context, passed directly for the embedded case (a pushed
   /// route still receives the same value through the router `extra`).
   final SearchContext? searchContext;
+
+  /// Extra space reserved under the scroll content, e.g. Home's floating AI
+  /// composer, so the last result is never hidden behind it.
+  final double bottomPadding;
 
   @override
   ConsumerState<HotelSearchPage> createState() => _HotelSearchPageState();
@@ -398,9 +407,9 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
         _visibleResults(state, filters).length > kSearchLazyResultsThreshold;
 
     return SearchScaffold(
-      title: l10n.searchHotels,
       subtitle: _summary(l10n),
       embedded: widget.embedded,
+      bottomPadding: widget.bottomPadding,
       headerActions: const SearchViewToggle(),
       // Collapsed after a search: the reference's floating summary card.
       form: showSummary ? _buildSummaryCard(l10n) : _buildForm(l10n),

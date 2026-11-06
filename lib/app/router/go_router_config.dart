@@ -1,8 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_provider.dart';
+import '../../core/auth/auth_state.dart';
+import '../../core/navigation/resume_destination.dart';
+import '../../core/storage/resume_destination_store.dart';
 import '../../core/domain/models/home/home_item.dart';
 import '../../core/domain/models/offers/car_offer.dart';
 import '../../core/domain/models/offers/flight_offer.dart';
@@ -43,6 +48,7 @@ import '../../features/search/presentation/pages/search_hub_page.dart';
 import '../../shared/widgets/placeholder_page.dart';
 import '../../shared/providers/onboarding_provider.dart';
 import '../config/app_config.dart';
+import '../providers/resume_providers.dart';
 import '../shell.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -52,15 +58,36 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 /// intentionally off — do not lock the whole app behind auth.
 const bool _authRedirectEnabled = false;
 
+/// Debounced write of the resume destination (Task 11).
+///
+/// A navigation burst (quick-action tap → page → detail) would otherwise write
+/// the box several times; one write a second after the last change is enough,
+/// and the in-memory state is already current for the button.
+Timer? _resumePersistTimer;
+
+void _scheduleResumePersist(String location) {
+  _resumePersistTimer?.cancel();
+  _resumePersistTimer = Timer(const Duration(seconds: 1), () {
+    ResumeDestinationStore.write(location);
+  });
+}
+
 /// Tab branches of the bottom navigation shell.
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   final authUser = ref.watch(authUserProvider);
   final onboarding = ref.watch(onboardingProvider);
+  final savedResume = ref.watch(savedResumeLocationProvider);
 
-  return GoRouter(
+  // Home is off: '/' is not a destination any more. The resume target is the
+  // saved browse location when it is still valid, else the default.
+  final String resumeTarget = AppConfig.homeEnabled
+      ? '/'
+      : resolveResumeTarget(savedResume);
+
+  final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/',
+    initialLocation: AppConfig.homeEnabled ? '/' : resumeTarget,
     redirect: (context, state) {
       // First-launch onboarding gate: show the intro exactly once, before
       // any other destination is reachable.
@@ -69,7 +96,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return '/onboarding';
       }
       if (onboarding.seen && isOnboarding) {
-        return '/';
+        // Leaving the intro lands on the resume target when Home is off.
+        return AppConfig.homeEnabled ? '/' : resumeTarget;
+      }
+      if (!AppConfig.homeEnabled && state.matchedLocation == '/') {
+        return resumeTarget;
       }
       if (!_authRedirectEnabled) {
         return null;
@@ -467,6 +498,28 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+
+  // Track the resume destination + the current location. Only allowlisted
+  // browse pages are persisted; the write is debounced so a fast navigation
+  // burst lands once.
+  router.routerDelegate.addListener(() {
+    final String location = router.state.matchedLocation;
+    ref.read(currentLocationProvider.notifier).state = location;
+    if (!AppConfig.homeEnabled && isSavableResumeLocation(location)) {
+      ref.read(resumeDestinationProvider.notifier).state = location;
+      _scheduleResumePersist(location);
+    }
+  });
+
+  // Signing out must not restore the previous account's last page.
+  ref.listen<AuthState>(authControllerProvider, (previous, next) {
+    final bool wasSignedIn = previous?.isAuthenticated ?? false;
+    if (wasSignedIn && !next.isAuthenticated) {
+      ResumeDestinationStore.clear();
+    }
+  });
+
+  return router;
 });
 
 /// Maps an offer instance to its feature hue so every surface that pushes

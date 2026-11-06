@@ -19,7 +19,11 @@ import 'package:tokigo/l10n/app_localizations.dart';
 /// exist (roles, join requests, polls and safety controls arrive with the group
 /// backend phase), and the surface says so instead of showing a fake feed.
 class GroupsPage extends StatelessWidget {
-  const GroupsPage({super.key});
+  const GroupsPage({super.key, this.bottomPadding = 0});
+
+  /// Extra space reserved under the scroll content, e.g. Home's floating AI
+  /// composer, so the last card is never hidden behind it.
+  final double bottomPadding;
 
   /// Empty by design (see the class doc).
   static const List<_Group> _groups = <_Group>[];
@@ -36,7 +40,6 @@ class GroupsPage extends StatelessWidget {
             slivers: <Widget>[
               SliverToBoxAdapter(
                 child: AppPageHeader(
-                  title: l10n.groupsTitle,
                   subtitle: l10n.groupsSubtitle,
                 ),
               ),
@@ -82,6 +85,8 @@ class GroupsPage extends StatelessWidget {
                   ),
                 ),
               ],
+              if (bottomPadding > 0)
+                SliverToBoxAdapter(child: SizedBox(height: bottomPadding)),
             ],
           ),
         ),

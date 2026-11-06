@@ -49,7 +49,7 @@ class TripDetailsPage extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               AppPageHeader(
-                title: l10n.tripDetails,
+                subtitle: l10n.tripDetailsSubtitle,
                 backFallbackLocation: '/bag',
               ),
               Expanded(

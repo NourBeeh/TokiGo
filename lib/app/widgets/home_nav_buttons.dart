@@ -39,7 +39,13 @@ class HomeActionDefinition {
 /// The single source of truth for Home's service shortcuts.
 ///
 /// Order is intentional: Flights, Hotels (labelled "Stays"), Cars,
-/// Activities, Groups, Trips.
+/// Activities, Groups.
+///
+/// **OWNER DECISION (2026-11):** the Trips tile is gone from the quick-action
+/// bar — My Trips stays reachable from Profile (and the Bag route), so the row
+/// is no longer the only way in. [HomeAction.trips] and its in-page branch are
+/// deliberately KEPT: removing them would break the selected-state persistence
+/// and the existing `home-trips-content` contract for no gain.
 List<HomeActionDefinition> homeActionDefinitions(AppLocalizations l10n) {
   return <HomeActionDefinition>[
     HomeActionDefinition(
@@ -71,12 +77,6 @@ List<HomeActionDefinition> homeActionDefinitions(AppLocalizations l10n) {
       label: l10n.homeNavGroups,
       icon: Icons.groups_rounded,
       path: '/groups',
-    ),
-    HomeActionDefinition(
-      action: HomeAction.trips,
-      label: l10n.homeNavTrips,
-      icon: Icons.luggage_rounded,
-      path: '/bag',
     ),
   ];
 }

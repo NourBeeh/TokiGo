@@ -49,6 +49,7 @@ class FlightSearchPage extends ConsumerStatefulWidget {
     super.key,
     this.embedded = false,
     this.searchContext,
+    this.bottomPadding = 0,
   });
 
   /// Renders the existing flight content inside Home's single Scaffold
@@ -58,6 +59,10 @@ class FlightSearchPage extends ConsumerStatefulWidget {
   /// Home's travel context, passed directly for the embedded case (a pushed
   /// route still receives the same value through the router `extra`).
   final SearchContext? searchContext;
+
+  /// Extra space reserved under the scroll content, e.g. Home's floating AI
+  /// composer, so the last result is never hidden behind it.
+  final double bottomPadding;
 
   @override
   ConsumerState<FlightSearchPage> createState() => _FlightSearchPageState();
@@ -528,9 +533,9 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
     final bool lazyResults = visible.length > kSearchLazyResultsThreshold;
 
     return SearchScaffold(
-      title: l10n.searchFlights,
       subtitle: l10n.flightSearchSubtitle,
       embedded: widget.embedded,
+      bottomPadding: widget.bottomPadding,
       form: _buildForm(l10n),
       // Sorting and filtering only make sense once there is something to sort.
       bottomContent: hasResults

@@ -34,7 +34,6 @@ const int kSearchLazyResultsThreshold = 12;
 class SearchScaffold extends StatelessWidget {
   const SearchScaffold({
     super.key,
-    required this.title,
     required this.subtitle,
     required this.form,
     required this.body,
@@ -45,10 +44,8 @@ class SearchScaffold extends StatelessWidget {
     this.bottomPadding = 0,
   });
 
-  /// Big header title ("Flights", "Hotels"…).
-  final String title;
-
-  /// Supporting line under the title.
+  /// The page's supporting line — the header's only identifying text
+  /// (owner decision, 2026-11: the large page name is gone).
   final String subtitle;
 
   /// The search form rendered under the header.
@@ -87,7 +84,6 @@ class SearchScaffold extends StatelessWidget {
         slivers: <Widget>[
           SliverToBoxAdapter(
             child: AppPageHeader(
-              title: title,
               subtitle: subtitle,
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,

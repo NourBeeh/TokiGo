@@ -1,26 +1,24 @@
 #!/usr/bin/env python3
 """Generate the TokiGo app icon from the app's own brand spec.
 
-The icon is a flat composition: a beach umbrella (parasol) above the word
-"Go", both in white on the brand-red canvas. Nothing is drawn by eye — every
-value comes from the theme tokens or the logo's own typography:
+The icon is a flat composition: ONE white beach umbrella (parasol) centred on
+the brand-red canvas. Nothing is drawn by eye — every value comes from the
+theme tokens:
 
     brand red     #FF2D2D  == AppColors.brandRed / TokiGoColors.brandRed
                           (the exact red the "Go" in the logotype uses)
-    umbrella/Go   #FFFFFF  == the logotype's light-on-brand pairing
-    typeface      Manrope Variable, weight 800 (ExtraBold)
-                          == AppTypography.fontFamily / weightExtraBold
-    tracking      -0.012em == AppWordmark.trackingEm
+    umbrella      #FFFFFF  == the logotype's light-on-brand pairing
 
-The "Go" letterforms are converted to SVG <path> outlines from the bundled
-font, so the artwork never depends on an installed font.
+The wordmark ("Go") is deliberately NOT part of the icon: at 29pt a second
+line of type under the mark stops reading, and the parasol alone is the
+brand's own glyph. The wordmark stays in `assets/branding/` and on the splash.
 
 Two canvases are emitted because the two platforms have different safe areas:
 
   assets/icon/app_icon.svg              iOS master, 1024x1024, full-bleed
-  assets/icon/app_icon_adaptive.svg     Android adaptive foreground, the whole
-                                        group kept inside the central 66% safe
-                                        zone (diagonal <= 66% of the canvas)
+  assets/icon/app_icon_adaptive.svg     Android adaptive foreground, the mark
+                                        kept inside the central 66% safe zone
+                                        (diagonal <= 66% of the canvas)
 
 Rasters (1024px PNG, plus the monochrome layer) are rendered from those SVGs
 with `tool/branding/render_svg.js` (npm i @resvg/resvg-js). Then:
@@ -36,15 +34,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from fontTools.misc.transform import Transform
-from fontTools.pens.svgPathPen import SVGPathPen
-from fontTools.pens.transformPen import TransformPen
-from fontTools.ttLib import TTFont
-
-# --- canonical brand spec (mirror app_wordmark.dart / app_colors.dart) ----
-FONT_PATH = Path("assets/fonts/Manrope-Variable.ttf")
-WEIGHT = 800  # FontWeight.w800 == AppTypography.weightExtraBold
-TRACKING_EM = -0.012  # AppWordmark.trackingEm
+# --- canonical brand spec (mirror app_colors.dart) ------------------------
 BRAND_RED = "#FF2D2D"  # AppColors.brandRed
 WHITE = "#FFFFFF"
 
@@ -58,92 +48,37 @@ ADAPTIVE_SVG = OUT_DIR / "app_icon_adaptive.svg"
 MONO_SVG = OUT_DIR / "app_icon_adaptive_mono.svg"
 RENDER_HELPER = Path("tool/branding/render_svg.js")
 
-# iOS composition: the group may use most of the full-bleed square.
-# The umbrella leads the upper half, "Go" is sized to stay legible at 29px.
+# iOS composition: the mark may use most of the full-bleed square, so the
+# parasol is drawn large and centred.
 IOS = {
-    "canopy_half_width": 300,
+    "canopy_half_width": 380,
     "hem_y": 400,
-    "dome_height": 210,
-    "scallop": 32,
-    "pole_bottom": 520,
-    "pole_width": 26,
-    "finial_above": 30,
-    "finial_below": 26,
-    "finial_half": 15,
-    "font_size": 430,
-    "baseline": 950,
+    "dome_height": 265,
+    "scallop": 41,
+    "pole_bottom": 665,
+    "pole_width": 32,
+    "finial_above": 47,
+    "finial_below": 41,
+    "finial_half": 24,
 }
 
-# Android composition: the whole group must fit the central safe zone
+# Android composition: the mark must fit the central safe zone
 # (diagonal <= 66% of the canvas == 676px, matching generate_wordmark.py).
-# "Go" is as large as that zone allows.
 ADAPTIVE = {
-    "canopy_half_width": 194,
-    "hem_y": 325,
-    "dome_height": 170,
-    "scallop": 20,
-    "pole_bottom": 405,
-    "pole_width": 20,
-    "finial_above": 26,
-    "finial_below": 22,
-    "finial_half": 12,
-    "font_size": 285,
-    "baseline": 660,
+    "canopy_half_width": 266,
+    "hem_y": 400,
+    "dome_height": 186,
+    "scallop": 28,
+    "pole_bottom": 592,
+    "pole_width": 25,
+    "finial_above": 34,
+    "finial_below": 30,
+    "finial_half": 18,
 }
 
-# Manrope ExtraBold cap height, measured from the font's own outlines at
-# wght 800 ('G' spans -30..1470 on a 2000 upm grid).
-CAP_HEIGHT_EM = 1470 / 2000
-
-
-def load_go():
-    """Return (glyph set, 'G' glyph, 'o' glyph, upm, advance G, advance o)."""
-    if not FONT_PATH.exists():
-        raise SystemExit(f"missing font {FONT_PATH} (run from the repo root)")
-    font = TTFont(str(FONT_PATH))
-    upm = font["head"].unitsPerEm
-    # The bundled font is variable (wght 200..800, default 200 = ExtraLight):
-    # resolve the ExtraBold instance through the glyph set's variation support.
-    glyph_set = font.getGlyphSet(location={"wght": WEIGHT})
-    cmap = font.getBestCmap()
-    g_name = cmap[ord("G")]
-    o_name = cmap[ord("o")]
-    return (
-        glyph_set,
-        glyph_set[g_name],
-        glyph_set[o_name],
-        upm,
-        glyph_set[g_name].width,
-        glyph_set[o_name].width,
-    )
-
-
-def glyph_path(glyph, transform: Transform, glyph_set) -> str:
-    """SVG path data for one glyph, with `transform` applied."""
-    pen = SVGPathPen(glyph_set)
-    glyph.draw(TransformPen(pen, transform))
-    return pen.getCommands()
-
-
-def go_group(glyph_set, g_glyph, o_glyph, upm, adv_g, adv_o, spec, cx):
-    """Place the "Go" outlines centred on `cx`. Returns (path data, bbox)."""
-    font_size = spec["font_size"]
-    baseline = spec["baseline"]
-    scale = font_size / upm
-    tracking = TRACKING_EM * font_size
-    width = (adv_g + adv_o) * scale + tracking
-    left = cx - width / 2
-
-    parts = []
-    x = left
-    for glyph, adv in ((g_glyph, adv_g), (o_glyph, adv_o)):
-        transform = Transform(scale, 0, 0, -scale, x, baseline)
-        parts.append(glyph_path(glyph, transform, glyph_set))
-        x += adv * scale + tracking
-
-    cap_height = CAP_HEIGHT_EM * font_size
-    bbox = (left, left + width, baseline - cap_height, baseline)
-    return " ".join(parts), bbox
+# A mark smaller than this share of the canvas stops reading as the brand at
+# the 29pt iOS settings size (a speck reads as a rendering bug).
+MIN_INK_FRACTION = 0.20
 
 
 def umbrella_paths(spec, cx):
@@ -199,83 +134,63 @@ def umbrella_paths(spec, cx):
     return f"{pole} {canopy} {finial}", bbox
 
 
-def build_svg(spec, glyph_set, g_glyph, o_glyph, upm, adv_g, adv_o):
+def build_svg(spec):
     cx = CANVAS / 2
-    umbrella, u_bbox = umbrella_paths(spec, cx)
-    go, g_bbox = go_group(
-        glyph_set, g_glyph, o_glyph, upm, adv_g, adv_o, spec, cx
-    )
-    bbox = (
-        min(u_bbox[0], g_bbox[0]),
-        max(u_bbox[1], g_bbox[1]),
-        min(u_bbox[2], g_bbox[2]),
-        max(u_bbox[3], g_bbox[3]),
-    )
-    # Optically centre the whole group: the umbrella is much taller than the
-    # word, so the pair is centred as ONE composition, not each piece.
+    umbrella, bbox = umbrella_paths(spec, cx)
+    # Optically centre the mark on the canvas.
     dy = CANVAS / 2 - (bbox[2] + bbox[3]) / 2
     svg = f"""<!-- Generated by tool/branding/generate_app_icon.py - do not edit by hand.
-     Brand red {BRAND_RED} == AppColors.brandRed; umbrella and "Go" {WHITE}.
-     "Go" is converted to outlines from Manrope ExtraBold (AppWordmark). -->
+     Brand red {BRAND_RED} == AppColors.brandRed; the parasol {WHITE}. -->
 <svg xmlns="http://www.w3.org/2000/svg" width="{CANVAS}" height="{CANVAS}" viewBox="0 0 {CANVAS} {CANVAS}">
   <rect width="{CANVAS}" height="{CANVAS}" fill="{BRAND_RED}"/>
   <g fill="{WHITE}" transform="translate(0 {dy:.1f})">
     <path d="{umbrella}"/>
-    <path d="{go}"/>
   </g>
 </svg>
 """
-    return svg, bbox, g_bbox, dy
+    return svg, bbox, dy
 
 
-def validate(
-    label: str,
-    bbox,
-    go_bbox,
-    dy: float,
-    *,
-    safe_zone: bool,
-) -> None:
-    """Fail loudly rather than ship an icon whose "Go" silently vanished.
+def validate(label: str, bbox, dy: float, *, safe_zone: bool) -> None:
+    """Fail loudly rather than ship an icon whose mark silently vanished.
 
-    Every check here is a regression guard for the failure this script had:
-    an icon that rendered the umbrella and dropped the word.
+    Every check here is a regression guard: an icon that rendered an empty
+    canvas, or a mark clipped by the platform mask, is a failure even though
+    the SVG is technically valid.
     """
-    go_x0, go_x1, go_y0, go_y1 = go_bbox
-    go_w = go_x1 - go_x0
-    go_h = go_y1 - go_y0
-    if go_w <= 0 or go_h <= 0:
-        raise SystemExit(f"{label}: the 'Go' outlines are empty")
-    # The word is shifted by the same group transform, so check the shift too.
+    x0, x1, y0, y1 = bbox
+    w = x1 - x0
+    h = y1 - y0
+    if w <= 0 or h <= 0:
+        raise SystemExit(f"{label}: the parasol outlines are empty")
+    # The mark is shifted by the group transform, so check the shift too.
     for name, value, low, high in (
-        ("Go left", go_x0, 0, CANVAS),
-        ("Go right", go_x1, 0, CANVAS),
-        ("Go top", go_y0 + dy, 0, CANVAS),
-        ("Go baseline", go_y1 + dy, 0, CANVAS),
+        ("mark left", x0, 0, CANVAS),
+        ("mark right", x1, 0, CANVAS),
+        ("mark top", y0 + dy, 0, CANVAS),
+        ("mark bottom", y1 + dy, 0, CANVAS),
     ):
         if not low <= value <= high:
             raise SystemExit(
                 f"{label}: {name} = {value:.1f} falls outside the viewBox"
             )
-    # Legibility floor: a cap height under ~17% of the canvas stops reading at
-    # the 29pt iOS settings size.
-    cap_ratio = go_h / CANVAS
-    if cap_ratio < 0.17:
+    # Legibility floor: the mark must still be a mark at 29pt.
+    ink = w * h / (CANVAS * CANVAS)
+    if ink < MIN_INK_FRACTION:
         raise SystemExit(
-            f"{label}: 'Go' cap height is only {cap_ratio:.1%} of the canvas — "
+            f"{label}: the mark covers only {ink:.1%} of the canvas — "
             f"too small to read at 29pt"
         )
-    w = bbox[1] - bbox[0]
-    h = bbox[3] - bbox[2]
     diagonal = (w * w + h * h) ** 0.5
     if safe_zone and diagonal > CANVAS * SAFE_FRACTION:
         raise SystemExit(
-            f"{label}: group diagonal {diagonal:.0f}px exceeds the "
-            f"{SAFE_FRACTION:.0%} adaptive-icon safe zone ({CANVAS * SAFE_FRACTION:.0f}px)"
+            f"{label}: mark diagonal {diagonal:.0f}px exceeds the "
+            f"{SAFE_FRACTION:.0%} adaptive icon safe zone "
+            f"({CANVAS * SAFE_FRACTION:.0f}px)"
         )
     print(
-        f"{label}: ink {w:.0f}x{h:.0f}, diagonal {diagonal:.0f}, "
-        f"'Go' {go_w:.0f}x{go_h:.0f} ({cap_ratio:.1%} of the canvas)"
+        f"{label}: ink {w:.0f}x{h:.0f} ({ink:.1%} of the canvas), "
+        f"diagonal {diagonal:.0f}"
     )
 
 
@@ -297,18 +212,14 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    glyph_set, g_glyph, o_glyph, upm, adv_g, adv_o = load_go()
-
     for spec, svg_path, safe_zone in (
         (IOS, IOS_SVG, False),
         (ADAPTIVE, ADAPTIVE_SVG, True),
     ):
-        svg, bbox, go_bbox, dy = build_svg(
-            spec, glyph_set, g_glyph, o_glyph, upm, adv_g, adv_o
-        )
+        svg, bbox, dy = build_svg(spec)
         svg_path.parent.mkdir(parents=True, exist_ok=True)
         svg_path.write_text(svg, encoding="utf-8")
-        validate(str(svg_path), bbox, go_bbox, dy, safe_zone=safe_zone)
+        validate(str(svg_path), bbox, dy, safe_zone=safe_zone)
 
     if args.no_render:
         return 0

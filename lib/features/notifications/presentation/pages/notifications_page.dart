@@ -60,7 +60,7 @@ class NotificationsPage extends ConsumerWidget {
           child: CustomScrollView(
             slivers: <Widget>[
               SliverToBoxAdapter(
-                child: AppPageHeader(title: l10n.notifications),
+                child: AppPageHeader(subtitle: l10n.notificationsSubtitle),
               ),
               if (feed.isEmpty)
                 const SliverFillRemaining(

@@ -137,17 +137,35 @@ abstract class AppLocalizations {
   /// **'My Trips'**
   String get bag;
 
+  /// No description provided for @bagSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your confirmed bookings, their status and references.'**
+  String get bagSubtitle;
+
   /// No description provided for @notifications.
   ///
   /// In en, this message translates to:
   /// **'Notifications'**
   String get notifications;
 
+  /// No description provided for @notificationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking updates, price alerts and reminders.'**
+  String get notificationsSubtitle;
+
   /// No description provided for @profile.
   ///
   /// In en, this message translates to:
   /// **'Profile'**
   String get profile;
+
+  /// No description provided for @profileSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account, trips and preferences.'**
+  String get profileSubtitle;
 
   /// No description provided for @profileGuestTitle.
   ///
@@ -647,6 +665,12 @@ abstract class AppLocalizations {
   /// **'Sign in'**
   String get signIn;
 
+  /// No description provided for @authSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep your trips, wishlist and preferences in one account.'**
+  String get authSubtitle;
+
   /// No description provided for @continueWithGoogle.
   ///
   /// In en, this message translates to:
@@ -713,6 +737,12 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settings;
 
+  /// No description provided for @settingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Language, theme, currency and account.'**
+  String get settingsSubtitle;
+
   /// No description provided for @language.
   ///
   /// In en, this message translates to:
@@ -731,6 +761,12 @@ abstract class AppLocalizations {
   /// **'Wishlist'**
   String get wishlist;
 
+  /// No description provided for @wishlistSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The stays you kept, at the provider\'s own price.'**
+  String get wishlistSubtitle;
+
   /// No description provided for @myTrips.
   ///
   /// In en, this message translates to:
@@ -742,6 +778,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Trip details'**
   String get tripDetails;
+
+  /// No description provided for @tripDetailsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything this booking really carries.'**
+  String get tripDetailsSubtitle;
 
   /// No description provided for @upcoming.
   ///
@@ -869,17 +911,35 @@ abstract class AppLocalizations {
   /// **'Review booking'**
   String get reviewBooking;
 
+  /// No description provided for @reviewBookingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the offer, travellers and total before paying.'**
+  String get reviewBookingSubtitle;
+
   /// No description provided for @passengerDetails.
   ///
   /// In en, this message translates to:
   /// **'Passenger details'**
   String get passengerDetails;
 
+  /// No description provided for @passengerDetailsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Who is travelling and how to reach you.'**
+  String get passengerDetailsSubtitle;
+
   /// No description provided for @addOns.
   ///
   /// In en, this message translates to:
   /// **'Add-ons'**
   String get addOns;
+
+  /// No description provided for @addOnsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra bags, seats and meals sold by the provider.'**
+  String get addOnsSubtitle;
 
   /// No description provided for @bookingStepOf.
   ///
@@ -928,6 +988,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Payment'**
   String get payment;
+
+  /// No description provided for @paymentSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay the provider\'s total for this trip.'**
+  String get paymentSubtitle;
 
   /// No description provided for @confirmation.
   ///
@@ -2225,6 +2291,12 @@ abstract class AppLocalizations {
   /// **'Choose a hotel, flight, or car to add it here.'**
   String get tripBuilderEmpty;
 
+  /// No description provided for @tripBuilderSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Collect hotels, flights and cars into one plan.'**
+  String get tripBuilderSubtitle;
+
   /// No description provided for @tripBuilderRemove.
   ///
   /// In en, this message translates to:
@@ -3460,6 +3532,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Edit profile'**
   String get editProfile;
+
+  /// No description provided for @editProfileSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name, contact details and nationality.'**
+  String get editProfileSubtitle;
 
   /// No description provided for @firstName.
   ///

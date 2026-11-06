@@ -75,7 +75,11 @@ void main() {
 
       expect(tester.getSize(find.byType(HomeAiSearchField)).height, 56);
       expect(decoration.color, surface);
-      expect(decoration.boxShadow, isEmpty);
+      // The pill floats over the feed, so it carries its own soft halo.
+      final BoxShadow halo = decoration.boxShadow!.single;
+      expect(halo.blurRadius, 20);
+      expect(halo.offset, const Offset(0, 4));
+      expect(halo.color, const Color(0x1A111111));
       expect(decoration.border, isA<Border>());
       final Border boxBorder = decoration.border! as Border;
       expect(boxBorder.top.color, border);
@@ -142,7 +146,7 @@ void main() {
   });
 
   group('quick action cards', () {
-    testWidgets('six spec tiles on one row', (tester) async {
+    testWidgets('five spec tiles on one row', (tester) async {
       phoneSize(tester);
       await tester.pumpWidget(
         app(const SizedBox(width: 360, child: HomeNavButtons())),
@@ -153,7 +157,8 @@ void main() {
         of: find.byType(HomeNavButtons),
         matching: find.byType(AnimatedContainer),
       );
-      expect(tiles, findsNWidgets(6));
+      // Trips left the bar (owner decision, 2026-11).
+      expect(tiles, findsNWidgets(5));
 
       final List<String> labels = <String>[
         'Flights',
@@ -161,7 +166,6 @@ void main() {
         'Cars Rental',
         'Activities',
         'Groups',
-        'Trips',
       ];
       final List<IconData> icons = <IconData>[
         Icons.flight_takeoff_rounded,
@@ -169,11 +173,10 @@ void main() {
         Icons.directions_car_rounded,
         Icons.beach_access_rounded,
         Icons.groups_rounded,
-        Icons.luggage_rounded,
       ];
 
       double previousRight = double.negativeInfinity;
-      for (int i = 0; i < 6; i++) {
+      for (int i = 0; i < 5; i++) {
         final Finder tileFinder = tiles.at(i);
         final AnimatedContainer tile = tester.widget<AnimatedContainer>(
           tileFinder,
@@ -223,7 +226,7 @@ void main() {
 
       // Equal, responsive widths.
       final List<double> widths = <double>[
-        for (int i = 0; i < 6; i++) tester.getRect(tiles.at(i)).width,
+        for (int i = 0; i < 5; i++) tester.getRect(tiles.at(i)).width,
       ];
       for (final double width in widths) {
         expect(width, closeTo(widths.first, 0.01));
@@ -246,7 +249,8 @@ void main() {
       expect(find.text('تأجير سيارات'), findsOneWidget);
       expect(find.text('أنشطة'), findsOneWidget);
       expect(find.text('الجروبات'), findsOneWidget);
-      expect(find.text('رحلاتي'), findsOneWidget);
+      // Trips left the bar (owner decision, 2026-11).
+      expect(find.text('رحلاتي'), findsNothing);
       expect(
         Directionality.of(tester.element(find.byType(HomeNavButtons))),
         TextDirection.rtl,

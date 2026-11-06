@@ -28,11 +28,15 @@ final carFiltersProvider = StateProvider<SearchFilters>(
 );
 
 class CarSearchPage extends ConsumerStatefulWidget {
-  const CarSearchPage({super.key, this.embedded = false});
+  const CarSearchPage({super.key, this.embedded = false, this.bottomPadding = 0});
 
   /// Renders the existing car content inside Home's single Scaffold instead
   /// of its own route-level Scaffold.
   final bool embedded;
+
+  /// Extra space reserved under the scroll content, e.g. Home's floating AI
+  /// composer, so the last result is never hidden behind it.
+  final double bottomPadding;
 
   @override
   ConsumerState<CarSearchPage> createState() => _CarSearchPageState();
@@ -234,9 +238,9 @@ class _CarSearchPageState extends ConsumerState<CarSearchPage> {
     // [_carRentalLive] and it returns.
     if (!_carRentalLive) {
       return SearchScaffold(
-        title: l10n.searchCars,
         subtitle: l10n.carsSubtitle,
         embedded: widget.embedded,
+        bottomPadding: widget.bottomPadding,
         form: const SizedBox.shrink(),
         body: Column(
           children: <Widget>[
@@ -279,9 +283,9 @@ class _CarSearchPageState extends ConsumerState<CarSearchPage> {
     final bool lazyResults = visible.length > kSearchLazyResultsThreshold;
 
     return SearchScaffold(
-      title: l10n.searchCars,
       subtitle: l10n.carsLiveSubtitle,
       embedded: widget.embedded,
+      bottomPadding: widget.bottomPadding,
       form: _buildForm(),
       bottomContent: _buildSortAndFilters(),
       body: lazyResults ? const SizedBox.shrink() : _buildResults(state),
