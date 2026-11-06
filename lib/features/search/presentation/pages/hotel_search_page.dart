@@ -831,6 +831,7 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
           onTap: () {
             ref.read(homeScrollTargetProvider.notifier).state =
                 HomeScrollTarget.discover;
+            // Discover lives on Home.
             context.go('/');
           },
         ),

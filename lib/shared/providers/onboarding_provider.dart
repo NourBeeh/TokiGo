@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 
@@ -19,6 +20,13 @@ class OnboardingController extends StateNotifier<OnboardingState> {
     _load();
   }
 
+  /// A controller that starts from [initial] and never touches the disk.
+  ///
+  /// Tests use it to pin the onboarding gate deterministically, without a Hive
+  /// round trip (and without the asynchronous load racing the assertion).
+  @visibleForTesting
+  OnboardingController.pinned(OnboardingState initial) : super(initial);
+
   static const String _boxName = 'tokigo_settings';
   static const String _seenKey = 'onboarding_seen';
   Box<Map>? _box;
@@ -28,6 +36,7 @@ class OnboardingController extends StateNotifier<OnboardingState> {
       // The settings box must never be opened before Hive knows its home; the
       // bootstrap is shared with the offline cache and resolves once.
       await StorageBootstrap.ensureReady();
+      if (!mounted) return;
       if (!Hive.isBoxOpen(_boxName)) {
         _box = await Hive.openBox<Map>(_boxName);
       } else {
@@ -39,6 +48,7 @@ class OnboardingController extends StateNotifier<OnboardingState> {
       // Storage unavailable (e.g. Hive not yet initialized — tests, very
       // early launches). Never block the app on the intro flag; fall back
       // to unseen so onboarding still shows once.
+      if (!mounted) return;
       state = const OnboardingState(seen: false, ready: true);
     }
   }

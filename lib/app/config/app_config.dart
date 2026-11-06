@@ -28,16 +28,4 @@ class AppConfig {
   /// The Groups page is currently an honest empty state until group data is
   /// available; keep its route accessible from the Home shortcut.
   static const bool groupsEnabled = true;
-
-  /// Whether the Home surface is enabled.
-  ///
-  /// OWNER DECISION (2026-11): Home is temporarily OFF. The app reopens on the
-  /// traveller's last visited section instead, and '/' redirects to that
-  /// resume target, so [HomePage] is never built and no Home feed/price call
-  /// runs. The quick-action row and a "resume" button stay pinned on the
-  /// service pages via the shell's top bar.
-  ///
-  /// Flip back to `true` to restore the current Home exactly as it was —
-  /// nothing is deleted, and the resume machinery simply goes unused.
-  static const bool homeEnabled = false;
 }

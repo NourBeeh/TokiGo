@@ -56,7 +56,8 @@ class CityPage extends StatelessWidget {
                 l10n?.homeCityNotFoundBody ??
                 'Go back to Discover and choose a city.',
             actionLabel: l10n?.back ?? 'Back',
-            onAction: () => context.canPop() ? context.pop() : context.go('/'),
+            onAction: () =>
+                context.canPop() ? context.pop() : context.go('/'),
           ),
         ),
       );

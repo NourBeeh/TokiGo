@@ -8,7 +8,7 @@ import 'package:tokigo/core/widgets/app_icon_action.dart';
 /// One glyph — `arrow_back_ios_new_rounded`, the thin One UI chevron, which
 /// carries `matchTextDirection` and therefore mirrors itself in Arabic — and one
 /// behaviour everywhere: `pop` when the route can pop, [fallbackLocation]
-/// otherwise (home by default; a funnel's root for its step pages, so a deep
+/// otherwise (Home by default; a funnel's root for its step pages, so a deep
 /// link still lands somewhere sensible).
 ///
 /// Pass [AppIconActionVariant.disc] over photography, where a bare glyph would
@@ -18,7 +18,7 @@ class AppBackButton extends StatelessWidget {
     super.key,
     this.variant = AppIconActionVariant.bare,
     this.color,
-    this.fallbackLocation = '/',
+    this.fallbackLocation,
     this.enabled = true,
   });
 
@@ -30,7 +30,9 @@ class AppBackButton extends StatelessWidget {
 
   /// Where a back press lands when the route cannot pop (no history to return
   /// to — a deep link, or a page entered with `go`).
-  final String fallbackLocation;
+  ///
+  /// Null resolves to Home.
+  final String? fallbackLocation;
 
   /// Whether leaving is currently allowed — see [AppIconAction.enabled].
   final bool enabled;
@@ -66,7 +68,7 @@ class AppBackButton extends StatelessWidget {
           if (router.canPop()) {
             router.pop();
           } else {
-            router.go(fallbackLocation);
+            router.go(fallbackLocation ?? '/');
           }
         },
       ),

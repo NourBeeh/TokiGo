@@ -23,6 +23,9 @@ class AuthController extends StateNotifier<AuthState> {
 
   Future<void> _restore() async {
     final result = await _repository.currentSession();
+    // The container may be gone by the time the session read lands (a test, a
+    // hot restart); a state update after disposal throws.
+    if (!mounted) return;
     final user = result.valueOrNull;
     if (user == null) {
       state = const AuthUnauthenticated();

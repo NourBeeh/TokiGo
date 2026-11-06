@@ -104,8 +104,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     } catch (_) {}
   }
 
-  /// Leaves the intro for Home and remembers it, so the first-launch gate never
-  /// shows the intro twice.
+  /// Leaves the intro for Home and remembers it, so the first-launch gate
+  /// never shows the intro twice.
   void _finish() {
     ref.read(onboardingProvider.notifier).markSeen();
     context.go('/');

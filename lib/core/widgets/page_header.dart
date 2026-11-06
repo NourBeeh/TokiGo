@@ -29,7 +29,7 @@ class AppPageHeader extends StatelessWidget {
     this.trailing,
     this.steps,
     this.showBackButton = true,
-    this.backFallbackLocation = '/',
+    this.backFallbackLocation,
     this.backEnabled = true,
   });
 
@@ -55,8 +55,8 @@ class AppPageHeader extends StatelessWidget {
   final bool showBackButton;
 
   /// Where the back control lands when the route cannot pop — see
-  /// [AppBackButton.fallbackLocation].
-  final String backFallbackLocation;
+  /// [AppBackButton.fallbackLocation]. Null resolves to Home.
+  final String? backFallbackLocation;
 
   /// Whether leaving the page is currently allowed — see
   /// [AppIconAction.enabled]. The payment step blocks it while a charge is in

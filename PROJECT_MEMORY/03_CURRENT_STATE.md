@@ -1,41 +1,36 @@
 # 03 — Current State
 
-Last updated: 2026-11-06 (session: Home UX + app icon, floating composer, Home disabled by flag)
+Last updated: 2026-11-06 (session: Home restored — Home-off / resume mode removed)
 
 ## Build / verification
 
 - `flutter analyze`: 0 errors.
-- `flutter test`: 253 passed, 0 failed.
+- `flutter test`: all green (233 tests).
 
-## HOME IS DISABLED BY FLAG (Task 11, 2026-11)
+## HOME IS THE ONLY SURFACE (2026-11)
 
-`AppConfig.homeEnabled = false` (`lib/app/config/app_config.dart`). **Why:** the
-owner wants the app to reopen on the traveller's last visited section instead of
-re-rendering the Home feed, and to keep every service one tap away without
-Home. Nothing is deleted — `HomePage`, `home_controller` and the Home providers
-are untouched; only the router reads the flag. Flipping it back to `true`
-restores Home exactly as it was.
+The temporary Home-off mode (Task 11–14) has been removed at the owner's
+request. The app opens on Home again and Home is the only top-level surface.
 
-- **Resume target** = the saved browse location when it is still valid, else
-  `/flights` (`resolveResumeTarget` in `lib/core/navigation/resume_destination.dart`).
-- **Persisted** by `ResumeDestinationStore` (`lib/core/storage/resume_destination_store.dart`)
-  in the same Hive `tokigo_settings` box as the onboarding flag, written
-  debounced (1s) from a `router.routerDelegate` listener, and **cleared on
-  logout**.
-- **Allowlist** (`kSavableResumePaths`): `/flights`, `/hotels`, `/cars`,
-  `/packages`, `/groups`, `/bag`, `/profile`, `/wishlist`. The booking funnel,
-  offer details, onboarding, auth, notifications and anything with a
-  short-lived id are never saved or restored.
-- **Pinned replacement**: `ResumeTopBar` (`lib/app/widgets/resume_top_bar.dart`)
-  — the quick-action row plus a 68dp `ResumeButton` showing the last section's
-  glyph + label — rendered by `TokiGoShell` above the page on allowlisted
-  destinations. `HomeActionBar` is unchanged and still the tile inventory.
-- **Deep links still win**: `GoRouter.initialLocation` is only a fallback
-  (`overridePlatformDefaultLocation` is false), so a platform deep link
-  overrides the restore.
-- Restore is unit-tested (`resolveResumeTarget`, the allowlist, the store
-  round-trip) and the button has widget tests
-  (`test/resume_destination_test.dart`, `test/resume_top_bar_test.dart`).
+- `AppConfig.homeEnabled` and `AppConfig.showResumeButton` are gone. The
+  router's `initialLocation` is `/`, and every fallback (`AppBackButton`,
+  City, onboarding completion, the hotel "Discover more" hand-off, booking
+  confirmation) goes to `/`.
+- Deleted with the mode: `ResumeTopBar`, `ResumeTopBarScope`, `ResumeButton`,
+  `lib/app/providers/resume_providers.dart`,
+  `lib/core/navigation/resume_destination.dart`,
+  `lib/core/storage/resume_destination_store.dart`, and their four test files
+  (`resume_top_bar_test`, `resume_shell_test`, `resume_router_test`,
+  `resume_destination_test`).
+- `TokiGoShell` only hosts the navigation stack again — no pinned chrome and
+  no page header is hidden (`AppPageHeader.visible` was removed).
+- The Groups route still honours `AppConfig.groupsEnabled`; when disabled it
+  redirects to `/`.
+- Deep links still win: `GoRouter.initialLocation` is only a fallback
+  (`overridePlatformDefaultLocation` stays false).
+
+## Build / verification (device)
+
 - Android: no device connected and no AVD available on this machine, so the
   launcher icon could not be confirmed on a device/simulator. The generated
   resources were verified directly instead (see "App icon" below).
