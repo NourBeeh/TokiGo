@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
+import 'package:tokigo/app/config/app_config.dart';
 import 'package:tokigo/core/navigation/resume_destination.dart';
 import 'package:tokigo/core/storage/resume_destination_store.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
@@ -103,7 +104,7 @@ void main() {
       }
     });
 
-    test('rejects the booking funnel, offer details, onboarding, auth and root', () {
+    test('rejects the booking funnel, offer details, onboarding, auth, root and standalone pages', () {
       for (final String path in <String>[
         '/booking/review',
         '/booking/summary',
@@ -112,10 +113,45 @@ void main() {
         '/policy',
         '/onboarding',
         '/login',
+        '/profile',
+        '/wishlist',
+        '/notifications',
         '/',
       ]) {
         expect(isSavableResumeLocation(path), isFalse, reason: path);
       }
+    });
+
+    test('Profile and Wishlist are standalone pages, never a cold-start target', () {
+      // They behave like Notifications: reachable from the header, never
+      // restored. Reopening on them would drop the traveller into an account
+      // page with no service context.
+      expect(isSavableResumeLocation('/profile'), isFalse);
+      expect(isSavableResumeLocation('/wishlist'), isFalse);
+      expect(sanitizeResumeLocation('/profile'), '');
+      expect(sanitizeResumeLocation('/wishlist'), '');
+    });
+
+    test('kTopBarPaths is exactly the six service paths', () {
+      expect(kTopBarPaths, <String>{
+        '/flights',
+        '/hotels',
+        '/cars',
+        '/packages',
+        '/groups',
+        '/bag',
+      });
+      // Profile and Wishlist keep their own header + back button.
+      expect(kTopBarPaths, isNot(contains('/profile')));
+      expect(kTopBarPaths, isNot(contains('/wishlist')));
+    });
+
+    test('homeRoute resolves to Home only while Home is enabled', () {
+      expect(homeRoute(homeEnabled: true), '/');
+      expect(homeRoute(homeEnabled: false), kDefaultResumePath);
+      // The build-time default follows the flag.
+      expect(homeRoute(), AppConfig.homeEnabled ? '/' : kDefaultResumePath);
+      expect(AppConfig.homeEnabled, isFalse);
     });
 
     test('accepts query parameters but keeps the path leading edge', () {

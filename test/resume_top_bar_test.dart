@@ -43,6 +43,46 @@ Widget _app(
   );
 }
 
+/// A router whose service pages host the real [ResumeTopBar], so the bar's
+/// tap behaviour is exercised end to end. '/' is a plain marker page: the
+/// tests assert it is never built.
+GoRouter _serviceRouter({String initial = '/flights'}) {
+  return GoRouter(
+    initialLocation: initial,
+    routes: <RouteBase>[
+      GoRoute(
+        path: '/',
+        builder: (BuildContext context, GoRouterState state) =>
+            const Scaffold(body: Text('home-page')),
+      ),
+      for (final String path in kTopBarPaths)
+        GoRoute(
+          path: path,
+          builder: (BuildContext context, GoRouterState state) =>
+              const Scaffold(body: ResumeTopBar()),
+        ),
+    ],
+  );
+}
+
+/// Hosts [router] under the same chrome the app uses (theme + localizations).
+Widget _routerApp(GoRouter router) {
+  return ProviderScope(
+    child: MaterialApp.router(
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      routerConfig: router,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+    ),
+  );
+}
+
 void main() {
   group('ResumeButton', () {
     testWidgets('renders the Flights fallback when nothing was saved', (
@@ -227,6 +267,81 @@ void main() {
       await tester.tap(find.byKey(const ValueKey<String>('home-resume-button')));
       await tester.pumpAndSettle();
       expect(find.text('flights-page'), findsOneWidget);
+    });
+  });
+
+  group('ResumeTopBar navigation', () {
+    testWidgets('re-tapping the active service is a no-op and never opens Home', (
+      tester,
+    ) async {
+      final GoRouter router = _serviceRouter();
+      await tester.pumpWidget(_routerApp(router));
+      await tester.pumpAndSettle();
+
+      expect(router.state.uri.path, '/flights');
+      expect(find.text('home-page'), findsNothing);
+
+      // Tapping the already-active tile must not navigate at all — no go, no
+      // push, no rebuild — and must never fall back to Home.
+      await tester.tap(find.byKey(const ValueKey<String>('home-action-flights')));
+      await tester.pumpAndSettle();
+      expect(router.state.uri.path, '/flights');
+      expect(find.text('home-page'), findsNothing);
+
+      // A different service switches the page.
+      await tester.tap(find.byKey(const ValueKey<String>('home-action-hotels')));
+      await tester.pumpAndSettle();
+      expect(router.state.uri.path, '/hotels');
+      expect(find.text('home-page'), findsNothing);
+
+      // The new page is now the active one, so its tile is a no-op too.
+      await tester.tap(find.byKey(const ValueKey<String>('home-action-hotels')));
+      await tester.pumpAndSettle();
+      expect(router.state.uri.path, '/hotels');
+      expect(find.text('home-page'), findsNothing);
+    });
+
+    testWidgets('marks the current service as selected', (tester) async {
+      final GoRouter router = _serviceRouter();
+      await tester.pumpWidget(_routerApp(router));
+      await tester.pumpAndSettle();
+
+      HomeActionTile tile(String key) => tester.widget<HomeActionTile>(
+        find.ancestor(
+          of: find.byKey(ValueKey<String>(key)),
+          matching: find.byType(HomeActionTile),
+        ),
+      );
+
+      expect(
+        tile('home-action-flights').selected,
+        isTrue,
+        reason: 'the current service tile is selected',
+      );
+      expect(tile('home-action-hotels').selected, isFalse);
+
+      await tester.tap(find.byKey(const ValueKey<String>('home-action-hotels')));
+      await tester.pumpAndSettle();
+
+      expect(tile('home-action-hotels').selected, isTrue);
+      expect(tile('home-action-flights').selected, isFalse);
+    });
+
+    testWidgets('a top-level service page cannot pop (system Back exits)', (
+      tester,
+    ) async {
+      final GoRouter router = _serviceRouter();
+      await tester.pumpWidget(_routerApp(router));
+      await tester.pumpAndSettle();
+
+      expect(router.state.uri.path, '/flights');
+      expect(router.canPop(), isFalse);
+
+      // Switching services replaces the root, so Back still has nowhere to go.
+      await tester.tap(find.byKey(const ValueKey<String>('home-action-cars')));
+      await tester.pumpAndSettle();
+      expect(router.state.uri.path, '/cars');
+      expect(router.canPop(), isFalse);
     });
   });
 }

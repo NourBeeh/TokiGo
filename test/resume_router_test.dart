@@ -151,9 +151,15 @@ void main() {
       );
     });
 
-    test('a destination needing a session falls back while signed out', () {
+    test('Profile and Wishlist are never restored', () {
+      // Standalone pages behave like Notifications: reachable from the
+      // header, never a cold-start destination.
       expect(
         _initialLocation(_buildRouter(savedResume: '/profile')),
+        kDefaultResumePath,
+      );
+      expect(
+        _initialLocation(_buildRouter(savedResume: '/wishlist')),
         kDefaultResumePath,
       );
     });
