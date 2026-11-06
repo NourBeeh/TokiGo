@@ -456,6 +456,8 @@
   "cabinPremiumEconomy": "Premium",
   "cabinBusiness": "Business",
   "cabinFirst": "First",
+  "cabinLabel": "Cabin",
+  "directFlightsOnly": "Direct flights only",
   "passengersCount": "{count, plural, =1{1 passenger} other{{count} passengers}}",
   "@passengersCount": {
     "placeholders": {

@@ -18,6 +18,7 @@ class SearchFlightsUseCase {
     int? passengers,
     List<FlightSearchLeg>? legs,
     String? cabinClass,
+    bool? directOnly,
   }) {
     return repository.search(
       origin: origin,
@@ -27,6 +28,7 @@ class SearchFlightsUseCase {
       passengers: passengers,
       legs: legs,
       cabinClass: cabinClass,
+      directOnly: directOnly,
     );
   }
 }

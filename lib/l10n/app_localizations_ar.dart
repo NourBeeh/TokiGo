@@ -1298,6 +1298,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cabinFirst => 'أولى';
 
   @override
+  String get cabinLabel => 'الدرجة';
+
+  @override
+  String get directFlightsOnly => 'رحلات مباشرة فقط';
+
+  @override
   String passengersCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

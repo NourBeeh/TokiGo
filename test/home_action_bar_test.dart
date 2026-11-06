@@ -109,7 +109,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('scrolls horizontally and hides the hint at the end', (
+  testWidgets('scrolls horizontally and bleeds to the screen edges', (
     tester,
   ) async {
     _phoneSize(tester);
@@ -120,13 +120,6 @@ void main() {
     final ListView list = tester.widget<ListView>(bar);
     expect(list.scrollDirection, Axis.horizontal);
 
-    // Six fixed-width cards exceed the 320dp viewport, so the trailing cue is
-    // shown and the row can travel.
-    expect(
-      find.byKey(const ValueKey<String>('home-action-bar-overflow')),
-      findsOneWidget,
-    );
-
     final ScrollableState scrollable = tester.state<ScrollableState>(
       find.descendant(of: bar, matching: find.byType(Scrollable)),
     );
@@ -134,9 +127,37 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(scrollable.position.pixels, greaterThan(0));
+    // The rail never renders the old overflow fades — it rides the edges.
+    expect(find.byKey(const ValueKey<String>('home-action-bar-overflow')), findsNothing);
+    expect(find.byKey(const ValueKey<String>('home-action-bar-overflow-start')), findsNothing);
+  });
+
+  testWidgets('the rail reaches both screen edges when unconstrained', (
+    tester,
+  ) async {
+    _phoneSize(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        locale: const Locale('en'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        // Exactly how the shell chrome renders the rail: unconstrained.
+        home: Scaffold(body: HomeActionBar(onActionSelected: (_) {})),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final Rect bar = tester.getRect(find.byType(HomeActionBar));
+    expect(bar.left, 0);
     expect(
-      find.byKey(const ValueKey<String>('home-action-bar-overflow')),
-      findsNothing,
+      bar.right,
+      tester.view.physicalSize.width / tester.view.devicePixelRatio,
     );
   });
 

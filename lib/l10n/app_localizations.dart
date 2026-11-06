@@ -2603,6 +2603,18 @@ abstract class AppLocalizations {
   /// **'First'**
   String get cabinFirst;
 
+  /// No description provided for @cabinLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cabin'**
+  String get cabinLabel;
+
+  /// No description provided for @directFlightsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct flights only'**
+  String get directFlightsOnly;
+
   /// No description provided for @passengersCount.
   ///
   /// In en, this message translates to:

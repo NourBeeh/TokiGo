@@ -111,6 +111,7 @@ class FlightSearchController extends StateNotifier<FlightSearchState> {
       // A multi-city trip travels as its own legs; one-way and round-trip keep
       // the single leg they always had.
       cabinClass: params.cabinClass,
+      directOnly: params.directOnly,
       legs: params.tripType == 'multicity'
           ? params.effectiveLegs
           : const <FlightSearchLeg>[],

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -44,6 +46,8 @@ import '../../shared/widgets/placeholder_page.dart';
 import '../../shared/providers/onboarding_provider.dart';
 import '../config/app_config.dart';
 import '../shell.dart';
+import '../../core/storage/last_route_store.dart';
+import '../../shared/providers/last_route_provider.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -57,10 +61,12 @@ const bool _authRedirectEnabled = false;
 final goRouterProvider = Provider<GoRouter>((ref) {
   final authUser = ref.watch(authUserProvider);
   final onboarding = ref.watch(onboardingProvider);
+  // Reopen on the last page the traveller used (restored in main()).
+  final restoredLocation = ref.watch(lastInitialRouteProvider);
 
   final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/',
+    initialLocation: restoredLocation,
     redirect: (context, state) {
       // First-launch onboarding gate: show the intro exactly once, before
       // any other destination is reachable.
@@ -466,6 +472,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+
+  // Persist every location change so a cold relaunch lands back where the
+  // traveller was — the clipboard of the app's back stack, not a snapshot of
+  // the screen (stateless destinations only; see LastRouteStore).
+  router.routerDelegate.addListener(() {
+    final String location = router.state.uri.toString();
+    unawaited(LastRouteStore.write(location));
+  });
 
   return router;
 });

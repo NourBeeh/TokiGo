@@ -11,6 +11,7 @@ abstract interface class FlightRepository {
     int? passengers,
     List<FlightSearchLeg>? legs,
     String? cabinClass,
+    bool? directOnly,
   });
 
   Future<ApiResult<FlightOffer>> getById(String id);

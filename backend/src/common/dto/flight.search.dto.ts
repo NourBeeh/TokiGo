@@ -6,6 +6,7 @@ import {
   Min,
   IsArray,
   IsIn,
+  IsBoolean,
   Matches,
   ValidateNested,
   ArrayMinSize,
@@ -88,6 +89,15 @@ export class FlightSearchDto {
     message: 'cabinClass must be one of economy, premium_economy, business, first',
   })
   cabinClass?: string;
+
+  /**
+   * Non-stop flights only (owner decision, 2026-11). Duffel honours it via
+   * `max_connections: 0`; cabin-only providers simply ignore it and the
+   * client applies the same filter on the returned offers.
+   */
+  @IsOptional()
+  @IsBoolean()
+  directOnly?: boolean;
 
   /** Informational traveller context; providers do not receive this field. */
   @IsOptional()

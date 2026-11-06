@@ -448,6 +448,8 @@
   "cabinPremiumEconomy": "بريميوم",
   "cabinBusiness": "أعمال",
   "cabinFirst": "أولى",
+  "cabinLabel": "الدرجة",
+  "directFlightsOnly": "رحلات مباشرة فقط",
   "passengersCount": "{count, plural, zero{لا مسافرين} one{مسافر واحد} two{مسافران} few{{count} مسافرين} many{{count} مسافرًا} other{{count} مسافر}}",
   "@passengersCount": {
     "placeholders": {

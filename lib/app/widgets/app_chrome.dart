@@ -96,12 +96,12 @@ class AppChrome extends StatelessWidget {
             ),
             child: HomeTopBar(),
           ),
+          // Edge-to-edge rail: no side gutter, so the row reaches both screen
+          // edges — it looks like the bar comes out of the phone.
           Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(
-              AppSpacing.lg,
-              AppSpacing.md,
-              AppSpacing.lg,
-              AppSpacing.md,
+            padding: const EdgeInsetsDirectional.only(
+              top: AppSpacing.md,
+              bottom: AppSpacing.md,
             ),
             child: HomeActionBar(
               definitions: definitions,

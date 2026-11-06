@@ -84,6 +84,10 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
   _Cabin _cabin = _Cabin.economy;
   int _passengers = 1;
 
+  /// Restrict the search to non-stop flights (the `directOnly` field the
+  /// models have carried since the first release — now wired to the UI).
+  bool _directOnly = false;
+
   /// The legs of a multi-city itinerary (owner decision, 2026-10-20). Empty
   /// until the traveller switches the trip type.
   final List<_LegDraft> _legs = <_LegDraft>[];
@@ -152,6 +156,16 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
     SearchFilters base,
     List<FlightOffer> results,
   ) {
+    final SearchFilters budgetAware = _applyBudget(base);
+    // Direct-flights-only forces maxStops: 0 on the applied filter set, the
+    // same semantics the airlines use for "non-stop only".
+    if (_directOnly) {
+      return budgetAware.copyWith(maxStops: 0);
+    }
+    return budgetAware;
+  }
+
+  SearchFilters _applyBudget(SearchFilters base) {
     final budget = _explicitBudget;
     if (budget == null || budget.max == null || budget.currency == null) {
       return base;
@@ -413,6 +427,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
         market: _marketCountryCode,
         currency: ref.read(currencyProvider),
         cabinClass: _cabinToken,
+        directOnly: _directOnly,
       );
       _lastParams = params;
       ref.read(flightSearchControllerProvider.notifier).search(params);
@@ -436,6 +451,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
       market: _marketCountryCode,
       currency: ref.read(currencyProvider),
       cabinClass: _cabinToken,
+      directOnly: _directOnly,
     );
     _lastParams = params;
     ref.read(flightSearchControllerProvider.notifier).search(params);
@@ -621,22 +637,115 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
     _Cabin.first => 'first',
   };
 
-  Widget _buildCabinRow(AppLocalizations l10n) {
-    return SearchSegmentedControl<_Cabin>(
-      options: const <_Cabin>[
-        _Cabin.economy,
-        _Cabin.premiumEconomy,
-        _Cabin.business,
-        _Cabin.first,
+  /// The compact passengers + cabin row (Google Flights / Kayak pattern):
+  /// one line, half passengers stepper, half a cabin picker button.
+  Widget _buildTravelersAndCabinRow(AppLocalizations l10n) {
+    return Row(
+      children: <Widget>[
+        Expanded(
+          flex: 11,
+          child: SearchStepperInput(
+            icon: Icons.people_outline_rounded,
+            label: l10n.passengersCount(_passengers),
+            count: _passengers,
+            onDecrement: () => setState(() {
+              if (_passengers > 1) _passengers--;
+            }),
+            onIncrement: () => setState(() {
+              if (_passengers < 9) _passengers++;
+            }),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          flex: 10,
+          child: _CabinButton(
+            label: l10n.cabinLabel,
+            value: _cabinLabel(l10n),
+            onTap: () => _pickCabin(l10n),
+          ),
+        ),
       ],
-      selected: _cabin,
-      labelOf: (_Cabin cabin) => switch (cabin) {
-        _Cabin.economy => l10n.cabinEconomy,
-        _Cabin.premiumEconomy => l10n.cabinPremiumEconomy,
-        _Cabin.business => l10n.cabinBusiness,
-        _Cabin.first => l10n.cabinFirst,
-      },
-      onSelected: (_Cabin cabin) => setState(() => _cabin = cabin),
+    );
+  }
+
+  /// Opens the cabin picker as a modal with a check mark on the current pick.
+  Future<void> _pickCabin(AppLocalizations l10n) async {
+    final _Cabin? picked = await showModalBottomSheet<_Cabin>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.sm,
+              ),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(
+                  l10n.cabinLabel,
+                  style: AppTypography.forLight().title.copyWith(
+                        color: context.tokigoColors.textPrimary,
+                      ),
+                ),
+              ),
+            ),
+            for (final cabin in _Cabin.values)
+              ListTile(
+                leading: Icon(
+                  cabin == _cabin
+                      ? Icons.check_circle_rounded
+                      : Icons.circle_outlined,
+                  color: cabin == _cabin
+                      ? context.tokigoColors.brand
+                      : context.tokigoColors.textTertiary,
+                ),
+                title: Text(
+                  switch (cabin) {
+                    _Cabin.economy => l10n.cabinEconomy,
+                    _Cabin.premiumEconomy => l10n.cabinPremiumEconomy,
+                    _Cabin.business => l10n.cabinBusiness,
+                    _Cabin.first => l10n.cabinFirst,
+                  },
+                ),
+                onTap: () => Navigator.pop(context, cabin),
+              ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+        ),
+      ),
+    );
+    if (picked != null && mounted) setState(() => _cabin = picked);
+  }
+
+  Widget _buildDirectOnlyRow(AppLocalizations l10n) {
+    return Row(
+      children: <Widget>[
+        Transform.scale(
+          scale: 0.85,
+          alignment: AlignmentDirectional.centerStart,
+          child: Switch.adaptive(
+            value: _directOnly,
+            onChanged: (bool value) => setState(() => _directOnly = value),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: GestureDetector(
+            onTap: () => setState(() => _directOnly = !_directOnly),
+            child: Text(
+              l10n.directFlightsOnly,
+              style: AppTypography.forLight().body.copyWith(
+                    color: context.tokigoColors.textPrimary,
+                  ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -660,14 +769,14 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
           onSelected: _setTripType,
         ),
         const SizedBox(height: AppSpacing.md),
-        _buildCabinRow(l10n),
-        const SizedBox(height: AppSpacing.md),
         if (_multiCity)
           ..._buildMultiCity(l10n)
         else
           ..._buildSingleRoute(l10n),
         const SizedBox(height: AppSpacing.md),
-        _buildPassengersRow(l10n),
+        _buildTravelersAndCabinRow(l10n),
+        const SizedBox(height: AppSpacing.md),
+        _buildDirectOnlyRow(l10n),
         const SizedBox(height: AppSpacing.lg),
         SearchSubmitButton(label: l10n.findFlights, onPressed: _search),
       ],
@@ -848,22 +957,6 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
     }
   }
 
-  Widget _buildPassengersRow(AppLocalizations l10n) {
-    // The cabin shown is the cabin actually sent with the search.
-    final label = '${l10n.passengersCount(_passengers)} · ${_cabinLabel(l10n)}';
-    return SearchStepperInput(
-      icon: Icons.people_outline_rounded,
-      label: label,
-      count: _passengers,
-      onDecrement: () => setState(() {
-        if (_passengers > 1) _passengers--;
-      }),
-      onIncrement: () => setState(() {
-        if (_passengers < 9) _passengers++;
-      }),
-    );
-  }
-
   // ── Results ─────────────────────────────────────────────────────────────
   Widget _buildResults(
     FlightSearchState state,
@@ -928,6 +1021,83 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
             onTap: () => context.push('/offer-details', extra: offer),
           ),
       ],
+    );
+  }
+}
+
+/// Compact cabin-class picker button — the single-line counterpart of the
+/// old full-width segmented control. Opens a modal with the four classes;
+/// the label reads the class actually sent with the search.
+class _CabinButton extends StatelessWidget {
+  const _CabinButton({
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
+
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final typography = AppTypography.forLight();
+    return Pressable.wrap(
+      child: Material(
+        color: context.tokigoColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+          side: BorderSide(color: context.tokigoColors.outline),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm + 4,
+            ),
+            child: Row(
+              children: <Widget>[
+                Icon(
+                  Icons.airline_seat_recline_normal_rounded,
+                  size: 20,
+                  color: context.tokigoColors.brand,
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        label,
+                        maxLines: 1,
+                        style: typography.captionSemibold.copyWith(
+                          color: context.tokigoColors.textTertiary,
+                        ),
+                      ),
+                      Text(
+                        value,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: typography.bodyLargeMedium.copyWith(
+                          color: context.tokigoColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 20,
+                  color: context.tokigoColors.textTertiary,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

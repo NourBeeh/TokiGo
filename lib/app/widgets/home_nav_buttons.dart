@@ -138,12 +138,12 @@ class HomeNavButtons extends StatelessWidget {
 /// The Home bottom action bar.
 ///
 /// The same [HomeActionTile] cards sit in a horizontal, lazily built
-/// [ListView.builder] directly above the persistent AI composer. Card width is
-/// fixed so the row extends naturally when a service is added, and a small
-/// directional fade at the trailing edge hints that more actions are available
-/// off-screen. It disappears once the row is scrolled to its end (or when the
-/// row fits), so it never becomes permanent decoration.
-class HomeActionBar extends StatefulWidget {
+/// [ListView.builder] directly above the persistent AI composer. The row
+/// extends edge-to-edge — it bleeds off both screen edges like a rail that
+/// comes out of the phone — and there are no edge fades: the rail simply
+/// continues past the screen edge. Card width is fixed so the row extends
+/// naturally when a service is added.
+class HomeActionBar extends StatelessWidget {
   const HomeActionBar({
     super.key,
     this.searchContext,
@@ -173,129 +173,37 @@ class HomeActionBar extends StatefulWidget {
   final List<HomeActionDefinition>? definitions;
 
   @override
-  State<HomeActionBar> createState() => _HomeActionBarState();
-}
-
-class _HomeActionBarState extends State<HomeActionBar> {
-  final ScrollController _controller = ScrollController();
-
-  /// True while the row has more content past its trailing edge.
-  bool _hasMoreAfter = false;
-
-  /// True while earlier items in the row are scrolled off the leading edge.
-  bool _hasMoreBefore = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller.addListener(_updateOverflowHint);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _updateOverflowHint());
-  }
-
-  @override
-  void dispose() {
-    _controller.removeListener(_updateOverflowHint);
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _updateOverflowHint() {
-    if (!mounted || !_controller.hasClients) return;
-    final bool hasMoreBefore = _controller.position.extentBefore > 0.5;
-    final bool hasMoreAfter = _controller.position.extentAfter > 0.5;
-    if (hasMoreBefore == _hasMoreBefore && hasMoreAfter == _hasMoreAfter) {
-      return;
-    }
-    setState(() {
-      _hasMoreBefore = hasMoreBefore;
-      _hasMoreAfter = hasMoreAfter;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final List<HomeActionDefinition> items =
-        widget.definitions ?? homeActionDefinitions(l10n);
-    final Color canvas = HomeDesignTokens.backgroundOf(context);
-
-    // Re-evaluate the trailing cue after this layout too: a locale flip,
-    // rotation or a definition change can alter the row's extent without a
-    // scroll notification.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _updateOverflowHint());
+        definitions ?? homeActionDefinitions(l10n);
 
     return SizedBox(
       height: HomeActionTile.height,
-      child: Stack(
-        children: <Widget>[
-          ListView.builder(
-            key: const ValueKey<String>('home-action-bar'),
-            controller: _controller,
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.zero,
-            itemCount: items.length,
-            itemBuilder: (BuildContext context, int index) {
-              final HomeActionDefinition definition = items[index];
-              return Padding(
-                padding: EdgeInsetsDirectional.only(
-                  end: index == items.length - 1 ? 0 : HomeActionBar.gap,
-                ),
-                child: SizedBox(
-                  width: HomeActionBar.cardWidth,
-                  child: HomeActionTile(
-                    definition: definition,
-                    searchContext: widget.searchContext,
-                    selected: widget.selectedAction == definition.action,
-                    onActionSelected: widget.onActionSelected,
-                  ),
-                ),
-              );
-            },
-          ),
-          // The "more actions before" cue: the same fade mirrored to the
-          // leading edge once the row is scrolled away from its start, so the
-          // edge the content exits through fades in both directions.
-          if (_hasMoreBefore)
-            PositionedDirectional(
-              top: 0,
-              bottom: 0,
-              start: 0,
-              width: 28,
-              child: IgnorePointer(
-                child: DecoratedBox(
-                  key: const ValueKey<String>('home-action-bar-overflow-start'),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: AlignmentDirectional.centerStart,
-                      end: AlignmentDirectional.centerEnd,
-                      colors: <Color>[canvas, canvas.withValues(alpha: 0)],
-                    ),
-                  ),
-                ),
+      child: ListView.builder(
+        key: const ValueKey<String>('home-action-bar'),
+        scrollDirection: Axis.horizontal,
+        // Edge-to-edge: the rail starts flush at the screen edge like a strip
+        // that comes out of the phone; tiles scroll off both edges.
+        padding: EdgeInsets.zero,
+        itemCount: items.length,
+        itemBuilder: (BuildContext context, int index) {
+          final HomeActionDefinition definition = items[index];
+          return Padding(
+            padding: EdgeInsetsDirectional.only(
+              end: index == items.length - 1 ? 0 : HomeActionBar.gap,
+            ),
+            child: SizedBox(
+              width: HomeActionBar.cardWidth,
+              child: HomeActionTile(
+                definition: definition,
+                searchContext: searchContext,
+                selected: selectedAction == definition.action,
+                onActionSelected: onActionSelected,
               ),
             ),
-          // The "more actions" cue: a narrow fade in the canvas colour at the
-          // trailing edge. It is purely visual and never intercepts a tap.
-          if (_hasMoreAfter)
-            PositionedDirectional(
-              top: 0,
-              bottom: 0,
-              end: 0,
-              width: 28,
-              child: IgnorePointer(
-                child: DecoratedBox(
-                  key: const ValueKey<String>('home-action-bar-overflow'),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: AlignmentDirectional.centerStart,
-                      end: AlignmentDirectional.centerEnd,
-                      colors: <Color>[canvas.withValues(alpha: 0), canvas],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
+          );
+        },
       ),
     );
   }

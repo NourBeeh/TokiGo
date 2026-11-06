@@ -8,8 +8,10 @@ import 'package:flutter/services.dart';
 import 'app/app.dart';
 import 'core/storage/deferred_offline_cache.dart';
 import 'core/storage/hive_offline_cache.dart';
+import 'core/storage/last_route_store.dart';
 import 'core/storage/offline_cache.dart';
 import 'core/storage/offline_cache_providers.dart';
+import 'shared/providers/last_route_provider.dart';
 import 'shared/providers/theme_provider.dart';
 
 /// How long the launch path may wait for the disk cache before the first frame.
@@ -75,6 +77,7 @@ void main() async {
   }
 
   final ThemeMode initialThemeMode = await _readInitialThemeMode(openedCache);
+  final String initialLocation = await _readInitialLocation();
 
   runApp(
     ProviderScope(
@@ -83,6 +86,7 @@ void main() async {
         themeModeProvider.overrideWith(
           () => ThemeModeController(initialMode: initialThemeMode),
         ),
+        lastInitialRouteProvider.overrideWithValue(initialLocation),
       ],
       child: const TokiGoApp(),
     ),
@@ -100,6 +104,22 @@ void main() async {
       );
     }),
   );
+}
+
+/// Reads the location the traveller was on when the app closed.
+///
+/// Bounded like the cache head start: a slow or unavailable settings box
+/// falls back to Home instead of stalling the first frame.
+Future<String> _readInitialLocation() async {
+  try {
+    return await LastRouteStore.read()
+            .timeout(const Duration(milliseconds: 250), onTimeout: () => null) ??
+        '/';
+  } catch (error, stackTrace) {
+    debugPrint('TokiGo: last-route restore unavailable — $error');
+    if (kDebugMode) debugPrintStack(stackTrace: stackTrace);
+    return '/';
+  }
 }
 
 Future<ThemeMode> _readInitialThemeMode(OfflineCache? cache) async {

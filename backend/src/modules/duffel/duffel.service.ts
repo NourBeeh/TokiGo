@@ -107,6 +107,7 @@ export class DuffelService implements FlightProvider {
     returnDate?: Date;
     passengers?: number;
     cabinClass?: string;
+    directOnly?: boolean;
   }): Promise<ProviderResult<any[]>> {
     if (!this.duffelClient) {
       return {
@@ -151,6 +152,7 @@ export class DuffelService implements FlightProvider {
 
       // Create offer request with Duffel API
       const cabinClass = params.cabinClass?.trim().toLowerCase();
+      const directOnly = params.directOnly === true;
       const request = await this.duffelClient?.offerRequests.create({
         slices: slices as any[],
         passengers: Array(passengersCount).fill({ type: 'adult' }),
@@ -161,6 +163,8 @@ export class DuffelService implements FlightProvider {
         ...(cabinClass
           ? { cabin_class: cabinClass as any }
           : {}),
+        // Non-stop only: Duffel caps any slice's connection count at 0.
+        ...(directOnly ? { max_connections: 0 } : {}),
       });
 
       // Map Duffel's response to the shared flight offer format matching Flutter contract

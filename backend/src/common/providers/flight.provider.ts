@@ -15,5 +15,10 @@ export interface FlightProvider {
      * optional so providers without cabin support may ignore it.
      */
     cabinClass?: string;
+    /**
+     * Non-stop flights only. Duffel honours it via `max_connections: 0`;
+     * providers without the notion ignore it.
+     */
+    directOnly?: boolean;
   }): Promise<ProviderResult<any[]>>;
 }
