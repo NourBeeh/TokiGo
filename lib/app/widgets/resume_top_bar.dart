@@ -53,6 +53,10 @@ class ResumeTopBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final GoRouter? router = GoRouter.maybeOf(context);
+    final HomeAction? selectedAction = HomeAction.fromPath(
+      router?.state.uri.path ?? '',
+    );
     return ColoredBox(
       // The page below paints `tokigoColors.background` (SearchScaffold's
       // Scaffold), so the bar must use the same token. A hardcoded Home beige
@@ -83,6 +87,7 @@ class ResumeTopBar extends ConsumerWidget {
                 children: <Widget>[
                   Expanded(
                     child: HomeActionBar(
+                      selectedAction: selectedAction,
                       onActionSelected: (HomeAction action) =>
                           _openAction(context, action),
                     ),
@@ -106,6 +111,10 @@ class ResumeTopBar extends ConsumerWidget {
   /// Top-level destinations replace the current page: the resume target is a
   /// root, not a pushed detail, so Back from it exits the app instead of
   /// looping back onto itself.
+  ///
+  /// Re-tapping the active service is a no-op: navigating would only rebuild
+  /// the same page, and the fallback must never be Home — Home is not built
+  /// while [AppConfig.homeEnabled] is false.
   void _openAction(BuildContext context, HomeAction action) {
     final String path = switch (action) {
       HomeAction.flights => '/flights',
@@ -115,7 +124,9 @@ class ResumeTopBar extends ConsumerWidget {
       HomeAction.groups => '/groups',
       HomeAction.trips => '/bag',
     };
-    context.go(path);
+    final GoRouter? router = GoRouter.maybeOf(context);
+    if (router == null || router.state.uri.path == path) return;
+    router.go(path);
   }
 }
 

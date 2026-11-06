@@ -20,4 +20,19 @@ enum HomeAction {
     HomeAction.groups => 'groups',
     HomeAction.trips => 'trips',
   };
+
+  /// The quick action matching a top-level service route.
+  ///
+  /// Null when the route is not one of Home's tiles (Profile, Wishlist,
+  /// Notifications, …), so a host can derive its selected tile from the
+  /// current router location without hardcoding the mapping twice.
+  static HomeAction? fromPath(String path) => switch (path) {
+    '/flights' => HomeAction.flights,
+    '/hotels' => HomeAction.hotels,
+    '/cars' => HomeAction.cars,
+    '/packages' => HomeAction.activities,
+    '/groups' => HomeAction.groups,
+    '/bag' => HomeAction.trips,
+    _ => null,
+  };
 }

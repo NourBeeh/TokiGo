@@ -20,9 +20,10 @@ import 'widgets/resume_top_bar.dart';
 ///
 /// HOME OFF (2026-11, Task 11): while [AppConfig.homeEnabled] is false, the
 /// shell pins the top bar (Home header + quick actions + resume button) above
-/// the current page on browse destinations. The bar owns the status-bar inset,
-/// so the page below has its top padding removed — and only there: every other
-/// destination (auth, onboarding, notifications, …) keeps its own padding.
+/// the current page on the six service paths ([kTopBarPaths]). The bar owns the
+/// status-bar inset, so the page below has its top padding removed — and only
+/// there: every other destination (auth, onboarding, notifications, Profile,
+/// Wishlist, …) keeps its own padding and its own header/back button.
 /// [ResumeTopBarScope] tells those pages the bar replaced their own header.
 class TokiGoShell extends StatelessWidget {
   const TokiGoShell({
@@ -40,7 +41,7 @@ class TokiGoShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool showTopBar =
-        !AppConfig.homeEnabled && kSavableResumePaths.contains(location.path);
+        !AppConfig.homeEnabled && kTopBarPaths.contains(location.path);
     return Scaffold(
       body: ResumeTopBarScope(
         visible: showTopBar,
