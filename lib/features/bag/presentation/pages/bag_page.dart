@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:tokigo/app/widgets/resume_top_bar.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
@@ -116,6 +117,9 @@ class _BagPageState extends ConsumerState<BagPage> {
                 : l10n.wishlistSubtitle,
             // Home owns the route/back affordance when this page is embedded.
             showBackButton: !widget.embedded,
+            // The pinned resume top bar replaces this header on the top-level
+            // browse pages; pushed pages keep it.
+            visible: !ResumeTopBarScope.of(context),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(

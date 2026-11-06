@@ -14,6 +14,7 @@ final resumeDestinationProvider = StateProvider<String?>((ref) => null);
 
 /// The current router location, updated on every navigation.
 ///
-/// Used to mark the resume button's selected state and to decide which pages
-/// show the pinned top bar.
+/// Carries the path plus any query string, so the resume button's selected
+/// state compares against exactly what would be restored. Also used to decide
+/// which pages show the pinned top bar.
 final currentLocationProvider = StateProvider<String>((ref) => '/');

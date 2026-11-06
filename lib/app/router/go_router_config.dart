@@ -81,9 +81,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
   // Home is off: '/' is not a destination any more. The resume target is the
   // saved browse location when it is still valid, else the default.
-  final String resumeTarget = AppConfig.homeEnabled
-      ? '/'
-      : resolveResumeTarget(savedResume);
+  final String resumeTarget = initialLocationFor(
+    homeEnabled: AppConfig.homeEnabled,
+    savedResume: savedResume,
+    isAuthenticated: authUser != null,
+  );
 
   final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
@@ -500,12 +502,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   );
 
   // Track the resume destination + the current location. Only allowlisted
-  // browse pages are persisted; the write is debounced so a fast navigation
-  // burst lands once.
+  // browse pages are persisted, and only their allowlisted query parameters
+  // survive; the write is debounced so a fast navigation burst lands once.
   router.routerDelegate.addListener(() {
-    final String location = router.state.matchedLocation;
-    ref.read(currentLocationProvider.notifier).state = location;
-    if (!AppConfig.homeEnabled && isSavableResumeLocation(location)) {
+    // Keep the full URI (path + safe query) so the button's selected state and
+    // the restored location stay faithful to what was saved.
+    final String current = router.state.uri.toString();
+    ref.read(currentLocationProvider.notifier).state = current;
+    final String location = sanitizeResumeLocation(current);
+    if (!AppConfig.homeEnabled && location.isNotEmpty) {
       ref.read(resumeDestinationProvider.notifier).state = location;
       _scheduleResumePersist(location);
     }

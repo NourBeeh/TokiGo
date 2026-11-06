@@ -20,15 +20,30 @@ const Set<String> kSavableResumePaths = <String>{
   '/wishlist',
 };
 
+/// Query parameters that are safe to persist, per route.
+///
+/// A saved location must never carry a short-lived id (an offer, a search, a
+/// trip) or anything account-specific, so each allowlisted path names the
+/// parameters it accepts AND the values that are safe. Everything else is
+/// dropped before the location is written.
+const Map<String, Map<String, Set<String>>> kResumeQueryAllowlist =
+    <String, Map<String, Set<String>>>{
+      // Bag's only state is which of its two tabs is open; the default (trips)
+      // needs no parameter at all.
+      '/bag': <String, Set<String>>{
+        'section': <String>{'likes', 'trips'},
+      },
+    };
+
 /// The destination used when nothing valid was saved (first install, a stale
 /// entry, or a saved path that no longer exists).
 const String kDefaultResumePath = '/flights';
 
-/// Whether [location] may be persisted as the resume target.
+/// Whether [location] points at a destination the app may reopen on.
 ///
-/// Compares the path only — query parameters are ignored so a saved
-/// `/bag?section=likes` still restores `/bag`. A null/empty value is simply
-/// not savable.
+/// Compares the path only — query parameters are handled separately by
+/// [sanitizeResumeLocation]. A null/empty value, or a path that is not
+/// absolute, is not savable.
 bool isSavableResumeLocation(String? location) {
   if (location == null || location.isEmpty) return false;
   final Uri? uri = Uri.tryParse(location);
@@ -36,13 +51,61 @@ bool isSavableResumeLocation(String? location) {
   return kSavableResumePaths.contains(uri.path);
 }
 
+/// Strips every query parameter that is not explicitly allowlisted for the
+/// location's path.
+///
+/// `/bag?section=likes` → `/bag?section=likes`, but `/bag?id=123` and
+/// `/flights?tab=radar` → the bare path. A location whose path is not
+/// savable yields an empty string, so the caller can skip the write.
+String sanitizeResumeLocation(String location) {
+  final Uri? uri = Uri.tryParse(location);
+  if (uri == null || !isSavableResumeLocation(uri.path)) return '';
+  final Map<String, Set<String>>? allowed = kResumeQueryAllowlist[uri.path];
+  if (allowed == null || uri.queryParameters.isEmpty) return uri.path;
+  final List<String> kept = <String>[];
+  uri.queryParameters.forEach((String key, String value) {
+    final Set<String>? values = allowed[key];
+    if (values != null && values.contains(value)) {
+      kept.add('${Uri.encodeComponent(key)}=${Uri.encodeComponent(value)}');
+    }
+  });
+  return kept.isEmpty ? uri.path : '${uri.path}?${kept.join('&')}';
+}
+
+/// The location a cold start opens on.
+///
+/// Home first when it is enabled; otherwise the resume target. Pure, so both
+/// branches are unit-testable without flipping the global flag.
+String initialLocationFor({
+  required bool homeEnabled,
+  String? savedResume,
+  bool isAuthenticated = true,
+}) =>
+    homeEnabled
+        ? '/'
+        : resolveResumeTarget(savedResume, isAuthenticated: isAuthenticated);
+
+/// Destinations that need a signed-in traveller.
+///
+/// The app lets guests browse, but reopening the account page for someone who
+/// is signed out only shows a sign-in prompt, so the restore falls back to the
+/// default instead of stranding them there.
+const Set<String> kResumeAuthRequiredPaths = <String>{'/profile'};
+
 /// The location a cold start should open on while Home is disabled.
 ///
 /// The saved location wins when it is still valid; anything else (first
-/// install, a stale entry, a path that no longer exists) falls back to
+/// install, a stale entry, a path that no longer exists, or a destination that
+/// needs a session the traveller does not have) falls back to
 /// [kDefaultResumePath]. Pure, so the restore decision is unit-testable.
-String resolveResumeTarget(String? saved) =>
-    isSavableResumeLocation(saved) ? saved! : kDefaultResumePath;
+String resolveResumeTarget(String? saved, {bool isAuthenticated = true}) {
+  if (!isSavableResumeLocation(saved)) return kDefaultResumePath;
+  final Uri uri = Uri.parse(saved!);
+  if (!isAuthenticated && kResumeAuthRequiredPaths.contains(uri.path)) {
+    return kDefaultResumePath;
+  }
+  return saved;
+}
 
 /// The resume destination's glyph and localized label, for the pinned button.
 class ResumeDestinationVisual {

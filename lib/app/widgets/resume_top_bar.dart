@@ -7,43 +7,88 @@ import 'package:tokigo/app/widgets/home_nav_buttons.dart';
 import 'package:tokigo/core/navigation/resume_destination.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/features/home/domain/home_action.dart';
 import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_top_bar.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
-/// The pinned top bar shown while Home is disabled: the quick-action row plus
-/// the resume button, so every service stays one tap away.
+/// Marks the pages that render underneath [ResumeTopBar].
 ///
-/// It is the Home top area extracted for the service pages — the same
-/// tiles, the same fixed size, no scroll-driven changes.
+/// The bar replaces the page's own `AppPageHeader`, so those pages hide it —
+/// otherwise every browse page would show two stacked headers. Pages pushed
+/// from elsewhere have no bar above them, so they keep their header (and its
+/// back button).
+class ResumeTopBarScope extends InheritedWidget {
+  const ResumeTopBarScope({
+    super.key,
+    required this.visible,
+    required super.child,
+  });
+
+  /// Whether the pinned top bar is currently above the page.
+  final bool visible;
+
+  static bool of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<ResumeTopBarScope>()?.visible ??
+      false;
+
+  @override
+  bool updateShouldNotify(ResumeTopBarScope oldWidget) =>
+      oldWidget.visible != visible;
+}
+
+/// The pinned top bar shown while Home is disabled: Home's header row, the
+/// quick-action row and the resume button.
+///
+/// The header row is the shared [HomeTopBar] — wordmark, notifications bell and
+/// profile avatar — so those two affordances stay reachable now that Home
+/// itself is not built. Both hosts render it exactly once.
 class ResumeTopBar extends ConsumerWidget {
   const ResumeTopBar({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ColoredBox(
-      color: HomeDesignTokens.backgroundOf(context),
+      // The page below paints `tokigoColors.background` (SearchScaffold's
+      // Scaffold), so the bar must use the same token. A hardcoded Home beige
+      // left a visible seam above a white page.
+      color: context.tokigoColors.background,
       child: SafeArea(
         bottom: false,
-        child: Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(
-            AppSpacing.lg,
-            AppSpacing.sm,
-            AppSpacing.lg,
-            AppSpacing.md,
-          ),
-          child: Row(
-            children: <Widget>[
-              Expanded(
-                child: HomeActionBar(
-                  onActionSelected: (HomeAction action) =>
-                      _openAction(context, action),
-                ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Padding(
+              padding: EdgeInsetsDirectional.fromSTEB(
+                AppSpacing.lg,
+                AppSpacing.xs,
+                AppSpacing.lg,
+                0,
               ),
-              const SizedBox(width: AppSpacing.sm),
-              const ResumeButton(),
-            ],
-          ),
+              child: HomeTopBar(),
+            ),
+            Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(
+                AppSpacing.lg,
+                AppSpacing.md,
+                AppSpacing.lg,
+                AppSpacing.md,
+              ),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: HomeActionBar(
+                      onActionSelected: (HomeAction action) =>
+                          _openAction(context, action),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  const ResumeButton(),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

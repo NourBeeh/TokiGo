@@ -19,10 +19,11 @@ import 'widgets/resume_top_bar.dart';
 /// rule) but has no consumer outside its own tests.
 ///
 /// HOME OFF (2026-11, Task 11): while [AppConfig.homeEnabled] is false, the
-/// shell pins the quick-action row + the resume button above the current page
-/// on browse destinations, so the services stay reachable without Home. The
-/// top bar owns the status-bar inset; the page below has its top padding
-/// removed so the two never stack.
+/// shell pins the top bar (Home header + quick actions + resume button) above
+/// the current page on browse destinations. The bar owns the status-bar inset,
+/// so the page below has its top padding removed — and only there: every other
+/// destination (auth, onboarding, notifications, …) keeps its own padding.
+/// [ResumeTopBarScope] tells those pages the bar replaced their own header.
 class TokiGoShell extends StatelessWidget {
   const TokiGoShell({
     super.key,
@@ -38,27 +39,28 @@ class TokiGoShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (AppConfig.homeEnabled) {
-      return Scaffold(body: navigationShell);
-    }
-    final bool showTopBar = kSavableResumePaths.contains(location.path);
+    final bool showTopBar =
+        !AppConfig.homeEnabled && kSavableResumePaths.contains(location.path);
     return Scaffold(
-      body: Column(
-        children: <Widget>[
-          if (showTopBar) const ResumeTopBar(),
-          Expanded(
-            // The top bar owns the status-bar inset, so the page's own top
-            // padding is only redundant when the bar is actually there. On
-            // every other destination (auth, onboarding, notifications, …)
-            // the page still needs it — removing it unconditionally laid those
-            // pages out under the status bar.
-            child: MediaQuery.removePadding(
-              context: context,
-              removeTop: showTopBar,
-              child: navigationShell,
+      body: ResumeTopBarScope(
+        visible: showTopBar,
+        child: Column(
+          children: <Widget>[
+            if (showTopBar) const ResumeTopBar(),
+            Expanded(
+              // The top bar owns the status-bar inset, so the page's own top
+              // padding is only redundant when the bar is actually there. On
+              // every other destination (auth, onboarding, notifications, …)
+              // the page still needs it — removing it unconditionally laid
+              // those pages out under the status bar.
+              child: MediaQuery.removePadding(
+                context: context,
+                removeTop: showTopBar,
+                child: navigationShell,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

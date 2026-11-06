@@ -12,6 +12,11 @@
 .swiftpm/
 migrate_working_dir/
 
+# Agent/tool session state (local, never shared)
+ses_*.json
+.tool-session*.json
+.session*.json
+
 # IntelliJ related
 *.iml
 *.ipr

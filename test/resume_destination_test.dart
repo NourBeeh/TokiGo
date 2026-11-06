@@ -131,6 +131,37 @@ void main() {
     });
   });
 
+  group('sanitizeResumeLocation', () {
+    test('keeps an allowlisted parameter with an allowlisted value', () {
+      expect(sanitizeResumeLocation('/bag?section=likes'), '/bag?section=likes');
+      expect(sanitizeResumeLocation('/bag?section=trips'), '/bag?section=trips');
+    });
+
+    test('drops a parameter that is not allowlisted for the route', () {
+      expect(sanitizeResumeLocation('/bag?id=123'), '/bag');
+      expect(sanitizeResumeLocation('/flights?tab=radar'), '/flights');
+      expect(sanitizeResumeLocation('/hotels?sort=price'), '/hotels');
+    });
+
+    test('drops an allowlisted parameter carrying a foreign value', () {
+      expect(sanitizeResumeLocation('/bag?section=evil'), '/bag');
+    });
+
+    test('keeps only the safe parameters when several are present', () {
+      expect(
+        sanitizeResumeLocation('/bag?section=likes&id=123'),
+        '/bag?section=likes',
+      );
+    });
+
+    test('yields an empty string for a path that is not savable', () {
+      expect(sanitizeResumeLocation('/onboarding?x=1'), '');
+      expect(sanitizeResumeLocation('/booking/review?offer=9'), '');
+      expect(sanitizeResumeLocation('flights'), '');
+      expect(sanitizeResumeLocation(''), '');
+    });
+  });
+
   group('resolveResumeTarget (restore on launch)', () {
     test('reopens the saved browse destination', () {
       expect(resolveResumeTarget('/hotels'), '/hotels');

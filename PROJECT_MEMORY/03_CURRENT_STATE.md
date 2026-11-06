@@ -5,7 +5,7 @@ Last updated: 2026-11-06 (session: Home UX + app icon, floating composer, Home d
 ## Build / verification
 
 - `flutter analyze`: 0 errors.
-- `flutter test`: 253 passed, 0 failed.
+- `flutter test`: all green (260 + tests; see the resume sections below).
 
 ## HOME IS DISABLED BY FLAG (Task 11, 2026-11)
 
@@ -36,6 +36,41 @@ restores Home exactly as it was.
 - Restore is unit-tested (`resolveResumeTarget`, the allowlist, the store
   round-trip) and the button has widget tests
   (`test/resume_destination_test.dart`, `test/resume_top_bar_test.dart`).
+
+### Regressions fixed (Task 12)
+
+- **Bell + profile are reachable again.** `_HomeTopBar` was extracted into the
+  shared `HomeTopBar` (`lib/features/home/presentation/widgets/home_top_bar.dart`)
+  and `ResumeTopBar` now renders it above the quick-action row — wordmark,
+  `AnimatedNotificationBell` and the avatar, same sizes and behaviour. Both
+  hosts render it exactly once.
+- **No double header.** `ResumeTopBarScope` (an `InheritedWidget` the shell
+  wraps the navigation stack in) tells the top-level browse pages that the bar
+  replaced their own header; `AppPageHeader.visible` hides it there. Flights,
+  Stays, Cars, Activities (`SearchScaffold`), Groups and Bag pass it. Every
+  other page — including pushed detail routes — keeps its header and back
+  button.
+- **No colour seam.** The bar paints `context.tokigoColors.background`, the
+  same token `SearchScaffold`'s Scaffold uses; the hardcoded Home beige
+  (`#FAF8F5`) is gone. Light and dark both resolve through the theme, and the
+  bar's `ColoredBox` sits outside its `SafeArea`, so the status-bar area is the
+  same colour too.
+- **Safe query strings survive.** `sanitizeResumeLocation` keeps only the
+  per-route allowlisted parameters (`kResumeQueryAllowlist`): `/bag?section=likes`
+  restores as `/bag?section=likes`, while `/bag?id=123` and `/flights?tab=radar`
+  collapse to the bare path. `router.state.uri` (not `matchedLocation`) is what
+  gets saved, and `currentLocationProvider` carries the full URI so the button's
+  selected state still matches.
+- **Router-level restore tests** (`test/resume_router_test.dart`): no saved
+  value, a valid saved value, a stale/unknown path, `/profile` while signed out,
+  a platform deep link overriding the restore, `homeEnabled: true` returning to
+  Home, and logout clearing the saved value.
+- Two robustness fixes found while testing: `AuthController._restore` and
+  `OnboardingController._load` no longer write state after disposal, and
+  `OnboardingController.pinned` lets tests pin the gate deterministically.
+
+## Build / verification (device)
+
 - Android: no device connected and no AVD available on this machine, so the
   launcher icon could not be confirmed on a device/simulator. The generated
   resources were verified directly instead (see "App icon" below).

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:tokigo/app/widgets/resume_top_bar.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
@@ -90,6 +91,9 @@ class SearchScaffold extends StatelessWidget {
                 children: <Widget>[?headerActions],
               ),
               showBackButton: false,
+              // The pinned resume top bar replaces this header on the
+              // top-level browse pages; pushed pages keep it.
+              visible: !ResumeTopBarScope.of(context),
             ),
           ),
           SliverPadding(

@@ -18,6 +18,7 @@ import 'package:tokigo/features/home/domain/home_action.dart';
 import 'package:tokigo/features/home/presentation/home_controller.dart';
 import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_ai_search_field.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_top_bar.dart';
 import 'package:tokigo/features/home/presentation/widgets/destination_cover_flow_carousel.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_section.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stays_carousel.dart';
@@ -247,7 +248,7 @@ class _HomePageState extends ConsumerState<HomePage>
               AppSpacing.lg,
               0,
             ),
-            child: _HomeTopBar(),
+            child: HomeTopBar(),
           ),
           Padding(
             padding: const EdgeInsetsDirectional.fromSTEB(
@@ -555,107 +556,6 @@ class _HomePageState extends ConsumerState<HomePage>
 /// It carries no greeting line: the logotype is Home's identity, and a
 /// personalized greeting lives in the composition contract (home_greeting)
 /// rather than occupying the page's loudest slot.
-class _HomeTopBar extends StatelessWidget {
-  const _HomeTopBar();
-
-  @override
-  Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
-
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        // 320pt phones are the narrowest target. The two 48pt actions and the
-        // 56pt avatar take 104pt; give the wordmark only what is left and
-        // scale it down rather than letting the row overflow.
-        final double wordmarkWidth = (constraints.maxWidth - 112).clamp(
-          0.0,
-          172.0,
-        );
-
-        return Directionality(
-          textDirection: TextDirection.ltr,
-          child: Row(
-            textDirection: TextDirection.ltr,
-            children: <Widget>[
-              // One semantics node saying "TokiGo" — the two halves are one word.
-              Semantics(
-                label: 'TokiGo',
-                container: true,
-                child: ExcludeSemantics(
-                  child: SizedBox(
-                    width: wordmarkWidth,
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: AlignmentDirectional.centerStart,
-                      child: AppWordmark(base: typography.title),
-                    ),
-                  ),
-                ),
-              ),
-              const Spacer(),
-              AnimatedNotificationBell(
-                normalColor: context.tokigoColors.textPrimary,
-                onTap: () => context.push('/notifications'),
-              ),
-              const _HomeAvatar(),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-/// Profile destination as a fixed person glyph.
-///
-/// Intentionally static: the chrome looks the SAME whether or not the
-/// traveller is signed in, so Home's only profile affordance never changes
-/// shape (and a signed-in photo never leaks into the header).
-class _HomeAvatar extends StatelessWidget {
-  const _HomeAvatar();
-
-  static const double size = 40;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return Semantics(
-      button: true,
-      label: l10n.profile,
-      child: Material(
-        color: Colors.transparent,
-        clipBehavior: Clip.antiAlias,
-        borderRadius: BorderRadius.circular(size / 2),
-        child: Pressable(
-          onTap: () => context.push('/profile'),
-          child: ClipOval(
-            child: SizedBox(
-              width: size,
-              height: size,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: context.tokigoColors.surfaceSecondary,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: context.tokigoColors.hairlineStrong,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  Icons.person_rounded,
-                  size: 22,
-                  color: context.tokigoColors.textPrimary,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 // ─── Centered honest states (empty / offline) ───────────────────────────────
 
 /// Centers an honest state (empty / offline) in the feed's remaining
