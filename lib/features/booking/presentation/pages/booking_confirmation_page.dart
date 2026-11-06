@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tokigo/core/domain/models/booking/booking.dart';
-import 'package:tokigo/core/navigation/resume_destination.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
@@ -130,8 +129,7 @@ class _BookingConfirmationPageState
                   child: AppButton(
                     label: l10n.bookingBackHome,
                     type: AppButtonType.ghost,
-                    // "Home" is the resume target while Home is disabled.
-                    onPressed: () => context.go(homeRoute()),
+                    onPressed: () => context.go('/'),
                   ),
                 ),
               ],
@@ -260,8 +258,7 @@ class _BookingConfirmationPageState
                     AppButton(
                       label: l10n.bookingBackHome,
                       type: AppButtonType.ghost,
-                      // "Home" is the resume target while Home is disabled.
-                      onPressed: () => context.go(homeRoute()),
+                      onPressed: () => context.go('/'),
                     ),
                   ],
                 ),

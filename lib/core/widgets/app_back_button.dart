@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:tokigo/core/navigation/resume_destination.dart';
 import 'package:tokigo/core/widgets/app_icon_action.dart';
 
 /// Consistent, localized back action for pages pushed onto the app router.
@@ -9,8 +8,8 @@ import 'package:tokigo/core/widgets/app_icon_action.dart';
 /// One glyph — `arrow_back_ios_new_rounded`, the thin One UI chevron, which
 /// carries `matchTextDirection` and therefore mirrors itself in Arabic — and one
 /// behaviour everywhere: `pop` when the route can pop, [fallbackLocation]
-/// otherwise (the resume target by default; a funnel's root for its step pages,
-/// so a deep link still lands somewhere sensible).
+/// otherwise (Home by default; a funnel's root for its step pages, so a deep
+/// link still lands somewhere sensible).
 ///
 /// Pass [AppIconActionVariant.disc] over photography, where a bare glyph would
 /// disappear against a light image.
@@ -32,9 +31,7 @@ class AppBackButton extends StatelessWidget {
   /// Where a back press lands when the route cannot pop (no history to return
   /// to — a deep link, or a page entered with `go`).
   ///
-  /// Null resolves to [homeRoute]: Home while it is enabled, otherwise the
-  /// default service page. A bare '/' is never used — while Home is off that
-  /// route is not built, so the fallback would strand the traveller.
+  /// Null resolves to Home.
   final String? fallbackLocation;
 
   /// Whether leaving is currently allowed — see [AppIconAction.enabled].
@@ -71,7 +68,7 @@ class AppBackButton extends StatelessWidget {
           if (router.canPop()) {
             router.pop();
           } else {
-            router.go(fallbackLocation ?? homeRoute());
+            router.go(fallbackLocation ?? '/');
           }
         },
       ),

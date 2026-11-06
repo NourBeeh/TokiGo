@@ -11,11 +11,8 @@ import 'package:tokigo/l10n/app_localizations.dart';
 /// Home's header row: the Toki Go wordmark, the notifications bell and the
 /// profile avatar.
 ///
-/// Shared, not duplicated: [HomePage] renders it above its feed, and
-/// `ResumeTopBar` renders the same row above the quick-action bar while Home is
-/// disabled. Both hosts must show it exactly once — the bell and the avatar are
-/// the only notifications/profile affordances on a browse page, so a second
-/// copy (or a missing one) is a regression.
+/// The bell and the avatar are the only notifications/profile affordances on a
+/// browse page, so a second copy (or a missing one) is a regression.
 class HomeTopBar extends StatelessWidget {
   const HomeTopBar({super.key});
 

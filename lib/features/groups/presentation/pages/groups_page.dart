@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/app/widgets/resume_top_bar.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
@@ -42,9 +41,6 @@ class GroupsPage extends StatelessWidget {
               SliverToBoxAdapter(
                 child: AppPageHeader(
                   subtitle: l10n.groupsSubtitle,
-                  // The pinned resume top bar replaces this header on the
-                  // top-level browse pages; pushed pages keep it.
-                  visible: !ResumeTopBarScope.of(context),
                 ),
               ),
               if (_groups.isEmpty)

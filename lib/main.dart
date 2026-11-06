@@ -7,9 +7,6 @@ import 'package:flutter/services.dart';
 
 import 'app/app.dart';
 import 'core/storage/deferred_offline_cache.dart';
-import '../app/config/app_config.dart';
-import '../app/providers/resume_providers.dart';
-import '../core/storage/resume_destination_store.dart';
 import 'core/storage/hive_offline_cache.dart';
 import 'core/storage/offline_cache.dart';
 import 'core/storage/offline_cache_providers.dart';
@@ -79,12 +76,6 @@ void main() async {
 
   final ThemeMode initialThemeMode = await _readInitialThemeMode(openedCache);
 
-  // Home is off: reopen on the traveller's last browse destination instead of
-  // re-rendering the feed. The value ships with the process so the router can
-  // compute its initial location before the first frame.
-  final String? savedResume =
-      AppConfig.homeEnabled ? null : await ResumeDestinationStore.read();
-
   runApp(
     ProviderScope(
       overrides: <Override>[
@@ -92,7 +83,6 @@ void main() async {
         themeModeProvider.overrideWith(
           () => ThemeModeController(initialMode: initialThemeMode),
         ),
-        savedResumeLocationProvider.overrideWithValue(savedResume),
       ],
       child: const TokiGoApp(),
     ),

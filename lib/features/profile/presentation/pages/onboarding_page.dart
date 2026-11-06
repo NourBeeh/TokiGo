@@ -9,7 +9,6 @@ import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_button.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:tokigo/core/geo/location_prompt.dart';
-import 'package:tokigo/core/navigation/resume_destination.dart';
 import 'package:tokigo/core/ui/app_wordmark.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
@@ -105,11 +104,11 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     } catch (_) {}
   }
 
-  /// Leaves the intro for the resume target (Home while it is enabled) and
-  /// remembers it, so the first-launch gate never shows the intro twice.
+  /// Leaves the intro for Home and remembers it, so the first-launch gate
+  /// never shows the intro twice.
   void _finish() {
     ref.read(onboardingProvider.notifier).markSeen();
-    context.go(homeRoute());
+    context.go('/');
   }
 
   /// "Already have an account? Log in" — the gate redirects an unseen intro

@@ -1,129 +1,33 @@
 # 03 — Current State
 
-Last updated: 2026-11-06 (session: Home UX + app icon, floating composer, Home disabled by flag, navigation cleanup)
+Last updated: 2026-11-06 (session: Home restored — Home-off / resume mode removed)
 
 ## Build / verification
 
 - `flutter analyze`: 0 errors.
-- `flutter test`: all green (260 + tests; see the resume sections below).
+- `flutter test`: all green (233 tests).
 
-## HOME IS DISABLED BY FLAG (Task 11, 2026-11)
+## HOME IS THE ONLY SURFACE (2026-11)
 
-`AppConfig.homeEnabled = false` (`lib/app/config/app_config.dart`). **Why:** the
-owner wants the app to reopen on the traveller's last visited section instead of
-re-rendering the Home feed, and to keep every service one tap away without
-Home. Nothing is deleted — `HomePage`, `home_controller` and the Home providers
-are untouched; only the router reads the flag. Flipping it back to `true`
-restores Home exactly as it was.
+The temporary Home-off mode (Task 11–14) has been removed at the owner's
+request. The app opens on Home again and Home is the only top-level surface.
 
-- **Resume target** = the saved browse location when it is still valid, else
-  `/flights` (`resolveResumeTarget` in `lib/core/navigation/resume_destination.dart`).
-- **Persisted** by `ResumeDestinationStore` (`lib/core/storage/resume_destination_store.dart`)
-  in the same Hive `tokigo_settings` box as the onboarding flag, written
-  debounced (1s) from a `router.routerDelegate` listener, and **cleared on
-  logout**.
-- **Allowlist** (`kSavableResumePaths`): `/flights`, `/hotels`, `/cars`,
-  `/packages`, `/groups`, `/bag`. The booking funnel, offer details,
-  onboarding, auth, notifications, Profile, Wishlist and anything with a
-  short-lived id are never saved or restored. Profile and Wishlist behave
-  like Notifications: reachable from the header, never a cold-start target.
-- **Top bar paths** (`kTopBarPaths`): the same six service paths, kept as a
-  SEPARATE set because the bar is chrome for the service surfaces while the
-  resume allowlist also decides what a cold start may reopen on. Profile and
-  Wishlist are standalone pages — they keep their own header and back button,
-  so they must never grow a top bar.
-- **Pinned replacement**: `ResumeTopBar` (`lib/app/widgets/resume_top_bar.dart`)
-  — the shared `HomeTopBar` (wordmark, bell, profile) above the quick-action
-  row — rendered by `TokiGoShell` on the six service paths (`kTopBarPaths`).
-  The resume button is **unpinned** (`AppConfig.showResumeButton = false`, owner
-  decision 2026-11): the bar keeps only those two rows, so it reserves no
-  height for a button it does not draw. `ResumeButton`, `ResumeDestinationStore`
-  and the restore-on-launch logic all stay in place — flip the flag back to
-  `true` to re-attach it. `HomeActionBar` is unchanged and still the tile
-  inventory.
-- **Deep links still win**: `GoRouter.initialLocation` is only a fallback
-  (`overridePlatformDefaultLocation` is false), so a platform deep link
-  overrides the restore.
-- Restore is unit-tested (`resolveResumeTarget`, the allowlist, the store
-  round-trip) and the button has widget tests
-  (`test/resume_destination_test.dart`, `test/resume_top_bar_test.dart`).
-
-### Regressions fixed (Task 12)
-
-- **Bell + profile are reachable again.** `_HomeTopBar` was extracted into the
-  shared `HomeTopBar` (`lib/features/home/presentation/widgets/home_top_bar.dart`)
-  and `ResumeTopBar` now renders it above the quick-action row — wordmark,
-  `AnimatedNotificationBell` and the avatar, same sizes and behaviour. Both
-  hosts render it exactly once.
-- **No double header.** `ResumeTopBarScope` (an `InheritedWidget` the shell
-  wraps the navigation stack in) tells the top-level browse pages that the bar
-  replaced their own header; `AppPageHeader.visible` hides it there. Flights,
-  Stays, Cars, Activities (`SearchScaffold`), Groups and Bag pass it. Every
-  other page — including pushed detail routes — keeps its header and back
-  button.
-- **No colour seam.** The bar paints `context.tokigoColors.background`, the
-  same token `SearchScaffold`'s Scaffold uses; the hardcoded Home beige
-  (`#FAF8F5`) is gone. Light and dark both resolve through the theme, and the
-  bar's `ColoredBox` sits outside its `SafeArea`, so the status-bar area is the
-  same colour too.
-- **Safe query strings survive.** `sanitizeResumeLocation` keeps only the
-  per-route allowlisted parameters (`kResumeQueryAllowlist`): `/bag?section=likes`
-  restores as `/bag?section=likes`, while `/bag?id=123` and `/flights?tab=radar`
-  collapse to the bare path. `router.state.uri` (not `matchedLocation`) is what
-  gets saved, and `currentLocationProvider` carries the full URI so the button's
-  selected state still matches.
-- **Router-level restore tests** (`test/resume_router_test.dart`): no saved
-  value, a valid saved value, a stale/unknown path, `/profile` while signed out,
-  a platform deep link overriding the restore, `homeEnabled: true` returning to
-  Home, and logout clearing the saved value.
-- Two robustness fixes found while testing: `AuthController._restore` and
-  `OnboardingController._load` no longer write state after disposal, and
-  `OnboardingController.pinned` lets tests pin the gate deterministically.
-
-### Resume button unpinned (Task 13, 2026-11)
-
-`AppConfig.showResumeButton = false`: `ResumeTopBar` now renders only the
-`HomeTopBar` row and the `HomeActionBar` row, and reserves nothing for the
-button (`if (AppConfig.showResumeButton) ...[SizedBox, ResumeButton]`). The
-button widget itself stays in `resume_top_bar.dart`, and
-`ResumeDestinationStore` plus the restore-on-launch logic are untouched — the
-app still reopens on the last visited page. `test/resume_top_bar_test.dart`
-asserts the button is absent from the bar, that the bar's height equals its two
-rows plus their own padding in light **and** dark, and that no gap is left where
-the button used to be; the button's own navigation test now renders it
-standalone.
-
-### Navigation cleanup (Task 14, 2026-11)
-
-- **Re-tap is a no-op, never Home.** `ResumeTopBar._openAction` returns early
-  when the current router path already equals the target path (no `go`, no
-  `push`, no rebuild; the tile's own haptic feedback still fires). The active
-  service is passed to `HomeActionBar` as `selectedAction`, derived from the
-  router location via `HomeAction.fromPath`, so the current tile shows its
-  selected state.
-- **No path lands on '/' while Home is off.** `homeRoute()` (in
-  `lib/core/navigation/resume_destination.dart`) returns '/' only when
-  `AppConfig.homeEnabled` is true, otherwise `kDefaultResumePath`. Audited and
-  fixed: `AppBackButton`/`AppPageHeader` fallback defaults (now nullable →
-  `homeRoute()`), the auth-success redirect and the Groups redirect (both →
-  the saved resume target), the City "not found" fallback, and the hotel
-  results "Discover more" hand-off. The legacy in-page Home switcher
-  (`HomePage._selectAction`) is dormant, marked with a comment, and kept.
-- **Profile and Wishlist are standalone.** Removed from
-  `kSavableResumePaths`; the shell's top bar now keys off the separate
-  `kTopBarPaths` (the six service paths only). They keep their own header and
-  back button, and the shell no longer strips their status-bar inset.
-- **Groups has no back button as a top-level page.** The header stays hidden
-  through `ResumeTopBarScope`; the dead redirect to '/' is gone (a disabled
-  Groups route now redirects to the resume target).
-- **System Back on a top-level service page exits.** `context.go` replaces the
-  root, so `router.canPop()` is false there; Back never loops to Home or to
-  another service.
-- Tests: `test/resume_top_bar_test.dart` (re-tap no-op + no Home, selected
-  state, cannot-pop), `test/resume_shell_test.dart` (top bar only on the six
-  service paths, Groups back button, status-bar inset),
-  `test/resume_destination_test.dart` (allowlist, `kTopBarPaths`, `homeRoute`),
-  `test/resume_router_test.dart` (Profile/Wishlist never restored).
+- `AppConfig.homeEnabled` and `AppConfig.showResumeButton` are gone. The
+  router's `initialLocation` is `/`, and every fallback (`AppBackButton`,
+  City, onboarding completion, the hotel "Discover more" hand-off, booking
+  confirmation) goes to `/`.
+- Deleted with the mode: `ResumeTopBar`, `ResumeTopBarScope`, `ResumeButton`,
+  `lib/app/providers/resume_providers.dart`,
+  `lib/core/navigation/resume_destination.dart`,
+  `lib/core/storage/resume_destination_store.dart`, and their four test files
+  (`resume_top_bar_test`, `resume_shell_test`, `resume_router_test`,
+  `resume_destination_test`).
+- `TokiGoShell` only hosts the navigation stack again — no pinned chrome and
+  no page header is hidden (`AppPageHeader.visible` was removed).
+- The Groups route still honours `AppConfig.groupsEnabled`; when disabled it
+  redirects to `/`.
+- Deep links still win: `GoRouter.initialLocation` is only a fallback
+  (`overridePlatformDefaultLocation` stays false).
 
 ## Build / verification (device)
 

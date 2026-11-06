@@ -31,7 +31,6 @@ class AppPageHeader extends StatelessWidget {
     this.showBackButton = true,
     this.backFallbackLocation,
     this.backEnabled = true,
-    this.visible = true,
   });
 
   /// The page's supporting line — the ONLY identifying text in the header.
@@ -56,8 +55,7 @@ class AppPageHeader extends StatelessWidget {
   final bool showBackButton;
 
   /// Where the back control lands when the route cannot pop — see
-  /// [AppBackButton.fallbackLocation]. Null resolves to the resume target
-  /// (Home while it is enabled), never a bare '/'.
+  /// [AppBackButton.fallbackLocation]. Null resolves to Home.
   final String? backFallbackLocation;
 
   /// Whether leaving the page is currently allowed — see
@@ -65,16 +63,8 @@ class AppPageHeader extends StatelessWidget {
   /// flight.
   final bool backEnabled;
 
-  /// Whether the header is drawn at all.
-  ///
-  /// The pinned resume top bar replaces this header on the top-level browse
-  /// pages (see `ResumeTopBarScope`), so those pages pass `false` instead of
-  /// dropping the widget — every other page keeps it, back button included.
-  final bool visible;
-
   @override
   Widget build(BuildContext context) {
-    if (!visible) return const SizedBox.shrink();
     final typography = AppTypography.forLight();
     final TextDirection appTextDirection = Directionality.of(context);
     final TextStyle description = typography.body.copyWith(

@@ -5,7 +5,6 @@ import 'package:tokigo/core/auth/auth_provider.dart';
 import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
 import 'package:tokigo/core/domain/models/search/hotel_search_params.dart';
 import 'package:tokigo/core/memory/explicit_preference_signal.dart';
-import 'package:tokigo/core/navigation/resume_destination.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_elevation.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
@@ -832,9 +831,8 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
           onTap: () {
             ref.read(homeScrollTargetProvider.notifier).state =
                 HomeScrollTarget.discover;
-            // Discover lives on Home, which is not built while the flag is
-            // off — the hand-off resolves to the resume target instead.
-            context.go(homeRoute());
+            // Discover lives on Home.
+            context.go('/');
           },
         ),
         const SizedBox(height: AppSpacing.xl),

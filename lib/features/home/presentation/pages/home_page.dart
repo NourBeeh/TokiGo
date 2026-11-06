@@ -271,10 +271,6 @@ class _HomePageState extends ConsumerState<HomePage>
   /// Switches the in-page Home content. Tapping the already-selected action
   /// returns to the full dashboard (the quick-action tiles are the only Home
   /// switcher).
-  ///
-  /// DORMANT while `AppConfig.homeEnabled` is false: Home is never built, so
-  /// nothing reaches this. Kept intact (no-deletion rule) — flipping the flag
-  /// back on restores the in-page switcher exactly as it was.
   void _selectAction(HomeAction action) {
     final HomeAction? current = ref.read(homeSelectedActionProvider);
     final HomeAction? next = current == action ? null : action;
