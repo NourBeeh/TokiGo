@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 
+import 'package:tokigo/app/config/app_config.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
 /// The destinations the app may reopen on (Task 11 — Home disabled by flag).
 ///
 /// Only top-level **browse** destinations are allowed. A saved path has to be
 /// a stable page that renders on its own, so the booking funnel, offer
-/// details, onboarding, auth, notifications and anything carrying a
-/// short-lived id is deliberately excluded — restoring one of those would
-/// either strand the traveller or rebuild a dead flow.
+/// details, onboarding, auth, notifications, Profile, Wishlist and anything
+/// carrying a short-lived id is deliberately excluded — restoring one of those
+/// would either strand the traveller or rebuild a dead flow. Profile and
+/// Wishlist behave like Notifications: reachable from the header, never a
+/// cold-start destination.
 const Set<String> kSavableResumePaths = <String>{
   '/flights',
   '/hotels',
@@ -16,8 +19,22 @@ const Set<String> kSavableResumePaths = <String>{
   '/packages',
   '/groups',
   '/bag',
-  '/profile',
-  '/wishlist',
+};
+
+/// The six top-level service paths that render underneath the pinned resume
+/// top bar.
+///
+/// Deliberately a SEPARATE set from [kSavableResumePaths]: the bar is chrome
+/// for the service surfaces, while the resume allowlist also decides what a
+/// cold start may reopen on. Profile and Wishlist are standalone pages — they
+/// keep their own header and back button, so they must never grow a top bar.
+const Set<String> kTopBarPaths = <String>{
+  '/flights',
+  '/hotels',
+  '/cars',
+  '/packages',
+  '/groups',
+  '/bag',
 };
 
 /// Query parameters that are safe to persist, per route.
@@ -79,32 +96,31 @@ String sanitizeResumeLocation(String location) {
 String initialLocationFor({
   required bool homeEnabled,
   String? savedResume,
-  bool isAuthenticated = true,
 }) =>
-    homeEnabled
-        ? '/'
-        : resolveResumeTarget(savedResume, isAuthenticated: isAuthenticated);
+    homeEnabled ? '/' : resolveResumeTarget(savedResume);
 
-/// Destinations that need a signed-in traveller.
+/// The route a "go Home" intent should land on.
 ///
-/// The app lets guests browse, but reopening the account page for someone who
-/// is signed out only shows a sign-in prompt, so the restore falls back to the
-/// default instead of stranding them there.
-const Set<String> kResumeAuthRequiredPaths = <String>{'/profile'};
+/// Home exists only while `AppConfig.homeEnabled` is true. While it is off,
+/// every fallback that used to point at '/' — a back press with no history, an
+/// auth redirect, a disabled Groups route, a legacy Discover hand-off — must
+/// resolve to the default service page instead, so no code path can land on a
+/// route the app deliberately never builds. The router's own redirects use the
+/// saved resume target when there is one; this is the pure fallback.
+///
+/// The flag is a parameter (defaulting to the build-time value) so both
+/// branches are unit-testable without flipping the global.
+String homeRoute({bool? homeEnabled}) =>
+    (homeEnabled ?? AppConfig.homeEnabled) ? '/' : kDefaultResumePath;
 
 /// The location a cold start should open on while Home is disabled.
 ///
 /// The saved location wins when it is still valid; anything else (first
-/// install, a stale entry, a path that no longer exists, or a destination that
-/// needs a session the traveller does not have) falls back to
+/// install, a stale entry, a path that no longer exists) falls back to
 /// [kDefaultResumePath]. Pure, so the restore decision is unit-testable.
-String resolveResumeTarget(String? saved, {bool isAuthenticated = true}) {
+String resolveResumeTarget(String? saved) {
   if (!isSavableResumeLocation(saved)) return kDefaultResumePath;
-  final Uri uri = Uri.parse(saved!);
-  if (!isAuthenticated && kResumeAuthRequiredPaths.contains(uri.path)) {
-    return kDefaultResumePath;
-  }
-  return saved;
+  return saved!;
 }
 
 /// The resume destination's glyph and localized label, for the pinned button.

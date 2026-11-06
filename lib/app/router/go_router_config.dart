@@ -84,7 +84,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   final String resumeTarget = initialLocationFor(
     homeEnabled: AppConfig.homeEnabled,
     savedResume: savedResume,
-    isAuthenticated: authUser != null,
   );
 
   final GoRouter router = GoRouter(
@@ -114,7 +113,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return AppRoute.auth.path;
       }
       if (isLoggedIn && isLoginRoute) {
-        return '/';
+        // Landing on Home after a successful sign-in is only valid while Home
+        // is enabled; otherwise the resume target is the root.
+        return resumeTarget;
       }
       return null;
     },
@@ -416,11 +417,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'groups',
                     name: 'groups',
-                    // TEMPORARY — Groups is parked (owner request). The nav
-                    // tile is hidden, and the route itself redirects Home so
-                    // a deep link or a stale in-app link cannot open it.
+                    // Groups is parked (owner request). The nav tile is
+                    // hidden, and the route itself redirects to the resume
+                    // target so a deep link or a stale in-app link cannot open
+                    // it — and never to '/', which is not a destination while
+                    // Home is off.
                     redirect: (context, state) =>
-                        AppConfig.groupsEnabled ? null : '/',
+                        AppConfig.groupsEnabled ? null : resumeTarget,
                     pageBuilder: (context, state) => slideFromRightPage(
                       key: state.pageKey,
                       restorationId: state.pageKey.value,

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:tokigo/core/domain/models/home/home_item.dart';
+import 'package:tokigo/core/navigation/resume_destination.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
@@ -56,7 +57,8 @@ class CityPage extends StatelessWidget {
                 l10n?.homeCityNotFoundBody ??
                 'Go back to Discover and choose a city.',
             actionLabel: l10n?.back ?? 'Back',
-            onAction: () => context.canPop() ? context.pop() : context.go('/'),
+            onAction: () =>
+                context.canPop() ? context.pop() : context.go(homeRoute()),
           ),
         ),
       );
