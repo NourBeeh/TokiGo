@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'package:go_router/go_router.dart';
 
+import '../core/navigation/resume_destination.dart';
+import 'config/app_config.dart';
+import 'widgets/resume_top_bar.dart';
+
 /// The unified application shell.
 ///
 /// NAV (2026-09-07): the floating bottom navigation pill is REMOVED — the
@@ -13,6 +17,12 @@ import 'package:go_router/go_router.dart';
 /// The historical pill (Home/Search/Groups/Explore) is retired by product
 /// decision — `AppBottomNav` itself is KEPT in the codebase (no-deletion
 /// rule) but has no consumer outside its own tests.
+///
+/// HOME OFF (2026-11, Task 11): while [AppConfig.homeEnabled] is false, the
+/// shell pins the quick-action row + the resume button above the current page
+/// on browse destinations, so the services stay reachable without Home. The
+/// top bar owns the status-bar inset; the page below has its top padding
+/// removed so the two never stack.
 class TokiGoShell extends StatelessWidget {
   const TokiGoShell({
     super.key,
@@ -28,6 +38,28 @@ class TokiGoShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: navigationShell);
+    if (AppConfig.homeEnabled) {
+      return Scaffold(body: navigationShell);
+    }
+    final bool showTopBar = kSavableResumePaths.contains(location.path);
+    return Scaffold(
+      body: Column(
+        children: <Widget>[
+          if (showTopBar) const ResumeTopBar(),
+          Expanded(
+            // The top bar owns the status-bar inset, so the page's own top
+            // padding is only redundant when the bar is actually there. On
+            // every other destination (auth, onboarding, notifications, …)
+            // the page still needs it — removing it unconditionally laid those
+            // pages out under the status bar.
+            child: MediaQuery.removePadding(
+              context: context,
+              removeTop: showTopBar,
+              child: navigationShell,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
