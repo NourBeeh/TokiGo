@@ -364,7 +364,9 @@ class _GroupHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     return Padding(
       padding: const EdgeInsetsDirectional.only(
         top: AppSpacing.xl,
@@ -507,9 +509,12 @@ class _MutedValue extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     return Text(
       text,
-      style: AppTypography.forLight().caption.copyWith(
+      style: typography.caption.copyWith(
         color: context.tokigoColors.textSecondary,
       ),
     );
