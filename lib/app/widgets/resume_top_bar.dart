@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:tokigo/app/config/app_config.dart';
 import 'package:tokigo/app/providers/resume_providers.dart';
 import 'package:tokigo/app/widgets/home_nav_buttons.dart';
 import 'package:tokigo/core/navigation/resume_destination.dart';
@@ -38,12 +39,15 @@ class ResumeTopBarScope extends InheritedWidget {
       oldWidget.visible != visible;
 }
 
-/// The pinned top bar shown while Home is disabled: Home's header row, the
-/// quick-action row and the resume button.
+/// The pinned top bar shown while Home is disabled: Home's header row and the
+/// quick-action row.
 ///
 /// The header row is the shared [HomeTopBar] — wordmark, notifications bell and
 /// profile avatar — so those two affordances stay reachable now that Home
 /// itself is not built. Both hosts render it exactly once.
+///
+/// The "resume" button is unpinned (see [AppConfig.showResumeButton]); the
+/// widget stays in this file, ready to be re-attached.
 class ResumeTopBar extends ConsumerWidget {
   const ResumeTopBar({super.key});
 
@@ -83,8 +87,13 @@ class ResumeTopBar extends ConsumerWidget {
                           _openAction(context, action),
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  const ResumeButton(),
+                  // Unpinned by owner decision (see AppConfig.showResumeButton):
+                  // the bar keeps only the header row + the quick-action row,
+                  // so nothing is reserved for a button that is not drawn.
+                  if (AppConfig.showResumeButton) ...<Widget>[
+                    const SizedBox(width: AppSpacing.sm),
+                    const ResumeButton(),
+                  ],
                 ],
               ),
             ),

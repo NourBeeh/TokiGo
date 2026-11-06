@@ -27,9 +27,13 @@ restores Home exactly as it was.
   offer details, onboarding, auth, notifications and anything with a
   short-lived id are never saved or restored.
 - **Pinned replacement**: `ResumeTopBar` (`lib/app/widgets/resume_top_bar.dart`)
-  — the quick-action row plus a 68dp `ResumeButton` showing the last section's
-  glyph + label — rendered by `TokiGoShell` above the page on allowlisted
-  destinations. `HomeActionBar` is unchanged and still the tile inventory.
+  — the shared `HomeTopBar` (wordmark, bell, profile) above the quick-action
+  row — rendered by `TokiGoShell` on allowlisted destinations. The resume
+  button is **unpinned** (`AppConfig.showResumeButton = false`, owner decision
+  2026-11): the bar keeps only those two rows, so it reserves no height for a
+  button it does not draw. `ResumeButton`, `ResumeDestinationStore` and the
+  restore-on-launch logic all stay in place — flip the flag back to `true` to
+  re-attach it. `HomeActionBar` is unchanged and still the tile inventory.
 - **Deep links still win**: `GoRouter.initialLocation` is only a fallback
   (`overridePlatformDefaultLocation` is false), so a platform deep link
   overrides the restore.
@@ -68,6 +72,19 @@ restores Home exactly as it was.
 - Two robustness fixes found while testing: `AuthController._restore` and
   `OnboardingController._load` no longer write state after disposal, and
   `OnboardingController.pinned` lets tests pin the gate deterministically.
+
+### Resume button unpinned (Task 13, 2026-11)
+
+`AppConfig.showResumeButton = false`: `ResumeTopBar` now renders only the
+`HomeTopBar` row and the `HomeActionBar` row, and reserves nothing for the
+button (`if (AppConfig.showResumeButton) ...[SizedBox, ResumeButton]`). The
+button widget itself stays in `resume_top_bar.dart`, and
+`ResumeDestinationStore` plus the restore-on-launch logic are untouched — the
+app still reopens on the last visited page. `test/resume_top_bar_test.dart`
+asserts the button is absent from the bar, that the bar's height equals its two
+rows plus their own padding in light **and** dark, and that no gap is left where
+the button used to be; the button's own navigation test now renders it
+standalone.
 
 ## Build / verification (device)
 

@@ -40,4 +40,13 @@ class AppConfig {
   /// Flip back to `true` to restore the current Home exactly as it was —
   /// nothing is deleted, and the resume machinery simply goes unused.
   static const bool homeEnabled = false;
+
+  /// Whether the pinned top bar shows the "resume" button.
+  ///
+  /// OFF (owner decision, 2026-11): the button is unpinned, so the top bar is
+  /// only the Home header row plus the quick-action row and the pages below
+  /// get their full height back. [ResumeButton], `ResumeDestinationStore` and
+  /// the restore-on-launch logic all stay in place — flip this back to `true`
+  /// to re-attach it.
+  static const bool showResumeButton = false;
 }
