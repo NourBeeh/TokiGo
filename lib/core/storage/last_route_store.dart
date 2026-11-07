@@ -32,7 +32,7 @@ class LastRouteStore {
     '/bag',
     '/notifications',
     '/profile',
-    '/settings',
+    '/profile/settings',
     '/wishlist',
     '/search',
     '/explore',

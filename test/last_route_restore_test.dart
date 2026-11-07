@@ -18,7 +18,7 @@ void main() {
       '/bag?section=likes',
       '/notifications',
       '/profile',
-      '/settings',
+      '/profile/settings',
       '/wishlist',
       '/search',
       '/explore',
