@@ -1324,6 +1324,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sortLongest => 'Longest';
 
   @override
+  String get sortTopRated => 'Top rated';
+
+  @override
+  String get carTransmissionAutomatic => 'Automatic';
+
+  @override
+  String get carTransmissionManual => 'Manual';
+
+  @override
   String get filtersAction => 'Filters';
 
   @override
@@ -1400,6 +1409,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pickerFromTitle => 'From where?';
+
+  @override
+  String get pickerToTitle => 'To where?';
 
   @override
   String get pickerSearchHint => 'Search…';

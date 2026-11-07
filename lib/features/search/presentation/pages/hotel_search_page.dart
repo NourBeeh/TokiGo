@@ -193,7 +193,7 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
   void _pickDestination() {
     showPickerSheet(
       context,
-      title: AppLocalizations.of(context)!.searchHint,
+      title: AppLocalizations.of(context)!.pickerToTitle,
       entries: kCities,
       onSelected: (entry) => setState(() {
         _destination = entry.name;

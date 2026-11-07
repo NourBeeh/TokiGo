@@ -2645,6 +2645,24 @@ abstract class AppLocalizations {
   /// **'Longest'**
   String get sortLongest;
 
+  /// No description provided for @sortTopRated.
+  ///
+  /// In en, this message translates to:
+  /// **'Top rated'**
+  String get sortTopRated;
+
+  /// No description provided for @carTransmissionAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get carTransmissionAutomatic;
+
+  /// No description provided for @carTransmissionManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual'**
+  String get carTransmissionManual;
+
   /// No description provided for @filtersAction.
   ///
   /// In en, this message translates to:
@@ -2788,6 +2806,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'From where?'**
   String get pickerFromTitle;
+
+  /// No description provided for @pickerToTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'To where?'**
+  String get pickerToTitle;
 
   /// No description provided for @pickerSearchHint.
   ///

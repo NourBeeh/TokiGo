@@ -134,7 +134,7 @@ class _FilterPanelState extends State<FilterPanel> {
       _airlines.isNotEmpty ||
       _amenities.isNotEmpty;
 
-  SearchFilters _draft() => SearchFilters(
+  SearchFilters _draft() => widget.filters.copyWith(
     priceMin: _effectivePriceMin,
     priceMax: _effectivePriceMax,
     maxStops: _maxStops,
@@ -175,7 +175,6 @@ class _FilterPanelState extends State<FilterPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final tc = context.tokigoColors;
     final l10n = AppLocalizations.of(context)!;
     final typography = AppTypography.forLight();
     final facet = widget.priceFacet;

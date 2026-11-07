@@ -274,13 +274,13 @@ class _PickerSheetState extends State<_PickerSheet> {
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
       child: ConstrainedBox(
-        // Cap the sheet at 85% of the screen height and give the suggestion
-        // list the REST of that height, strictly (tight fit) — with
-        // `mainAxisSize.min` + a loose `Flexible` the list used to collapse
-        // to zero height when the keyboard pushed the sheet up, hiding every
-        // airport.
+        // Cap the sheet at 85% of the height that is ACTUALLY available — the
+        // screen minus the keyboard. The shell's Scaffold already shortens the
+        // body when the keyboard is up (so the inset is 0 there), but the same
+        // sheet can be opened from a root-navigator page, where the inset is
+        // live; subtracting it here keeps both hosts overflow-free.
         constraints: BoxConstraints(
-          maxHeight: media.size.height * 0.85,
+          maxHeight: (media.size.height - bottomInset) * 0.85,
         ),
         child: Material(
           color: context.tokigoColors.surface,

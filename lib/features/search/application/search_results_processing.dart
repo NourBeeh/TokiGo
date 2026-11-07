@@ -28,18 +28,28 @@ double effectiveSortAmount(BaseOffer offer) {
   return offer.price;
 }
 
-/// Whether the list is sortable by customer total at all (all priced in the
-/// same customer currency or no quotes attached). Used to keep mixed
-/// currency fallbacks honest (grouped, not falsely ranked).
-bool hasComparableCustomerTotals(Iterable<BaseOffer> offers) {
-  final quoted = offers.where((o) => o.customerPrice != null).toList();
-  if (quoted.isEmpty) {
-    return true; // provider-amount fallback for the whole list
+/// The currency [effectiveSortAmount] is stated in: the quoted customer
+/// currency when the backend attached a quote, else the provider currency.
+///
+/// A budget cap or a price filter is only honest when it compares amounts in
+/// the SAME currency the card displays — never the provider amount in one
+/// currency against a customer cap in another.
+String effectiveSortCurrency(BaseOffer offer) {
+  final quote = offer.customerPrice;
+  if (quote != null &&
+      quote.customerAmount > 0 &&
+      quote.customerCurrency.trim().isNotEmpty) {
+    return quote.customerCurrency.trim();
   }
-  final currencies = quoted
-      .map((o) => o.customerPrice!.customerCurrency)
-      .toSet();
-  return currencies.length == 1;
+  return offer.currency.trim();
+}
+
+/// Whether the list is sortable by customer total at all (all priced in the
+/// same effective currency). Used to keep mixed currency fallbacks honest
+/// (grouped, not falsely ranked).
+bool hasComparableCustomerTotals(Iterable<BaseOffer> offers) {
+  final currencies = offers.map(effectiveSortCurrency).toSet();
+  return currencies.length <= 1;
 }
 
 // ---------------------------------------------------------------------------
@@ -56,7 +66,7 @@ bool budgetAppliesTo(Iterable<BaseOffer> offers, SearchFilters filters) {
   final max = filters.budgetMax;
   final currency = filters.budgetCurrency;
   if (max == null || currency == null) return false;
-  return offers.any((offer) => offer.currency == currency);
+  return offers.any((offer) => effectiveSortCurrency(offer) == currency);
 }
 
 /// Applies the shared filter set to flights — provider-safe: pure
@@ -82,9 +92,13 @@ List<FlightOffer> applyFlightFilters(
   if (filters.budgetMax != null && filters.budgetCurrency != null) {
     final max = filters.budgetMax!;
     final currency = filters.budgetCurrency!;
-    if (items.any((o) => o.currency == currency)) {
+    if (items.any((o) => effectiveSortCurrency(o) == currency)) {
       items = items
-          .where((o) => o.currency == currency && o.price <= max)
+          .where(
+            (o) =>
+                effectiveSortCurrency(o) == currency &&
+                effectiveSortAmount(o) <= max,
+          )
           .toList();
     }
   }
@@ -119,9 +133,13 @@ List<HotelOffer> applyHotelFilters(
   if (filters.budgetMax != null && filters.budgetCurrency != null) {
     final max = filters.budgetMax!;
     final currency = filters.budgetCurrency!;
-    if (items.any((o) => o.currency == currency)) {
+    if (items.any((o) => effectiveSortCurrency(o) == currency)) {
       items = items
-          .where((o) => o.currency == currency && o.price <= max)
+          .where(
+            (o) =>
+                effectiveSortCurrency(o) == currency &&
+                effectiveSortAmount(o) <= max,
+          )
           .toList();
     }
   }

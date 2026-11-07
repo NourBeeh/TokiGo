@@ -156,6 +156,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'offer-details',
                     name: 'offer_details',
+                    // A deep link / restored location without its offer
+                    // payload cannot render an offer: fall back to Home
+                    // instead of throwing on `state.extra!`.
+                    redirect: (context, state) =>
+                        state.extra == null ? '/' : null,
                     pageBuilder: (context, state) => slideFromRightPage(
                       key: state.pageKey,
                       restorationId: state.pageKey.value,
@@ -454,7 +459,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           key: state.pageKey,
           restorationId: state.pageKey.value,
           name: 'ai_chat',
-          child: AiChatPage(initialPrompt: state.extra as String?),
+          child: AiChatPage(
+            initialPrompt: state.extra is String ? state.extra as String : null,
+          ),
         ),
       ),
       // 2C-C2 — "What I Know About You": explicit memory controls, opened

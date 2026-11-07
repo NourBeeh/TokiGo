@@ -34,81 +34,66 @@ class SearchFilters {
     this.budgetCurrency,
   });
 
+  /// Sentinel that distinguishes an omitted argument ("keep the current
+  /// value") from an explicit `null` ("clear this value").
+  static const Object _unset = Object();
+
   SearchFilters copyWith({
-    double? priceMin,
-    double? priceMax,
-    int? maxStops,
-    double? minRating,
-    int? minStars,
-    int? minSeats,
-    List<String>? airlines,
-    List<String>? amenities,
-    String? transmission,
-    double? budgetMax,
-    String? budgetCurrency,
+    Object? priceMin = _unset,
+    Object? priceMax = _unset,
+    Object? maxStops = _unset,
+    Object? minRating = _unset,
+    Object? minStars = _unset,
+    Object? minSeats = _unset,
+    Object? airlines = _unset,
+    Object? amenities = _unset,
+    Object? transmission = _unset,
+    Object? budgetMax = _unset,
+    Object? budgetCurrency = _unset,
   }) {
     return SearchFilters(
-      priceMin: priceMin ?? this.priceMin,
-      priceMax: priceMax ?? this.priceMax,
-      maxStops: maxStops ?? this.maxStops,
-      minRating: minRating ?? this.minRating,
-      minStars: minStars ?? this.minStars,
-      minSeats: minSeats ?? this.minSeats,
-      airlines: airlines ?? this.airlines,
-      amenities: amenities ?? this.amenities,
-      transmission: transmission ?? this.transmission,
-      budgetMax: budgetMax ?? this.budgetMax,
-      budgetCurrency: budgetCurrency ?? this.budgetCurrency,
+      priceMin: identical(priceMin, _unset)
+          ? this.priceMin
+          : (priceMin as num?)?.toDouble(),
+      priceMax: identical(priceMax, _unset)
+          ? this.priceMax
+          : (priceMax as num?)?.toDouble(),
+      maxStops: identical(maxStops, _unset) ? this.maxStops : maxStops as int?,
+      minRating: identical(minRating, _unset)
+          ? this.minRating
+          : (minRating as num?)?.toDouble(),
+      minStars: identical(minStars, _unset) ? this.minStars : minStars as int?,
+      minSeats: identical(minSeats, _unset) ? this.minSeats : minSeats as int?,
+      airlines: identical(airlines, _unset)
+          ? this.airlines
+          : airlines as List<String>?,
+      amenities: identical(amenities, _unset)
+          ? this.amenities
+          : amenities as List<String>?,
+      transmission: identical(transmission, _unset)
+          ? this.transmission
+          : transmission as String?,
+      budgetMax: identical(budgetMax, _unset)
+          ? this.budgetMax
+          : (budgetMax as num?)?.toDouble(),
+      budgetCurrency: identical(budgetCurrency, _unset)
+          ? this.budgetCurrency
+          : budgetCurrency as String?,
     );
   }
 
   /// Same filters with [rating] as the minimum rating — or with the rating
-  /// constraint removed when [rating] is null. [copyWith] cannot clear a
-  /// value (null means "keep"), so quick-filter chips use this instead.
-  SearchFilters withMinRating(double? rating) => SearchFilters(
-    priceMin: priceMin,
-    priceMax: priceMax,
-    maxStops: maxStops,
-    minRating: rating,
-    minStars: minStars,
-    minSeats: minSeats,
-    airlines: airlines,
-    amenities: amenities,
-    transmission: transmission,
-    budgetMax: budgetMax,
-    budgetCurrency: budgetCurrency,
-  );
+  /// constraint removed when [rating] is null.
+  SearchFilters withMinRating(double? rating) => copyWith(minRating: rating);
 
   /// Same filters with [stars] as the minimum hotel star class — or with the
   /// class constraint removed when [stars] is null.
-  SearchFilters withMinStars(int? stars) => SearchFilters(
-    priceMin: priceMin,
-    priceMax: priceMax,
-    maxStops: maxStops,
-    minRating: minRating,
-    minStars: stars,
-    minSeats: minSeats,
-    airlines: airlines,
-    amenities: amenities,
-    transmission: transmission,
-    budgetMax: budgetMax,
-    budgetCurrency: budgetCurrency,
-  );
+  SearchFilters withMinStars(int? stars) => copyWith(minStars: stars);
 
   /// Same filters with the traveller's budget cap removed (the chip was
-  /// tapped). [copyWith] cannot clear a value (null means "keep"), so this
-  /// is the way out of the budget filter.
-  SearchFilters withoutBudget() => SearchFilters(
-    priceMin: priceMin,
-    priceMax: priceMax,
-    maxStops: maxStops,
-    minRating: minRating,
-    minStars: minStars,
-    minSeats: minSeats,
-    airlines: airlines,
-    amenities: amenities,
-    transmission: transmission,
-  );
+  /// tapped).
+  SearchFilters withoutBudget() =>
+      copyWith(budgetMax: null, budgetCurrency: null);
 
   bool get isEmpty =>
       priceMin == null &&

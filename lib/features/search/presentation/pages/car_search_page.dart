@@ -27,6 +27,14 @@ final carFiltersProvider = StateProvider<SearchFilters>(
   (ref) => const SearchFilters(),
 );
 
+/// Sort choices offered on the car surface. Labels are localized where the
+/// chips are built — never compared as display strings.
+enum _CarSort { recommended, cheapest, topRated }
+
+/// Transmission choices; [any] means "no constraint" (the provider receives
+/// null).
+enum _CarTransmission { any, automatic, manual }
+
 class CarSearchPage extends ConsumerStatefulWidget {
   const CarSearchPage({super.key, this.embedded = false, this.bottomPadding = 0});
 
@@ -50,15 +58,10 @@ class _CarSearchPageState extends ConsumerState<CarSearchPage> {
 
   DateTime _pickupDate = DateTime.now().add(const Duration(days: 1));
   DateTime _dropoffDate = DateTime.now().add(const Duration(days: 2));
-  String _transmission = 'Any';
+  _CarTransmission _transmission = _CarTransmission.any;
 
   CarSearchParams? _lastParams;
 
-  static const List<String> _transmissionOptions = [
-    'Any',
-    'Automatic',
-    'Manual',
-  ];
   bool _prefilled = false;
 
   @override
@@ -160,7 +163,11 @@ class _CarSearchPageState extends ConsumerState<CarSearchPage> {
       dropoffLocation: _dropoffCtrl.text,
       pickupDateTime: _pickupDate,
       dropoffDateTime: _dropoffDate,
-      transmission: _transmission == 'Any' ? null : _transmission.toLowerCase(),
+      transmission: switch (_transmission) {
+        _CarTransmission.any => null,
+        _CarTransmission.automatic => 'automatic',
+        _CarTransmission.manual => 'manual',
+      },
     );
     _lastParams = params;
     ref.read(carSearchControllerProvider.notifier).search(params);
@@ -175,18 +182,18 @@ class _CarSearchPageState extends ConsumerState<CarSearchPage> {
 
   /// Phase 3C — shared sort/filter controls (same visual language as
   /// flights/hotels).
-  static const List<String> _sortLabels = [
-    'Recommended',
-    'Cheapest',
-    'Top rated',
-  ];
-  String _sortLabel = 'Recommended';
+  _CarSort _sort = _CarSort.recommended;
 
-  SortOption get _sortOption => switch (_sortLabel) {
-    'Cheapest' => SortOption.priceLowHigh,
-    'Top rated' => SortOption.rating,
-    _ => SortOption.recommended,
+  SortOption get _sortOption => switch (_sort) {
+    _CarSort.recommended => SortOption.recommended,
+    _CarSort.cheapest => SortOption.priceLowHigh,
+    _CarSort.topRated => SortOption.rating,
   };
+
+  void _selectSort(_CarSort sort) {
+    setState(() => _sort = sort);
+    ref.read(carSortProvider.notifier).state = _sortOption;
+  }
 
   void _showFilters() {
     final results = ref.read(carSearchControllerProvider).results;
@@ -208,15 +215,18 @@ class _CarSearchPageState extends ConsumerState<CarSearchPage> {
   }
 
   Widget _buildSortAndFilters() {
+    final l10n = AppLocalizations.of(context)!;
     final filters = ref.watch(carFiltersProvider);
-    return SortChipsRow(
-      options: _sortLabels,
-      selected: _sortLabel,
-      onSelected: (label) {
-        setState(() => _sortLabel = label);
-        ref.read(carSortProvider.notifier).state = _sortOption;
+    return SortChipsRow<_CarSort>(
+      options: _CarSort.values,
+      selected: _sort,
+      labelOf: (sort) => switch (sort) {
+        _CarSort.recommended => l10n.sortRecommended,
+        _CarSort.cheapest => l10n.sortCheapest,
+        _CarSort.topRated => l10n.sortTopRated,
       },
-      filtersLabel: 'Filters',
+      onSelected: _selectSort,
+      filtersLabel: l10n.filtersAction,
       filtersActive: !filters.isEmpty,
       onFilters: _showFilters,
     );
@@ -375,12 +385,18 @@ class _CarSearchPageState extends ConsumerState<CarSearchPage> {
   }
 
   Widget _buildTransmissionChips() {
+    final l10n = AppLocalizations.of(context)!;
+    String labelOf(_CarTransmission option) => switch (option) {
+      _CarTransmission.any => l10n.filterAny,
+      _CarTransmission.automatic => l10n.carTransmissionAutomatic,
+      _CarTransmission.manual => l10n.carTransmissionManual,
+    };
     return Row(
       children: [
-        for (final (index, option) in _transmissionOptions.indexed) ...[
+        for (final (index, option) in _CarTransmission.values.indexed) ...[
           if (index > 0) const SizedBox(width: AppSpacing.sm),
           SearchChoiceChip(
-            label: option,
+            label: labelOf(option),
             selected: option == _transmission,
             onTap: () => setState(() => _transmission = option),
           ),
@@ -439,7 +455,7 @@ class _CarSearchPageState extends ConsumerState<CarSearchPage> {
       case CarSearchStatus.error:
         return SearchStatesView.error(
           title: l10n.carConnectionErrorTitle,
-          body: state.errorMessage ?? 'Something went wrong. Please try again.',
+          body: state.errorMessage ?? l10n.searchErrorBody,
           onAction: _retry,
         );
     }

@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- The window behind the Flutter surface. It must match the app canvas:
+         with edge-to-edge + adjustResize any pixel Flutter has not painted yet
+         (e.g. mid keyboard animation) would otherwise show as a black band. -->
+    <color name="window_background">#FFFFFF</color>
 </resources>

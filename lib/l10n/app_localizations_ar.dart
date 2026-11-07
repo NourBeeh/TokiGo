@@ -1331,6 +1331,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sortLongest => 'الأطول';
 
   @override
+  String get sortTopRated => 'الأعلى تقييماً';
+
+  @override
+  String get carTransmissionAutomatic => 'أوتوماتيك';
+
+  @override
+  String get carTransmissionManual => 'مانيوال';
+
+  @override
   String get filtersAction => 'الفلاتر';
 
   @override
@@ -1407,6 +1416,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get pickerFromTitle => 'من فين؟';
+
+  @override
+  String get pickerToTitle => 'رايح فين؟';
 
   @override
   String get pickerSearchHint => 'ابحث…';

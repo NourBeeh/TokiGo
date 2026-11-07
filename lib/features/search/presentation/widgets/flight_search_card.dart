@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
+import 'package:tokigo/core/domain/models/offers/display_price.dart';
 import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/widgets/cards/card.dart';
@@ -51,14 +52,21 @@ class FlightSearchCard extends StatelessWidget {
   /// which never reads offer data.
   FlightOffer get data => offer!;
 
+  /// The provider's marketing number already carries the carrier code
+  /// ("EK 123", "DE2017"). It must NEVER be invented from the airline's
+  /// display name — "Emirates" is not the carrier code "EM".
+  ///
+  /// A number that already has a space, or a bare numeric flight number
+  /// ("985"), is shown verbatim; a glued alphanumeric prefix is only given a
+  /// readable space ("DE2017" → "DE 2017").
   String _formatFlightNumber() {
-    if (data.airline.isNotEmpty && data.flightNumber.isNotEmpty) {
-      final code = data.airline.length >= 2
-          ? data.airline.substring(0, 2).toUpperCase()
-          : data.airline.toUpperCase();
-      return '$code ${data.flightNumber}';
-    }
-    return data.flightNumber;
+    final raw = data.flightNumber.trim();
+    if (raw.isEmpty) return raw;
+    final match = RegExp(
+      r'^([A-Za-z]{2}|[A-Za-z]\d|\d[A-Za-z])(\d+)$',
+    ).firstMatch(raw);
+    if (match == null) return raw;
+    return '${match.group(1)!.toUpperCase()} ${match.group(2)}';
   }
 
   String _calculateDuration() =>
@@ -253,6 +261,22 @@ class FlightSearchCard extends StatelessWidget {
         ? priceInfo['perTraveler']!
         : (hasTotalPrice ? priceInfo['total']! : data.price);
 
+    // The card must state the SAME money the sort/filter compare: the backend
+    // quote's customer currency when attached, never the raw provider amount
+    // in a currency the traveller was not quoted.
+    final DisplayMoney displayPrice = displayMoneyFor(
+      primaryPrice,
+      data.currency,
+      data.customerPrice,
+    );
+    final DisplayMoney? displayTotal = hasTotalPrice && hasPricePerTraveler
+        ? displayMoneyFor(
+            priceInfo['total']!,
+            data.currency,
+            data.customerPrice,
+          )
+        : null;
+
     final semanticParts = <String>[
       l10n?.offerSemanticsFlightRoute(data.origin, data.destination) ??
           'Flight from ${data.origin} to ${data.destination}',
@@ -268,17 +292,20 @@ class FlightSearchCard extends StatelessWidget {
       if (stopsText.isNotEmpty) stopsText,
       if (features.isNotEmpty) features.join(', '),
       l10n?.offerSemanticsPrice(
-            formatCardPrice(price: primaryPrice, currency: data.currency),
+            formatCardPrice(
+              price: displayPrice.amount,
+              currency: displayPrice.currency,
+            ),
           ) ??
-          'Price ${data.currency} ${primaryPrice.toStringAsFixed(0)}',
-      if (hasTotalPrice && hasPricePerTraveler)
+          'Price ${displayPrice.currency} ${displayPrice.amount.toStringAsFixed(0)}',
+      if (displayTotal != null)
         l10n?.offerSemanticsTotal(
               formatCardPrice(
-                price: priceInfo['total'],
-                currency: data.currency,
+                price: displayTotal.amount,
+                currency: displayTotal.currency,
               ),
             ) ??
-            'Total ${data.currency} ${priceInfo['total']!.toStringAsFixed(0)}',
+            'Total ${displayTotal.currency} ${displayTotal.amount.toStringAsFixed(0)}',
       if (isFavorite) l10n?.offerSaved ?? 'Saved',
       if (seatsLeft != null && seatsLeft > 0)
         l10n?.offerSeatsLeft(seatsLeft.toInt()) ??
@@ -366,23 +393,23 @@ class FlightSearchCard extends StatelessWidget {
                   children: [
                     Text(
                       formatCardPrice(
-                        price: primaryPrice,
-                        currency: data.currency,
+                        price: displayPrice.amount,
+                        currency: displayPrice.currency,
                       ),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: scheme.primary,
                       ),
                     ),
-                    if (hasTotalPrice && hasPricePerTraveler)
+                    if (displayTotal != null)
                       Text(
                         l10n?.offerCardTotal(
                               formatCardPrice(
-                                price: priceInfo['total'],
-                                currency: data.currency,
+                                price: displayTotal.amount,
+                                currency: displayTotal.currency,
                               ),
                             ) ??
-                            'total ${formatCardPrice(price: priceInfo['total'], currency: data.currency)}',
+                            'total ${formatCardPrice(price: displayTotal.amount, currency: displayTotal.currency)}',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),

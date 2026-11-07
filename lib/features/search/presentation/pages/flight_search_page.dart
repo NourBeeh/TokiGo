@@ -152,10 +152,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
   /// state plus their explicit budget cap, unless they removed the chip for
   /// this session. A budget without a currency never filters anything (the
   /// app never converts a price).
-  SearchFilters _effectiveFilters(
-    SearchFilters base,
-    List<FlightOffer> results,
-  ) {
+  SearchFilters _effectiveFilters(SearchFilters base) {
     final SearchFilters budgetAware = _applyBudget(base);
     // Direct-flights-only forces maxStops: 0 on the applied filter set, the
     // same semantics the airlines use for "non-stop only".
@@ -353,7 +350,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
     final l10n = AppLocalizations.of(context)!;
     showPickerSheet(
       context,
-      title: l10n.searchHint,
+      title: l10n.pickerToTitle,
       entries: kAirports,
       onSelected: (entry) => setState(() => _destCtrl.text = entry.code),
     );
@@ -512,7 +509,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
     final label = l10n.searchBudgetCap(_numText(budget.max!), currency);
     final results = ref.read(flightSearchControllerProvider).results;
     final pricedInBudgetCurrency = results.any(
-      (offer) => offer.currency == currency,
+      (offer) => effectiveSortCurrency(offer) == currency,
     );
     if (!pricedInBudgetCurrency) {
       return SearchFilterChipData(
@@ -541,12 +538,12 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(flightSearchControllerProvider);
-    final filters = _effectiveFilters(
-      ref.watch(flightFiltersProvider),
-      state.results,
-    );
+    final filters = _effectiveFilters(ref.watch(flightFiltersProvider));
     final hasResults =
         state.status == SearchStatus.success && state.results.isNotEmpty;
+    // One chip instance per build: computing it twice also meant two different
+    // chip states could be read between the null check and the render.
+    final budgetChip = hasResults ? _buildBudgetChip(l10n) : null;
 
     // Long result lists must not build every card up front — the same
     // Low Memory Killer risk the hotel results hit applies to a busy route.
@@ -579,14 +576,14 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
                   filtersActive: !filters.isEmpty,
                   onFilters: _showFilters,
                 ),
-                if (_buildBudgetChip(l10n) != null)
+                if (budgetChip != null)
                   Padding(
                     padding: const EdgeInsets.only(
                       top: AppSpacing.xs,
                       bottom: AppSpacing.xs,
                     ),
                     child: SearchFilterChips(
-                      chips: <SearchFilterChipData>[_buildBudgetChip(l10n)!],
+                      chips: <SearchFilterChipData>[budgetChip],
                     ),
                   ),
               ],
@@ -920,7 +917,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
             hint: l10n.selectAction,
             value: _routeValue(leg.destination),
             readOnly: true,
-            onTap: () => _pickLegAirport(leg.destination, l10n.searchHint),
+            onTap: () => _pickLegAirport(leg.destination, l10n.pickerToTitle),
           ),
           const SizedBox(height: AppSpacing.sm),
           SearchFieldInput(

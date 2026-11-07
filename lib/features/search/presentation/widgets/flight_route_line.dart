@@ -58,6 +58,13 @@ class FlightRouteLine extends StatelessWidget {
       fontSize: compact ? null : AppTypography.fontSizeTitle,
     );
 
+    // "Arrives the next day": the arrival time is shown in the destination's
+    // local clock, so a red-eye can read 23:50 → 05:10 with no hint that it
+    // landed tomorrow. Compare calendar days, not hours.
+    final int arrivalDayOffset = DateUtils.dateOnly(
+      arrivalTime,
+    ).difference(DateUtils.dateOnly(departureTime)).inDays;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -158,7 +165,33 @@ class FlightRouteLine extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(_formatTime(arrivalTime), style: timeStyle),
+                  // The arrival column is a fixed flex share of a narrow row
+                  // (compact cards are the tightest). The optional "+1"
+                  // badge must never push the time past that share, so the
+                  // pair scales down together instead of overflowing.
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(_formatTime(arrivalTime), style: timeStyle),
+                        if (arrivalDayOffset > 0)
+                          Padding(
+                            padding: const EdgeInsetsDirectional.only(start: 2),
+                            child: Text(
+                              '+$arrivalDayOffset',
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: scheme.primary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.xxs),
                   Text(
                     destination,

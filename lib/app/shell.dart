@@ -58,10 +58,21 @@ class TokiGoShell extends StatelessWidget {
               Expanded(
                 // The chrome consumed the status-bar inset for the whole
                 // column; section pages must not add it a second time.
-                child: MediaQuery.removePadding(
-                  context: context,
-                  removeTop: chromeVisible,
-                  child: content,
+                //
+                // `Builder` matters here: `MediaQuery.removePadding` reads the
+                // MediaQuery of the context it is given. Using the shell's own
+                // context (ABOVE the Scaffold) would re-apply the keyboard
+                // inset that the Scaffold already removed from its body — and
+                // every bottom sheet opened from a section would then pad for
+                // the keyboard a second time, leaving a large empty (dark)
+                // band above it.
+                child: Builder(
+                  builder: (BuildContext bodyContext) =>
+                      MediaQuery.removePadding(
+                        context: bodyContext,
+                        removeTop: chromeVisible,
+                        child: content,
+                      ),
                 ),
               ),
             ],

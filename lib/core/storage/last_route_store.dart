@@ -32,7 +32,10 @@ class LastRouteStore {
     '/bag',
     '/notifications',
     '/profile',
-    '/profile/settings',
+    // Settings lives at `/settings` (a Home-branch child), not under
+    // `/profile` — restoring a non-existent path would open the router error
+    // page on a cold relaunch.
+    '/settings',
     '/wishlist',
     '/search',
     '/explore',

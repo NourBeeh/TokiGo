@@ -48,8 +48,7 @@ PriceFacet? priceFacetOf(Iterable<BaseOffer> offers) {
     final amount = effectiveSortAmount(offer);
     // An unpriced offer is not "free" — it simply has no amount to compare.
     if (amount <= 0) continue;
-    final currency = (offer.customerPrice?.customerCurrency ?? offer.currency)
-        .trim();
+    final currency = effectiveSortCurrency(offer);
     // A missing currency cannot be labelled honestly.
     if (currency.isEmpty) return null;
     currencies.add(currency);
