@@ -114,11 +114,11 @@ Future<String> _readInitialLocation() async {
   try {
     return await LastRouteStore.read()
             .timeout(const Duration(milliseconds: 250), onTimeout: () => null) ??
-        '/';
+        '/flights';
   } catch (error, stackTrace) {
     debugPrint('TokiGo: last-route restore unavailable — $error');
     if (kDebugMode) debugPrintStack(stackTrace: stackTrace);
-    return '/';
+    return '/flights';
   }
 }
 
