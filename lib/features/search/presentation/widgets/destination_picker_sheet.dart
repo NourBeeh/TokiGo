@@ -219,7 +219,7 @@ Future<void> showPickerSheet(
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: context.tokigoColors.surface,
     builder: (context) =>
         _PickerSheet(title: title, entries: entries, onSelected: onSelected),
   );
