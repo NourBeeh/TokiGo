@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 ///
 /// The wrapper therefore adds nothing: it renders [child] unchanged. Do not
 /// reintroduce a drag recognizer here (or anywhere else) — see `AGENTS.md`
-/// § Navigation and page exits and `PROJECT_MEMORY/06_DECISIONS.md`.
+/// § Navigation and page exits.
 class SwipeFromRightToPop extends StatelessWidget {
   const SwipeFromRightToPop({super.key, required this.child});
 

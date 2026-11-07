@@ -12,7 +12,7 @@ Requirements per spec §52 / MASTER_PLAN.md 23:
 - One market (EG) + one product canary first.
 
 Current state:
-- Flutter test: 1116 passed / 6 skipped / 0 failed (latest from 03_CURRENT_STATE.md).
+- Flutter test: 262 passed / 0 skipped / 0 failed (last full run).
 - Backend tsc: clean; jest: 320 passed.
 - .env gitignored.
 - Real provider data only (Nuitee).
