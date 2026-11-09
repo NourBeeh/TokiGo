@@ -73,21 +73,17 @@ class SearchScaffold extends StatelessWidget {
   /// single-page Scaffold.
   final bool embedded;
 
-  /// Extra space reserved under the scroll content (e.g. for Home's persistent
-  /// AI composer) so cards are never hidden behind it.
+  /// Extra space reserved under the scroll content (e.g. a host's own bottom
+  /// inset) so cards are never hidden behind it.
   final double bottomPadding;
 
   @override
   Widget build(BuildContext context) {
     final tc = context.tokigoColors;
     // Alongside the persistent shell chrome the section owns no header of its
-    // own (no back control, no description) and must reserve the floating
-    // composer's footprint at the end of its scroll view.
+    // own (no back control, no description).
     final bool chromeVisible = AppChromeScope.visibleOf(context);
-    final double reserve = chromeVisible
-        ? AppChrome.composerReserve(context)
-        : 0;
-    final double effectiveBottomPadding = bottomPadding + reserve;
+    final double effectiveBottomPadding = bottomPadding;
     final Widget scrollView = AiEntranceAnimation(
       child: CustomScrollView(
         slivers: <Widget>[

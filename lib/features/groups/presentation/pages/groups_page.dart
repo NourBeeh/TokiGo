@@ -22,8 +22,8 @@ import 'package:tokigo/l10n/app_localizations.dart';
 class GroupsPage extends StatelessWidget {
   const GroupsPage({super.key, this.bottomPadding = 0});
 
-  /// Extra space reserved under the scroll content, e.g. Home's floating AI
-  /// composer, so the last card is never hidden behind it.
+  /// Extra space reserved under the scroll content (e.g. a host's own bottom
+  /// inset).
   final double bottomPadding;
 
   /// Empty by design (see the class doc).
@@ -33,12 +33,9 @@ class GroupsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     // Under the persistent shell chrome Groups has no header of its own (the
-    // navigation bar identifies it) and reserves the floating composer.
+    // navigation bar identifies it).
     final bool chromeVisible = AppChromeScope.visibleOf(context);
-    final double reserve = chromeVisible
-        ? AppChrome.composerReserve(context)
-        : 0;
-    final double effectiveBottomPadding = bottomPadding + reserve;
+    final double effectiveBottomPadding = bottomPadding;
 
     return Scaffold(
       backgroundColor: context.tokigoColors.background,

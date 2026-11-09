@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tokigo/app/shell.dart';
-import 'package:tokigo/app/widgets/home_nav_buttons.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
@@ -136,8 +135,8 @@ Widget _app({
   );
 }
 
-/// A stand-in for a section route: a long scrolling list so tests can drive
-/// the scroll-direction hiding of the floating composer.
+/// A stand-in for a section route: a long scrolling list so tests can verify
+/// that the pinned chrome and composer never move.
 Widget _sectionPlaceholder(String name) => Scaffold(
   body: ListView(
     key: const ValueKey<String>('section-content-list'),
@@ -292,7 +291,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await _tapAction(tester, HomeAction.flights);
-    // TokiGo row + the navigation row stay pinned; the composer floats above
+    // TokiGo row + the navigation row + the AI composer stay pinned above
     // every section.
     expect(find.byKey(const ValueKey<String>('home-ai-composer')), findsOneWidget);
     expect(find.byKey(const ValueKey<String>('home-action-bar')), findsOneWidget);
@@ -319,7 +318,7 @@ void main() {
     expect(find.byKey(const ValueKey<String>('home-ai-composer')), findsOneWidget);
   });
 
-  testWidgets('the chrome stays pinned and the pill floats while scrolling', (
+  testWidgets('the chrome and composer stay pinned while scrolling', (
     tester,
   ) async {
     _setPhoneSize(tester);
@@ -328,10 +327,14 @@ void main() {
     await tester.pumpAndSettle();
 
     final Finder bar = find.byKey(const ValueKey<String>('home-action-bar'));
+    final Finder composer = find.byKey(
+      const ValueKey<String>('home-ai-composer'),
+    );
     expect(bar, findsOneWidget);
-    expect(find.byKey(const ValueKey<String>('home-ai-composer')), findsOneWidget);
+    expect(composer, findsOneWidget);
 
     final Rect barBefore = tester.getRect(bar);
+    final Rect composerBefore = tester.getRect(composer);
     expect(barBefore.top, greaterThan(0));
 
     await _tapAction(tester, HomeAction.flights);
@@ -344,12 +347,12 @@ void main() {
 
     await _scrollList(tester, -600);
 
-    // The pinned chrome does not move; the pill stays put too.
+    // The pinned chrome does not move; the composer stays with it.
     expect(tester.getRect(bar), barBefore);
-    expect(find.byKey(const ValueKey<String>('home-ai-composer')), findsOneWidget);
+    expect(tester.getRect(composer), composerBefore);
   });
 
-  testWidgets('the composer floats with no full-width bar and no dead band', (
+  testWidgets('the composer sits under the navigation bar, above the feed', (
     tester,
   ) async {
     _setPhoneSize(tester);
@@ -360,26 +363,18 @@ void main() {
       const ValueKey<String>('home-ai-composer'),
     );
     final Rect pill = tester.getRect(pillFinder);
-
-    // No ANCESTOR of the pill paints a full-width bar behind it. Stop at the
-    // shell; above it may sit MaterialApp transition boxes.
-    bool hasColoredBoxAncestor = false;
-    tester.element(pillFinder).visitAncestorElements((Element ancestor) {
-      if (ancestor.widget is TokiGoShell) return false;
-      if (ancestor.widget is ColoredBox) hasColoredBoxAncestor = true;
-      return true;
-    });
-    expect(
-      hasColoredBoxAncestor,
-      isFalse,
-      reason: 'the floating pill must have no ColoredBox ancestor',
+    final Rect bar = tester.getRect(
+      find.byKey(const ValueKey<String>('home-action-bar')),
     );
-
     final Rect feed = tester.getRect(find.byType(CustomScrollView));
-    expect(feed.bottom, greaterThan(pill.top));
+
+    // The composer is part of the pinned chrome: directly below the navigation
+    // tiles and above the scrolling feed (no overlap, no dead band).
+    expect(pill.top, greaterThanOrEqualTo(bar.bottom));
+    expect(pill.bottom, lessThanOrEqualTo(feed.top));
   });
 
-  testWidgets('keyboard inset keeps the focused composer above the keyboard', (
+  testWidgets('the composer stays pinned in the chrome when the keyboard opens', (
     tester,
   ) async {
     _setPhoneSize(tester);
@@ -387,8 +382,11 @@ void main() {
     await tester.pumpWidget(_app(router: router));
     await tester.pumpAndSettle();
 
-    // The composer hides whenever the keyboard is up and its own field is not
-    // focused, so focus the field before raising the keyboard.
+    final Finder composerFinder = find.byKey(
+      const ValueKey<String>('home-ai-composer'),
+    );
+    final Rect before = tester.getRect(composerFinder);
+
     await tester.tap(
       find.byKey(const ValueKey<String>('home-ai-composer-field')),
     );
@@ -398,11 +396,9 @@ void main() {
     addTearDown(tester.view.resetViewInsets);
     await tester.pumpAndSettle();
 
-    final Rect composerRect = tester.getRect(
-      find.byKey(const ValueKey<String>('home-ai-composer')),
-    );
-    // The whole bottom interaction area rides above the keyboard.
-    expect(composerRect.bottom, lessThanOrEqualTo(550));
+    // The composer lives in the pinned top chrome, so the keyboard resize must
+    // not move it.
+    expect(tester.getRect(composerFinder), before);
   });
 
   testWidgets('send submits the trimmed query through the AI chat route', (
@@ -455,7 +451,7 @@ void main() {
     expect(find.text('AI:weekend in Cairo'), findsOneWidget);
   });
 
-  testWidgets('the composer keeps clear of the system navigation inset', (
+  testWidgets('the composer sits under the navigation bar with a bottom inset', (
     tester,
   ) async {
     _setPhoneSize(tester);
@@ -468,8 +464,13 @@ void main() {
     final Rect composer = tester.getRect(
       find.byKey(const ValueKey<String>('home-ai-composer')),
     );
-    // 700dp tall view - 34dp system inset - 12dp gap under the floating pill.
-    expect(composer.bottom, closeTo(654, 1));
+    final Rect bar = tester.getRect(
+      find.byKey(const ValueKey<String>('home-action-bar')),
+    );
+    // The composer is pinned under the navigation tiles; the bottom system
+    // inset belongs to the feed, not to the top chrome.
+    expect(composer.top, greaterThanOrEqualTo(bar.bottom));
+    expect(composer.bottom, lessThan(400));
   });
 
   testWidgets('Arabic shell keeps the composer and RTL navigation bar', (

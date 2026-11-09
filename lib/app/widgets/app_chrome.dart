@@ -5,15 +5,16 @@ import 'package:tokigo/app/widgets/home_nav_buttons.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/features/home/domain/home_action.dart';
 import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_ai_search_field.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_top_bar.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
 /// Tells the routed pages whether the persistent app chrome is on screen.
 ///
-/// The shell renders the wordmark / notifications / profile row and the
-/// service navigation bar above the six top-level sections only. Pages read
-/// this scope to drop their own redundant header (back button + description)
-/// and to reserve room for the floating AI composer.
+/// The shell renders the wordmark / notifications / profile row, the service
+/// navigation bar and the AI composer above the six top-level sections only.
+/// Pages read this scope to drop their own redundant header (back button +
+/// description).
 @immutable
 class AppChromeScope extends InheritedWidget {
   const AppChromeScope({
@@ -36,7 +37,7 @@ class AppChromeScope extends InheritedWidget {
 }
 
 /// The persistent top chrome: the TokiGo row (wordmark, notifications,
-/// profile) with the service navigation bar beneath it.
+/// profile), the service navigation bar and the AI composer beneath it.
 ///
 /// It is rendered by [TokiGoShell] for the six top-level sections
 /// ([sectionLocations]) and is intentionally absent from detail, booking and
@@ -53,19 +54,6 @@ class AppChrome extends StatelessWidget {
     '/packages',
     '/groups',
   };
-
-  /// Height of the floating AI composer pill (spec: 56dp).
-  static const double composerHeight = 56;
-
-  /// Gap between the pill and the bottom edge of the screen.
-  static const double composerBottomMargin = AppSpacing.md;
-
-  /// Space a routed scroll view must reserve so its last card is never hidden
-  /// behind the floating composer.
-  static double composerReserve(BuildContext context) =>
-      composerHeight +
-      composerBottomMargin +
-      MediaQuery.paddingOf(context).bottom;
 
   /// Whether [location] is one of the six sections that own the chrome.
   static bool isSection(String location) => sectionLocations.contains(location);
@@ -114,6 +102,19 @@ class AppChrome extends StatelessWidget {
                 if (path == null || path == location) return;
                 context.go(path);
               },
+            ),
+          ),
+          // The AI composer sits directly under the navigation tiles: it is
+          // part of the pinned chrome, not a floating overlay over the feed.
+          Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(
+              AppSpacing.lg,
+              0,
+              AppSpacing.lg,
+              AppSpacing.md,
+            ),
+            child: HomeAiSearchField(
+              accentColor: HomeDesignTokens.accentOf(context),
             ),
           ),
         ],

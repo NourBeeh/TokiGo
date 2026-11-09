@@ -20,20 +20,20 @@
 		<string>AppIcon</string>
 		<key>CFBundleAlternateIcons</key>
 		<dict>
-		    <key>AppIcon-Light</key>
-		    <dict>
-		        <key>CFBundleIconFiles</key>
-		        <array>
-		            <string>app_icon</string>
-		        </array>
-		    </dict>
-		    <key>AppIcon-Dark</key>
-		    <dict>
-		        <key>CFBundleIconFiles</key>
-		        <array>
-		            <string>app_icon_dark</string>
-		        </array>
-		    </dict>
+			<key>AppIcon-Light</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>app_icon</string>
+				</array>
+			</dict>
+			<key>AppIcon-Dark</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>app_icon_dark</string>
+				</array>
+			</dict>
 		</dict>
 		<key>CFBundleShortVersionString</key>
 		<string>$(FLUTTER_BUILD_NAME)</string>

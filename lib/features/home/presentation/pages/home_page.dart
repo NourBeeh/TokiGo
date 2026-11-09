@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:tokigo/app/widgets/app_chrome.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -43,16 +42,6 @@ class _HomePageState extends ConsumerState<HomePage>
   /// Anchors the Discover section so another page can land on it.
   final GlobalKey _discoverKey = GlobalKey();
   bool _scrollScheduled = false;
-
-  /// Space the feed reserves at its end so the shell's floating AI composer
-  /// never covers the last card. Zero when the chrome (and therefore the
-  /// composer) is not on screen — e.g. when HomePage is hosted standalone in
-  /// tests.
-  double _composerReserve(BuildContext context) => AppChromeScope.visibleOf(
-    context,
-  )
-      ? AppChrome.composerReserve(context)
-      : 0;
 
   @override
   void initState() {
@@ -165,23 +154,16 @@ class _HomePageState extends ConsumerState<HomePage>
       // H1: pull-to-refresh removed by product decision — Home refreshes
       // prices/availability via live validation only (H2).
       //
-      // The keyboard resizes this body; the floating composer lives in the
-      // shell and rides up with the keyboard there.
+      // The keyboard resizes this body; the AI composer now lives in the
+      // pinned shell chrome above it.
       body: SafeArea(
         top: true,
-        // The feed stays edge-to-edge under the navigation bar; the composer
-        // (in the shell) reserves its own inset.
+        // The feed stays edge-to-edge under the navigation bar.
         bottom: false,
         child: CustomScrollView(
           controller: _feedController,
           slivers: <Widget>[
             ..._feedSlivers(state, ref),
-            // Reserve space for the shell's floating composer (only when the
-            // chrome is on screen — zero for standalone test hosts).
-            if (_composerReserve(context) > 0)
-              SliverToBoxAdapter(
-                child: SizedBox(height: _composerReserve(context)),
-              ),
           ],
         ),
       ),
@@ -196,9 +178,9 @@ class _HomePageState extends ConsumerState<HomePage>
 
   /// The dashboard's feed content as slivers.
   ///
-  /// The header and quick-action row are provided by the persistent shell
-  /// chrome; the floating composer lives there too. This scroll view only
-  /// carries the feed content and reserves the composer's footprint.
+  /// The header, quick-action row and AI composer are provided by the
+  /// persistent shell chrome above this scroll view. This scroll view only
+  /// carries the feed content.
   List<Widget> _feedSlivers(HomeState state, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final List<HomeSection> visibleSections = state.sections
@@ -286,9 +268,6 @@ class _HomePageState extends ConsumerState<HomePage>
           SliverFillRemaining(
             hasScrollBody: false,
             child: _CenteredFeedState(
-              // The composer's footprint stays reserved for this state too, so
-              // the message centres between the shell chrome and the composer.
-              reserveBottom: _composerReserve(context),
               child: AppMessageState(
                 icon: Icons.explore_off_outlined,
                 title: l10n.homeEmptyTitle,
@@ -305,7 +284,6 @@ class _HomePageState extends ConsumerState<HomePage>
           SliverFillRemaining(
             hasScrollBody: false,
             child: _CenteredFeedState(
-              reserveBottom: _composerReserve(context),
               child: AppMessageState(
                 icon: Icons.wifi_off_rounded,
                 hue: context.tokigoColors.danger,
@@ -343,47 +321,32 @@ class _HomePageState extends ConsumerState<HomePage>
 }
 
 /// Centers an honest state (empty / offline) in the feed's remaining
-/// viewport, between the pinned shell chrome and the pinned composer.
+/// viewport, beneath the pinned shell chrome.
 ///
 /// The state scrolls only when its content genuinely cannot fit — a very
 /// small screen or a large system type scale — so the message is never
 /// clipped and never overlaps the pinned chrome.
 ///
-/// [reserveBottom] is subtracted from the viewport height the message centres
-/// in, so the pill's footprint is honoured without a trailing spacer sliver
-/// (a second sliver after `SliverFillRemaining` forces it to measure its
-/// child's intrinsics, which [LayoutBuilder] cannot provide).
+/// This used to be a `LayoutBuilder`, which cannot answer intrinsic
+/// dimensions: `RenderSliverFillRemaining.performLayout` always asks its
+/// child for `getMaxIntrinsicHeight`, so every debug build of the
+/// empty/offline state threw "LayoutBuilder does not support returning
+/// intrinsic dimensions". `Center` implements intrinsics, so the question is
+/// answered instead of crashing.
+///
+/// No `SingleChildScrollView` either: it would give `Center` an UNBOUNDED
+/// height, which makes `Center` top-align the message.
+/// `SliverFillRemaining` already sizes itself to `max(viewport, child
+/// intrinsic)`, so a message that genuinely cannot fit grows the sliver and
+/// the outer feed scrolls — the message is never clipped.
 class _CenteredFeedState extends StatelessWidget {
-  const _CenteredFeedState({required this.child, this.reserveBottom = 0});
+  const _CenteredFeedState({required this.child});
 
   final Widget child;
 
-  /// Space kept clear at the bottom of the state's own viewport (the floating
-  /// AI composer's footprint).
-  final double reserveBottom;
-
   @override
   Widget build(BuildContext context) {
-    // `SliverFillRemaining` fills the viewport and hands this child TIGHT
-    // constraints, so the reserve is simply subtracted here — and `Padding` +
-    // `Center` are both intrinsics-safe.
-    //
-    // This used to be a `LayoutBuilder`, which cannot answer intrinsic
-    // dimensions: `RenderSliverFillRemaining.performLayout` always asks its
-    // child for `getMaxIntrinsicHeight`, so every debug build of the
-    // empty/offline state threw "LayoutBuilder does not support returning
-    // intrinsic dimensions". `Padding`/`Center` implement intrinsics, so the
-    // question is answered instead of crashing.
-    //
-    // No `SingleChildScrollView` either: it would give `Center` an UNBOUNDED
-    // height, which makes `Center` top-align the message. `SliverFillRemaining`
-    // already sizes itself to `max(viewport, child intrinsic)`, so a message
-    // that genuinely cannot fit grows the sliver and the outer feed scrolls —
-    // the message is never clipped and never overlaps the pill.
-    return Padding(
-      padding: EdgeInsets.only(bottom: reserveBottom),
-      child: Center(child: child),
-    );
+    return Center(child: child);
   }
 }
 

@@ -6,7 +6,8 @@ and the in-app logotype is text (`lib/core/ui/app_wordmark.dart`). For both to
 stay identical, the raster must be produced with the exact same font, weight,
 tracking, gap and colours the widget renders. This script is that bridge: it
 draws "TokiGo" with the bundled Manrope variable font and writes the light and
-dark masters that `pubspec.yaml` feeds to flutter_native_splash.
+dark masters that `tool/branding/generate_splash.py` composes with the app
+icon.
 
 Canonical spec (keep in sync with `lib/core/ui/app_wordmark.dart` and
 `lib/core/theme/app_colors.dart`):
@@ -21,19 +22,13 @@ Because tracking and gap are em-based, the mark is scale-invariant: the raster
 drawn at 45dp/4x is pixel-for-pixel the same mark the widget renders at 25dp.
 
 Writes:
-  assets/branding/logo_wordmark.png           pre-Android-12 splash master
-                                              (xxxhdpi = 4x, wide canvas)
-  assets/branding/logo_wordmark_android12.png Android 12+ splash master
-                                              (xxxhdpi = 4x, square canvas,
-                                               mark inside the system safe
-                                               circle - Android masks the
-                                               outer third of the icon)
+  assets/branding/logo_wordmark.png           light wide master
+                                              (xxxhdpi = 4x, transparent canvas)
   assets/branding/logo_wordmark_dark.png      dark-mode wide master, white ink
-  assets/branding/logo_wordmark_android12_dark.png
-                                              dark-mode square master
 
-Then regenerate the drawables:
+Then compose the splash masters and regenerate the drawables:
 
+    python tool/branding/generate_splash.py
     dart run flutter_native_splash:create
 
 Usage:  python tool/branding/generate_wordmark.py [--check]
@@ -68,16 +63,12 @@ TARGET_INK_DP = 140.0
 SCALE = 4
 TARGET_INK_PX = int(TARGET_INK_DP * SCALE)
 
-CANVAS_WIDE = (1024, 360)  # pre-12: launch_background centers this bitmap
-CANVAS_SQUARE = (1024, 1024)  # android 12+: adaptive-icon spec, 2/3 visible
-SAFE_CIRCLE_FRACTION = 66 / 108  # guaranteed-visible circle of an adaptive icon
+CANVAS_WIDE = (1024, 360)  # launch_background centers this bitmap
 REFERENCE_PX = 180  # first-pass render used to solve the font size
 
 HALVES = (("Toki", INK), ("Go", GO))
 OUT_WIDE = Path("assets/branding/logo_wordmark.png")
-OUT_SQUARE = Path("assets/branding/logo_wordmark_android12.png")
 OUT_WIDE_DARK = Path("assets/branding/logo_wordmark_dark.png")
-OUT_SQUARE_DARK = Path("assets/branding/logo_wordmark_android12_dark.png")
 
 
 def render_half(text: str, font: ImageFont.FreeTypeFont) -> tuple[Image.Image, int]:
@@ -158,7 +149,6 @@ def measure(img: Image.Image) -> dict:
 def verify(
     img: Image.Image,
     label: str,
-    safe_circle: bool = False,
     ink_color: tuple[int, int, int] = INK,
 ) -> dict:
     """Fail loudly if the render is not the brand spec."""
@@ -177,14 +167,6 @@ def verify(
         raise SystemExit(f"{label}: brand colours missing from the render: {missing}")
     if stats["max_ink"] < 250:
         raise SystemExit(f"{label}: fully transparent pixels at the ink core")
-    if safe_circle:
-        w, h = stats["ink"]
-        safe = min(img.size) * SAFE_CIRCLE_FRACTION
-        if (w**2 + h**2) ** 0.5 > safe:
-            raise SystemExit(
-                f"{label}: ink {w}x{h} pokes outside the adaptive-icon safe "
-                f"circle ({safe:.0f}px) - Android 12+ would clip the mark"
-            )
     return stats
 
 
@@ -214,10 +196,8 @@ def main() -> int:
     font = render_font(solve_font_size())
     mark = build_wordmark(font)
     wide = centered(mark, CANVAS_WIDE)
-    square = centered(mark, CANVAS_SQUARE)
     dark_mark = build_wordmark(font, ink_color=INK_DARK)
     wide_dark = centered(dark_mark, CANVAS_WIDE)
-    square_dark = centered(dark_mark, CANVAS_SQUARE)
     print(
         f"brand mark: font {font.size}px ({font.size / SCALE:g}dp) x{SCALE} "
         f"-> ink {mark.width / SCALE:g}x{mark.height / SCALE:g}dp"
@@ -225,12 +205,10 @@ def main() -> int:
 
     if args.check:
         outputs = (
-            (OUT_WIDE, wide, INK, False),
-            (OUT_SQUARE, square, INK, True),
-            (OUT_WIDE_DARK, wide_dark, INK_DARK, False),
-            (OUT_SQUARE_DARK, square_dark, INK_DARK, True),
+            (OUT_WIDE, wide, INK),
+            (OUT_WIDE_DARK, wide_dark, INK_DARK),
         )
-        for path, expected, ink_color, safe_circle in outputs:
+        for path, expected, ink_color in outputs:
             if not path.exists():
                 raise SystemExit(f"missing {path}")
             actual = Image.open(path).convert("RGBA")
@@ -245,27 +223,23 @@ def main() -> int:
             verify(
                 actual,
                 str(path),
-                safe_circle=safe_circle,
                 ink_color=ink_color,
             )
         print("brand rasters match the spec")
         return 0
 
     outputs = (
-        (OUT_WIDE, wide, INK, False),
-        (OUT_SQUARE, square, INK, True),
-        (OUT_WIDE_DARK, wide_dark, INK_DARK, False),
-        (OUT_SQUARE_DARK, square_dark, INK_DARK, True),
+        (OUT_WIDE, wide, INK),
+        (OUT_WIDE_DARK, wide_dark, INK_DARK),
     )
-    for path, img, ink_color, safe_circle in outputs:
+    for path, img, ink_color in outputs:
         _write(path, _encode(img))
         verify(
             img,
             str(path),
-            safe_circle=safe_circle,
             ink_color=ink_color,
         )
-    print("now regenerate the Android drawables: dart run flutter_native_splash:create")
+    print("now compose the splash: python tool/branding/generate_splash.py")
     return 0
 
 
