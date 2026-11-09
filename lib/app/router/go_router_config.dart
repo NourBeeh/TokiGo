@@ -259,16 +259,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     ),
                   ),
                   GoRoute(
-                    path: 'settings',
-                    name: 'settings',
-                    pageBuilder: (context, state) => slideFromRightPage(
-                      key: state.pageKey,
-                      restorationId: state.pageKey.value,
-                      name: 'settings',
-                      child: const SwipeFromRightToPop(child: SettingsPage()),
-                    ),
-                  ),
-                  GoRoute(
                     path: 'auth',
                     name: 'auth',
                     pageBuilder: (context, state) => slideFromRightPage(
@@ -421,6 +411,22 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           restorationId: state.pageKey.value,
           name: 'profile',
           child: const SwipeFromRightToPop(child: ProfilePage()),
+        ),
+      ),
+      // Settings is a root-level destination, like Profile: it is opened from
+      // the Profile page (which lives on the root navigator) and must not be a
+      // child of the Home shell branch. Pushing a shell-branch route while a
+      // root page is on top re-uses the shell page key and leaves the navigator
+      // showing a blank (black) screen after the settings button is tapped.
+      GoRoute(
+        path: '/settings',
+        name: 'settings',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) => slideFromRightPage(
+          key: state.pageKey,
+          restorationId: state.pageKey.value,
+          name: 'settings',
+          child: const SwipeFromRightToPop(child: SettingsPage()),
         ),
       ),
       GoRoute(

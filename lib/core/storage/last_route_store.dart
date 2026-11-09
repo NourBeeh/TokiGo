@@ -32,9 +32,9 @@ class LastRouteStore {
     '/bag',
     '/notifications',
     '/profile',
-    // Settings lives at `/settings` (a Home-branch child), not under
-    // `/profile` — restoring a non-existent path would open the router error
-    // page on a cold relaunch.
+    // Settings lives at `/settings` (a root-level destination, like Profile),
+    // not under `/profile` — restoring a non-existent path would open the
+    // router error page on a cold relaunch.
     '/settings',
     '/wishlist',
     '/search',

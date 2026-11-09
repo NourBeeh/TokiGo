@@ -18,7 +18,10 @@ void main() {
         overrides: <Override>[
           authUserProvider.overrideWithValue(null),
           geoCountryProvider.overrideWith((ref) async => null),
-          lastInitialRouteProvider.overrideWithValue('/profile'),
+          // Start on Home so the shell is already in the navigator stack: the
+          // settings bug only reproduced when Profile was pushed on top of the
+          // shell. Starting directly on `/profile` hides it.
+          lastInitialRouteProvider.overrideWithValue('/'),
           onboardingProvider.overrideWith(
             (ref) => OnboardingController.pinned(
               const OnboardingState(seen: true, ready: true),
@@ -34,11 +37,19 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pumpAndSettle();
+
+    // Home chrome → Profile (root page on top of the shell).
+    await tester.tap(find.byIcon(Icons.person_rounded));
+    await tester.pumpAndSettle();
     expect(find.byType(ProfilePage), findsOneWidget);
+
+    // Profile → Settings. This push used to reuse the shell's page key and
+    // leave a blank (black) screen.
     await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pumpAndSettle();
     expect(find.byType(SettingsPage), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
