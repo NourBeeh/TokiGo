@@ -892,6 +892,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingOfferUnavailable => 'This offer is no longer available. Please pick another.';
 
   @override
+  String get bookingOfferExpired => 'This offer has expired. Please search again.';
+
+  @override
+  String get bookingRevalidationFailed => 'We could not re-check this offer. Please try again.';
+
+  @override
   String get carPickupLocation => 'Pickup location';
 
   @override
@@ -959,6 +965,51 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bookingValidPhone => 'Enter a valid phone';
+
+  @override
+  String get bookingTitleLabel => 'Title';
+
+  @override
+  String get bookingPassengerTypeAdult => 'Adult';
+
+  @override
+  String get bookingPassengerTypeChild => 'Child';
+
+  @override
+  String get bookingPassengerTypeInfant => 'Infant';
+
+  @override
+  String get bookingAccompanyingAdultLabel => 'Travels with';
+
+  @override
+  String get bookingAccompanyingAdultRequired => 'Choose the adult this infant travels with';
+
+  @override
+  String get bookingPhoneCountryCodeLabel => 'Country code';
+
+  @override
+  String get bookingPhoneCountryCodeHint => 'e.g. 20';
+
+  @override
+  String get bookingValidPhoneCountryCode => 'Enter a 1-3 digit code';
+
+  @override
+  String get bookingDocumentTypeLabel => 'Document type';
+
+  @override
+  String get bookingDocumentTypePassport => 'Passport';
+
+  @override
+  String get bookingDocumentTypeNationalId => 'National ID';
+
+  @override
+  String get bookingDocumentNumberLabel => 'Document number';
+
+  @override
+  String get bookingDocumentIssueCountryLabel => 'Issuing country (ISO)';
+
+  @override
+  String get bookingDocumentExpiryLabel => 'Expiry (YYYY-MM-DD)';
 
   @override
   String get groupsCreateTrip => 'Create a group trip';
@@ -1166,6 +1217,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get checkoutNoBookingBody => 'There is no prepared booking for this trip, so there is nothing to charge. Go back to the booking review and prepare it again.';
+
+  @override
+  String get hotelGuestInvalidTitle => 'Guest details don\'t match this booking';
+
+  @override
+  String get hotelGuestInvalidBody => 'The guest details don\'t match this hotel booking. Go back and re-enter the guests for this stay.';
 
   @override
   String get checkoutProviderPrice => 'Trip price (from the provider)';

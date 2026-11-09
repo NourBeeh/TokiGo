@@ -84,6 +84,47 @@ export function resolveIataCode(input: string): string {
   return input.trim().toUpperCase();
 }
 
+/**
+ * Maps a search party to Duffel's offer-request passenger entries.
+ *
+ * Pure and exported for unit testing: the type/age mapping IS the provider
+ * contract, and an adult-only array would silently drop child/infant pricing.
+ * `passengers` is the adult-count fallback both flight providers use. A
+ * missing age keeps the type (Duffel validates it) — never an invented age.
+ */
+export function buildDuffelPassengerEntries(params: {
+  passengers?: number;
+  adults?: number;
+  children?: number;
+  infants?: number;
+  childAges?: number[];
+  infantAges?: number[];
+}): any[] {
+  const adultsCount = params.adults ?? params.passengers ?? 1;
+  const childrenCount = params.children ?? 0;
+  const infantsCount = params.infants ?? 0;
+  const childAges = params.childAges ?? [];
+  const infantAges = params.infantAges ?? [];
+
+  const passengerEntries: any[] = [];
+  for (let i = 0; i < adultsCount; i++) {
+    passengerEntries.push({ type: 'adult' });
+  }
+  for (let i = 0; i < childrenCount; i++) {
+    const age = childAges[i];
+    passengerEntries.push(age != null ? { type: 'child', age } : { type: 'child' });
+  }
+  for (let i = 0; i < infantsCount; i++) {
+    const age = infantAges[i];
+    passengerEntries.push(
+      age != null
+        ? { type: 'infant_without_seat', age }
+        : { type: 'infant_without_seat' },
+    );
+  }
+  return passengerEntries;
+}
+
 @Injectable()
 export class DuffelService implements FlightProvider {
   providerId = 'duffel-flight';
@@ -106,6 +147,11 @@ export class DuffelService implements FlightProvider {
     departure: Date;
     returnDate?: Date;
     passengers?: number;
+    adults?: number;
+    children?: number;
+    infants?: number;
+    childAges?: number[];
+    infantAges?: number[];
     cabinClass?: string;
     directOnly?: boolean;
   }): Promise<ProviderResult<any[]>> {
@@ -125,7 +171,7 @@ export class DuffelService implements FlightProvider {
       const departureDate = params.departure instanceof Date 
         ? params.departure.toISOString().split('T')[0]
         : String(params.departure).split('T')[0];
-      const passengersCount = params.passengers ?? 1;
+      const passengerEntries = buildDuffelPassengerEntries(params);
 
       // A multi-city itinerary is one slice per leg, in order. The legacy
       // single triple stays a one-slice request.
@@ -155,7 +201,7 @@ export class DuffelService implements FlightProvider {
       const directOnly = params.directOnly === true;
       const request = await this.duffelClient?.offerRequests.create({
         slices: slices as any[],
-        passengers: Array(passengersCount).fill({ type: 'adult' }),
+        passengers: passengerEntries,
         return_offers: true,
         // Cabin class the traveller picked in the Flights form; Duffel
         // honours it verbatim and prices/offers accordingly. Absent ⇒ Duffel
@@ -291,6 +337,12 @@ export class DuffelService implements FlightProvider {
    * authoritative price/availability + expiry. The caller (offers
    * controller) compares against the known price and produces a structured
    * PRICE_CHANGED outcome instead of charging silently.
+   *
+   * P3-D5: the offer ALSO carries the passenger list created by the original
+   * offer request (`Offer.passengers[].id`). Those ids are the ONLY valid
+   * `id` values on an order passenger, and they are recoverable from the
+   * stored offer id alone — so they are surfaced here and persisted in the
+   * booking snapshot instead of being dropped at search time.
    */
   async revalidateOffer(offerId: string): Promise<ProviderResult<any>> {
     if (!this.duffelClient) {
@@ -307,6 +359,9 @@ export class DuffelService implements FlightProvider {
       const offer = response?.data ?? response;
       const price = parseFloat(offer?.total_amount ?? '0');
       const currency = offer?.total_currency ?? 'USD';
+      const rawPassengers = Array.isArray(offer?.passengers)
+        ? offer.passengers
+        : [];
       return {
         success: true,
         providerId: this.providerId,
@@ -320,6 +375,26 @@ export class DuffelService implements FlightProvider {
           expiresAt: offer?.expires_at ?? undefined,
           available: price > 0,
           rawId: offerId,
+          // Verbatim offer passengers (id/type/age). A passenger without a
+          // non-empty id is dropped — it can never be booked, and an invented
+          // replacement is forbidden.
+          passengers: rawPassengers
+            .filter(
+              (p: any) => p && typeof p.id === 'string' && p.id.length > 0,
+            )
+            .map((p: any) => ({
+              id: p.id,
+              type: p.type ?? null,
+              age: typeof p.age === 'number' ? p.age : null,
+            })),
+          // Conditional document requirement, read from the offer itself.
+          passengerIdentityDocumentsRequired:
+            offer?.passenger_identity_documents_required === true,
+          supportedPassengerIdentityDocumentTypes: Array.isArray(
+            offer?.supported_passenger_identity_document_types,
+          )
+            ? offer.supported_passenger_identity_document_types
+            : [],
         },
         timestamp: new Date(),
       };

@@ -17,6 +17,7 @@ class RevalidationOutcome {
     this.oldPrice,
     this.expiresAt,
     this.reason,
+    this.expired = false,
   });
 
   final RevalidationStatus status;
@@ -27,7 +28,17 @@ class RevalidationOutcome {
   final String? expiresAt;
   final String? reason;
 
+  /// True when the provider reports the offer itself expired (as opposed to a
+  /// transport failure). The review page tells the traveller to search again
+  /// instead of retrying the same offerId.
+  final bool expired;
+
   bool get canProceed => status == RevalidationStatus.ok;
+
+  /// A provider "offer expired / not found" reason — never a silent retry.
+  static bool looksExpired(String? reason) =>
+      reason != null &&
+      RegExp('expir|404|not found', caseSensitive: false).hasMatch(reason);
 }
 
 /// Calls the backend `/offers/revalidate` endpoint right before checkout —
@@ -76,9 +87,11 @@ class OfferRevalidationService {
               expiresAt: body['expiresAt']?.toString(),
             );
           case 'UNAVAILABLE':
+            final reason = body['reason']?.toString();
             return RevalidationOutcome(
               status: RevalidationStatus.unavailable,
-              reason: body['reason']?.toString(),
+              reason: reason,
+              expired: RevalidationOutcome.looksExpired(reason),
             );
           default:
             return RevalidationOutcome(

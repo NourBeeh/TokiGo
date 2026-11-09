@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tokigo/core/domain/models/search/hotel_room_occupancy.dart';
 import 'package:tokigo/core/domain/models/search/hotel_search_params.dart';
 import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
 import 'package:tokigo/core/events/events_tracker.dart';
@@ -7,6 +8,7 @@ import 'package:tokigo/core/repositories/contracts/hotel_repository.dart';
 import 'package:tokigo/core/repositories/impl/hotel_repository_impl.dart';
 import 'package:tokigo/core/storage/offline_cache.dart';
 import 'package:tokigo/core/storage/offline_cache_serializers.dart';
+import 'package:tokigo/features/search/application/providers/offer_selection_provider.dart';
 
 enum HotelSearchStatus { idle, loading, success, empty, error }
 
@@ -72,6 +74,12 @@ class HotelSearchController extends StateNotifier<HotelSearchState> {
     if (repo is HotelRepositoryImpl) {
       repo.setNextSearchExtras(
         rooms: params.rooms,
+        occupancies: params.occupancies
+            .map((o) => <String, dynamic>{
+                  'adults': o.adults,
+                  'children': o.childAges,
+                })
+            .toList(),
         minRating: params.minRating,
         maxPrice: params.maxPrice,
         minPrice: params.minPrice,
@@ -88,6 +96,7 @@ class HotelSearchController extends StateNotifier<HotelSearchState> {
       checkIn: params.checkIn,
       checkOut: params.checkOut,
       guests: params.adults,
+      occupancies: params.occupancies,
       country: params.countryCode,
       market: params.market,
       currency: params.currency,
@@ -170,4 +179,36 @@ class HotelSearchController extends StateNotifier<HotelSearchState> {
       },
     );
   }
+}
+
+final hotelOccupanciesProvider =
+    StateProvider<List<HotelRoomOccupancy>>((ref) => const <HotelRoomOccupancy>[]);
+
+final hotelGuestTravelersProvider =
+    StateProvider<List<Map<String, dynamic>>>((ref) => const <Map<String, dynamic>>[]);
+
+/// The ownership key of the payload currently in [hotelGuestTravelersProvider].
+///
+/// The guest page writes it next to the travelers; checkout ignores hotel
+/// guests whose key does not match the selected offer + occupancy, so a stale
+/// payload from a previous search can never reach a booking.
+final hotelGuestTravelersOwnerProvider = StateProvider<String>((ref) => '');
+
+/// Builds the ownership key from real identifiers only: the selected hotel
+/// offer's `providerId`/`offerId` plus the exact room occupancy the guests
+/// were collected for. Returns an empty string when there is no offer or no
+/// occupancy — neither is a bookable guest context.
+String hotelGuestOwnershipKey(
+  SelectedOffer? offer,
+  List<HotelRoomOccupancy> occupancies,
+) {
+  final String providerId = offer?.providerId ?? '';
+  final String offerId = offer?.offerId ?? '';
+  if (providerId.isEmpty || offerId.isEmpty || occupancies.isEmpty) return '';
+  final String occupancy = occupancies
+      .map(
+        (HotelRoomOccupancy room) => '${room.adults}:${room.childAges.join('.')}',
+      )
+      .join('|');
+  return '$providerId:$offerId:$occupancy';
 }

@@ -29,6 +29,11 @@ export class DuffelController {
       destination: body.destination,
       departure: new Date(body.departureDate),
       passengers: body.passengers,
+      adults: body.adults,
+      children: body.children,
+      infants: body.infants,
+      childAges: body.childAges,
+      infantAges: body.infantAges,
     });
   }
 

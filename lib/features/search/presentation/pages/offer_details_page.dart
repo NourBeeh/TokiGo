@@ -211,7 +211,11 @@ class OfferDetailsPage extends ConsumerWidget {
                     }
                     ref.read(selectedOfferProvider.notifier).state =
                         _selectedOfferFrom(offer);
-                    context.push('/booking/review');
+                    if (offer is HotelOffer) {
+                      context.push('/booking/hotel-guests');
+                    } else {
+                      context.push('/booking/review');
+                    }
                   },
                 ),
               ),

@@ -13,6 +13,7 @@ export interface NuiteeSearchParams {
   checkOut: Date;
   guests?: number;
   rooms?: number;
+  occupancies?: { adults: number; children?: number[] }[];
   /** ISO-2 country of the city. Omitted → resolved from the city table. */
   country?: string;
   /** Hotel content language. Omitted preserves Nuitee's default (English). */

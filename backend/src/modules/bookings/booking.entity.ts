@@ -44,6 +44,11 @@ export type BookingStatus = (typeof BOOKING_STATUSES)[number];
 @Index('idx_bookings_user_idempotency', ['userId', 'idempotencyKey'], {
   unique: true,
 })
+@Index('uq_bookings_payment_attempt', ['paymentAttemptId'], {
+  unique: true,
+  where: `"paymentAttemptId" IS NOT NULL`,
+})
+@Index('idx_bookings_status_confirming_since', ['status', 'confirmingSince'])
 export class Booking {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -110,6 +115,52 @@ export class Booking {
   /** Quote expiry when the provider communicates one. */
   @Column({ type: 'timestamptz', nullable: true })
   expiresAt?: Date | null;
+
+  // ------------------------------------------------------------------
+  // P4-1 durable payment / recovery extensions.
+  //
+  // `paymentAttemptId` is the SINGLE successful customer attempt consumed by
+  // this booking. The column being single-valued already guarantees a booking
+  // cannot consume two attempts; the partial unique index guarantees one
+  // attempt cannot be consumed by two bookings; composite FKs (migration)
+  // guarantee the attempt belongs to this booking AND this user.
+  // ------------------------------------------------------------------
+
+  /** The consumed customer payment attempt (nullable until payment proof). */
+  @Column({ type: 'uuid', nullable: true })
+  paymentAttemptId?: string | null;
+
+  /**
+   * Customer payment status: unverified | legacy_unverified | pending |
+   * verified | failed | refunded | partially_refunded. Derived from the
+   * CUSTOMER leg only — never from supplier settlement.
+   */
+  @Column({ type: 'varchar', default: 'unverified' })
+  paymentStatus!: string;
+
+  /** When the consumed attempt was attached to this booking. */
+  @Column({ type: 'timestamptz', nullable: true })
+  consumedAt?: Date | null;
+
+  /** Confirmation lease: set when a provider confirmation starts. */
+  @Column({ type: 'timestamptz', nullable: true })
+  confirmingSince?: Date | null;
+
+  /** Confirmation lease owner (instance id) for recovery diagnostics. */
+  @Column({ type: 'varchar', nullable: true })
+  confirmingOwner?: string | null;
+
+  /**
+   * Pre-P4-1 bookings have no verifiable payment proof. They are marked
+   * legacy/unverified by the migration and must never be treated as paid.
+   * New bookings default to false.
+   */
+  @Column({ default: false })
+  legacyUnverified!: boolean;
+
+  /** Optimistic concurrency version for booking state transitions. */
+  @Column({ type: 'int', default: 0 })
+  version!: number;
 
   @CreateDateColumn()
   createdAt!: Date;

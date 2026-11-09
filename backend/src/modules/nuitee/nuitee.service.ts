@@ -74,6 +74,16 @@ export class NuiteeService implements HotelProvider {
     const guests = params.guests ?? 2;
     const rooms = params.rooms ?? 1;
 
+    let occupancies: any[];
+    if (Array.isArray(params.occupancies) && params.occupancies.length > 0) {
+      occupancies = params.occupancies.map((o: any) => ({
+        adults: o.adults,
+        children: Array.isArray(o.children) ? o.children : [],
+      }));
+    } else {
+      occupancies = [{ rooms, adults: guests }];
+    }
+
     try {
       const body = {
         cityName: params.city,
@@ -82,7 +92,7 @@ export class NuiteeService implements HotelProvider {
         checkout: checkOutStr,
         currency: 'USD',
         guestNationality: 'EG',
-        occupancies: [{ rooms, adults: guests }],
+        occupancies,
         // Keep responses lean: top rate per room type, capped hotel set.
         maxRatesPerHotel: 2,
         limit: 40,
@@ -207,6 +217,7 @@ export class NuiteeService implements HotelProvider {
     holderName: string;
     holderEmail?: string;
     guestNames: string[];
+    adults?: boolean[];
   }): Promise<ProviderResult<any>> {
     if (!this.client.enabled) {
       return {
@@ -231,7 +242,7 @@ export class NuiteeService implements HotelProvider {
               firstName: firstNameOf(name),
               lastName: lastNameOf(name),
             },
-            adult: i === 0,
+            adult: input.adults?.[i] ?? i === 0,
           })),
         },
       });

@@ -31,10 +31,15 @@ class HomeAiSearchField extends StatefulWidget {
   const HomeAiSearchField({
     super.key,
     this.accentColor = HomeDesignTokens.accent,
+    this.focusNode,
   });
 
   /// The spec's accent, resolved for the active brightness by the caller.
   final Color accentColor;
+
+  /// Optional lifted focus node (owned by the shell) so keyboard ownership
+  /// can be tracked. Falls back to an internal node when not provided.
+  final FocusNode? focusNode;
 
   @override
   State<HomeAiSearchField> createState() => _HomeAiSearchFieldState();
@@ -42,7 +47,8 @@ class HomeAiSearchField extends StatefulWidget {
 
 class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
   final TextEditingController _textCtrl = TextEditingController();
-  final FocusNode _focusNode = FocusNode();
+  late final FocusNode _focusNode = widget.focusNode ?? FocusNode();
+  bool get _ownsFocusNode => widget.focusNode == null;
 
   // Duplicate-submission guard.
   bool _submitting = false;
@@ -50,7 +56,7 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
   @override
   void dispose() {
     _textCtrl.dispose();
-    _focusNode.dispose();
+    if (_ownsFocusNode) _focusNode.dispose();
     super.dispose();
   }
 

@@ -49,6 +49,26 @@ export class FlightSearchDto {
   @Min(1)
   passengers?: number;
 
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  children?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  infants?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  childAges?: number[];
+
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  infantAges?: number[];
+
   /**
    * A multi-city itinerary (owner decision, 2026-10-20). When present it
    * REPLACES the single origin/destination/departure triple: one leg per

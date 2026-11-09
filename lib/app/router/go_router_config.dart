@@ -22,6 +22,7 @@ import '../../features/ai/presentation/pages/ai_memory_page.dart';
 import '../../features/booking/presentation/pages/add_ons_page.dart';
 import '../../features/booking/presentation/pages/booking_confirmation_page.dart';
 import '../../features/booking/presentation/pages/checkout_page.dart';
+import '../../features/booking/presentation/pages/hotel_guest_details_page.dart';
 import '../../features/booking/presentation/pages/passenger_details_page.dart';
 import '../../features/groups/presentation/pages/groups_page.dart';
 import '../../features/home/presentation/pages/city_page.dart';
@@ -275,6 +276,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                       restorationId: state.pageKey.value,
                       name: 'auth',
                       child: const SwipeFromRightToPop(child: AuthPage()),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'hotel-guests',
+                    name: 'hotel_guests',
+                    pageBuilder: (context, state) => slideFromRightPage(
+                      key: state.pageKey,
+                      restorationId: state.pageKey.value,
+                      name: 'hotel_guests',
+                      child: const SwipeFromRightToPop(
+                        child: HotelGuestDetailsPage(),
+                      ),
                     ),
                   ),
                   GoRoute(

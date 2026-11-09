@@ -132,6 +132,35 @@ class BookingController extends StateNotifier<BookingState> {
     }
   }
 
+  /// The pre-checkout offer check found the offer gone (or expired). The
+  /// funnel must NOT continue — the Continue action is blocked until a fresh
+  /// revalidation succeeds.
+  void markOfferUnavailable(String message) {
+    state = state.copyWith(
+      phase: BookingPhase.unavailable,
+      errorMessage: message,
+    );
+  }
+
+  /// The offer expired. Distinct from a generic failure so the traveller is
+  /// told to search again rather than retry the same offerId.
+  void markOfferExpired(String message) {
+    state = state.copyWith(
+      phase: BookingPhase.expired,
+      errorMessage: message,
+    );
+  }
+
+  /// The offer check itself failed (backend unreachable / provider error).
+  /// Blocking is the safe default: proceeding on an unverified price would
+  /// let a moved fare through silently.
+  void markOfferCheckFailed(String message) {
+    state = state.copyWith(
+      phase: BookingPhase.error,
+      errorMessage: message,
+    );
+  }
+
   /// Confirms the prepared booking on the backend.
   ///
   /// [travelers] carries the REAL travellers collected by the booking funnel
@@ -144,6 +173,13 @@ class BookingController extends StateNotifier<BookingState> {
     TripItem? item,
   }) async {
     final stateLocal = state;
+    // A duplicate tap while the request is in flight — or after the booking is
+    // already confirmed — is a NO-OP. It must never become a second submission
+    // and must never overwrite a confirmed state with an error. This check has
+    // to run before the generic phase guard below, which would otherwise turn
+    // an in-flight/confirmed phase into a validation error.
+    if (stateLocal.phase == BookingPhase.confirming) return;
+    if (stateLocal.phase == BookingPhase.confirmed) return;
     if (stateLocal.phase != BookingPhase.readyToConfirm) {
       state = state.copyWith(
         phase: BookingPhase.error,
@@ -152,13 +188,24 @@ class BookingController extends StateNotifier<BookingState> {
       );
       return;
     }
-    if (stateLocal.phase == BookingPhase.confirming) return;
 
     final record = stateLocal.record;
     if (record == null) {
       state = state.copyWith(
         phase: BookingPhase.error,
         errorMessage: 'Missing booking record',
+        errorCode: BookingErrorCode.validationFailed,
+      );
+      return;
+    }
+
+    // Hotel bookings must carry the real guests collected for the selected
+    // offer + occupancy. The sandbox default is never a valid substitute for
+    // a hotel booking, so an empty or malformed list blocks confirmation.
+    if (!_hasValidTravelers(record.type, travelers)) {
+      state = state.copyWith(
+        phase: BookingPhase.error,
+        errorMessage: 'Hotel guest details are missing or incomplete',
         errorCode: BookingErrorCode.validationFailed,
       );
       return;
@@ -229,6 +276,24 @@ class BookingController extends StateNotifier<BookingState> {
         );
       },
     );
+  }
+
+  /// Whether [travelers] satisfies the booking type's requirements.
+  ///
+  /// Hotel bookings require at least one guest with a non-empty first and
+  /// last name; flights keep the existing behaviour (the sandbox default is
+  /// used when the list is empty).
+  static bool _hasValidTravelers(String type, List<dynamic> travelers) {
+    if (type != 'hotel') return true;
+    if (travelers.isEmpty) return false;
+    for (final dynamic traveler in travelers) {
+      if (traveler is! Map) return false;
+      final String firstName =
+          (traveler['firstName'] as String?)?.trim() ?? '';
+      final String lastName = (traveler['lastName'] as String?)?.trim() ?? '';
+      if (firstName.isEmpty || lastName.isEmpty) return false;
+    }
+    return true;
   }
 
   String _generateIdempotencyKey(BookingRecord record) {

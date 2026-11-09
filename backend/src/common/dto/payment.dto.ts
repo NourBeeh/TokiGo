@@ -24,6 +24,13 @@ import {
  * (`lib/features/booking/application/services/checkout_payment_service.dart`);
  * adding a field to that client without adding it here is a 400, and that is
  * the intended behaviour.
+ *
+ * P4-2R — `amount` / `currency` are a QUOTE, NOT THE AUTHORITY.
+ * The payable amount is derived on the server from `bookings.authoritativePrice`
+ * and `bookings.currency` (the provider-revalidated price). The values below
+ * are validated against that authority and a mismatch is rejected with
+ * `409 pricing mismatch`; the server value is what reaches the gateway. See
+ * `PaymentService.resolveServerPricing`.
  */
 
 /** Intent: what the customer is about to pay for. */
@@ -32,12 +39,18 @@ export class CreatePaymentDto {
   @MinLength(1)
   bookingId!: string;
 
-  /** Minor-unit-free decimal amount as the client quoted it. */
+  /**
+   * Client-quoted amount. Validated against the server-authoritative price;
+   * never used as the charge amount on its own.
+   */
   @IsNumber()
-    @Min(0.01)
-    amount!: number;
+  @Min(0.01)
+  amount!: number;
 
-  /** ISO-4217, e.g. EGP / USD. */
+  /**
+   * Client-quoted ISO-4217 currency. Must equal the booking's authoritative
+   * currency.
+   */
   @IsString()
   @Matches(/^[A-Z]{3}$/, { message: 'currency must be an ISO-4217 code' })
   currency!: string;

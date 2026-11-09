@@ -62,6 +62,7 @@ class HotelRepositoryImpl implements HotelRepository {
     required DateTime checkOut,
     int? guests,
     int? rooms,
+    List<Map<String, dynamic>>? occupancies,
     double? minRating,
     double? maxPrice,
     double? minPrice,
@@ -77,6 +78,7 @@ class HotelRepositoryImpl implements HotelRepository {
       'checkOut': checkOut.toIso8601String(),
       'guests': guests ?? 2,
       'rooms': rooms,
+      if (occupancies != null) 'occupancies': occupancies,
       'minRating': minRating,
       'maxPrice': maxPrice,
       'minPrice': minPrice,
@@ -101,6 +103,7 @@ class HotelRepositoryImpl implements HotelRepository {
     checkOut: checkOut,
     guests: guests,
     rooms: _pendingRooms,
+    occupancies: _pendingOccupancies,
     minRating: _pendingMinRating,
     maxPrice: _pendingMaxPrice,
     minPrice: _pendingMinPrice,
@@ -116,6 +119,7 @@ class HotelRepositoryImpl implements HotelRepository {
   // while the caller (controller) seeds the extras before calling. This
   // mirrors how the vertical forms already work.
   int? _pendingRooms;
+  List<Map<String, dynamic>>? _pendingOccupancies;
   double? _pendingMinRating;
   double? _pendingMaxPrice;
   double? _pendingMinPrice;
@@ -130,6 +134,7 @@ class HotelRepositoryImpl implements HotelRepository {
   /// caller). A pure pass-through: nothing is invented, nothing defaults.
   void setNextSearchExtras({
     int? rooms,
+    List<Map<String, dynamic>>? occupancies,
     double? minRating,
     double? maxPrice,
     double? minPrice,
@@ -140,6 +145,7 @@ class HotelRepositoryImpl implements HotelRepository {
     String? language,
   }) {
     _pendingRooms = rooms;
+    _pendingOccupancies = occupancies;
     _pendingMinRating = minRating;
     _pendingMaxPrice = maxPrice;
     _pendingMinPrice = minPrice;

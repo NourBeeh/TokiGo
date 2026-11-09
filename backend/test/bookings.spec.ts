@@ -60,6 +60,50 @@ class FakeRepo {
       ) ?? null
     );
   }
+
+  /**
+   * Mirrors the real conditional UPDATE used to reserve an idempotency key:
+   * evaluated against the CURRENT row state, so a concurrent writer that
+   * already moved the status on matches zero rows.
+   */
+  async update(
+    criteria: any,
+    partial: any,
+  ): Promise<{ affected: number }> {
+    const statusCriteria = criteria.status;
+    let allowed: any[] | null = null;
+    if (statusCriteria && typeof statusCriteria === 'object') {
+      const value = (statusCriteria as any).value;
+      allowed = Array.isArray(value) ? value : [value];
+    } else if (Array.isArray(statusCriteria)) {
+      allowed = statusCriteria;
+    } else if (statusCriteria !== undefined) {
+      allowed = [statusCriteria];
+    }
+
+    const matches = this.rows.filter((r) => {
+      if (criteria.id !== undefined && r.id !== criteria.id) return false;
+      if (criteria.userId !== undefined && r.userId !== criteria.userId) {
+        return false;
+      }
+      if (allowed && !allowed.includes(r.status)) return false;
+      return true;
+    });
+    // The (userId, idempotencyKey) unique index still applies to the update.
+    if (partial.idempotencyKey != null) {
+      const clash = this.rows.find(
+        (r) =>
+          !matches.includes(r) &&
+          r.userId === matches[0]?.userId &&
+          r.idempotencyKey === partial.idempotencyKey,
+      );
+      if (clash) {
+        throw new QueryFailedError('UPDATE', [], { code: '23505' } as any);
+      }
+    }
+    for (const row of matches) Object.assign(row, partial);
+    return { affected: matches.length };
+  }
 }
 
 class StubProvider implements BookingProvider {
@@ -221,6 +265,32 @@ describe('BookingsService — 4A foundation', () => {
       providerBookingId: 'pb-1',
       providerStatus: 'CONFIRMED',
     });
+  });
+
+  it('create refreshes the provider handoff on every revalidation, not only on a price move', async () => {
+    const provider = new StubProvider();
+    const { service, repo } = setup(provider);
+    const prepared = await service.prepare('u1', prepareDto);
+
+    // A fresh revalidation produces a NEW handoff (e.g. Duffel's offer
+    // passenger ids); the confirm step must receive the fresh one.
+    provider.handoff = {
+      rateId: 'r1',
+      prebookId: 'pb-new',
+      transactionId: 'tx-new',
+      duffelPassengers: [{ id: 'pas_1', type: 'adult', age: null }],
+    };
+    await service.create('u1', {
+      bookingId: prepared.id,
+      idempotencyKey: 'k1',
+    });
+
+    expect(provider.lastCreateInput?.offerSnapshot).toMatchObject({
+      prebookId: 'pb-new',
+      transactionId: 'tx-new',
+      duffelPassengers: [{ id: 'pas_1', type: 'adult', age: null }],
+    });
+    expect(repo.rows[0].offerSnapshot).toMatchObject({ prebookId: 'pb-new' });
   });
 
   it('create blocks a price move (price_changed) and frees the key', async () => {

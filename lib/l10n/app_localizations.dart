@@ -1829,6 +1829,18 @@ abstract class AppLocalizations {
   /// **'This offer is no longer available. Please pick another.'**
   String get bookingOfferUnavailable;
 
+  /// No description provided for @bookingOfferExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This offer has expired. Please search again.'**
+  String get bookingOfferExpired;
+
+  /// No description provided for @bookingRevalidationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not re-check this offer. Please try again.'**
+  String get bookingRevalidationFailed;
+
   /// No description provided for @carPickupLocation.
   ///
   /// In en, this message translates to:
@@ -1966,6 +1978,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter a valid phone'**
   String get bookingValidPhone;
+
+  /// No description provided for @bookingTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get bookingTitleLabel;
+
+  /// No description provided for @bookingPassengerTypeAdult.
+  ///
+  /// In en, this message translates to:
+  /// **'Adult'**
+  String get bookingPassengerTypeAdult;
+
+  /// No description provided for @bookingPassengerTypeChild.
+  ///
+  /// In en, this message translates to:
+  /// **'Child'**
+  String get bookingPassengerTypeChild;
+
+  /// No description provided for @bookingPassengerTypeInfant.
+  ///
+  /// In en, this message translates to:
+  /// **'Infant'**
+  String get bookingPassengerTypeInfant;
+
+  /// No description provided for @bookingAccompanyingAdultLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Travels with'**
+  String get bookingAccompanyingAdultLabel;
+
+  /// No description provided for @bookingAccompanyingAdultRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the adult this infant travels with'**
+  String get bookingAccompanyingAdultRequired;
+
+  /// No description provided for @bookingPhoneCountryCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Country code'**
+  String get bookingPhoneCountryCodeLabel;
+
+  /// No description provided for @bookingPhoneCountryCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 20'**
+  String get bookingPhoneCountryCodeHint;
+
+  /// No description provided for @bookingValidPhoneCountryCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a 1-3 digit code'**
+  String get bookingValidPhoneCountryCode;
+
+  /// No description provided for @bookingDocumentTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Document type'**
+  String get bookingDocumentTypeLabel;
+
+  /// No description provided for @bookingDocumentTypePassport.
+  ///
+  /// In en, this message translates to:
+  /// **'Passport'**
+  String get bookingDocumentTypePassport;
+
+  /// No description provided for @bookingDocumentTypeNationalId.
+  ///
+  /// In en, this message translates to:
+  /// **'National ID'**
+  String get bookingDocumentTypeNationalId;
+
+  /// No description provided for @bookingDocumentNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Document number'**
+  String get bookingDocumentNumberLabel;
+
+  /// No description provided for @bookingDocumentIssueCountryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Issuing country (ISO)'**
+  String get bookingDocumentIssueCountryLabel;
+
+  /// No description provided for @bookingDocumentExpiryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry (YYYY-MM-DD)'**
+  String get bookingDocumentExpiryLabel;
 
   /// No description provided for @groupsCreateTrip.
   ///
@@ -2356,6 +2458,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'There is no prepared booking for this trip, so there is nothing to charge. Go back to the booking review and prepare it again.'**
   String get checkoutNoBookingBody;
+
+  /// No description provided for @hotelGuestInvalidTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Guest details don\'t match this booking'**
+  String get hotelGuestInvalidTitle;
+
+  /// No description provided for @hotelGuestInvalidBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The guest details don\'t match this hotel booking. Go back and re-enter the guests for this stay.'**
+  String get hotelGuestInvalidBody;
 
   /// No description provided for @checkoutProviderPrice.
   ///

@@ -210,9 +210,9 @@ export class NuiteeFlightService implements FlightProvider {
   async prebookFlight(payload: {
     offerId: string;
     contact: { firstName: string; lastName: string; email: string; phoneCountryCode: string; phoneNumber: string };
-    passengers: Array<{ passengerType: string; firstName: string; lastName: string; birthday?: string; gender?: string; nationality?: string; documentType?: string; documentNumber?: string; documentIssueCountry?: string; documentExpiry?: string }>;
+    passengers: Array<{ passengerType: number | string; firstName: string; lastName: string; birthday?: string; gender?: string; nationality?: string; documentType?: string; documentNumber?: string; documentIssueCountry?: string; documentExpiry?: string }>;
     usePaymentSdk?: boolean;
-  }): Promise<{ success: boolean; prebookId?: string; transactionId?: string; servicesAttachable?: any; error?: string; timestamp?: Date }> {
+  }): Promise<{ success: boolean; prebookId?: string; transactionId?: string; servicesAttachable?: any; price?: number; currency?: string; error?: string; timestamp?: Date }> {
     if (!this.apiKey) return { success: false, error: 'NUITEE_API_KEY missing' };
     try {
       const response = await this.nuiteeFetch('/flights/prebooks', {
@@ -226,15 +226,154 @@ export class NuiteeFlightService implements FlightProvider {
         }),
       });
       const data = response?.data ?? response;
+      const booking = data?.booking ?? data?.data?.booking;
+      const price = booking?.journey?.price;
       return {
         success: true,
         prebookId: data?.prebookId,
         transactionId: data?.transactionId,
         servicesAttachable: data?.servicesAttachable ?? undefined,
+        // The prebook response carries the journey price — the ONLY
+        // provider-side price source for a flight offer. Absent stays absent.
+        price: typeof price?.total === 'number' ? price.total : undefined,
+        currency: typeof price?.currency === 'string' ? price.currency : undefined,
         timestamp: new Date(),
       };
     } catch (error: any) {
       return { success: false, error: `Nuitee flight prebook failed: ${error.message}` };
+    }
+  }
+
+  /**
+   * Read-only offer verification — `POST /flights/verify`.
+   *
+   * LiteAPI's documented pre-booking check: "Confirm a flight offer is still
+   * available and retrieve the latest pricing before proceeding to booking."
+   * It takes ONLY the offerId (no passenger identities, no inventory hold), so
+   * it is the legitimate review-stage price source. A 404 means the offer
+   * expired; a `changes` block means the provider itself reports a price or
+   * fare move since the search.
+   */
+  async verifyFlightOffer(offerId: string): Promise<{
+    success: boolean;
+    price?: number;
+    currency?: string;
+    available?: boolean;
+    priceChanged?: boolean;
+    oldPrice?: number;
+    newPrice?: number;
+    expiresAt?: string;
+    error?: string;
+    timestamp?: Date;
+  }> {
+    if (!this.apiKey) return { success: false, error: 'NUITEE_API_KEY missing' };
+    try {
+      const response = await this.nuiteeFetch('/flights/verify', {
+        method: 'POST',
+        headers: this.headers(),
+        body: JSON.stringify({ offerId }),
+      });
+      const results = Array.isArray(response?.data) ? response.data : [];
+      const first = results[0];
+      const journey = first?.journey;
+      const display = journey?.pricing?.display;
+      const price = typeof display?.total === 'number' ? display.total : undefined;
+      const currency =
+        typeof display?.currency === 'string' ? display.currency : undefined;
+      const changes = first?.changes;
+      const changesOld =
+        typeof changes?.pricing?.old?.display?.total === 'number'
+          ? changes.pricing.old.display.total
+          : undefined;
+      const changesNew =
+        typeof changes?.pricing?.new?.display?.total === 'number'
+          ? changes.pricing.new.display.total
+          : undefined;
+      return {
+        success: true,
+        price,
+        currency,
+        available: price !== undefined && price > 0,
+        // The provider's OWN search-vs-verified comparison — the only
+        // apples-to-apples price signal for this offer.
+        priceChanged: changes?.priceChanged === true,
+        oldPrice: changesOld,
+        newPrice: changesNew,
+        expiresAt: journey?.expiration,
+        timestamp: new Date(),
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: `Nuitee flight verify failed: ${error.message}`,
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Read-only prebook retrieval — `GET /flights/prebooks/{prebookId}`.
+   *
+   * Returns the SAME `FlightPrebookData` shape as `POST /flights/prebooks`
+   * (journey, pricing, payment intent, servicesAttachable). It creates no
+   * inventory hold, so the review stage can validate an existing prebook and
+   * read its frozen quote without prebooking a second time. A 404 means the
+   * prebook is gone — the caller must fail closed, never reuse it.
+   */
+  async getFlightPrebook(prebookId: string): Promise<{
+    success: boolean;
+    prebookId?: string;
+    transactionId?: string;
+    price?: number;
+    currency?: string;
+    available?: boolean;
+    expiresAt?: string;
+    error?: string;
+    timestamp?: Date;
+  }> {
+    if (!this.apiKey) return { success: false, error: 'NUITEE_API_KEY missing' };
+    try {
+      const response = await this.nuiteeFetch(
+        `/flights/prebooks/${encodeURIComponent(prebookId)}`,
+        { method: 'GET', headers: this.headers() },
+      );
+      const data = response?.data ?? response;
+      // The prebook payload is an object in the documented contract; accept a
+      // single-element array too so a wrapper change cannot silently yield
+      // `price: undefined`.
+      const payload = Array.isArray(data) ? data[0] : data;
+      const booking = payload?.booking ?? payload?.data?.booking ?? payload;
+      const journey = booking?.journey ?? payload?.journey;
+      const legacyPrice = journey?.price;
+      const display = journey?.pricing?.display;
+      const total =
+        typeof legacyPrice?.total === 'number'
+          ? legacyPrice.total
+          : typeof display?.total === 'number'
+            ? display.total
+            : undefined;
+      const currency =
+        typeof legacyPrice?.currency === 'string'
+          ? legacyPrice.currency
+          : typeof display?.currency === 'string'
+            ? display.currency
+            : undefined;
+      return {
+        success: true,
+        prebookId: payload?.prebookId ?? prebookId,
+        transactionId: payload?.transactionId,
+        price: total,
+        currency,
+        available: total !== undefined && total > 0,
+        expiresAt: payload?.servicesAttachable?.expiresAt,
+        timestamp: new Date(),
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: `Nuitee flight prebook lookup failed: ${error.message}`,
+        timestamp: new Date(),
+      };
     }
   }
 

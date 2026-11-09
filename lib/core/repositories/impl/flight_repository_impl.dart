@@ -25,6 +25,10 @@ class FlightRepositoryImpl implements FlightRepository {
     required DateTime departure,
     DateTime? returnDate,
     int? passengers,
+    int? children,
+    int? infants,
+    List<int>? childAges,
+    List<int>? infantAges,
     List<FlightSearchLeg>? legs,
     String? cabinClass,
     bool? directOnly,
@@ -37,6 +41,10 @@ class FlightRepositoryImpl implements FlightRepository {
         departure: departure,
         returnDate: returnDate,
         passengers: passengers,
+        children: children,
+        infants: infants,
+        childAges: childAges,
+        infantAges: infantAges,
         legs: legs,
         market: _nextMarket,
         currency: _nextCurrency,
@@ -71,6 +79,10 @@ class FlightRepositoryImpl implements FlightRepository {
     required DateTime departure,
     DateTime? returnDate,
     int? passengers,
+    int? children,
+    int? infants,
+    List<int>? childAges,
+    List<int>? infantAges,
     List<FlightSearchLeg>? legs,
     String? market,
     String? currency,
@@ -81,7 +93,15 @@ class FlightRepositoryImpl implements FlightRepository {
     'destination': destination,
     'departure': departure.toIso8601String(),
     'returnDate': returnDate?.toIso8601String(),
+    // `passengers` is the adult count on this endpoint: the backend's
+    // `FlightSearchDto` has no `adults` field (an undeclared field would be
+    // rejected by `forbidNonWhitelisted`), and both flight providers fall back
+    // to `passengers` for the adult count.
     'passengers': passengers,
+    'children': ?children,
+    'infants': ?infants,
+    if (childAges != null && childAges.isNotEmpty) 'childAges': childAges,
+    if (infantAges != null && infantAges.isNotEmpty) 'infantAges': infantAges,
     if (legs != null && legs.isNotEmpty)
       'legs': <Map<String, String>>[
         for (final FlightSearchLeg leg in legs)

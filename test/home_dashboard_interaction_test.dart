@@ -379,14 +379,23 @@ void main() {
     expect(feed.bottom, greaterThan(pill.top));
   });
 
-  testWidgets('keyboard inset forces the floating composer visible', (
+  testWidgets('keyboard inset keeps the focused composer above the keyboard', (
     tester,
   ) async {
     _setPhoneSize(tester);
+    final GoRouter router = _router();
+    await tester.pumpWidget(_app(router: router));
+    await tester.pumpAndSettle();
+
+    // The composer hides whenever the keyboard is up and its own field is not
+    // focused, so focus the field before raising the keyboard.
+    await tester.tap(
+      find.byKey(const ValueKey<String>('home-ai-composer-field')),
+    );
+    await tester.pumpAndSettle();
+
     tester.view.viewInsets = const FakeViewPadding(bottom: 300);
     addTearDown(tester.view.resetViewInsets);
-
-    await tester.pumpWidget(_app(router: _router()));
     await tester.pumpAndSettle();
 
     final Rect composerRect = tester.getRect(

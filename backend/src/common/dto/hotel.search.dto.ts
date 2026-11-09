@@ -10,13 +10,26 @@ import {
   Max,
   Min,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { TRAVEL_MOODS } from '../travel_mood';
+
+export class HotelOccupancyDto {
+  @IsInt()
+  @Min(1)
+  adults!: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  @Min(0, { each: true })
+  children?: number[];
+}
 
 export class HotelSearchDto {
   @IsString()
   city!: string;
-
   @IsDateString()
   checkIn!: Date;
 
@@ -39,6 +52,12 @@ export class HotelSearchDto {
   @IsInt()
   @Min(1)
   rooms?: number | null;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => HotelOccupancyDto)
+  occupancies?: HotelOccupancyDto[] | null;
 
   @IsOptional()
   @IsNumber()

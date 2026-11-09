@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { join } from 'path';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -36,21 +37,34 @@ import { BookingsModule } from './modules/bookings/bookings.module';
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get('database.host'),
-        port: config.get('database.port'),
-        username: config.get('database.username'),
-        password: config.get('database.password'),
-        database: config.get('database.database'),
-        autoLoadEntities: true,
-        // Auto-schema-sync is a development-only convenience. Fail closed when
-        // NODE_ENV is missing/unrecognised instead of silently rewriting the
-        // production schema.
-        synchronize:
-          config.get<string>('NODE_ENV') === 'development' ||
-          config.get<string>('DB_SYNCHRONIZE') === 'true',
-      }),
+      useFactory: (config: ConfigService) => {
+        // Auto-schema-sync is a development-only convenience. Production must
+        // never rewrite the schema: `synchronize` is forced off there and the
+        // P4-1 migration chain is the only sanctioned way to change it.
+        const nodeEnv = config.get<string>('NODE_ENV');
+        const synchronize =
+          nodeEnv !== 'production' &&
+          (nodeEnv === 'development' ||
+            config.get<string>('DB_SYNCHRONIZE') === 'true');
+        return {
+          type: 'postgres',
+          host: config.get('database.host'),
+          port: config.get('database.port'),
+          username: config.get('database.username'),
+          password: config.get('database.password'),
+          database: config.get('database.database'),
+          autoLoadEntities: true,
+          synchronize,
+          // Migrations are the production schema path: run them whenever the
+          // schema is not being auto-synchronised. Already-applied migrations
+          // are tracked in the `migrations` table and skipped.
+          migrationsRun: !synchronize,
+          migrations: [
+            join(__dirname, 'database', 'migrations', '*.{ts,js}'),
+          ],
+          migrationsTableName: 'migrations',
+        };
+      },
       inject: [ConfigService],
     }),
     UsersModule,

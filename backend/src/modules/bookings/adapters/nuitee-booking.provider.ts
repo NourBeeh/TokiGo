@@ -94,12 +94,21 @@ export class NuiteeBookingProvider implements BookingProvider {
     const holderName = names[0] ?? 'TokiGo Guest';
     const holderEmail = travelers[0]?.email;
 
+    const guestNames = names.length ? names : [holderName];
+    const isAdult = (t: any, i: number) => {
+      if (typeof t?.adult === 'boolean') return t.adult;
+      if (typeof t?.isAdult === 'boolean') return t.isAdult;
+      if (typeof t?.type === 'string') return t.type.toLowerCase() === 'adult';
+      return i === 0;
+    };
+
     const result = await this.nuitee.bookHotel({
       prebookId: String(prebookId),
       transactionId: String(transactionId),
       holderName,
       holderEmail,
-      guestNames: names.length ? names : [holderName],
+      guestNames,
+      adults: travelers.map((t: any, i: number) => isAdult(t, i)),
     });
 
     if (!result.success || !result.data) {

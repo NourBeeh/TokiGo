@@ -32,6 +32,13 @@ class BookingError {
 /// Preference order: the backend's structured `{code}` in the response body,
 /// then a status-code fallback so even an unstructured failure is classified.
 BookingErrorCode bookingErrorCodeFrom(ApiError error) {
+  // A transport failure means the provider never answered (timeout / socket
+  // loss). It is a providerUnavailable outcome, not an unknown one — callers
+  // use this code to decide whether a retry is meaningful.
+  if (error is ApiTimeoutError || error is ApiNetworkError) {
+    return BookingErrorCode.providerUnavailable;
+  }
+
   final code = _parseBody(error.message)?['code']?.toString();
   switch (code) {
     case 'offer_not_found':

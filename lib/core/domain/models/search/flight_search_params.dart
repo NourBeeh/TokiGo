@@ -51,6 +51,8 @@ class FlightSearchParams {
   final int adults;
   final int children;
   final int infants;
+  final List<int> childAges;
+  final List<int> infantAges;
   final String cabinClass;
   final bool directOnly;
 
@@ -72,6 +74,8 @@ class FlightSearchParams {
     this.adults = 1,
     this.children = 0,
     this.infants = 0,
+    this.childAges = const <int>[],
+    this.infantAges = const <int>[],
     this.cabinClass = 'economy',
     this.directOnly = false,
     this.legs = const <FlightSearchLeg>[],
@@ -100,6 +104,8 @@ class FlightSearchParams {
     int? adults,
     int? children,
     int? infants,
+    List<int>? childAges,
+    List<int>? infantAges,
     String? cabinClass,
     bool? directOnly,
     List<FlightSearchLeg>? legs,
@@ -115,6 +121,8 @@ class FlightSearchParams {
       adults: adults ?? this.adults,
       children: children ?? this.children,
       infants: infants ?? this.infants,
+      childAges: childAges ?? this.childAges,
+      infantAges: infantAges ?? this.infantAges,
       cabinClass: cabinClass ?? this.cabinClass,
       directOnly: directOnly ?? this.directOnly,
       legs: legs ?? this.legs,

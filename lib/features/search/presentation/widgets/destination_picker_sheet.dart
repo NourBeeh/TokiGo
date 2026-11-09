@@ -251,17 +251,84 @@ class _PickerSheetState extends State<_PickerSheet> {
   }
 
   List<PickerEntry> get _filtered {
-    if (_query.isEmpty) return widget.entries;
-    final q = _query.toLowerCase();
+    if (_query.trim().isEmpty) {
+      final popular = widget.entries.where((e) => e.isPopular).toList();
+      final rest = widget.entries.where((e) => !e.isPopular).toList();
+      return <PickerEntry>[...popular, ...rest];
+    }
+    final q = _normalize(_query);
     return widget.entries
-        .where(
-          (e) =>
-              e.code.toLowerCase().contains(q) ||
-              e.name.toLowerCase().contains(q) ||
-              (e.country?.toLowerCase().contains(q) ?? false),
-        )
+        .where((e) {
+          final haystacks = <String>[
+            e.code,
+            e.name,
+            e.country ?? '',
+            e.countryCode ?? '',
+            ..._aliasesFor(e.code),
+          ];
+          return haystacks.any((h) => _normalize(h).contains(q));
+        })
         .toList();
   }
+
+  static String _normalize(String value) {
+    var v = value.toLowerCase().trim();
+    v = v.replaceAll(RegExp(r'\s+'), ' ');
+    v = v.replaceAll(RegExp(r'[\u064B-\u065F\u0670]'), '');
+    v = v
+        .replaceAll('أ', 'ا')
+        .replaceAll('إ', 'ا')
+        .replaceAll('آ', 'ا')
+        .replaceAll('ى', 'ي')
+        .replaceAll('ة', 'ه')
+        .replaceAll('ؤ', 'و')
+        .replaceAll('ئ', 'ي');
+    return v;
+  }
+
+  static const Map<String, List<String>> _aliases = <String, List<String>>{
+    'CAI': <String>['القاهرة', 'cairo'],
+    'DXB': <String>['دبي', 'dubai'],
+    'RUH': <String>['الرياض', 'riyadh'],
+    'JED': <String>['جدة', 'jeddah'],
+    'HRG': <String>['الغردقة', 'hurghada'],
+    'SSH': <String>['شرم الشيخ', 'sharm el sheikh'],
+    'LXR': <String>['الأقصر', 'luxor'],
+    'ASW': <String>['أسوان', 'aswan'],
+    'HBE': <String>['الإسكندرية', 'alexandria'],
+    'LHR': <String>['لندن', 'london'],
+    'CDG': <String>['باريس', 'paris'],
+    'IST': <String>['إسطنبول', 'istanbul'],
+    'FCO': <String>['روما', 'rome'],
+    'JFK': <String>['نيويورك', 'new york'],
+    'DOH': <String>['الدوحة', 'doha'],
+    'AMM': <String>['عمان', 'amman'],
+    'ATH': <String>['أثينا', 'athens'],
+    'BKK': <String>['بانكوك', 'bangkok'],
+    'SIN': <String>['سنغافورة', 'singapore'],
+    'HND': <String>['طوكيو', 'tokyo'],
+    'cairo': <String>['القاهرة'],
+    'dubai': <String>['دبي'],
+    'riyadh': <String>['الرياض'],
+    'jeddah': <String>['جدة'],
+    'hurghada': <String>['الغردقة'],
+    'sharm el sheikh': <String>['شرم الشيخ'],
+    'luxor': <String>['الأقصر'],
+    'aswan': <String>['أسوان'],
+    'alexandria': <String>['الإسكندرية'],
+    'istanbul': <String>['إسطنبول'],
+    'london': <String>['لندن'],
+    'paris': <String>['باريس'],
+    'rome': <String>['روما'],
+    'athens': <String>['أثينا'],
+    'doha': <String>['الدوحة'],
+    'amman': <String>['عمان'],
+    'new york': <String>['نيويورك'],
+    'bangkok': <String>['بانكوك'],
+  };
+
+  static List<String> _aliasesFor(String code) =>
+      _aliases[code] ?? const <String>[];
 
   @override
   Widget build(BuildContext context) {

@@ -73,6 +73,11 @@ class FlightSearchController extends StateNotifier<FlightSearchState> {
       departure: params.departureDate,
       returnDate: params.returnDate,
       passengers: params.adults,
+      adults: params.adults,
+      children: params.children,
+      infants: params.infants,
+      childAges: params.childAges,
+      infantAges: params.infantAges,
       legs: params.tripType == 'multicity'
           ? params.effectiveLegs
           : const <FlightSearchLeg>[],
@@ -108,6 +113,10 @@ class FlightSearchController extends StateNotifier<FlightSearchState> {
       departure: params.departureDate,
       returnDate: params.returnDate,
       passengers: params.adults,
+      children: params.children,
+      infants: params.infants,
+      childAges: params.childAges,
+      infantAges: params.infantAges,
       // A multi-city trip travels as its own legs; one-way and round-trip keep
       // the single leg they always had.
       cabinClass: params.cabinClass,
@@ -164,3 +173,44 @@ class FlightSearchController extends StateNotifier<FlightSearchState> {
     );
   }
 }
+
+/// The traveller party a flight search was run for.
+///
+/// The search page records it on every submit so the booking funnel can start
+/// with the same number of travellers — the same hand-off the hotel occupancy
+/// gives the guest page. It is collect-state only: it never invents ages, and
+/// [isEmpty] means "no flight search context" (so a non-flight funnel is never
+/// seeded from a stale flight search).
+class FlightPassengerComposition {
+  const FlightPassengerComposition({
+    this.adults = 1,
+    this.children = 0,
+    this.infants = 0,
+    this.childAges = const <int>[],
+    this.infantAges = const <int>[],
+  });
+
+  /// No search context. The funnel falls back to a single traveller.
+  const FlightPassengerComposition.empty()
+    : adults = 0,
+      children = 0,
+      infants = 0,
+      childAges = const <int>[],
+      infantAges = const <int>[];
+
+  final int adults;
+  final int children;
+  final int infants;
+  final List<int> childAges;
+  final List<int> infantAges;
+
+  int get total => adults + children + infants;
+
+  bool get isEmpty => total <= 0;
+}
+
+/// The party the most recent flight search was submitted for.
+final flightPassengerCompositionProvider =
+    StateProvider<FlightPassengerComposition>(
+      (ref) => const FlightPassengerComposition.empty(),
+    );

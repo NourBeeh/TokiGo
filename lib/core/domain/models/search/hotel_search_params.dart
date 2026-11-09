@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import 'package:tokigo/core/domain/models/search/hotel_room_occupancy.dart';
+
 /// The search form's full request contract. Context fields are informational
 /// except for country and market.
 @immutable
@@ -10,6 +12,7 @@ class HotelSearchParams {
   final int rooms;
   final int adults;
   final int children;
+  final List<HotelRoomOccupancy> occupancies;
   final double? minRating;
   final double? maxPrice;
   final double? minPrice;
@@ -26,6 +29,7 @@ class HotelSearchParams {
     this.rooms = 1,
     this.adults = 2,
     this.children = 0,
+    this.occupancies = const <HotelRoomOccupancy>[],
     this.minRating,
     this.maxPrice,
     this.minPrice,

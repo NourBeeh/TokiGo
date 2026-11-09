@@ -19,7 +19,7 @@ import 'package:tokigo/features/home/presentation/widgets/home_ai_search_field.d
 ///
 /// The floating AI composer is available on all six sections and stays put —
 /// it never hides on scroll.
-class TokiGoShell extends StatelessWidget {
+class TokiGoShell extends StatefulWidget {
   const TokiGoShell({
     super.key,
     required this.navigationShell,
@@ -32,14 +32,44 @@ class TokiGoShell extends StatelessWidget {
   final String location;
 
   @override
+  State<TokiGoShell> createState() => _TokiGoShellState();
+}
+
+class _TokiGoShellState extends State<TokiGoShell> {
+  /// Lifted focus node for the floating AI composer so the shell can tell
+  /// whether the keyboard belongs to it (keep showing) or to a search field
+  /// / picker (hide the composer).
+  final FocusNode _aiFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _aiFocusNode.addListener(_onFocusChanged);
+  }
+
+  void _onFocusChanged() => setState(() {});
+
+  bool _hideComposer(BuildContext context) {
+    final bool keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
+    return keyboardVisible && !_aiFocusNode.hasFocus;
+  }
+
+  @override
+  void dispose() {
+    _aiFocusNode.removeListener(_onFocusChanged);
+    _aiFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final bool chromeVisible = AppChrome.isSection(location);
+    final bool chromeVisible = AppChrome.isSection(widget.location);
 
     // The scope is above the branch navigator so every routed section page can
     // drop its own header and reserve the composer's footprint.
     final Widget content = AppChromeScope(
       visible: chromeVisible,
-      child: navigationShell,
+      child: widget.navigationShell,
     );
 
     return Scaffold(
@@ -53,7 +83,7 @@ class TokiGoShell extends StatelessWidget {
               if (chromeVisible)
                 SafeArea(
                   bottom: false,
-                  child: AppChrome(location: location),
+                  child: AppChrome(location: widget.location),
                 ),
               Expanded(
                 // The chrome consumed the status-bar inset for the whole
@@ -77,7 +107,7 @@ class TokiGoShell extends StatelessWidget {
               ),
             ],
           ),
-          if (chromeVisible)
+          if (chromeVisible && !_hideComposer(context))
             Positioned(
               left: 0,
               right: 0,
@@ -92,6 +122,7 @@ class TokiGoShell extends StatelessWidget {
                 ),
                 child: HomeAiSearchField(
                   accentColor: HomeDesignTokens.accentOf(context),
+                  focusNode: _aiFocusNode,
                 ),
               ),
             ),

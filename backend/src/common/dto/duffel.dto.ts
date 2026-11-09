@@ -6,6 +6,7 @@ import {
   IsInt,
   IsNotEmpty,
   IsObject,
+  IsOptional,
   IsString,
   Matches,
   Max,
@@ -52,7 +53,36 @@ export class DuffelFlightSearchDto {
   @IsInt()
   @Min(1)
   @Max(9)
-  passengers!: number;
+  @IsOptional()
+  passengers?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(9)
+  adults?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(9)
+  children?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(9)
+  infants?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  childAges?: number[];
+
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  infantAges?: number[];
 }
 
 /** Booking creation (JWT-guarded: it moves money). */

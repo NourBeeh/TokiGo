@@ -366,13 +366,16 @@ class _PhaseTimelineCard extends StatelessWidget {
                       : _StepState.idle),
           ),
           if (phase == BookingPhase.unavailable ||
+              phase == BookingPhase.expired ||
               phase == BookingPhase.failed ||
               phase == BookingPhase.error) ...<Widget>[
             const SizedBox(height: AppSpacing.md),
             _ErrorBanner(
               message: state?.errorMessage ?? 'Something went wrong',
             ),
-            if (phase == BookingPhase.unavailable && onRetryPrepare != null)
+            if ((phase == BookingPhase.unavailable ||
+                    phase == BookingPhase.expired) &&
+                onRetryPrepare != null)
               Padding(
                 padding: const EdgeInsets.only(top: AppSpacing.md),
                 child: AppButton(
@@ -403,6 +406,7 @@ class _PhaseTimelineCard extends StatelessWidget {
     if (phase == activePhase) return _StepState.active;
     if (phase.index >= donePhase.index &&
         phase != BookingPhase.unavailable &&
+        phase != BookingPhase.expired &&
         phase != BookingPhase.error &&
         phase != BookingPhase.failed) {
       return _StepState.done;
@@ -567,7 +571,7 @@ class _PriceChangedBanner extends StatelessWidget {
 // Phase CTA
 // ---------------------------------------------------------------------------
 
-class _PrimaryActionForPhase extends ConsumerWidget {
+class _PrimaryActionForPhase extends ConsumerStatefulWidget {
   const _PrimaryActionForPhase({
     required this.phase,
     required this.state,
@@ -587,87 +591,47 @@ class _PrimaryActionForPhase extends ConsumerWidget {
   final VoidCallback? onViewTrip;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tc = context.tokigoColors;
+  ConsumerState<_PrimaryActionForPhase> createState() =>
+      _PrimaryActionForPhaseState();
+}
+
+class _PrimaryActionForPhaseState
+    extends ConsumerState<_PrimaryActionForPhase> {
+  /// Guards the pre-checkout offer check against a double tap. A second tap
+  /// while the check is in flight would fire a second provider call.
+  bool _checkingOffer = false;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    switch (phase) {
+    switch (widget.phase) {
       case BookingPhase.idle:
-        return AppButton(label: l10n.bookingPrepare, onPressed: onPrepare);
+        return AppButton(
+          label: l10n.bookingPrepare,
+          onPressed: widget.onPrepare,
+        );
       case BookingPhase.preparing:
       case BookingPhase.revalidating:
         return _ProcessingButton(label: l10n.bookingValidating);
       case BookingPhase.prepared:
         return AppButton(
           label: l10n.bookingValidatePrice,
-          onPressed: onRevalidate,
+          onPressed: widget.onRevalidate,
         );
       case BookingPhase.priceChanged:
         return AppButton(
           label: l10n.bookingAcceptNewPrice,
-          onPressed: onAcceptPrice,
+          onPressed: widget.onAcceptPrice,
         );
       case BookingPhase.readyToConfirm:
+        if (_checkingOffer) {
+          return _ProcessingButton(label: l10n.bookingValidating);
+        }
         return AppButton(
           label: l10n.continueAction,
           trailingIcon: Icons.chevron_right_rounded,
-          onPressed: () async {
-            // Final provider-side revalidation right before the funnel
-            // (spec point 8): the frozen quote must still be live.
-            final selected = ref.read(selectedOfferProvider);
-            final revalidationService = ref.read(
-              offerRevalidationServiceProvider,
-            );
-            final outcome = await revalidationService.revalidate(
-              offerId: selected?.offerId ?? state?.record?.offerId ?? '',
-              providerId:
-                  selected?.providerId ?? state?.record?.providerId ?? '',
-              offerType: selected?.offerType ?? state?.record?.type ?? 'flight',
-              knownPrice: state?.record?.authoritativePrice ?? selected?.price,
-            );
-
-            if (!context.mounted) return;
-            switch (outcome.status) {
-              case RevalidationStatus.ok:
-                // Seed the funnel with the live authoritative price.
-                ref.read(checkoutBasePriceProvider.notifier).state =
-                    outcome.price ??
-                    state?.record?.authoritativePrice ??
-                    selected?.price ??
-                    0;
-                ref.read(checkoutCurrencyProvider.notifier).state =
-                    outcome.currency ??
-                    state?.record?.currency ??
-                    selected?.currency ??
-                    'USD';
-                context.push('/booking/review/passengers');
-              case RevalidationStatus.priceChanged:
-                // Structured PRICE_CHANGED (spec point 8): block checkout
-                // until the customer accepts the new amount.
-                ref
-                    .read(bookingControllerProvider.notifier)
-                    .revalidate(
-                      bookingId: state?.record?.bookingId ?? '',
-                      oldPrice:
-                          outcome.oldPrice ??
-                          state?.record?.authoritativePrice ??
-                          selected?.price ??
-                          0,
-                    );
-              case RevalidationStatus.unavailable:
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.bookingOfferUnavailable)),
-                );
-              case RevalidationStatus.error:
-                // Backend unreachable — proceed with the last validated
-                // machine price rather than blocking the funnel forever.
-                ref.read(checkoutBasePriceProvider.notifier).state =
-                    state?.record?.authoritativePrice ?? selected?.price ?? 0;
-                ref.read(checkoutCurrencyProvider.notifier).state =
-                    state?.record?.currency ?? selected?.currency ?? 'USD';
-                context.push('/booking/review/passengers');
-            }
-          },
+          onPressed: _checkOfferAndContinue,
         );
       case BookingPhase.confirming:
         return _ProcessingButton(label: l10n.bookingConfirming);
@@ -675,12 +639,90 @@ class _PrimaryActionForPhase extends ConsumerWidget {
         return AppButton(
           label: l10n.bookingViewTrip,
           leadingIcon: Icons.luggage_rounded,
-          onPressed: onViewTrip,
+          onPressed: widget.onViewTrip,
         );
       case BookingPhase.unavailable:
-      case BookingPhase.failed:
+      case BookingPhase.expired:
       case BookingPhase.error:
-        return AppButton(label: l10n.retry, onPressed: onConfirm);
+        // The offer is not in a confirmable state — the Continue action is
+        // replaced by a retry of the review revalidation.
+        return AppButton(label: l10n.retry, onPressed: widget.onRevalidate);
+      case BookingPhase.failed:
+        return AppButton(label: l10n.retry, onPressed: widget.onConfirm);
+    }
+  }
+
+  Future<void> _checkOfferAndContinue() async {
+    if (_checkingOffer) return;
+    final l10n = AppLocalizations.of(context)!;
+    setState(() => _checkingOffer = true);
+    try {
+      // Final provider-side revalidation right before the funnel
+      // (spec point 8): the frozen quote must still be live.
+      final selected = ref.read(selectedOfferProvider);
+      final revalidationService = ref.read(offerRevalidationServiceProvider);
+      final outcome = await revalidationService.revalidate(
+        offerId: selected?.offerId ?? widget.state?.record?.offerId ?? '',
+        providerId:
+            selected?.providerId ?? widget.state?.record?.providerId ?? '',
+        offerType:
+            selected?.offerType ?? widget.state?.record?.type ?? 'flight',
+        knownPrice:
+            widget.state?.record?.authoritativePrice ?? selected?.price,
+      );
+
+      if (!mounted) return;
+      switch (outcome.status) {
+        case RevalidationStatus.ok:
+          // Seed the funnel with the live authoritative price.
+          ref.read(checkoutBasePriceProvider.notifier).state =
+              outcome.price ??
+              widget.state?.record?.authoritativePrice ??
+              selected?.price ??
+              0;
+          ref.read(checkoutCurrencyProvider.notifier).state =
+              outcome.currency ??
+              widget.state?.record?.currency ??
+              selected?.currency ??
+              'USD';
+          context.push('/booking/review/passengers');
+        case RevalidationStatus.priceChanged:
+          // Structured PRICE_CHANGED (spec point 8): block checkout until the
+          // customer accepts the new amount.
+          ref.read(bookingControllerProvider.notifier).revalidate(
+                bookingId: widget.state?.record?.bookingId ?? '',
+                oldPrice:
+                    outcome.oldPrice ??
+                    widget.state?.record?.authoritativePrice ??
+                    selected?.price ??
+                    0,
+              );
+        case RevalidationStatus.unavailable:
+          // The offer is gone or expired — block the funnel. Retrying the
+          // same offerId cannot help when the provider reports expiry.
+          final String message = outcome.expired
+              ? l10n.bookingOfferExpired
+              : (outcome.reason?.isNotEmpty ?? false)
+                  ? outcome.reason!
+                  : l10n.bookingOfferUnavailable;
+          if (outcome.expired) {
+            ref
+                .read(bookingControllerProvider.notifier)
+                .markOfferExpired(message);
+          } else {
+            ref
+                .read(bookingControllerProvider.notifier)
+                .markOfferUnavailable(message);
+          }
+        case RevalidationStatus.error:
+          // Revalidation failure blocks Continue: proceeding on an
+          // unverified price would let a moved fare through silently.
+          ref.read(bookingControllerProvider.notifier).markOfferCheckFailed(
+                outcome.reason ?? l10n.bookingRevalidationFailed,
+              );
+      }
+    } finally {
+      if (mounted) setState(() => _checkingOffer = false);
     }
   }
 }

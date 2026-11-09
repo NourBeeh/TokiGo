@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:tokigo/core/auth/auth_provider.dart';
 import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
 import 'package:tokigo/core/domain/models/search/hotel_search_params.dart';
+import 'package:tokigo/core/domain/models/search/hotel_room_occupancy.dart';
 import 'package:tokigo/core/memory/explicit_preference_signal.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_elevation.dart';
@@ -87,6 +88,9 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
   DateTime _checkOut = DateTime.now().add(const Duration(days: 10));
   int _guests = 2;
   int _rooms = 1;
+  List<HotelRoomOccupancy> _occupancies = <HotelRoomOccupancy>[
+    const HotelRoomOccupancy(adults: 2),
+  ];
 
   _HotelSort _sort = _HotelSort.recommended;
 
@@ -230,7 +234,131 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
     if (d != null) setState(() => _checkOut = d);
   }
 
+  Widget _buildOccupancyEditor(AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        for (int i = 0; i < _occupancies.length; i++)
+          Container(
+            margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: context.tokigoColors.surface,
+              borderRadius: AppRadius.mdBorder,
+              border: Border.all(color: context.tokigoColors.outline),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    Text('${l10n.hotelRoomsCount(1)} ${i + 1}'),
+                    if (_occupancies.length > 1)
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => setState(() {
+                          final list = List<HotelRoomOccupancy>.from(_occupancies);
+                          list.removeAt(i);
+                          _occupancies = list;
+                        }),
+                      ),
+                  ],
+                ),
+                Row(
+                  children: <Widget>[
+                    const Text('Adults'),
+                    IconButton(
+                      icon: const Icon(Icons.remove),
+                      onPressed: () => setState(() {
+                        final r = _occupancies[i];
+                        if (r.adults > 1) {
+                          final list = List<HotelRoomOccupancy>.from(_occupancies);
+                          list[i] = r.copyWith(adults: r.adults - 1);
+                          _occupancies = list;
+                        }
+                      }),
+                    ),
+                    Text('${_occupancies[i].adults}'),
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: () => setState(() {
+                        final r = _occupancies[i];
+                        final list = List<HotelRoomOccupancy>.from(_occupancies);
+                        list[i] = r.copyWith(adults: r.adults + 1);
+                        _occupancies = list;
+                      }),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: <Widget>[
+                    const Text('Children'),
+                    IconButton(
+                      icon: const Icon(Icons.remove),
+                      onPressed: () => setState(() {
+                        final r = _occupancies[i];
+                        if (r.childAges.isNotEmpty) {
+                          final ages = List<int>.from(r.childAges)..removeLast();
+                          final list = List<HotelRoomOccupancy>.from(_occupancies);
+                          list[i] = r.copyWith(childAges: ages);
+                          _occupancies = list;
+                        }
+                      }),
+                    ),
+                    Text('${_occupancies[i].children}'),
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: () => setState(() {
+                        final r = _occupancies[i];
+                        final ages = List<int>.from(r.childAges)..add(5);
+                        final list = List<HotelRoomOccupancy>.from(_occupancies);
+                        list[i] = r.copyWith(childAges: ages);
+                        _occupancies = list;
+                      }),
+                    ),
+                  ],
+                ),
+                for (int c = 0; c < _occupancies[i].children; c++)
+                  DropdownButton<int>(
+                    value: _occupancies[i].childAges[c].clamp(0, 17),
+                    items: <int>[for (int a = 0; a <= 17; a++) a]
+                        .map((a) => DropdownMenuItem<int>(value: a, child: Text('$a')))
+                        .toList(),
+                    onChanged: (v) {
+                      if (v == null) return;
+                      setState(() {
+                        final r = _occupancies[i];
+                        final ages = List<int>.from(r.childAges);
+                        ages[c] = v;
+                        final list = List<HotelRoomOccupancy>.from(_occupancies);
+                        list[i] = r.copyWith(childAges: ages);
+                        _occupancies = list;
+                      });
+                    },
+                  ),
+              ],
+            ),
+          ),
+        ElevatedButton(
+          onPressed: () => setState(() {
+            _occupancies = List<HotelRoomOccupancy>.from(_occupancies)
+              ..add(const HotelRoomOccupancy(adults: 1));
+          }),
+          child: const Text('Add room'),
+        ),
+        Text(
+          '${_occupancies.length} rooms · '
+          '${_occupancies.fold<int>(0, (s, r) => s + r.adults)} adults · '
+          '${_occupancies.fold<int>(0, (s, r) => s + r.children)} children',
+        ),
+      ],
+    );
+  }
+
   void _search() {
+    _rooms = _occupancies.length;
+    _guests = _occupancies.fold<int>(0, (s, r) => s + r.adults);
     if (_destination.trim().isEmpty) {
       final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -247,6 +375,7 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
       checkOut: _checkOut,
       rooms: _rooms,
       adults: _guests,
+      occupancies: _occupancies,
       countryCode: _destinationCountryCode,
       market: _marketCountryCode,
       currency: ref.read(currencyProvider),
@@ -254,13 +383,15 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
     );
     setState(() => _editing = false);
     _lastParams = params;
+    ref.read(hotelOccupanciesProvider.notifier).state = params.occupancies;
     ref.read(hotelSearchControllerProvider.notifier).search(params);
   }
 
   void _retry() {
     final params = _lastParams;
     if (params != null) {
-      ref.read(hotelSearchControllerProvider.notifier).search(params);
+      ref.read(hotelOccupanciesProvider.notifier).state = params.occupancies;
+    ref.read(hotelSearchControllerProvider.notifier).search(params);
     }
   }
 
@@ -706,9 +837,7 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
           ],
         ),
         const SizedBox(height: AppSpacing.md),
-        _buildGuestsRow(l10n),
-        const SizedBox(height: AppSpacing.md),
-        _buildRoomsRow(l10n),
+        _buildOccupancyEditor(l10n),
         const SizedBox(height: AppSpacing.lg),
         SearchSubmitButton(label: l10n.findHotels, onPressed: _search),
       ],

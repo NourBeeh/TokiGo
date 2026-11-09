@@ -149,11 +149,16 @@ function clampConfidence(value?: number): number | undefined {
   return Math.min(1, Math.max(0, value));
 }
 
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error('rerank timeout')), ms),
-    ),
-  ]);
+export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: NodeJS.Timeout | undefined;
+  const timeout = new Promise<T>((_, reject) => {
+    timer = setTimeout(() => reject(new Error('rerank timeout')), ms);
+  });
+  // Clear the timer as soon as the race settles. Without this, a slow AI call
+  // leaves a pending Timeout handle open for the whole window — the exact
+  // Jest open-handle leak proven in P4-0 (ai.rerank.controller.ts:156).
+  // The timeout path still rejects with the same error and behaviour.
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer !== undefined) clearTimeout(timer);
+  });
 }

@@ -12,6 +12,11 @@ class TravelerForm {
     this.documentNumber = '',
     this.documentIssueCountry = '',
     this.documentExpiry = '',
+    this.title = '',
+    this.email = '',
+    this.phone = '',
+    this.passengerType = 'adult',
+    this.accompanyingAdultIndex,
   });
 
   final String firstName;
@@ -23,14 +28,50 @@ class TravelerForm {
   final String documentNumber;
   final String documentIssueCountry;
   final String documentExpiry;
+
+  /// Duffel requires a title per passenger (`DuffelPassengerTitle`).
+  final String title;
+
+  /// P3-D5: Duffel requires an email and an E.164 phone for EVERY passenger.
+  /// These are per-passenger values — the lead contact is never copied.
+  final String email;
+  final String phone;
+
+  /// 'adult' | 'child' | 'infant'. Seeded from the searched party so the
+  /// booking maps each traveller back to its own offer passenger.
+  final String passengerType;
+
+  /// For an infant: the index of the accompanying adult in the traveller list.
+  final int? accompanyingAdultIndex;
+
+  /// The title values BOTH flight providers accept (Duffel: mr/ms/mrs/miss/dr,
+  /// Nuitee: MR/MS/MRS/MISS). `dr` is intentionally excluded so one collected
+  /// value is valid for every provider.
+  static const List<String> titleOptions = <String>['mr', 'ms', 'mrs', 'miss'];
+
+  /// The document types the flight providers accept. Each provider maps what
+  /// IT supports (`national_id` → LiteAPI `id`); an unsupported type is
+  /// omitted by that provider's adapter, never guessed or rewritten.
+  static const List<String> documentTypeOptions = <String>[
+    'passport',
+    'national_id',
+  ];
 }
 
 /// Contact details shared across the funnel.
 class ContactForm {
-  const ContactForm({this.email = '', this.phone = ''});
+  const ContactForm({
+    this.email = '',
+    this.phone = '',
+    this.phoneCountryCode = '',
+  });
 
   final String email;
   final String phone;
+
+  /// Calling code WITHOUT '+' (LiteAPI requires it separately). Collected
+  /// explicitly — never assumed from the market or the phone number.
+  final String phoneCountryCode;
 }
 
 /// Selected add-on with quantity (seats, baggage, insurance…).

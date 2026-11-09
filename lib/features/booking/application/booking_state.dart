@@ -14,6 +14,9 @@ enum BookingPhase {
   confirmed,
   failed,
   error,
+  /// The offer itself expired (the provider says so). Distinct from a
+  /// transport failure so the traveller is told to search again.
+  expired,
 }
 
 class BookingState {

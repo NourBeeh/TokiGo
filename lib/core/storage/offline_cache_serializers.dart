@@ -1,4 +1,6 @@
 import 'package:tokigo/core/domain/models/search/flight_search_params.dart';
+import 'package:tokigo/core/domain/models/search/hotel_room_occupancy.dart';
+import 'package:tokigo/core/domain/models/search/hotel_search_params.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 
@@ -103,11 +105,28 @@ String flightSearchCacheKey({
   required DateTime departure,
   DateTime? returnDate,
   int? passengers,
+  int? adults,
+  int? children,
+  int? infants,
+  List<int>? childAges,
+  List<int>? infantAges,
   List<FlightSearchLeg>? legs,
   String? market,
   String? currency,
   String? cabinClass,
+  bool? directOnly,
 }) {
+  final int resolvedAdults = adults ?? passengers ?? 1;
+  final int resolvedChildren = children ?? 0;
+  final int resolvedInfants = infants ?? 0;
+  final String agesKey =
+      'a${resolvedAdults}c${resolvedChildren}i${resolvedInfants}' +
+      (childAges != null && childAges.isNotEmpty
+          ? 'ca${childAges.join(",")}'
+          : '') +
+      (infantAges != null && infantAges.isNotEmpty
+          ? 'ia${infantAges.join(",")}'
+          : '');
   final sb = StringBuffer();
   sb.write('flight|');
   final String currencyKey = currency?.toUpperCase() ?? '';
@@ -124,7 +143,7 @@ String flightSearchCacheKey({
       sb.write(';');
     }
     sb.write('|');
-    sb.write((passengers ?? 1).toString());
+    sb.write(agesKey);
     sb.write('|${market?.toUpperCase() ?? ''}|$currencyKey|$cabinKey');
     return sb.toString();
   }
@@ -137,10 +156,8 @@ String flightSearchCacheKey({
     sb.write('|');
     sb.write(returnDate.toIso8601String());
   }
-  if (passengers != null) {
-    sb.write('|');
-    sb.write(passengers);
-  }
+  sb.write('|');
+  sb.write(agesKey);
   sb.write('|${market?.toUpperCase() ?? ''}|$currencyKey|$cabinKey');
   return sb.toString();
 }
@@ -151,6 +168,7 @@ String hotelSearchCacheKey({
   required DateTime checkIn,
   required DateTime checkOut,
   int? guests,
+  List<HotelRoomOccupancy>? occupancies,
   String? country,
   String? market,
   String? currency,
@@ -166,6 +184,12 @@ String hotelSearchCacheKey({
   if (guests != null) {
     sb.write('|');
     sb.write(guests);
+  }
+  if (occupancies != null && occupancies.isNotEmpty) {
+    sb.write('|');
+    sb.write(
+      occupancies.map((o) => '${o.adults}:${o.childAges.join(",")}').join(';'),
+    );
   }
   sb.write(
     '|${country?.toUpperCase() ?? ''}|${market?.toUpperCase() ?? ''}|${currency?.toUpperCase() ?? ''}|${languageCode?.toLowerCase() ?? 'en'}',

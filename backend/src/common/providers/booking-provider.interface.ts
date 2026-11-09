@@ -56,12 +56,32 @@ export interface CancelBookingInput {
   offerSnapshot?: Record<string, any>;
 }
 
+/** Context a provider may need to revalidate an offer. */
+export interface RevalidationContext {
+  /**
+   * Travellers collected by the funnel. Present at CONFIRM time (the booking
+   * service passes the persisted list); absent at prepare time, where the
+   * traveller form has not been filled yet.
+   */
+  travelers?: any[];
+  /**
+   * The booking's persisted provider snapshot (`offerId`, `prebookId`,
+   * `transactionId`, …). Present at REVIEW time so a provider can validate the
+   * EXISTING hold instead of creating another one; absent at prepare time,
+   * where no hold exists yet.
+   */
+  offerSnapshot?: Record<string, any>;
+}
+
 /** A provider that can participate in the booking lifecycle. */
 export interface BookingProvider {
   readonly providerId: string;
   readonly providerName: string;
   readonly bookingCapability: BookingCapability;
-  revalidateBooking(offerId: string): Promise<ProviderResult<BookingRevalidation>>;
+  revalidateBooking(
+    offerId: string,
+    context?: RevalidationContext,
+  ): Promise<ProviderResult<BookingRevalidation>>;
   createBooking(input: CreateBookingInput): Promise<ProviderResult<CreatedBooking>>;
   cancelBooking?(
     input: CancelBookingInput,

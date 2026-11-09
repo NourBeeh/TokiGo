@@ -895,6 +895,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get bookingOfferUnavailable => 'هذا العرض لم يعد متاحًا. اختر عرضًا آخر.';
 
   @override
+  String get bookingOfferExpired => 'انتهت صلاحية هذا العرض. ابحث مرة أخرى.';
+
+  @override
+  String get bookingRevalidationFailed => 'تعذّر إعادة التحقق من هذا العرض. حاول مرة أخرى.';
+
+  @override
   String get carPickupLocation => 'موقع الاستلام';
 
   @override
@@ -962,6 +968,51 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get bookingValidPhone => 'أدخل رقم هاتف صحيحًا';
+
+  @override
+  String get bookingTitleLabel => 'اللقب';
+
+  @override
+  String get bookingPassengerTypeAdult => 'بالغ';
+
+  @override
+  String get bookingPassengerTypeChild => 'طفل';
+
+  @override
+  String get bookingPassengerTypeInfant => 'رضيع';
+
+  @override
+  String get bookingAccompanyingAdultLabel => 'يسافر مع';
+
+  @override
+  String get bookingAccompanyingAdultRequired => 'اختر البالغ الذي يسافر معه هذا الرضيع';
+
+  @override
+  String get bookingPhoneCountryCodeLabel => 'رمز الدولة';
+
+  @override
+  String get bookingPhoneCountryCodeHint => 'مثال: 20';
+
+  @override
+  String get bookingValidPhoneCountryCode => 'أدخل رمزًا من 1 إلى 3 أرقام';
+
+  @override
+  String get bookingDocumentTypeLabel => 'نوع المستند';
+
+  @override
+  String get bookingDocumentTypePassport => 'جواز سفر';
+
+  @override
+  String get bookingDocumentTypeNationalId => 'بطاقة وطنية';
+
+  @override
+  String get bookingDocumentNumberLabel => 'رقم المستند';
+
+  @override
+  String get bookingDocumentIssueCountryLabel => 'بلد الإصدار (ISO)';
+
+  @override
+  String get bookingDocumentExpiryLabel => 'تاريخ الانتهاء (YYYY-MM-DD)';
 
   @override
   String get groupsCreateTrip => 'أنشئ رحلة جماعية';
@@ -1169,6 +1220,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get checkoutNoBookingBody => 'مفيش حجز مُجهَّز للرحلة دي، فمفيش حاجة تتحصّل. ارجع لمراجعة الحجز وجهّزه من جديد.';
+
+  @override
+  String get hotelGuestInvalidTitle => 'بيانات الضيوف مش متطابقة مع الحجز';
+
+  @override
+  String get hotelGuestInvalidBody => 'بيانات الضيوف مش متطابقة مع حجز الفندق ده. ارجع وادخل بيانات ضيوف الإقامة دي.';
 
   @override
   String get checkoutProviderPrice => 'سعر الرحلة (من المزوّد)';

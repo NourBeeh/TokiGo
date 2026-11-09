@@ -83,6 +83,10 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
   _TripType _tripType = _TripType.oneWay;
   _Cabin _cabin = _Cabin.economy;
   int _passengers = 1;
+  int _children = 0;
+  int _infants = 0;
+  List<int> _childAges = <int>[];
+  List<int> _infantAges = <int>[];
 
   /// Restrict the search to non-stop flights (the `directOnly` field the
   /// models have carried since the first release — now wired to the UI).
@@ -420,12 +424,17 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
         departureDate: legs.first.date,
         tripType: 'multicity',
         adults: _passengers,
+        children: _children,
+        infants: _infants,
+        childAges: _childAges,
+        infantAges: _infantAges,
         legs: legs,
         market: _marketCountryCode,
         currency: ref.read(currencyProvider),
         cabinClass: _cabinToken,
         directOnly: _directOnly,
       );
+      _recordPassengerComposition(ref);
       _lastParams = params;
       ref.read(flightSearchControllerProvider.notifier).search(params);
       return;
@@ -445,13 +454,32 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
       returnDate: _roundTrip ? _returnDate : null,
       tripType: _roundTrip ? 'roundtrip' : 'oneway',
       adults: _passengers,
+      children: _children,
+      infants: _infants,
+      childAges: _childAges,
+      infantAges: _infantAges,
       market: _marketCountryCode,
       currency: ref.read(currencyProvider),
       cabinClass: _cabinToken,
       directOnly: _directOnly,
     );
+    _recordPassengerComposition(ref);
     _lastParams = params;
     ref.read(flightSearchControllerProvider.notifier).search(params);
+  }
+
+  /// Records the party this search runs for, so the booking funnel can start
+  /// with the same number of travellers (the flight counterpart of the hotel
+  /// occupancy → guest-page hand-off).
+  void _recordPassengerComposition(WidgetRef ref) {
+    ref.read(flightPassengerCompositionProvider.notifier).state =
+        FlightPassengerComposition(
+          adults: _passengers,
+          children: _children,
+          infants: _infants,
+          childAges: _childAges,
+          infantAges: _infantAges,
+        );
   }
 
   void _retry() {
@@ -634,6 +662,141 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
     _Cabin.first => 'first',
   };
 
+  String _passengersSummary(AppLocalizations l10n) {
+    final total = _passengers + _children + _infants;
+    return l10n.passengersCount(total);
+  }
+
+  void _openPassengersSheet(AppLocalizations l10n) {
+    int adults = _passengers;
+    int children = _children;
+    int infants = _infants;
+    List<int> childAges = List<int>.from(_childAges);
+    List<int> infantAges = List<int>.from(_infantAges);
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.tokigoColors.surface,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            void syncCounts() {
+              while (childAges.length < children) childAges.add(5);
+              while (childAges.length > children) childAges.removeLast();
+              while (infantAges.length < infants) infantAges.add(0);
+              while (infantAges.length > infants) infantAges.removeLast();
+            }
+
+            Widget stepper(String label, int value, VoidCallback dec, VoidCallback inc) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Text(label),
+                  Row(
+                    children: <Widget>[
+                      IconButton(onPressed: dec, icon: const Icon(Icons.remove)),
+                      Text('$value'),
+                      IconButton(onPressed: inc, icon: const Icon(Icons.add)),
+                    ],
+                  ),
+                ],
+              );
+            }
+
+            return SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    stepper(
+                      l10n.passengersCount(adults),
+                      adults,
+                      () => setSheetState(() {
+                        if (adults > 1) adults--;
+                      }),
+                      () => setSheetState(() {
+                        if (adults + children + infants < 9) adults++;
+                      }),
+                    ),
+                    stepper(
+                      'Children',
+                      children,
+                      () => setSheetState(() {
+                        if (children > 0) {
+                          children--;
+                          syncCounts();
+                        }
+                      }),
+                      () => setSheetState(() {
+                        if (adults + children + infants < 9) {
+                          children++;
+                          syncCounts();
+                        }
+                      }),
+                    ),
+                    for (int i = 0; i < children; i++)
+                      DropdownButton<int>(
+                        value: childAges[i].clamp(2, 17),
+                        items: <int>[
+                          for (int a = 2; a <= 17; a++) a
+                        ].map((a) => DropdownMenuItem<int>(value: a, child: Text('$a'))).toList(),
+                        onChanged: (v) {
+                          if (v == null) return;
+                          setSheetState(() => childAges[i] = v);
+                        },
+                      ),
+                    stepper(
+                      'Infants',
+                      infants,
+                      () => setSheetState(() {
+                        if (infants > 0) {
+                          infants--;
+                          syncCounts();
+                        }
+                      }),
+                      () => setSheetState(() {
+                        if (infants < adults && adults + children + infants < 9) {
+                          infants++;
+                          syncCounts();
+                        }
+                      }),
+                    ),
+                    for (int i = 0; i < infants; i++)
+                      DropdownButton<int>(
+                        value: infantAges[i].clamp(0, 1),
+                        items: const <int>[0, 1]
+                            .map((a) => DropdownMenuItem<int>(value: a, child: Text('$a')))
+                            .toList(),
+                        onChanged: (v) {
+                          if (v == null) return;
+                          setSheetState(() => infantAges[i] = v);
+                        },
+                      ),
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _passengers = adults;
+                          _children = children;
+                          _infants = infants;
+                          _childAges = childAges;
+                          _infantAges = infantAges;
+                        });
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Done'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
   /// The compact passengers + cabin row (Google Flights / Kayak pattern):
   /// one line, half passengers stepper, half a cabin picker button.
   Widget _buildTravelersAndCabinRow(AppLocalizations l10n) {
@@ -641,16 +804,49 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
       children: <Widget>[
         Expanded(
           flex: 11,
-          child: SearchStepperInput(
-            icon: Icons.people_outline_rounded,
-            label: l10n.passengersCount(_passengers),
-            count: _passengers,
-            onDecrement: () => setState(() {
-              if (_passengers > 1) _passengers--;
-            }),
-            onIncrement: () => setState(() {
-              if (_passengers < 9) _passengers++;
-            }),
+          child: Pressable.wrap(
+            child: Material(
+              color: context.tokigoColors.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+                side: BorderSide(color: context.tokigoColors.outline),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () => _openPassengersSheet(l10n),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm + 4,
+                  ),
+                  child: Row(
+                    children: <Widget>[
+                      Icon(
+                        Icons.people_outline_rounded,
+                        size: 20,
+                        color: context.tokigoColors.brand,
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Text(
+                          _passengersSummary(l10n),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.forLight().bodyLarge.copyWith(
+                            color: context.tokigoColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 20,
+                        color: context.tokigoColors.textTertiary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
         const SizedBox(width: AppSpacing.md),

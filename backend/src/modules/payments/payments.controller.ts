@@ -55,6 +55,24 @@ export class PaymentsController {
   @Get('ledger/:bookingId')
   @UseGuards(JwtAuthGuard)
   async timeline(@Param('bookingId') bookingId: string, @Req() req: Request) {
-    return { entries: this.service.bookingTimeline(bookingId, (req.user as { id: string }).id) };
+    return {
+      entries: await this.service.bookingTimeline(
+        bookingId,
+        (req.user as { id: string }).id,
+      ),
+    };
+  }
+
+  /**
+   * Balanced CUSTOMER trail for a booking: captured minus refunded. Derived
+   * from the same durable rows as the ledger, so the two can never disagree.
+   */
+  @Get('ledger/:bookingId/balance')
+  @UseGuards(JwtAuthGuard)
+  async balance(@Param('bookingId') bookingId: string, @Req() req: Request) {
+    return this.service.bookingBalance(
+      bookingId,
+      (req.user as { id: string }).id,
+    );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:tokigo/core/domain/models/search/hotel_room_occupancy.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
@@ -17,6 +18,7 @@ import 'package:tokigo/features/bag/domain/trip.dart';
 import 'package:tokigo/features/booking/application/booking_providers.dart';
 import 'package:tokigo/features/booking/application/booking_state.dart';
 import 'package:tokigo/features/booking/application/providers/checkout_flow_providers.dart';
+import 'package:tokigo/features/search/application/controllers/hotel_search_controller.dart';
 import 'package:tokigo/features/booking/application/services/checkout_payment_service.dart';
 import 'package:tokigo/features/search/application/providers/offer_selection_provider.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
@@ -74,6 +76,61 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         _cvc.text.trim().length >= 3;
   }
 
+  /// Validates the hotel guest data against the selected offer + occupancy.
+  ///
+  /// Returns a localized error when the booking is a hotel and the guests are
+  /// missing, stale, or do not match the occupancy. Returns null for flights
+  /// (they use `checkoutTravelersProvider`) and for valid hotel data.
+  String? _hotelGuestError() {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final SelectedOffer? selectedOffer = ref.read(selectedOfferProvider);
+    if (selectedOffer?.offerType != 'hotel') return null;
+
+    final List<HotelRoomOccupancy> occupancies = ref.read(
+      hotelOccupanciesProvider,
+    );
+    final String expectedKey = hotelGuestOwnershipKey(
+      selectedOffer,
+      occupancies,
+    );
+    if (expectedKey.isEmpty ||
+        ref.read(hotelGuestTravelersOwnerProvider) != expectedKey) {
+      return l10n.hotelGuestInvalidBody;
+    }
+
+    final List<Map<String, dynamic>> guests = ref.read(
+      hotelGuestTravelersProvider,
+    );
+    if (guests.isEmpty) return l10n.hotelGuestInvalidBody;
+
+    final int expectedAdults = occupancies.fold<int>(
+      0,
+      (int sum, HotelRoomOccupancy room) => sum + room.adults,
+    );
+    final int expectedChildren = occupancies.fold<int>(
+      0,
+      (int sum, HotelRoomOccupancy room) => sum + room.childAges.length,
+    );
+    int adults = 0;
+    int children = 0;
+    for (final Map<String, dynamic> guest in guests) {
+      final String firstName = (guest['firstName'] as String?)?.trim() ?? '';
+      final String lastName = (guest['lastName'] as String?)?.trim() ?? '';
+      if (firstName.isEmpty || lastName.isEmpty) {
+        return l10n.hotelGuestInvalidBody;
+      }
+      if (guest['adult'] == true) {
+        adults++;
+      } else {
+        children++;
+      }
+    }
+    if (adults != expectedAdults || children != expectedChildren) {
+      return l10n.hotelGuestInvalidBody;
+    }
+    return null;
+  }
+
   void _fail(String message) {
     setState(() => _failure = message);
   }
@@ -85,6 +142,18 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       setState(() => _showErrors = true);
       return;
     }
+
+    // Hotel bookings: the guest data must belong to THIS offer + occupancy.
+    // Block before any charge or confirmation — never fall back to flight
+    // travellers or the sandbox default for a hotel.
+    final String? hotelGuestError = _hotelGuestError();
+    if (hotelGuestError != null) {
+      _fail(hotelGuestError);
+      return;
+    }
+    // Capture the travelers once, after validation, so the exact validated
+    // data is what reaches the controller.
+    final List<Map<String, dynamic>> travelers = _travelers();
 
     // Real booking only: both the charge and the confirmation act on the
     // prepared booking the backend created for this offer. Without one there
@@ -147,7 +216,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         await ref
             .read(bookingControllerProvider.notifier)
             .confirm(
-              travelers: _travelers(),
+              travelers: travelers,
               // The booked offer, so My Trips can name the trip it just made.
               item: _bookedItem(ref),
             );
@@ -176,6 +245,32 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
   /// The travellers the customer actually entered, shaped for the backend
   /// (contact details go on the lead traveller). No defaults, no placeholders.
   List<Map<String, dynamic>> _travelers() {
+    final selectedOffer = ref.read(selectedOfferProvider);
+    if (selectedOffer?.offerType == 'hotel') {
+      final hotelTravelers = ref.read(hotelGuestTravelersProvider);
+      final owner = ref.read(hotelGuestTravelersOwnerProvider);
+      final expected = hotelGuestOwnershipKey(
+        selectedOffer,
+        ref.read(hotelOccupanciesProvider),
+      );
+      // Only the guests collected for THIS offer + occupancy are valid. A
+      // missing or mismatched key means the payload is stale, so it is
+      // ignored rather than silently booked.
+      if (hotelTravelers.isNotEmpty &&
+          expected.isNotEmpty &&
+          owner == expected) {
+        final contact = ref.read(checkoutContactProvider);
+        return <Map<String, dynamic>>[
+          for (int i = 0; i < hotelTravelers.length; i++)
+            <String, dynamic>{
+              'firstName': hotelTravelers[i]['firstName'],
+              'lastName': hotelTravelers[i]['lastName'],
+              'adult': hotelTravelers[i]['adult'] == true,
+              if (i == 0 && contact.email.isNotEmpty) 'email': contact.email,
+            },
+        ];
+      }
+    }
     final travelers = ref.read(checkoutTravelersProvider);
     final contact = ref.read(checkoutContactProvider);
     return <Map<String, dynamic>>[
@@ -185,8 +280,37 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
           'lastName': travelers[i].lastName,
           if (travelers[i].dob != null && travelers[i].dob!.isNotEmpty)
             'dateOfBirth': travelers[i].dob,
+          // The passenger form collects these; dropping them here would lose
+          // data the provider needs (gender / born_on, document details).
+          if (travelers[i].gender.isNotEmpty) 'gender': travelers[i].gender,
+          if (travelers[i].nationality.isNotEmpty)
+            'nationality': travelers[i].nationality,
+          if (travelers[i].documentType.isNotEmpty)
+            'documentType': travelers[i].documentType,
+          if (travelers[i].documentNumber.isNotEmpty)
+            'documentNumber': travelers[i].documentNumber,
+          if (travelers[i].documentIssueCountry.isNotEmpty)
+            'documentIssueCountry': travelers[i].documentIssueCountry,
+          if (travelers[i].documentExpiry.isNotEmpty)
+            'documentExpiry': travelers[i].documentExpiry,
+          // The lead contact stays available for providers that only accept a
+          // single contact (hotels, Nuitee flights).
           if (i == 0 && contact.email.isNotEmpty) 'email': contact.email,
           if (i == 0 && contact.phone.isNotEmpty) 'phone': contact.phone,
+          // P3-D5: Duffel requires a title, an email and a phone for EVERY
+          // passenger. These are per-passenger values — the lead contact is
+          // never copied onto another traveller, and a passenger's own value
+          // wins when both are present.
+          if (travelers[i].title.isNotEmpty) 'title': travelers[i].title,
+          if (travelers[i].email.isNotEmpty) 'email': travelers[i].email,
+          if (travelers[i].phone.isNotEmpty) 'phone': travelers[i].phone,
+          // The calling code is a separate LiteAPI field; it travels on the
+          // lead traveller (the booking's primary contact).
+          if (i == 0 && contact.phoneCountryCode.isNotEmpty)
+            'phoneCountryCode': contact.phoneCountryCode,
+          'passengerType': travelers[i].passengerType,
+          if (travelers[i].accompanyingAdultIndex != null)
+            'accompanyingAdultIndex': travelers[i].accompanyingAdultIndex,
         },
     ];
   }

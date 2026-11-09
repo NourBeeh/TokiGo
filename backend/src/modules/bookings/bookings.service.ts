@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository } from 'typeorm';
+import { In, QueryFailedError, Repository } from 'typeorm';
 
 import { Booking } from './booking.entity';
 import { BookingProviderRegistry } from './booking-provider.registry';
@@ -102,7 +102,11 @@ export class BookingsService {
     }
 
     const provider = this.requireCapability(booking.providerId, 'revalidate');
-    const revalidation = await provider.revalidateBooking(booking.offerId);
+    // P3-D7: hand the persisted snapshot to the provider so a Nuitee flight
+    // review can REUSE the existing prebook instead of creating another hold.
+    const revalidation = await provider.revalidateBooking(booking.offerId, {
+      offerSnapshot: booking.offerSnapshot,
+    });
     if (!revalidation.success || !revalidation.data) {
       throw new BookingException(
         'provider_unavailable',
@@ -150,22 +154,42 @@ export class BookingsService {
       );
     }
 
-    // Reserve the idempotency key before any provider call. The unique index
-    // on (userId, idempotencyKey) makes a concurrent retry fail closed.
+    // Reserve the idempotency key before any provider call. The reservation is
+    // a CONDITIONAL update: it only matches while the row is still in a
+    // confirmable state. Two concurrent calls that both read 'prepared' race
+    // here — the loser waits on the row lock, then matches zero rows and fails
+    // closed. A plain save would let both through and submit two bookings; the
+    // unique index cannot help because both writers update the SAME row.
+    const reserve = await this.bookings
+      .update(
+        {
+          id: booking.id,
+          status: In(['prepared', 'revalidated', 'failed']),
+        },
+        {
+          status: 'confirming',
+          idempotencyKey: dto.idempotencyKey,
+          travelers: dto.travelers ?? [],
+        },
+      )
+      .catch((error) => {
+        if (this.isUniqueViolation(error)) {
+          throw new BookingException(
+            'duplicate_request',
+            'Duplicate booking request',
+          );
+        }
+        throw error;
+      });
+    if (!reserve.affected) {
+      throw new BookingException(
+        'duplicate_request',
+        'A booking confirmation is already in progress',
+      );
+    }
     booking.status = 'confirming';
     booking.idempotencyKey = dto.idempotencyKey;
     booking.travelers = dto.travelers ?? [];
-    try {
-      await this.bookings.save(booking);
-    } catch (error) {
-      if (this.isUniqueViolation(error)) {
-        throw new BookingException(
-          'duplicate_request',
-          'Duplicate booking request',
-        );
-      }
-      throw error;
-    }
 
     const provider = this.registry.resolve(booking.providerId);
     if (!provider || !provider.bookingCapability.book) {
@@ -177,7 +201,13 @@ export class BookingsService {
     }
 
     // Revalidate immediately before commit — never book a stale price.
-    const revalidation = await provider.revalidateBooking(booking.offerId);
+    // P3-D6: the persisted travellers are passed too, so a provider whose
+    // prebook carries passenger data (Nuitee) prebooks the REAL party here
+    // instead of a second, sandbox prebook inside `createBooking`.
+    const revalidation = await provider.revalidateBooking(booking.offerId, {
+      travelers: booking.travelers,
+      offerSnapshot: booking.offerSnapshot,
+    });
     if (!revalidation.success || !revalidation.data) {
       await this.fail(booking);
       throw new BookingException(
@@ -186,6 +216,14 @@ export class BookingsService {
       );
     }
     const live = revalidation.data;
+    // P3-D5: refresh the provider handoff on EVERY revalidation, not only
+    // when the price moved. Duffel's offer passenger ids live in that handoff
+    // and the confirm step reads them from the snapshot — a stale snapshot
+    // would send the wrong (or no) passenger ids to the provider.
+    booking.offerSnapshot = {
+      ...booking.offerSnapshot,
+      ...(live.handoff ?? {}),
+    };
     if (!live.available || live.price <= 0) {
       await this.fail(booking);
       throw new BookingException(
