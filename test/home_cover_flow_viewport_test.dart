@@ -131,9 +131,11 @@ void main() {
       final double visible = next.intersect(viewport).width;
       expect(visible, greaterThan(0));
       expect(visible, lessThan(next.width));
-      // Its inner edge sits flush against the focal card's trailing edge (a
-      // pixel or two of overlap is the rotated bounding box, not a gap).
-      expect(next.left, closeTo(focal.right, 3));
+      // Its inner edge sits flush against the focal card's trailing edge —
+      // the slot offset is solved from the same scale/rotateY/perspective
+      // pipeline the transform applies, so a rotated side card cannot leave a
+      // white gutter before it. (A 3px tolerance used to hide that gutter.)
+      expect(next.left, closeTo(focal.right, 0.5));
       // The 3D scale is preserved: the neighbour is smaller than the focal
       // card, so it reads as depth rather than a second full card.
       expect(next.width, lessThan(focal.width));

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
@@ -17,13 +19,18 @@ import 'package:tokigo/features/home/presentation/widgets/home_discovery_stay_ca
 /// [Matrix4] is built per page. The [Transform.alignment] is
 /// [Alignment.center], so the rotation/scale pivot is the card's own centre —
 /// the matrix itself only carries the slot offset, the tilt and the scale:
-///   1. `RotateY` — tilt the side cards in 3D (LTR drags toward the
-///      direction of motion; the focal card leans *with* the drag).
+///   1. `RotateY` — a fan: cards past the focal position tilt one way, the ones
+///      before it the other, flattening out with distance.
 ///   2. `Scale` — the focal card is 100 %, one slot out is ~70 %, two slots
-///      out is ~48 %.
+///      out is ~48 %. Uniform on both axes so a side card keeps the card's own
+///      aspect ratio instead of stretching into a full-height sliver.
 ///   3. `translate(x, 0, z)` — move the card to its slot and push the side
 ///      cards slightly *toward* the viewer ([negative Z] in Flutter's
 ///      right-handed space), so the tilted cards peek "out of" the focal card.
+///
+/// The transforms are driven by the **live** scroll offset, not the settled
+/// page index, so an arriving card grows from ~70 % to 100 % as it crosses the
+/// viewport instead of jumping the instant the pager snaps.
 ///
 /// A [Matrix4.perspective](entry `(3, 2)` → 0.0018) creates the parallax
 /// distortion so cards that trail away (or forward) read as depth.
@@ -280,47 +287,53 @@ class _DestinationCoverFlowCarouselState
     double pageWidth,
     TextDirection direction,
   ) {
-    final int currentPage = _pageOf(offset);
-    final double offsetWithinPage = _snapWithinPage(offset, currentPage);
-
-    // Distance (in page slots) from the focal card. For the focal card the
-    // within-page offset speeds up its own tilt/scale while the user drags.
-    final int diff = index - currentPage;
-    final double absDiff = diff.abs().toDouble();
-    final double effectiveDistance =
-        absDiff + (diff == 0 ? offsetWithinPage.abs() : 0.0);
-    final double clampedDistance = effectiveDistance.clamp(0.0, 2.5);
+    // Continuous distance from the focal position, in page units. Reading the
+    // live offset — not the settled page index — is what makes the hand-over
+    // seamless: an arriving card grows from ~70 % to 100 % as it crosses the
+    // viewport instead of jumping the instant the pager snaps.
+    final double distance = index - offset;
+    final double absDistance = distance.abs();
+    final double clampedDistance = absDistance.clamp(0.0, 2.5);
 
     // ── Scale ──────────────────────────────────────────────────────────────
-    // 1.0 at the focal card → ~0.48 at two slots out.
-    final double rawScale = 1.0 - (clampedDistance * 0.26);
-    final double scale = rawScale.clamp(0.48, 1.0);
+    // 1.0 at the focal card → ~0.48 at two slots out. Uniform on both axes so
+    // a side card keeps the card's own aspect ratio: an X-only scale stretches
+    // it into a full-height sliver whose rotated corners leave the rail and get
+    // clipped by the viewport.
+    final double scale = (1.0 - clampedDistance * 0.26).clamp(0.48, 1.0);
 
     // ── RotationY (degrees) ────────────────────────────────────────────────
-    // ±14° at one slot out, flattening to ~0 as the distance grows. The focal
-    // card leans with the drag (up to ±6° at a 0.5 slot drag).
-    double rotationDegrees = diff * 14.0;
-    if (diff == 0) {
-      rotationDegrees = offsetWithinPage * 11.0;
-    }
-    rotationDegrees = rotationDegrees * (1.0 - clampedDistance * 0.25);
+    // A fan: cards past the focal position tilt one way, the ones before it the
+    // other, flattening out with distance.
+    final double rotationDegrees =
+        distance * 14.0 * (1.0 - clampedDistance * 0.25);
+
+    // Small Z push (negative Z = towards the viewer) so side cards read as
+    // "out of" the focal card.
+    final double visualOffsetZ = -absDistance * 34.0;
 
     // ── Visual offset ──────────────────────────────────────────────────────
-    // A side card is scaled about its OWN centre, which pulls its inner edge
-    // away from the focal card by half the shrink. Compensate by exactly that
-    // amount so a side card stays flush against the focal card's edge and the
-    // peek the pager leaves is actually visible. Without it the scaled side
-    // card floats in the middle of the viewport and no neighbour shows.
-    // Page +1 is to the RIGHT in LTR and to the LEFT in RTL, so the sign of
-    // the correction follows the reading direction.
+    // A side card is scaled about its OWN centre AND rotated in 3D, and BOTH
+    // move its inner edge away from the focal card. Half the shrink is only
+    // the unrotated part: rotateY plus the perspective divide move the edge
+    // further, so the old `-shrink/2` compensation left a white gutter
+    // between the focal card and its neighbour and the peek the pager leaves
+    // was mostly empty canvas.
+    //
+    // Project the inner edge through the exact same scale → rotateY →
+    // perspective pipeline the matrix below applies, then solve for the slot
+    // translation that lands it exactly on the focal card's edge. Page +1 is
+    // to the RIGHT in LTR and to the LEFT in RTL, so the edge's sign follows
+    // the reading direction.
     final double directionSign = direction == TextDirection.rtl ? -1.0 : 1.0;
-    final double visualOffsetX =
-        -directionSign * diff * (pageWidth * (1.0 - scale)) / 2.0;
-    // Small Z push (negative Z = towards the viewer) so side cards read as
-    // "out of" the focal card. The focal card is dragged through the z-axis
-    // too, reinforcing the depth cue.
-    final double visualOffsetZ = -absDiff * 34.0;
-    final double focalDragZ = diff == 0 ? -offsetWithinPage * 16.0 : 0.0;
+    final double innerEdge =
+        -directionSign * distance.sign * pageWidth / 2.0;
+    final double theta = rotationDegrees * math.pi / 180.0;
+    final double scaledEdge = innerEdge * scale;
+    final double rotatedEdge = scaledEdge * math.cos(theta);
+    final double edgeZ = -scaledEdge * math.sin(theta) + visualOffsetZ;
+    final double edgeW = 1.0 + 0.0018 * edgeZ;
+    final double visualOffsetX = innerEdge * edgeW - rotatedEdge;
 
     // ── Card geometry ──────────────────────────────────────────────────────
     // The card is laid out at the page's own box (pageWidth × cardHeight) and
@@ -337,14 +350,14 @@ class _DestinationCoverFlowCarouselState
 
     // 2) T_slot: move the card to its slot + a small Z shift (applied last,
     //    so it's the outermost transform).
-    m.translateByDouble(visualOffsetX, 0.0, visualOffsetZ + focalDragZ, 1.0);
+    m.translateByDouble(visualOffsetX, 0.0, visualOffsetZ, 1.0);
 
     // 3) R: rotate about the card's own centre (supplied by the Transform's
     //    alignment, so the pivot term lives there and not in this matrix).
     m.rotateY(rotationDegrees * 3.141592653589793 / 180.0);
 
-    // 4) S: shrink the side cards.
-    m.scaleByDouble(scale, 1.0, 1.0, 1.0);
+    // 4) S: shrink the side cards, uniformly so they keep their proportions.
+    m.scaleByDouble(scale, scale, 1.0, 1.0);
 
     return m;
   }
@@ -375,12 +388,4 @@ class _DestinationCoverFlowCarouselState
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────
-
-  int _pageOf(double offset) => offset.floor().toInt();
-
-  /// Keep the within-page offset inside [-0.5, 0.5] so a drag that overshoots
-  /// a page still yields a sane tilt/scale for the pulled card.
-  double _snapWithinPage(double offset, int page) {
-    return (offset - page).clamp(-0.5, 0.5);
-  }
 }
