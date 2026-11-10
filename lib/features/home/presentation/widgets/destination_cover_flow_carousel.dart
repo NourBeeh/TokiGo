@@ -81,8 +81,9 @@ class _DestinationCoverFlowCarouselState
     extends State<DestinationCoverFlowCarousel> {
   /// The pager. Its [PageController.viewportFraction] is the rail's own
   /// [DestinationCoverFlowCarousel.viewportFraction], so one page is 90 % of
-  /// the rail and the neighbouring city stays visible as a 10 % peek — the
-  /// only affordance that says "swipe me".
+  /// the rail. `padEnds` is on: the focal card is centred in the viewport and
+  /// the neighbouring cities peek on both sides — the only affordance that
+  /// says "swipe me".
   late PageController _controller;
   final ValueNotifier<double> _offsetNotifier = ValueNotifier<double>(0.0);
 
@@ -180,7 +181,9 @@ class _DestinationCoverFlowCarouselState
           child: PageView.builder(
             controller: _controller,
             itemCount: 1,
-            padEnds: false,
+            // padEnds centres the one page — the skeleton must land exactly
+            // where the loaded focal card will.
+            padEnds: true,
             itemBuilder: (context, index) =>
                 _buildTransformedPage(index, pageWidth, cardHeight),
           ),
@@ -203,7 +206,10 @@ class _DestinationCoverFlowCarouselState
           child: PageView.builder(
             controller: _controller,
             itemCount: widget.items.length,
-            padEnds: false,
+            // Owner decision (2026-11): the rail is a centred cover flow —
+            // the focal card sits in the MIDDLE of the viewport with the
+            // neighbours peeking on both sides, not hugging the leading edge.
+            padEnds: true,
             itemBuilder: (context, index) {
               return _buildTransformedPage(index, pageWidth, cardHeight);
             },
@@ -303,8 +309,8 @@ class _DestinationCoverFlowCarouselState
     // A side card is scaled about its OWN centre, which pulls its inner edge
     // away from the focal card by half the shrink. Compensate by exactly that
     // amount so a side card stays flush against the focal card's edge and the
-    // 10 % peek the pager leaves is actually visible. Without it the scaled
-    // side card floats in the middle of the viewport and no neighbour shows.
+    // peek the pager leaves is actually visible. Without it the scaled side
+    // card floats in the middle of the viewport and no neighbour shows.
     // Page +1 is to the RIGHT in LTR and to the LEFT in RTL, so the sign of
     // the correction follows the reading direction.
     final double directionSign = direction == TextDirection.rtl ? -1.0 : 1.0;
@@ -357,7 +363,8 @@ class _DestinationCoverFlowCarouselState
           child: PageView.builder(
             controller: _controller,
             itemCount: widget.items.length,
-            padEnds: false,
+            // Same centred page as the 3D rail, so the fallback never jumps.
+            padEnds: true,
             itemBuilder: (context, index) {
               return _buildPageContent(index, pageWidth, cardHeight);
             },

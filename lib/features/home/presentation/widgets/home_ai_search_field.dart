@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
-import 'package:tokigo/core/theme/tokigo_gradients.dart';
 import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
@@ -31,12 +30,16 @@ const double _trailingActionSize = 40;
 class HomeAiSearchField extends StatefulWidget {
   const HomeAiSearchField({
     super.key,
-    this.accentColor = HomeDesignTokens.accent,
+    this.accentColor,
     this.focusNode,
   });
 
-  /// The spec's accent, resolved for the active brightness by the caller.
-  final Color accentColor;
+  /// Optional ink override for the leading glyph and the trailing actions.
+  ///
+  /// Null (the default) resolves the Home ink for the active brightness —
+  /// black on the light canvas, white on the dark one — so a standalone field
+  /// is correct in both themes. [AppChrome] passes the same value explicitly.
+  final Color? accentColor;
 
   /// Optional lifted focus node (owned by the shell) so keyboard ownership
   /// can be tracked. Falls back to an internal node when not provided.
@@ -124,6 +127,8 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
     final l10n = AppLocalizations.of(context)!;
+    final Color ink =
+        widget.accentColor ?? HomeDesignTokens.accentOf(context);
 
     return TapRegion(
       onTapOutside: (_) => _focusNode.unfocus(),
@@ -154,7 +159,7 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
               Icon(
                 Icons.search_rounded,
                 size: 22,
-                color: widget.accentColor,
+                color: ink,
               ),
               const SizedBox(width: AppSpacing.sm),
               // The editable field with a static, localized hint. The trailing
@@ -213,7 +218,7 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                     child: Center(
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          color: widget.accentColor.withValues(alpha: 0.10),
+                          color: ink.withValues(alpha: 0.10),
                           shape: BoxShape.circle,
                         ),
                         child: SizedBox(
@@ -223,7 +228,7 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                             child: Icon(
                               Icons.mic_rounded,
                               size: 19,
-                              color: widget.accentColor,
+                              color: ink,
                             ),
                           ),
                         ),
@@ -234,8 +239,9 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
               ),
               // Send is the composer's primary action. It uses the send glyph
               // (not a second magnifier) because the job here is to submit the
-              // typed message to the AI, not to open a picker. The gradient
-              // fill is the one decorative accent the composer carries.
+              // typed message to the AI, not to open a picker. The fill is the
+              // Home ink — black on the light canvas, white on the dark one —
+              // with the glyph inverted so it always clears AA on the disc.
               Semantics(
                 button: true,
                 label: l10n.aiSend,
@@ -250,19 +256,19 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                     child: Center(
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          // The signature Instagram ramp, used for ONE
-                          // accent only: the send action.
-                          gradient: TokiGoGradients.brandGradient(),
+                          color: ink,
                           shape: BoxShape.circle,
                         ),
-                        child: const SizedBox(
+                        child: SizedBox(
                           width: 34,
                           height: 34,
                           child: Center(
                             child: Icon(
                               Icons.send_rounded,
                               size: 20,
-                              color: Colors.white,
+                              color: ink.computeLuminance() > 0.5
+                                  ? Colors.black
+                                  : Colors.white,
                             ),
                           ),
                         ),

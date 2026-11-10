@@ -14,11 +14,17 @@ import 'package:tokigo/l10n/app_localizations.dart';
 void main() {
   const Color background = Color(0xFFFAFAFA);
   const Color surface = Color(0xFFFFFFFF);
-  const Color accent = Color(0xFF0064E0);
+  // Owner decision (2026-11): Home's ink is neutral — black on the light
+  // canvas (white on the dark one) — replacing the brand blue accent.
+  const Color accent = Color(0xFF000000);
   const Color hint = Color(0xFF8E8E8E);
   const Color border = Color(0xFFDBDBDB);
 
-  Widget app(Widget child, {Locale locale = const Locale('en')}) {
+  Widget app(
+    Widget child, {
+    Locale locale = const Locale('en'),
+    ThemeMode mode = ThemeMode.light,
+  }) {
     final GoRouter router = GoRouter(
       initialLocation: '/',
       routes: <RouteBase>[
@@ -31,6 +37,8 @@ void main() {
     return MaterialApp.router(
       routerConfig: router,
       theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: mode,
       locale: locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
@@ -277,5 +285,73 @@ void main() {
     expect(HomeDesignTokens.accentOf(context), accent);
     expect(HomeDesignTokens.borderOf(context), border);
     expect(HomeDesignTokens.hintOf(context), hint);
+  });
+
+  group('dark mode', () {
+    testWidgets('quick actions and the composer ink resolve to white', (
+      tester,
+    ) async {
+      phoneSize(tester);
+      await tester.pumpWidget(
+        app(
+          const Center(
+            child: SizedBox(width: 360, child: HomeNavButtons()),
+          ),
+          mode: ThemeMode.dark,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Owner decision (2026-11): white on the dark canvas.
+      expect(HomeDesignTokens.accentOf(
+        tester.element(find.byType(HomeNavButtons)),
+      ), const Color(0xFFFFFFFF));
+
+      final Finder tiles = find.descendant(
+        of: find.byType(HomeNavButtons),
+        matching: find.byType(AnimatedContainer),
+      );
+      final Icon icon = tester.widget<Icon>(
+        find.descendant(of: tiles.at(0), matching: find.byType(Icon)).first,
+      );
+      expect(icon.color, const Color(0xFFFFFFFF));
+      final Text label = tester.widget<Text>(find.text('Flights'));
+      expect(label.style?.color, const Color(0xFFFFFFFF));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the AI composer send disc is white with a black glyph', (
+      tester,
+    ) async {
+      phoneSize(tester);
+      await tester.pumpWidget(
+        app(
+          const Center(
+            child: SizedBox(width: 360, child: HomeAiSearchField()),
+          ),
+          mode: ThemeMode.dark,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final BuildContext context = tester.element(
+        find.byType(HomeAiSearchField),
+      );
+      expect(HomeDesignTokens.accentOf(context), const Color(0xFFFFFFFF));
+
+      // The send disc is a DecoratedBox with the Home ink as its fill.
+      final Finder send = find.byKey(
+        const ValueKey<String>('home-ai-composer-send'),
+      );
+      final DecoratedBox disc = tester.widget<DecoratedBox>(
+        find.descendant(of: send, matching: find.byType(DecoratedBox)).first,
+      );
+      expect((disc.decoration as BoxDecoration).color, const Color(0xFFFFFFFF));
+      final Icon glyph = tester.widget<Icon>(
+        find.descendant(of: send, matching: find.byType(Icon)).first,
+      );
+      expect(glyph.color, const Color(0xFF000000));
+      expect(tester.takeException(), isNull);
+    });
   });
 }

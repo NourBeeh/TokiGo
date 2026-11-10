@@ -8,7 +8,8 @@ import 'package:tokigo/core/theme/tokigo_colors.dart';
 /// resolve against the shared [TokiGoColors] roles in dark mode so Home stays
 /// legible on the dark canvas rather than painting the light palette over it.
 /// The light values follow the same Instagram-inspired identity as the rest of
-/// the app (blue accent, neutral surfaces, hairline borders).
+/// the app (neutral surfaces, hairline borders), with one owner-decided
+/// departure: Home's ink is black, not the brand blue.
 ///
 /// The spec is a light-mode design. In dark mode each *role* resolves to the
 /// active [TokiGoColors] value instead.
@@ -20,11 +21,14 @@ abstract final class HomeDesignTokens {
   /// Fill for a raised Home surface (search field, quick-action card).
   static const Color surface = Color(0xFFFFFFFF);
 
-  /// Home accent — the leading search glyph, the card icons and their labels.
+  /// Home ink — the leading search glyph, the quick-action glyphs and their
+  /// labels, and the AI composer's actions.
   ///
-  /// The Instagram-inspired brand blue `#0064E0`, so Home reads as part of the
-  /// same identity as every other surface (5.4:1 against white).
-  static const Color accent = Color(0xFF0064E0);
+  /// Owner decision (2026-11): Home's accent is NEUTRAL, not the brand blue —
+  /// black on the light canvas, white on the dark one. The blue identity stays
+  /// with the brand mark and the results surfaces; Home reads as a calm,
+  /// content-first dashboard.
+  static const Color accent = Color(0xFF000000);
 
   /// Search placeholder ink.
   static const Color hint = Color(0xFF8E8E8E);
@@ -42,7 +46,7 @@ abstract final class HomeDesignTokens {
 
   /// Home accent, resolved for the active brightness.
   static Color accentOf(BuildContext context) =>
-      isDark(context) ? context.tokigoColors.brand : accent;
+      isDark(context) ? const Color(0xFFFFFFFF) : accent;
 
   /// Border on a Home surface.
   static Color borderOf(BuildContext context) =>

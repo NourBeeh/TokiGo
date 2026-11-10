@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- Owner decision (2026-11): the DARK mark is the FIXED launcher icon —
+         it is used in BOTH appearances, so the icon never changes with the
+         system mode. This is the dark field; values-night/colors.xml carries
+         the same value. -->
+    <color name="ic_launcher_background">#000000</color>
     <!-- The window behind the Flutter surface. It must match the app canvas:
          with edge-to-edge + adjustResize any pixel Flutter has not painted yet
          (e.g. mid keyboard animation) would otherwise show as a black band. -->

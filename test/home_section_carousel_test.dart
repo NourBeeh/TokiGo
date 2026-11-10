@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
@@ -192,6 +193,68 @@ void main() {
     // The viewport should be constrained to the rail width.
     final Rect viewport = tester.getRect(find.byType(PageView));
     expect(viewport.width, greaterThan(100.0));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+      'the Home rail card opens the city page even without a host action',
+      (WidgetTester tester) async {
+    final GoRouter router = GoRouter(
+      initialLocation: '/',
+      routes: <RouteBase>[
+        GoRoute(
+          path: '/',
+          builder: (BuildContext context, GoRouterState state) =>
+              const Scaffold(
+                body: SingleChildScrollView(
+                  child: HomeSectionWidget(
+                    section: HomeSection(
+                      id: 'destinations',
+                      title: 'Discover',
+                      layout: HomeSectionLayout.grid,
+                      items: <HomeItem>[
+                        HomeItem(
+                          id: 'paris',
+                          type: HomeCardType.destination,
+                          title: 'Paris',
+                          subtitle: 'France',
+                        ),
+                        HomeItem(
+                          id: 'london',
+                          type: HomeCardType.destination,
+                          title: 'London',
+                          subtitle: 'United Kingdom',
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+        ),
+        GoRoute(
+          path: '/city',
+          builder: (BuildContext context, GoRouterState state) => Scaffold(
+            body: Text(
+              'City opened: ${(state.extra as HomeItem).title}',
+            ),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp.router(routerConfig: router),
+    );
+    await tester.pumpAndSettle();
+
+    // No `onItemTap` is supplied — Home's own feed passes none — so the card
+    // must still open its city page.
+    expect(find.byType(HomeDiscoveryStayCard), findsWidgets);
+    await tester.tap(find.byType(HomeDiscoveryStayCard).first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('City opened: Paris'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

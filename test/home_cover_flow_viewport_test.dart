@@ -9,8 +9,8 @@ import 'package:tokigo/features/home/presentation/widgets/home_discovery_stay_ca
 
 /// Focused contract for the Discover cover-flow rail.
 ///
-/// The rail must show ONE full 90 %-wide focal card inside the viewport, with
-/// the neighbouring city peeking at the trailing edge — and the loading
+/// The rail must show ONE full 90 %-wide focal card CENTRED in the viewport,
+/// with the neighbouring city peeking at the trailing edge — and the loading
 /// skeleton must occupy exactly the same box.
 void main() {
   const Size phone = Size(720, 1480); // 360 x 740 logical
@@ -69,9 +69,10 @@ void main() {
       // 90 % page, exactly as the design token says.
       expect(focal.width, closeTo(viewport.width * 0.9, 0.5));
       expect(focal.height, closeTo(viewport.height, 0.5));
-      // No half-page pivot shift: the card hugs the rail's leading edge and
-      // the top of the rail.
-      expect(focal.left, closeTo(viewport.left, 0.5));
+      // Owner decision (2026-11): the rail is a CENTRED cover flow — the
+      // focal card sits in the middle of the viewport, not hugging the
+      // leading edge.
+      expect(focal.center.dx, closeTo(viewport.center.dx, 0.5));
       expect(focal.top, closeTo(viewport.top, 0.5));
       // Fully inside — nothing clipped.
       expect(focal.right, lessThanOrEqualTo(viewport.right + 0.5));
@@ -100,6 +101,9 @@ void main() {
         HomeCardDimensions.destinationViewportFraction,
         controller.viewportFraction,
       );
+      // Owner decision (2026-11): the focal card is centred, so the pager
+      // pads both ends by half the leftover viewport.
+      expect(tester.widget<PageView>(find.byType(PageView)).padEnds, isTrue);
     });
   });
 
@@ -225,7 +229,7 @@ void main() {
 
       final Rect viewport = viewportRect(tester);
       final Rect skeleton = tester.getRect(find.byType(HomeDiscoveryStayCard));
-      expect(skeleton.left, closeTo(viewport.left, 0.5));
+      expect(skeleton.center.dx, closeTo(viewport.center.dx, 0.5));
       expect(skeleton.top, closeTo(viewport.top, 0.5));
       expect(skeleton.right, lessThanOrEqualTo(viewport.right + 0.5));
       expect(skeleton.bottom, lessThanOrEqualTo(viewport.bottom + 0.5));
@@ -253,7 +257,7 @@ void main() {
       final Rect focal = tester.getRect(find.byType(HomeDiscoveryStayCard).at(0));
 
       expect(focal.width, closeTo(viewport.width * 0.9, 0.5));
-      expect(focal.right, closeTo(viewport.right, 0.5));
+      expect(focal.center.dx, closeTo(viewport.center.dx, 0.5));
       expect(focal.top, closeTo(viewport.top, 0.5));
       expect(focal.left, greaterThanOrEqualTo(viewport.left - 0.5));
       expect(focal.bottom, lessThanOrEqualTo(viewport.bottom + 0.5));
@@ -285,7 +289,7 @@ void main() {
 
       expect(viewport.width, 320);
       expect(focal.width, closeTo(288, 0.5));
-      expect(focal.left, closeTo(viewport.left, 0.5));
+      expect(focal.center.dx, closeTo(viewport.center.dx, 0.5));
       expect(focal.right, lessThanOrEqualTo(viewport.right + 0.5));
       expect(
         tester.getRect(find.byType(HomeDiscoveryStayCard).at(1)).intersect(
@@ -321,7 +325,7 @@ void main() {
       final Rect viewport = viewportRect(tester);
       final Rect focal = tester.getRect(find.byType(HomeDiscoveryStayCard).at(0));
       expect(focal.width, closeTo(viewport.width * 0.9, 0.5));
-      expect(focal.left, closeTo(viewport.left, 0.5));
+      expect(focal.center.dx, closeTo(viewport.center.dx, 0.5));
       expect(focal.right, lessThanOrEqualTo(viewport.right + 0.5));
       expect(tester.takeException(), isNull);
     });

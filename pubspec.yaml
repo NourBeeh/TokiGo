@@ -82,26 +82,31 @@ flutter_launcher_icons:
   ios: true
   # iOS masks the icon itself: the master must be a full-bleed opaque square.
   remove_alpha_ios: true
-  # Light/default: white canvas, black parasol. Dark: black canvas, white
-  # parasol (Android night resources are mirrored by
-  # tool/branding/sync_android_night_icons.py).
-  image_path: assets/icon/app_icon_1024.png
+  # Owner decision (2026-11): the DARK mark (black field, white parasol) is the
+  # FIXED launcher icon — it is generated for BOTH appearances, so the icon
+  # never changes with the system mode. The light masters stay in assets/icon/
+  # as the brand source, but they are no longer the default.
+  image_path: assets/icon/app_icon_dark_1024.png
   # iOS 18 dark appearance: transparent master, iOS supplies the dark field.
   image_path_ios_dark_transparent: assets/icon/app_icon_ios_dark_1024.png
-  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_background: "#000000"
   # The foreground master is already drawn inside the 66% safe zone, so the
   # default 16% inset would shrink the parasol twice.
   adaptive_icon_foreground_inset: 0
-  adaptive_icon_foreground: assets/icon/app_icon_adaptive_foreground_1024.png
+  adaptive_icon_foreground: assets/icon/app_icon_adaptive_dark_foreground_1024.png
   adaptive_icon_monochrome: assets/icon/app_icon_adaptive_monochrome_1024.png
 
 # The splash shows the app icon with the wordmark below it. The composed
 # masters are rendered by tool/branding/generate_splash.py from the app icon
 # and the wordmark. Regenerate them there, then run
 # `dart run flutter_native_splash:create`.
+#
+# Owner decision (2026-11): the DARK splash (#111111 field, white artwork) is
+# the FIXED splash — it is generated for BOTH appearances, so the launch screen
+# never changes with the system mode.
 flutter_native_splash:
-  color: "#FFFFFF"
-  image: assets/branding/logo_splash.png
+  color: "#111111"
+  image: assets/branding/logo_splash_dark.png
   color_dark: "#111111"
   image_dark: assets/branding/logo_splash_dark.png
   android_gravity: center
@@ -110,11 +115,11 @@ flutter_native_splash:
     # Android 12+ masks the outer third of the icon, so it takes the adaptive
     # foreground (already inside the safe circle). The system splash cannot
     # place a name under the icon, so the wordmark goes in the branding slot.
-    color: "#FFFFFF"
-    image: assets/icon/app_icon_adaptive_foreground_1024.png
+    color: "#111111"
+    image: assets/icon/app_icon_adaptive_dark_foreground_1024.png
     color_dark: "#111111"
     image_dark: assets/icon/app_icon_adaptive_dark_foreground_1024.png
-    branding: assets/branding/logo_branding.png
+    branding: assets/branding/logo_branding_dark.png
     branding_dark: assets/branding/logo_branding_dark.png
 
 # For information on the generic Dart part of this file, see the

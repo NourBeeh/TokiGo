@@ -19,6 +19,7 @@ import 'package:tokigo/features/home/presentation/widgets/home_stay_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stays_carousel.dart';
 import 'package:tokigo/features/home/presentation/widgets/destination_cover_flow_carousel.dart';
 import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
+import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
 
 typedef FlightTapCallback = void Function(HomeItem flight);
 typedef ViewAllCallback = void Function();
@@ -91,6 +92,12 @@ class HomeSectionWidget extends StatelessWidget {
                     onTap: () => context.push('/explore'),
                     child: TextButton(
                       onPressed: () => context.push('/explore'),
+                      // Home's ink, not the theme's brand blue: the section
+                      // header is part of the neutral Home canvas (owner
+                      // decision, 2026-11).
+                      style: TextButton.styleFrom(
+                        foregroundColor: HomeDesignTokens.accentOf(context),
+                      ),
                       child: Text(l10n?.exploreFilterAll ?? 'All'),
                     ),
                   ),
@@ -276,7 +283,11 @@ class HomeSectionWidget extends StatelessWidget {
     if (primaryType == HomeCardType.destination) {
       return DestinationCoverFlowCarousel(
         items: items,
-        onItemTap: onItemTap,
+        // The rail's cards carry the "Explore" hint, so a tap must DO
+        // something. A host that supplies its own action (the AI answer, for
+        // example) keeps it; Home — which passes none — opens the city page,
+        // exactly like the grid/vertical presentation of the same card.
+        onItemTap: onItemTap ?? (HomeItem item) => _openCity(context, item),
         viewportFraction: 0.9,
       );
     }
