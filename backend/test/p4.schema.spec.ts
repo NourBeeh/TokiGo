@@ -279,7 +279,7 @@ describeDb('P4-1 durable payment schema (PostgreSQL)', () => {
     );
     // P4-1: 7 migrations. P4-2 adds 1731000000007 (attempt status states) and
     // 1731000000008 (retire the legacy webhook table).
-    expect(executed[0].n).toBe(10);
+    expect(executed[0].n).toBe(11);
   });
 
   it('1b. the migration (not the entity) creates the flight-provider exclusion index', async () => {
@@ -839,7 +839,7 @@ describeDb('P4-1 durable payment schema (PostgreSQL)', () => {
 
   it('12. migration rollback removes the P4 tables (and re-apply restores them)', async () => {
     // Revert the whole chain, one migration at a time (9 as of P4-2).
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 11; i++) {
       await ds.undoLastMigration();
     }
     for (const table of [
@@ -975,21 +975,21 @@ describeDb('P4-1R migration 6 rollback safety (PostgreSQL)', () => {
     // schema is the only state-independent way to get back to a known point.
     await ds.query('DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;');
     await ds.runMigrations();
-    // P4-2/P4-2R added migrations 7, 8 and 9 after 6, so four reverts are
-    // needed to reach the pre-migration-6 state.
-    for (let i = 0; i < 4; i++) {
+    // P4-2/P4-2R/P4-2R2 added migrations 7, 8, 9 and 10 after 6, so five
+    // reverts are needed to reach the pre-migration-6 state.
+    for (let i = 0; i < 5; i++) {
       await ds.undoLastMigration();
     }
     await ds.query(`TRUNCATE providers CASCADE`);
   }
 
   /**
-   * Revert migration 6 specifically. P4-2/P4-2R appended migrations 7, 8
-   * and 9 after it, so `undoLastMigration()` alone would revert migration 9
-   * instead.
+   * Revert migration 6 specifically. P4-2/P4-2R/P4-2R2 appended
+   * migrations 7, 8, 9 and 10 after it, so `undoLastMigration()` alone would
+   * revert migration 10 instead.
    */
   async function revertMigration6(): Promise<void> {
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
       await ds.undoLastMigration();
     }
   }

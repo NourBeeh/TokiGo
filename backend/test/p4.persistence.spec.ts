@@ -264,6 +264,52 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
     });
   }
 
+  /** A gateway whose stored amount contradicts the durable attempt. */
+  function wrongRetrieveAmountGateway(delegate: MockEgyptGateway): PaymentGateway {
+    return gatewayWithFaults(delegate, {
+      retrievePayment: async (id: string) => {
+        const intent = await delegate.retrievePayment(id);
+        return intent ? { ...intent, amount: intent.amount + 1 } : intent;
+      },
+    });
+  }
+
+  /** A gateway that returns a structurally incomplete intent. */
+  function malformedGateway(delegate: MockEgyptGateway): PaymentGateway {
+    return gatewayWithFaults(delegate, {
+      retrievePayment: async (id: string) => {
+        const intent = await delegate.retrievePayment(id);
+        return intent ? { ...intent, amount: Number.NaN } : intent;
+      },
+    });
+  }
+
+  /** A gateway whose provider status can be forced, to model late events. */
+  class SwitchableGateway extends MockEgyptGateway {
+    forceStatus: string | null = null;
+
+    async retrievePayment(paymentId: string): Promise<PaymentIntent | null> {
+      const intent = await super.retrievePayment(paymentId);
+      return intent && this.forceStatus
+        ? { ...intent, status: this.forceStatus as PaymentIntent['status'] }
+        : intent;
+    }
+  }
+
+  /** A gateway whose lookup fails for the first `failTimes` calls. */
+  class FlakyGateway extends MockEgyptGateway {
+    failTimes = 0;
+    private calls = 0;
+
+    async retrievePayment(paymentId: string): Promise<PaymentIntent | null> {
+      this.calls += 1;
+      if (this.calls <= this.failTimes) {
+        throw new Error('ETIMEDOUT: provider lookup timed out');
+      }
+      return super.retrievePayment(paymentId);
+    }
+  }
+
   async function createIntent(
     app: TestApp,
     bookingId: string,
@@ -310,6 +356,18 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
       signature: signMockWebhook({ id, paymentId, type, occurredAt }),
       occurredAt,
     };
+  }
+
+  /**
+   * A payment in the 3DS `pending` state: intent created, confirmed with
+   * CARD_3DS, no webhook applied yet.
+   */
+  async function threeDsSetup(app: TestApp) {
+    const bookingId = await insertBooking();
+    const created = await createIntent(app, bookingId, 'user-1', 'webhook-key');
+    const paymentId = created.status === 'OK' ? created.intent.paymentId : '';
+    await confirmIntent(app, paymentId, bookingId, 'CARD_3DS', 'user-1', 'c');
+    return { bookingId, paymentId };
   }
 
   // =========================================================================
@@ -850,13 +908,6 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
   // =========================================================================
 
   describe('Webhook persistence', () => {
-    async function threeDsSetup(app: TestApp) {
-      const bookingId = await insertBooking();
-      const created = await createIntent(app, bookingId, 'user-1', 'webhook-key');
-      const paymentId = created.status === 'OK' ? created.intent.paymentId : '';
-      await confirmIntent(app, paymentId, bookingId, 'CARD_3DS', 'user-1', 'c');
-      return { bookingId, paymentId };
-    }
 
     it('W1. duplicate event ids are processed once', async () => {
       const app = buildApp();
@@ -986,7 +1037,7 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
       expect(rows[0].status).toBe('succeeded');
     });
 
-    it('W6. a webhook for an unknown payment is ignored without financial effect', async () => {
+    it('W6. an unknown payment is retryable, not permanently consumed', async () => {
       const app = buildApp();
       await insertBooking();
 
@@ -994,11 +1045,16 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
         signedEvent('evt-unknown', 'pay_does_not_exist', 'payment.succeeded'),
       );
       expect(result.status).toBe('REJECTED');
+      expect('reason' in result ? result.reason : '').toBe('unknown_payment');
 
+      // The event is NOT settled: it is retryable, and it must NOT be archived
+      // (archiving it would block every redelivery forever).
       const events = await app.webhookRepo.find();
       expect(events).toHaveLength(1);
-      expect(events[0].status).toBe('ignored');
+      expect(events[0].status).toBe('retryable');
       expect(events[0].outcome).toBe('payment_not_found');
+      expect(events[0].processedAt).toBeNull();
+      expect(await app.legacyRepo.count()).toBe(0);
       expect(await app.txnRepo.count()).toBe(0);
     });
 
@@ -1068,7 +1124,7 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
       expect(attempts[0].status).toBe('succeeded');
     });
 
-    it('W10. an ignored event is still archived so a redelivery cannot loop', async () => {
+    it('W10. a retryable event is retried on redelivery, never archived', async () => {
       const app = buildApp();
       await insertBooking();
 
@@ -1077,13 +1133,336 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
       );
       expect(first.status).toBe('REJECTED');
       expect(await app.webhookRepo.count()).toBe(1);
-      expect(await app.legacyRepo.count()).toBe(1);
+      // Not archived — a redelivery must still be able to attempt the effect.
+      expect(await app.legacyRepo.count()).toBe(0);
 
-      // The redelivery is caught by the webhook_events duplicate path.
+      // The redelivery RETRIES (it is not a hard duplicate) and fails the same
+      // way, because the cause is still present.
       const second = await app.service.handleWebhook(
         signedEvent('evt-unknown-2', 'pay_missing', 'payment.succeeded'),
       );
       expect(second.status).toBe('REJECTED');
+      expect('reason' in second ? second.reason : '').toBe('unknown_payment');
+      expect(await app.webhookRepo.count()).toBe(1);
+      expect(await app.legacyRepo.count()).toBe(0);
+      expect(await app.txnRepo.count()).toBe(0);
+    });
+  });
+
+  // =========================================================================
+  // Webhook retryability (P4-2R2)
+  // =========================================================================
+
+  describe('Webhook retryability (P4-2R2)', () => {
+    it('R1. an event arriving before its attempt exists is not permanently consumed', async () => {
+      const app = buildApp();
+      const bookingId = await insertBooking({ authoritativePrice: 1000 });
+
+      // The gateway already knows the payment, but no attempt row exists yet.
+      const intent = await app.gateway.createPaymentIntent({
+        bookingId,
+        idempotencyKey: 'user-1:early-key',
+        amount: 1000,
+        currency: 'EGP',
+        market: 'EG',
+      });
+      // The provider has already confirmed it; only our association is missing.
+      await app.gateway.confirmPayment({
+        paymentId: intent.paymentId,
+        methodReference: 'CARD_SUCCESS',
+        idempotencyKey: 'gw-confirm',
+      });
+
+      const first = await app.service.handleWebhook(
+        signedEvent('evt-early', intent.paymentId, 'payment.succeeded'),
+      );
+      expect(first.status).toBe('REJECTED');
+      expect('reason' in first ? first.reason : '').toBe('unknown_attempt');
+
+      // Retryable, NOT archived, NOT treated as processed.
+      const events = await app.webhookRepo.find();
+      expect(events[0].status).toBe('retryable');
+      expect(events[0].outcome).toBe('attempt_not_found');
+      expect(events[0].processedAt).toBeNull();
+      expect(await app.legacyRepo.count()).toBe(0);
+      expect(await app.txnRepo.count()).toBe(0);
+    });
+
+    it('R2. the same event processes exactly once after the association appears', async () => {
+      const app = buildApp();
+      const bookingId = await insertBooking({ authoritativePrice: 1000 });
+
+      // The gateway knows the payment and it is awaiting 3DS settlement.
+      const intent = await app.gateway.createPaymentIntent({
+        bookingId,
+        idempotencyKey: 'user-1:early-key-2',
+        amount: 1000,
+        currency: 'EGP',
+        market: 'EG',
+      });
+      await app.gateway.confirmPayment({
+        paymentId: intent.paymentId,
+        methodReference: 'CARD_3DS',
+        idempotencyKey: 'gw-confirm-2',
+      });
+
+      // The event arrives before our association exists.
+      const early = await app.service.handleWebhook(
+        signedEvent('evt-early-2', intent.paymentId, 'payment.succeeded'),
+      );
+      expect(early.status).toBe('REJECTED');
+      expect('reason' in early ? early.reason : '').toBe('unknown_attempt');
+      expect(await app.legacyRepo.count()).toBe(0);
+
+      // The association appears through the normal funnel: intent + 3DS confirm.
+      const created = await createIntent(app, bookingId, 'user-1', 'early-key-2', 1000);
+      expect(created.status).toBe('OK');
+      const paymentId = created.status === 'OK' ? created.intent.paymentId : '';
+      expect(paymentId).toBe(intent.paymentId);
+      await confirmIntent(app, paymentId, bookingId, 'CARD_3DS', 'user-1', 'confirm-early-2');
+      expect((await app.attemptRepo.find())[0].status).toBe('pending');
+
+      // R2: the same event now completes exactly once.
+      const second = await app.service.handleWebhook(
+        signedEvent('evt-early-2', paymentId, 'payment.succeeded'),
+      );
+      expect(second.status).toBe('PROCESSED');
+      expect(second.attemptStatus).toBe('succeeded');
+      expect(await app.txnRepo.count()).toBe(1);
+      expect(await app.legacyRepo.count()).toBe(1);
+
+      // A third delivery is a hard duplicate and adds nothing.
+      const third = await app.service.handleWebhook(
+        signedEvent('evt-early-2', paymentId, 'payment.succeeded'),
+      );
+      expect(third.status).toBe('REJECTED');
+      expect(await app.txnRepo.count()).toBe(1);
+      expect(await app.legacyRepo.count()).toBe(1);
+    });
+
+    it('R3. a temporary gateway lookup failure leaves the event retryable', async () => {
+      const gateway = new FlakyGateway();
+      gateway.failTimes = 1;
+      const app = buildApp(gateway);
+      const { paymentId } = await threeDsSetup(app);
+
+      const first = await app.service.handleWebhook(
+        signedEvent('evt-flaky', paymentId, 'payment.succeeded'),
+      );
+      expect(first.status).toBe('REJECTED');
+      expect('reason' in first ? first.reason : '').toBe('gateway_unavailable');
+
+      const events = await app.webhookRepo.find();
+      expect(events).toHaveLength(1);
+      expect(events[0].status).toBe('retryable');
+      expect(events[0].outcome).toBe('gateway_unavailable');
+      expect(events[0].processedAt).toBeNull();
+      expect(await app.legacyRepo.count()).toBe(0);
+      expect(await app.txnRepo.count()).toBe(0);
+
+      // R5: the retry completes and produces exactly one financial effect.
+      const second = await app.service.handleWebhook(
+        signedEvent('evt-flaky', paymentId, 'payment.succeeded'),
+      );
+      expect(second.status).toBe('PROCESSED');
+      expect(second.attemptStatus).toBe('succeeded');
+      expect(await app.txnRepo.count()).toBe(1);
+      expect(await app.legacyRepo.count()).toBe(1);
+      expect((await app.webhookRepo.find())[0].status).toBe('processed');
+    });
+
+    it('R4. a database transaction failure does not archive or consume the event', async () => {
+      const app = buildApp();
+      const { bookingId, paymentId } = await threeDsSetup(app);
+
+      // Force a REAL failure inside the effect transaction: a trigger rejects
+      // the CUSTOMER ledger insert, so the attempt transition, the event status
+      // and the archive insert all roll back together.
+      await ds.query(`
+        CREATE OR REPLACE FUNCTION p4_test_fail_ledger() RETURNS trigger AS $$
+        BEGIN
+          RAISE EXCEPTION 'injected ledger failure';
+        END;
+        $$ LANGUAGE plpgsql
+      `);
+      await ds.query(`
+        CREATE TRIGGER trg_p4_fail_ledger
+          BEFORE INSERT ON payment_transactions
+          FOR EACH ROW EXECUTE FUNCTION p4_test_fail_ledger()
+      `);
+
+      try {
+        const failed = await app.service.handleWebhook(
+          signedEvent('evt-txfail', paymentId, 'payment.succeeded'),
+        );
+        expect(failed.status).toBe('REJECTED');
+        expect('reason' in failed ? failed.reason : '').toBe('effect_retryable');
+      } finally {
+        await ds.query(
+          'DROP TRIGGER IF EXISTS trg_p4_fail_ledger ON payment_transactions',
+        );
+        await ds.query('DROP FUNCTION IF EXISTS p4_test_fail_ledger()');
+      }
+
+      // Nothing was archived, the attempt did not move, no ledger row exists,
+      // and the event is explicitly retryable.
+      expect(await app.legacyRepo.count()).toBe(0);
+      expect(await app.txnRepo.count()).toBe(0);
+      expect((await app.attemptRepo.find())[0].status).toBe('pending');
+      const events = await app.webhookRepo.find();
+      expect(events[0].status).toBe('retryable');
+      expect(events[0].outcome).toBe('effect_failed');
+      expect(events[0].processedAt).toBeNull();
+
+      // R5: the redelivery completes exactly once and every artefact agrees.
+      const retry = await app.service.handleWebhook(
+        signedEvent('evt-txfail', paymentId, 'payment.succeeded'),
+      );
+      expect(retry.status).toBe('PROCESSED');
+      expect(retry.attemptStatus).toBe('succeeded');
+
+      expect(await app.txnRepo.count()).toBe(1);
+      expect(await app.legacyRepo.count()).toBe(1);
+      expect((await app.attemptRepo.find())[0].status).toBe('succeeded');
+      const settled = await app.webhookRepo.find();
+      expect(settled[0].status).toBe('processed');
+      expect(settled[0].outcome).toBe('succeeded');
+      expect(settled[0].processedAt).not.toBeNull();
+      expect(bookingId).toBeTruthy();
+    });
+  });
+
+  // =========================================================================
+  // Webhook final outcomes (P4-2R2)
+  // =========================================================================
+
+  describe('Webhook final outcomes (P4-2R2)', () => {
+    it('F9. a confirmed gateway amount contradiction cannot produce a capture', async () => {
+      const app = buildApp(wrongRetrieveAmountGateway(new MockEgyptGateway()));
+      const { bookingId, paymentId } = await threeDsSetup(app);
+
+      const result = await app.service.handleWebhook(
+        signedEvent('evt-mismatch', paymentId, 'payment.succeeded'),
+      );
+      expect(result.status).toBe('REJECTED');
+      expect('reason' in result ? result.reason : '').toBe('gateway_amount_mismatch');
+
+      // PERMANENT: archived, so a redelivery cannot retry it into a capture.
+      expect(await app.txnRepo.count()).toBe(0);
+      expect(await app.legacyRepo.count()).toBe(1);
+      const events = await app.webhookRepo.find();
+      expect(events[0].status).toBe('failed');
+      expect(events[0].outcome).toBe('gateway_amount_mismatch');
+
+      const again = await app.service.handleWebhook(
+        signedEvent('evt-mismatch', paymentId, 'payment.succeeded'),
+      );
+      expect(again.status).toBe('REJECTED');
+      expect(await app.txnRepo.count()).toBe(0);
+      expect(bookingId).toBeTruthy();
+    });
+
+    it('F10. an incomplete gateway response is retryable, not a confirmed failure', async () => {
+      const app = buildApp(malformedGateway(new MockEgyptGateway()));
+      const { paymentId } = await threeDsSetup(app);
+
+      const first = await app.service.handleWebhook(
+        signedEvent('evt-incomplete', paymentId, 'payment.succeeded'),
+      );
+      expect(first.status).toBe('REJECTED');
+      expect('reason' in first ? first.reason : '').toBe('gateway_response_incomplete');
+
+      // The attempt is NOT moved to a failure — nothing was proven.
+      expect((await app.attemptRepo.find())[0].status).toBe('pending');
+      expect(await app.txnRepo.count()).toBe(0);
+      expect(await app.legacyRepo.count()).toBe(0);
+
+      const events = await app.webhookRepo.find();
+      expect(events[0].status).toBe('retryable');
+      expect(events[0].outcome).toBe('gateway_response_incomplete');
+      expect(events[0].processedAt).toBeNull();
+    });
+
+    it('C12. different event ids for the same payment cannot duplicate the capture', async () => {
+      const app = buildApp();
+      const { bookingId, paymentId } = await threeDsSetup(app);
+
+      const a = await app.service.handleWebhook(
+        signedEvent('evt-A', paymentId, 'payment.succeeded'),
+      );
+      expect(a.status).toBe('PROCESSED');
+
+      // A distinct event id for the SAME payment (the gateway re-issued it).
+      const b = await app.service.handleWebhook(
+        signedEvent('evt-B', paymentId, 'payment.succeeded'),
+      );
+      expect(b.status).toBe('PROCESSED');
+
+      // One capture, one succeeded attempt, two archived identities.
+      const rows = await app.ledger.forBooking(bookingId);
+      expect(rows).toHaveLength(1);
+      expect(rows[0].status).toBe('succeeded');
+      expect((await app.attemptRepo.find())[0].status).toBe('succeeded');
+      expect(await app.legacyRepo.count()).toBe(2);
+      expect(await app.webhookRepo.count()).toBe(2);
+    });
+
+    it('C13. a late failure event cannot downgrade a succeeded payment', async () => {
+      const gateway = new SwitchableGateway();
+      const app = buildApp(gateway);
+      const { bookingId, paymentId } = await threeDsSetup(app);
+
+      const ok = await app.service.handleWebhook(
+        signedEvent('evt-ok', paymentId, 'payment.succeeded'),
+      );
+      expect(ok.status).toBe('PROCESSED');
+      expect((await app.attemptRepo.find())[0].status).toBe('succeeded');
+      expect(await app.txnRepo.count()).toBe(1);
+
+      // The provider now reports FAILED for the same payment.
+      gateway.forceStatus = 'FAILED';
+      const late = await app.service.handleWebhook(
+        signedEvent('evt-late', paymentId, 'payment.failed'),
+      );
+      expect(late.status).toBe('REJECTED');
+      expect('reason' in late ? late.reason : '').toBe('attempt_state_conflict');
+
+      // The capture stands: no downgrade, no second ledger row.
+      expect((await app.attemptRepo.find())[0].status).toBe('succeeded');
+      expect(await app.txnRepo.count()).toBe(1);
+      // The late event is permanently archived so a redelivery cannot retry
+      // the downgrade.
+      expect(await app.legacyRepo.count()).toBe(2);
+      const late2 = await app.service.handleWebhook(
+        signedEvent('evt-late', paymentId, 'payment.failed'),
+      );
+      expect(late2.status).toBe('REJECTED');
+      expect((await app.attemptRepo.find())[0].status).toBe('succeeded');
+      expect(await app.txnRepo.count()).toBe(1);
+      expect(bookingId).toBeTruthy();
+    });
+
+    it('C14. a duplicate event cannot cause a second payment-state transition', async () => {
+      const app = buildApp();
+      const { paymentId } = await threeDsSetup(app);
+
+      const first = await app.service.handleWebhook(
+        signedEvent('evt-dup', paymentId, 'payment.succeeded'),
+      );
+      expect(first.status).toBe('PROCESSED');
+      const afterFirst = (await app.attemptRepo.find())[0];
+      expect(afterFirst.status).toBe('succeeded');
+
+      const second = await app.service.handleWebhook(
+        signedEvent('evt-dup', paymentId, 'payment.succeeded'),
+      );
+      expect(second.status).toBe('REJECTED');
+      const afterSecond = (await app.attemptRepo.find())[0];
+
+      // Untouched: the redelivery was blocked before any write.
+      expect(afterSecond.status).toBe('succeeded');
+      expect(afterSecond.updatedAt.getTime()).toBe(afterFirst.updatedAt.getTime());
+      expect(await app.txnRepo.count()).toBe(1);
       expect(await app.webhookRepo.count()).toBe(1);
       expect(await app.legacyRepo.count()).toBe(1);
     });
@@ -1438,10 +1817,10 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
   // Migration
   // =========================================================================
 
-  describe('Migration 7/8/9', () => {
-    /** Revert to the P4-1 schema state (migrations 7, 8 and 9 not applied). */
+  describe('Migration 7/8/9/10', () => {
+    /** Revert to the P4-1 schema state (migrations 7..10 not applied). */
     async function revertToP4_1(): Promise<void> {
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 4; i++) {
         await ds.undoLastMigration();
       }
     }
@@ -1580,7 +1959,9 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
     it('M4. migration 8/9 up and down never drop the archive', async () => {
       expect(await tableExists('processed_webhooks')).toBe(true);
 
-      // Reverting the whole P4-2R chain (9 then 8) leaves the archive in place.
+      // Reverting the whole P4-2R chain (10, 9 then 8) leaves the archive in
+      // place — migration 10 only widens the webhook status CHECK.
+      await ds.undoLastMigration(); // 10
       await ds.undoLastMigration(); // 9
       await ds.undoLastMigration(); // 8
       expect(await tableExists('processed_webhooks')).toBe(true);
@@ -1648,7 +2029,9 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
     it('M7. migration 9 recreates the archive for a database that ran the original drop', async () => {
       // Simulate a database where the ORIGINAL migration 8 already dropped the
       // table: its rows are gone and no DDL can bring them back. Revert
-      // migration 9 first so it is pending again and can actually execute.
+      // migrations 10 and 9 first so migration 9 is pending again and can
+      // actually execute.
+      await ds.undoLastMigration(); // 10
       await ds.undoLastMigration(); // 9
       await ds.query(`DROP TABLE processed_webhooks`);
       expect(await tableExists('processed_webhooks')).toBe(false);
@@ -1666,6 +2049,42 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
           WHERE i.indrelid = 'processed_webhooks'::regclass AND i.indisprimary`,
       );
       expect(legacyPk.map((r: { attname: string }) => r.attname)).toEqual(['id']);
+    });
+
+    it('M8. migration 10 accepts `retryable` and its down() translates it back', async () => {
+      const app = buildApp();
+
+      // The widened CHECK admits the new outcome.
+      await ds.query(
+        `INSERT INTO webhook_events
+           (provider, "eventId", "eventType", "payloadHash", status, outcome)
+         VALUES ('mock-egypt-gateway', 'evt-r2', 'payment.succeeded', 'hash',
+                 'retryable', 'effect_failed')`,
+      );
+      const row = await app.webhookRepo.findOne({
+        where: { provider: 'mock-egypt-gateway', eventId: 'evt-r2' },
+      });
+      expect(row!.status).toBe('retryable');
+
+      // The CHECK is the one migration 10 manages.
+      const check = await ds.query(
+        `SELECT pg_get_constraintdef(oid) AS def FROM pg_constraint
+          WHERE conname = 'chk_webhook_events_status'`,
+      );
+      expect(check[0].def).toContain('retryable');
+
+      // down() translates retryable -> received so the narrowed CHECK holds.
+      await ds.undoLastMigration(); // 10
+      const reverted = await app.webhookRepo.findOne({
+        where: { provider: 'mock-egypt-gateway', eventId: 'evt-r2' },
+      });
+      expect(reverted!.status).toBe('received');
+
+      await applyP4_2();
+      const reapplied = await app.webhookRepo.findOne({
+        where: { provider: 'mock-egypt-gateway', eventId: 'evt-r2' },
+      });
+      expect(reapplied!.status).toBe('received');
     });
   });
 

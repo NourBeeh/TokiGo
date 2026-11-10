@@ -20,8 +20,14 @@ import {
 import { routesForMarket } from './payment.gateway';
 import { Booking } from '../bookings/booking.entity';
 import { WebhookEvent } from '../../database/entities/webhook-event.entity';
+import {
+  WEBHOOK_EVENT_FINAL_STATUSES,
+  WEBHOOK_EVENT_RETRYABLE_STATUSES,
+} from '../../database/entities/webhook-event.entity';
 import { PaymentAttempt } from '../../database/entities/payment-attempt.entity';
 import { ProcessedWebhook } from '../../database/entities/processed_webhook.entity';
+import { InvalidPaymentAttemptTransitionError } from './payment-attempt.state';
+import { PaymentIntent } from './payment.gateway';
 
 /** How long a concurrent retry waits for the winning request's gateway ref. */
 const CLAIM_WAIT_MS = 1000;
@@ -611,18 +617,33 @@ export class PaymentService {
       return { status: 'REJECTED' as const, reason: 'duplicate_event' };
     }
 
-    // Authoritative provider state — NOT payload.type.
-    let authoritative = await gateway.retrievePayment(payload.paymentId);
+    // --- provider retrieval. No transaction is open here. ------------------
+    // A lookup failure is NOT proof that the payment failed; it is a transient
+    // condition, so the event stays retryable.
+    let authoritative: PaymentIntent | null = null;
+    try {
+      authoritative = await gateway.retrievePayment(payload.paymentId);
+    } catch {
+      await this.markWebhookEvent(
+        provider,
+        payload.id,
+        'retryable',
+        'gateway_unavailable',
+      );
+      return { status: 'REJECTED' as const, reason: 'gateway_unavailable' };
+    }
+
+    // The provider may simply not know the payment yet (event ordering). That is
+    // timing, not a verdict — a later delivery must be able to retry.
     if (!authoritative) {
-      await this.markWebhookEvent(provider, payload.id, 'ignored', 'payment_not_found');
-      await this.recordLegacyEvent(payload.id);
+      await this.markWebhookEvent(provider, payload.id, 'retryable', 'payment_not_found');
       return { status: 'REJECTED' as const, reason: 'unknown_payment' };
     }
 
     const attempt = await this.attempts.findByGatewayRef(provider, payload.paymentId);
     if (!attempt) {
-      await this.markWebhookEvent(provider, payload.id, 'ignored', 'attempt_not_found');
-      await this.recordLegacyEvent(payload.id);
+      // Not automatically permanent: the attempt may not be visible yet.
+      await this.markWebhookEvent(provider, payload.id, 'retryable', 'attempt_not_found');
       return { status: 'REJECTED' as const, reason: 'unknown_attempt' };
     }
 
@@ -634,20 +655,56 @@ export class PaymentService {
       const settle = (gateway as unknown as { settlePending?: (id: string) => unknown })
         .settlePending;
       if (typeof settle === 'function') {
-        settle.call(gateway, payload.paymentId);
-        authoritative = (await gateway.retrievePayment(payload.paymentId)) ?? authoritative;
+        try {
+          settle.call(gateway, payload.paymentId);
+          authoritative =
+            (await gateway.retrievePayment(payload.paymentId)) ?? authoritative;
+        } catch {
+          await this.markWebhookEvent(
+            provider,
+            payload.id,
+            'retryable',
+            'gateway_unavailable',
+          );
+          return { status: 'REJECTED' as const, reason: 'gateway_unavailable' };
+        }
       }
     }
 
-    // Amount/currency authority: the provider's state must still match the
-    // amount this attempt was created for. A contradiction is an ambiguity, so
-    // the event is refused rather than applied.
-    const amountMatches =
+    // --- amount/currency authority ---------------------------------------
+    // Distinguish an INCOMPLETE response from a CONFIRMED contradiction.
+    // A malformed value is not evidence of anything, so it is retryable; only a
+    // well-formed value that disagrees with the durable attempt is a permanent
+    // rejection. In neither case is a capture ever recorded.
+    const wellFormed =
       typeof authoritative.amount === 'number' &&
+      Number.isFinite(authoritative.amount) &&
+      typeof authoritative.currency === 'string';
+    if (!wellFormed) {
+      await this.markWebhookEvent(
+        provider,
+        payload.id,
+        'retryable',
+        'gateway_response_incomplete',
+      );
+      return {
+        status: 'REJECTED' as const,
+        reason: 'gateway_response_incomplete',
+        attemptId: attempt.id,
+        attemptStatus: attempt.status,
+      };
+    }
+    const amountMatches =
       Math.abs(authoritative.amount - attempt.amount) <= MONEY_TOLERANCE &&
       authoritative.currency === attempt.currency;
     if (!amountMatches) {
-      await this.markWebhookEvent(provider, payload.id, 'failed', 'gateway_amount_mismatch');
+      // The provider answered, and the answer contradicts the durable attempt.
+      await this.markWebhookEvent(
+        provider,
+        payload.id,
+        'failed',
+        'gateway_amount_mismatch',
+      );
       await this.recordLegacyEvent(payload.id);
       return {
         status: 'REJECTED' as const,
@@ -660,7 +717,8 @@ export class PaymentService {
     const target = statusFromGateway(authoritative.status);
 
     // Attempt state + ledger entry + event status + legacy archive commit
-    // atomically.
+    // atomically. If this rolls back, the event stays `received` and NOT
+    // archived, so a redelivery can complete the effect exactly once.
     try {
       await this.attempts.getManager().transaction(async em => {
         await this.attempts.transitionWithin(em, attempt.id, target);
@@ -687,23 +745,31 @@ export class PaymentService {
         await this.recordLegacyEvent(payload.id, em);
       });
     } catch (error) {
-      // The durable state contradicted the event (e.g. the attempt is terminal
-      // in a state that cannot reach `target`). Record the failure on the event
-      // so a redelivery cannot loop forever, and never invent a financial fact.
-      try {
+      if (error instanceof InvalidPaymentAttemptTransitionError) {
+        // PERMANENT: the durable attempt state cannot reach the event's
+        // outcome (e.g. a late failure event for a succeeded payment). A
+        // redelivery must never downgrade it, so it is archived as rejected.
         await this.markWebhookEvent(
           provider,
           payload.id,
           'failed',
-          safeFailureCode(error),
+          'attempt_state_conflict',
         );
         await this.recordLegacyEvent(payload.id);
-      } catch {
-        // A failed bookkeeping update must not mask the original rejection.
+        return {
+          status: 'REJECTED' as const,
+          reason: 'attempt_state_conflict',
+          attemptId: attempt.id,
+          attemptStatus: attempt.status,
+        };
       }
+      // TRANSIENT: the effect did not commit (deadlock, connection drop, lock
+      // timeout, …). Leave the event retryable and do NOT archive it — a
+      // redelivery must be able to finish the job.
+      await this.markWebhookEvent(provider, payload.id, 'retryable', 'effect_failed');
       return {
         status: 'REJECTED' as const,
-        reason: 'effect_rejected',
+        reason: 'effect_retryable',
         attemptId: attempt.id,
         attemptStatus: attempt.status,
       };
@@ -734,9 +800,9 @@ export class PaymentService {
 
   /**
    * Claim the event. The first delivery inserts `received`; a redelivery of an
-   * event that is still `received`/`failed` is allowed to retry (so a crash
-   * before the effect is applied is recoverable), while `processed`/`ignored`
-   * is a hard duplicate.
+   * event that is still `received` or explicitly `retryable` is allowed to try
+   * again (so a transient failure is recoverable), while `processed`, `failed`
+   * and `ignored` are settled outcomes and hard duplicates.
    */
   private async claimWebhookEvent(
     provider: string,
@@ -763,24 +829,34 @@ export class PaymentService {
           where: { provider, eventId },
         });
         if (!existing) throw error;
-        if (existing.status === 'processed' || existing.status === 'ignored') {
+        if ((WEBHOOK_EVENT_FINAL_STATUSES as readonly string[]).includes(existing.status)) {
           return { state: 'duplicate', event: existing };
         }
+        // `received` or `retryable` — not settled, so a redelivery may retry.
         return { state: 'retry', event: existing };
       }
       throw error;
     }
   }
 
+  /**
+   * Record an event outcome.
+   *
+   * `processedAt` is only meaningful for a RESOLVED event, so it is left null
+   * for `retryable` — an event that has not settled was not "processed".
+   */
   private async markWebhookEvent(
     provider: string,
     eventId: string,
-    status: 'processed' | 'failed' | 'ignored',
+    status: 'processed' | 'retryable' | 'failed' | 'ignored',
     outcome: string,
   ): Promise<void> {
+    const resolved = status !== 'retryable';
     await this.webhookEvents.update(
       { provider, eventId },
-      { status, outcome, processedAt: new Date() },
+      resolved
+        ? { status, outcome, processedAt: new Date() }
+        : { status, outcome },
     );
   }
 

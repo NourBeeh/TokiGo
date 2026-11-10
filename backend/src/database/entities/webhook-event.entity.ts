@@ -18,9 +18,37 @@ import {
  * processing `status` records how far the event got; it is deliberately NOT a
  * payment state — marking an arbitrary webhook as a successful payment is a
  * state-specific validation that belongs to payment orchestration (P4-2+).
+ *
+ * P4-2R2 — three distinguishable outcomes:
+ *
+ *   received   claimed, no effect attempted yet (in flight)
+ *   retryable  TRANSIENT failure — not resolved, redelivery retries it, and it
+ *              is NEVER written to the legacy archive
+ *   processed  the payment transition and ledger effect committed
+ *   failed     PERMANENT rejection — a confirmed contradiction; archived
+ *   ignored    retained for pre-P4-2R2 rows; no longer written
  */
-export const WEBHOOK_EVENT_STATUSES = ['received', 'processed', 'failed', 'ignored'] as const;
+export const WEBHOOK_EVENT_STATUSES = [
+  'received',
+  'retryable',
+  'processed',
+  'failed',
+  'ignored',
+] as const;
 export type WebhookEventStatus = (typeof WEBHOOK_EVENT_STATUSES)[number];
+
+/**
+ * Statuses that mean "this event is settled; a redelivery must not touch it".
+ * `retryable` and `received` are deliberately absent.
+ */
+export const WEBHOOK_EVENT_FINAL_STATUSES = ['processed', 'failed', 'ignored'] as const;
+
+/**
+ * Statuses that mean "this event may be attempted again".
+ * A `retryable` event keeps its diagnostic `outcome` so an operator can see why
+ * it has not settled, but it is NOT archived as processed.
+ */
+export const WEBHOOK_EVENT_RETRYABLE_STATUSES = ['received', 'retryable'] as const;
 
 @Entity('webhook_events')
 export class WebhookEvent {
@@ -40,7 +68,7 @@ export class WebhookEvent {
   @Column({ type: 'varchar' })
   payloadHash!: string;
 
-  /** received | processed | failed | ignored. */
+  /** received | retryable | processed | failed | ignored. */
   @Column({ type: 'varchar', default: 'received' })
   status!: WebhookEventStatus;
 
