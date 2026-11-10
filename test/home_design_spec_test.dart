@@ -88,10 +88,9 @@ void main() {
       expect(halo.blurRadius, 20);
       expect(halo.offset, const Offset(0, 4));
       expect(halo.color, const Color(0x1A111111));
-      expect(decoration.border, isA<Border>());
-      final Border boxBorder = decoration.border! as Border;
-      expect(boxBorder.top.color, border);
-      expect(boxBorder.top.width, 1);
+      // Owner decision (2026-11): the composer is a FLOATING pill — its edge
+      // comes from the halo below, not from a 1dp border.
+      expect(decoration.border, isNull);
       expect(
         decoration.borderRadius,
         equals(BorderRadius.circular(32)),

@@ -224,22 +224,6 @@ class SettingsPage extends ConsumerWidget {
                         ],
                       ),
 
-                      // ---- Danger zone ---------------------------------
-                      if (user != null) ...<Widget>[
-                        _GroupHeader(label: l10n.settingsDangerZone),
-                        _GroupCard(
-                          children: <Widget>[
-                            _SettingsRow(
-                              icon: Icons.logout_rounded,
-                              label: l10n.signOut,
-                              labelColor: context.tokigoColors.danger,
-                              onTap: () => ref
-                                  .read(authControllerProvider.notifier)
-                                  .logout(),
-                            ),
-                          ],
-                        ),
-                      ],
                     ],
                   ),
                 ),

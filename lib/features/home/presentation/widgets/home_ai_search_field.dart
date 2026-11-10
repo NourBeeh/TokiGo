@@ -141,12 +141,9 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
           color: HomeDesignTokens.surfaceOf(context),
           // Fully rounded: a 32 radius on a 56dp-tall box is a stadium.
           borderRadius: BorderRadius.circular(32),
-          border: Border.all(
-            color: HomeDesignTokens.borderOf(context),
-            width: 1,
-          ),
-          // The pill floats over the feed, so it carries its own soft halo
-          // instead of the flat "no shadow" treatment a card gets.
+          // Owner decision (2026-11): the composer is a FLOATING pill — its
+          // edge comes from the soft halo below, not from a 1dp border, so it
+          // reads as hovering over the feed instead of being boxed into it.
           boxShadow: HomeDesignTokens.composerShadowOf(context),
         ),
         child: Padding(

@@ -105,12 +105,13 @@ void main() {
     final Rect viewport = tester.getRect(find.byType(PageView));
     final Rect firstCard = tester.getRect(find.byType(HomeStayCard).first);
     final Rect nextCard = tester.getRect(find.byType(HomeStayCard).last);
-    expect(firstCard.width, closeTo(viewport.width * 0.8 - 12, 1));
-    expect(nextCard.left - firstCard.right, closeTo(12, 1));
-    expect(
-      nextCard.intersect(viewport).width,
-      closeTo(viewport.width * 0.2, 1),
-    );
+    // Owner decision (2026-11): the stay rail shares the Discover rail's
+    // centred cover flow, so the focal card is centred and the next card's
+    // inner edge sits flush against it.
+    expect(firstCard.center.dx, closeTo(viewport.center.dx, 1));
+    expect(firstCard.width, closeTo(viewport.width * 0.8, 1));
+    expect(nextCard.left, closeTo(firstCard.right, 1));
+    expect(nextCard.intersect(viewport).width, greaterThan(0));
     expect(firstCard.width, greaterThan(300));
     expect(tester.takeException(), isNull);
   });

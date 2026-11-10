@@ -270,7 +270,7 @@ class HomeSectionWidget extends StatelessWidget {
         ? items.first.type
         : HomeCardType.hotel;
     if (primaryType == HomeCardType.hotel) {
-      // The hotel rail keeps [HomeStaysCarousel] unchanged.
+      // The hotel rail shares the Discover rail's 3D cover flow.
       return HomeStaysCarousel(
         items: items,
         viewportFraction: 0.8,

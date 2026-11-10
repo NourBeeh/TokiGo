@@ -50,9 +50,9 @@ class AppPageHeader extends StatelessWidget {
 
   /// Whether the header draws the back control itself.
   ///
-  /// Hosts that own a travelling control ([DetachedBackButton]) pass `false`:
-  /// the row keeps its height (and [trailing]) so the title rhythm never
-  /// shifts, while the detached control renders over the reserved space.
+  /// The header owns the one back control of the page (owner decision,
+  /// 2026-11): it is always visible, so no floating copy is drawn over the
+  /// scrolling content.
   final bool showBackButton;
 
   /// Where the back control lands when the route cannot pop — see

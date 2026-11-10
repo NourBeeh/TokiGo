@@ -7,7 +7,6 @@ import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_button.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/ask_assistant_card.dart';
-import 'package:tokigo/core/widgets/detached_back_button.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
 
@@ -99,7 +98,10 @@ class SearchScaffold extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[?headerActions],
               ),
-              showBackButton: false,
+              // Owner decision (2026-11): the back control lives in the header
+              // only. There is no floating copy that appears on scroll — the
+              // header is always visible, so a second control is redundant.
+              showBackButton: true,
             ),
           ),
           SliverPadding(
@@ -137,11 +139,7 @@ class SearchScaffold extends StatelessWidget {
       body: SafeArea(
         // `bottom: false` left the results' last row under the Android
         // navigation bar (the pill it was written for is gone).
-        child: DetachedBackButton(
-          // The header no longer draws the back control: the detaching one
-          // does, and it stays reachable once the header scrolls away.
-          child: scrollView,
-        ),
+        child: scrollView,
       ),
     );
   }

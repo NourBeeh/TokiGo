@@ -199,13 +199,18 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                             ),
                             if (_avatarBytes != null ||
                                 _avatarCtrl.text.startsWith('data:'))
-                              const PositionedDirectional(
+                              PositionedDirectional(
                                 bottom: 0,
                                 start: 0,
                                 child: CircleAvatar(
                                   radius: 12,
-                                  backgroundColor: Colors.green,
-                                  child: Icon(Icons.check, size: 14, color: Colors.white),
+                                  backgroundColor:
+                                      context.tokigoColors.successStrong,
+                                  child: const Icon(
+                                    Icons.check,
+                                    size: 14,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                           ],

@@ -70,21 +70,28 @@ class _SearchHero extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
-        color: context.tokigoColors.brand,
+        // Owner decision (2026-11): the hero follows Home's neutral surface
+        // language — a white card with a hairline border, not a brand-blue
+        // block — so the search surface reads as the same calm, content-first
+        // dashboard as Home.
+        color: context.tokigoColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: context.tokigoColors.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
             l10n.searchPromptTitle,
-            style: typography.headline.copyWith(color: Colors.white),
+            style: typography.headline.copyWith(
+              color: context.tokigoColors.textPrimary,
+            ),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             l10n.searchPromptSubtitle,
             style: typography.body.copyWith(
-              color: Colors.white.withValues(alpha: 0.9),
+              color: context.tokigoColors.textSecondary,
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
@@ -136,7 +143,9 @@ class _HeroSearchField extends StatelessWidget {
       label: l10n.searchHint,
       child: Pressable.wrap(
         child: Material(
-          color: Colors.white,
+          // An inset well on the white hero card, so the field reads as an
+          // input rather than a second white card.
+          color: context.tokigoColors.surfaceSecondary,
           borderRadius: BorderRadius.circular(AppRadius.md),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
@@ -151,7 +160,7 @@ class _HeroSearchField extends StatelessWidget {
                 Icon(
                   Icons.search_rounded,
                   size: 22,
-                  color: context.tokigoColors.brand,
+                  color: context.tokigoColors.textPrimary,
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
@@ -165,13 +174,13 @@ class _HeroSearchField extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.sm),
                   decoration: BoxDecoration(
-                    color: context.tokigoColors.brandContainer,
+                    color: context.tokigoColors.surfaceTertiary,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Icon(
                     Icons.arrow_forward_rounded,
                     size: 16,
-                    color: context.tokigoColors.brand,
+                    color: context.tokigoColors.textPrimary,
                   ),
                 ),
               ],
@@ -214,15 +223,21 @@ class _HeroQuickLink extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: context.tokigoColors.surfaceSecondary,
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
-              child: Icon(icon, size: 22, color: Colors.white),
+              child: Icon(
+                icon,
+                size: 22,
+                color: context.tokigoColors.textPrimary,
+              ),
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               label,
-              style: typography.captionSemibold.copyWith(color: Colors.white),
+              style: typography.captionSemibold.copyWith(
+                color: context.tokigoColors.textPrimary,
+              ),
             ),
           ],
         ),
@@ -260,29 +275,21 @@ class _ServiceGrid extends StatelessWidget {
             _ServiceTile(
               label: l10n.searchFlights,
               icon: Icons.flight_takeoff_rounded,
-              color: AppColors.flightHue,
-              colorContainer: AppColors.flightContainer,
               onTap: () => context.go(AppRoute.flights.path),
             ),
             _ServiceTile(
               label: l10n.searchHotels,
               icon: Icons.house_rounded,
-              color: AppColors.hotelHue,
-              colorContainer: AppColors.hotelContainer,
               onTap: () => context.go(AppRoute.hotels.path),
             ),
             _ServiceTile(
               label: l10n.searchCars,
               icon: Icons.directions_car_rounded,
-              color: AppColors.carHue,
-              colorContainer: AppColors.carContainer,
               onTap: () => context.go(AppRoute.cars.path),
             ),
             _ServiceTile(
               label: l10n.searchPackages,
               icon: Icons.card_travel_rounded,
-              color: AppColors.packageHue,
-              colorContainer: AppColors.packageContainer,
               onTap: () => context.go(AppRoute.packages.path),
             ),
           ],
@@ -296,15 +303,11 @@ class _ServiceTile extends StatelessWidget {
   const _ServiceTile({
     required this.label,
     required this.icon,
-    required this.color,
-    required this.colorContainer,
     required this.onTap,
   });
 
   final String label;
   final IconData icon;
-  final Color color;
-  final Color colorContainer;
   final VoidCallback onTap;
 
   @override
@@ -330,10 +333,17 @@ class _ServiceTile extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.sm),
                   decoration: BoxDecoration(
-                    color: colorContainer,
+                    // Owner decision (2026-11): the service tiles use Home's
+                    // neutral quick-action language — a grey well with an ink
+                    // glyph — instead of the retired per-vertical hues.
+                    color: context.tokigoColors.surfaceSecondary,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
-                  child: Icon(icon, size: 22, color: color),
+                  child: Icon(
+                    icon,
+                    size: 22,
+                    color: context.tokigoColors.textPrimary,
+                  ),
                 ),
                 const Spacer(),
                 Text(

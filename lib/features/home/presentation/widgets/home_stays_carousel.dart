@@ -3,21 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
+import 'package:tokigo/features/home/presentation/widgets/cover_flow_carousel.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stay_card.dart';
 
 /// Home's "Hotels recommended for you" rail (owner decision, 2026-10-25).
 ///
-/// It used to be a vertical stack of full-width cards: the traveller had to
-/// scroll past every stay to reach the rest of the feed. It is now a SWIPE
-/// pager — one stay per page, snapped card by card, with the next stay peeking
-/// at the edge (the only affordance that says "swipe me" without a tutorial).
+/// Owner decision (2026-11): the rail shares the Discover rail's 3D
+/// **cover-flow** mechanics — ONE stay centred in the viewport with its
+/// neighbours peeking on both sides, tilted in 3D — instead of the flat,
+/// leading-aligned pager it used to be. Both rails now run the same
+/// [CoverFlowCarousel], so the swipe feel is identical across the feed.
 ///
 /// Every stay is the same structured [HomeStayCard] used by the results page
 /// and AI answer, with room below its photo for the hotel's decision facts.
 ///
-/// The pager is a fixed-height box by nature, so the height is derived from
-/// the image and information panel and grows with the traveller's text scale.
-class HomeStaysCarousel extends StatefulWidget {
+/// The rail is a fixed-height box by nature, so the height is derived from the
+/// image and information panel and grows with the traveller's text scale.
+class HomeStaysCarousel extends StatelessWidget {
   const HomeStaysCarousel({
     super.key,
     required this.items,
@@ -33,7 +35,7 @@ class HomeStaysCarousel extends StatefulWidget {
   final List<HomeItem> items;
 
   /// Width of one page as a fraction of the rail's width. A little under the
-  /// full width so the next stay peeks — the only affordance that says
+  /// full width so the neighbouring stay peeks — the only affordance that says
   /// "swipe me" without a tutorial.
   final double viewportFraction;
 
@@ -51,10 +53,10 @@ class HomeStaysCarousel extends StatefulWidget {
 
   /// Skeleton state — the SAME rail with placeholder cards.
   ///
-  /// The rail's height, page width, page fraction and trailing gap are read
-  /// from the same fields the loaded rail uses, so a loading feed occupies
-  /// exactly the space the real stays will. One page only: pretending there
-  /// are stays to swipe before any exists would be a lie.
+  /// The rail's height, page width and page fraction are read from the same
+  /// fields the loaded rail uses, so a loading feed occupies exactly the space
+  /// the real stays will. One page only: pretending there are stays to swipe
+  /// before any exists would be a lie.
   final bool loading;
 
   /// A city sheet's content budget at the default text scale: name, place,
@@ -78,7 +80,11 @@ class HomeStaysCarousel extends StatefulWidget {
       HomeCardDimensions.staySheetTextHeight;
 
   /// Breathing room so rounding never turns into a clipped price.
-  static const double _sheetSlack = 8;
+  ///
+  /// The card fills its page edge-to-edge now that the rail is a cover flow
+  /// (the old leading-aligned pager left a 12dp trailing gap), so the photo is
+  /// wider and the sheet needs the extra slack to stay inside the rail.
+  static const double _sheetSlack = 24;
 
   /// The rail's card height for a page of [pageWidth] at [textScale].
   static double cardHeightFor(
@@ -111,75 +117,45 @@ class HomeStaysCarousel extends StatefulWidget {
       MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 2.0);
 
   @override
-  State<HomeStaysCarousel> createState() => _HomeStaysCarouselState();
-}
-
-class _HomeStaysCarouselState extends State<HomeStaysCarousel> {
-  late final PageController _controller = PageController(
-    viewportFraction: widget.viewportFraction,
-  );
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final double pageWidth = constraints.maxWidth * widget.viewportFraction;
+        final double pageWidth = constraints.maxWidth * viewportFraction;
         final double height = HomeStaysCarousel.cardHeightFor(
           pageWidth,
           HomeStaysCarousel._textScaleOf(context),
-          sheetTextHeight: widget.sheetTextHeight,
+          sheetTextHeight: sheetTextHeight,
         );
 
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            SizedBox(
-              height: height,
-              child: PageView.builder(
-                controller: _controller,
-                itemCount: widget.loading ? 1 : widget.items.length,
-                padEnds: false,
-                itemBuilder: (BuildContext context, int index) {
-                  // The page box is already the card's exact width, and the
-                  // card fills it; the height is the rail height, so every
-                  // card in the rail ends on the same line.
-                  final Widget card = widget.loading
-                      ? HomeStayCard.loading(
-                          margin: EdgeInsets.zero,
-                          aspectRatio: HomeStaysCarousel.mediaAspectRatio,
-                        )
-                      : widget.itemBuilder?.call(context, widget.items[index]) ??
-                          HomeStayCard(
-                            item: widget.items[index],
-                            margin: EdgeInsets.zero,
-                            aspectRatio: HomeStaysCarousel.mediaAspectRatio,
-                            onTap: widget.onItemTap == null
-                                ? null
-                                : () => widget.onItemTap!(widget.items[index]),
-                          );
-                  return KeyedSubtree(
-                    key: ValueKey<String>(
-                      widget.loading
-                          ? 'home-stays-skeleton'
-                          : widget.items[index].id,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsetsDirectional.only(
-                        end: AppSpacing.md,
-                      ),
-                      child: card,
-                    ),
-                  );
-                },
+        return CoverFlowCarousel(
+          itemCount: loading ? 1 : items.length,
+          height: height,
+          viewportFraction: viewportFraction,
+          itemBuilder: (BuildContext context, int index) {
+            // The page box is already the card's exact width, and the card
+            // fills it; the height is the rail height, so every card in the
+            // rail ends on the same line.
+            final Widget card = loading
+                ? HomeStayCard.loading(
+                    margin: EdgeInsets.zero,
+                    aspectRatio: HomeStaysCarousel.mediaAspectRatio,
+                  )
+                : itemBuilder?.call(context, items[index]) ??
+                    HomeStayCard(
+                      item: items[index],
+                      margin: EdgeInsets.zero,
+                      aspectRatio: HomeStaysCarousel.mediaAspectRatio,
+                      onTap: onItemTap == null
+                          ? null
+                          : () => onItemTap!(items[index]),
+                    );
+            return KeyedSubtree(
+              key: ValueKey<String>(
+                loading ? 'home-stays-skeleton' : items[index].id,
               ),
-            ),
-          ],
+              child: card,
+            );
+          },
         );
       },
     );

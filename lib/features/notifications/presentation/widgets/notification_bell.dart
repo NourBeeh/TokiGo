@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/features/notifications/domain/app_notification.dart';
 import 'package:tokigo/features/notifications/providers/notifications_providers.dart';
@@ -30,8 +31,10 @@ class AnimatedNotificationBell extends ConsumerStatefulWidget {
     this.iconSize = 25,
   });
 
-  /// The project accent used by the flash (`#B22234`).
-  static const Color flashColor = Color(0xFFB22234);
+  /// The accent used by the flash — the palette's `danger` role, so the bell
+  /// never carries a colour the rest of the app does not own.
+  static Color flashColorOf(BuildContext context) =>
+      context.tokigoColors.danger;
 
   /// Opens the notifications surface.
   final VoidCallback onTap;
@@ -177,7 +180,7 @@ class _AnimatedNotificationBellState
                     final double flash = _flash.value;
                     final Color glyphColor = Color.lerp(
                       widget.normalColor,
-                      AnimatedNotificationBell.flashColor.withValues(
+                      AnimatedNotificationBell.flashColorOf(context).withValues(
                         alpha: 0.88,
                       ),
                       flash,
@@ -206,7 +209,9 @@ class _AnimatedNotificationBellState
                               child: Icon(
                                 Icons.notifications_rounded,
                                 size: widget.iconSize,
-                                color: AnimatedNotificationBell.flashColor,
+                                color: AnimatedNotificationBell.flashColorOf(
+                                  context,
+                                ),
                               ),
                             ),
                           ],
@@ -245,7 +250,7 @@ class _UnreadBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 3),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: AnimatedNotificationBell.flashColor,
+        color: AnimatedNotificationBell.flashColorOf(context),
         borderRadius: BorderRadius.circular(7),
       ),
       child: Text(
