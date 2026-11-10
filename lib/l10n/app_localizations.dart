@@ -251,6 +251,30 @@ abstract class AppLocalizations {
   /// **'Where do you want to go?'**
   String get aiSearchSheetHint;
 
+  /// No description provided for @askAssistantTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask your assistant'**
+  String get askAssistantTitle;
+
+  /// No description provided for @askAssistantSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Need help choosing? Compare these options with AI'**
+  String get askAssistantSubtitle;
+
+  /// No description provided for @askAssistantFlightPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Help me choose between these flight results from {origin} to {destination} on {date}'**
+  String askAssistantFlightPrompt(String origin, String destination, String date);
+
+  /// No description provided for @askAssistantHotelPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Help me choose between these hotel results in {destination} from {checkIn} to {checkOut}'**
+  String askAssistantHotelPrompt(String destination, String checkIn, String checkOut);
+
   /// No description provided for @aiSearchNoSuggestions.
   ///
   /// In en, this message translates to:
@@ -2824,6 +2848,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Direct'**
   String get filterDirect;
+
+  /// No description provided for @filterDirectOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct only'**
+  String get filterDirectOnly;
 
   /// No description provided for @filterAny.
   ///

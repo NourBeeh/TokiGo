@@ -26,6 +26,24 @@
   "aiHintPhrase2": "إلى أين تريد السفر؟",
   "aiHintPhrase3": "فنادق في إستنبول؟ رحلات إلى القاهرة؟",
   "aiSearchSheetHint": "عايز تسافر فين؟",
+  "askAssistantTitle": "اسأل مساعدك",
+  "askAssistantSubtitle": "محتاج مساعدة في الاختيار؟ قارن الخيارات بالذكاء الاصطناعي",
+  "askAssistantFlightPrompt": "ساعدني في الاختيار بين نتائج الرحلات هذه من {origin} إلى {destination} في {date}",
+  "@askAssistantFlightPrompt": {
+    "placeholders": {
+      "origin": {"type": "String"},
+      "destination": {"type": "String"},
+      "date": {"type": "String"}
+    }
+  },
+  "askAssistantHotelPrompt": "ساعدني في الاختيار بين نتائج الفنادق هذه في {destination} من {checkIn} إلى {checkOut}",
+  "@askAssistantHotelPrompt": {
+    "placeholders": {
+      "destination": {"type": "String"},
+      "checkIn": {"type": "String"},
+      "checkOut": {"type": "String"}
+    }
+  },
   "aiSearchNoSuggestions": "مفيش اقتراحات دلوقتي. جرب صيغة تانية.",
   "aiSearchError": "حدث خطأ ما. حاول مرة أخرى.",
   "aiSearchSuggestions": "اقتراحات",
@@ -492,6 +510,7 @@
   "filterGuestScore": "تقييم النزلاء",
   "filterStops": "الوقفات",
   "filterDirect": "مباشر",
+  "filterDirectOnly": "مباشر فقط",
   "filterAny": "أي",
   "filterAirlines": "شركات الطيران",
   "flightIdleTitle": "دوّر على رحلتك",

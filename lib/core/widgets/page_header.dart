@@ -66,9 +66,9 @@ class AppPageHeader extends StatelessWidget {
 
   /// Whether the whole header is rendered.
   ///
-  /// The six top-level sections pass `false` while the persistent shell chrome
-  /// is on screen: their navigation bar already identifies the section, so a
-  /// second back control or description would be redundant.
+  /// The six top-level sections used to pass `false` while the persistent
+  /// shell chrome was on screen. They are now standalone pages, so the header
+  /// (and its back control) is always visible.
   final bool visible;
 
   @override

@@ -4,34 +4,33 @@ import 'package:tokigo/core/theme/tokigo_colors.dart';
 
 /// The Home surface's own palette — the owner's Home design spec.
 ///
-/// These are **Home-scoped** values, deliberately not app theme tokens: the
-/// app's global palette stays white/ink ([TokiGoColors]) and Home is the one
-/// surface carrying this warm, red-accented identity. Nothing here is wired
-/// into [ThemeData], so no other screen can pick these up by accident.
+/// These are **Home-scoped** values, deliberately not app theme tokens: they
+/// resolve against the shared [TokiGoColors] roles in dark mode so Home stays
+/// legible on the dark canvas rather than painting the light palette over it.
+/// The light values follow the same Instagram-inspired identity as the rest of
+/// the app (blue accent, neutral surfaces, hairline borders).
 ///
 /// The spec is a light-mode design. In dark mode each *role* resolves to the
-/// active [TokiGoColors] value instead, so Home stays legible on the dark
-/// canvas rather than painting light-mode beige over it.
+/// active [TokiGoColors] value instead.
 @immutable
 abstract final class HomeDesignTokens {
-  /// Home canvas.
-  static const Color background = Color(0xFFFAF8F5);
+  /// Home canvas (Instagram-inspired light neutral).
+  static const Color background = Color(0xFFFAFAFA);
 
   /// Fill for a raised Home surface (search field, quick-action card).
   static const Color surface = Color(0xFFFFFFFF);
 
   /// Home accent — the leading search glyph, the card icons and their labels.
   ///
-  /// Action Ink `#111111` (the DESIGN.md action-ink token), NOT a red: the
-  /// service shortcuts are monochrome, and the same near-black keeps a 12pt
-  /// label above 4.5:1 on the white tile in both themes.
-  static const Color accent = Color(0xFF111111);
+  /// The Instagram-inspired brand blue `#0064E0`, so Home reads as part of the
+  /// same identity as every other surface (5.4:1 against white).
+  static const Color accent = Color(0xFF0064E0);
 
   /// Search placeholder ink.
-  static const Color hint = Color(0xFF757575);
+  static const Color hint = Color(0xFF8E8E8E);
 
   /// 1dp border on the search field and the quick-action cards.
-  static const Color border = Color(0xFFE0DCD6);
+  static const Color border = Color(0xFFDBDBDB);
 
   /// The canvas Home paints behind its chrome.
   static Color backgroundOf(BuildContext context) =>

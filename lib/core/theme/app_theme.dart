@@ -11,12 +11,12 @@ import 'app_typography.dart';
 import 'tokigo_colors.dart';
 import 'package:tokigo/core/navigation/app_transitions.dart';
 
-/// Builds the central light-only [ThemeData] for TokiGo.
+/// Builds the central light [ThemeData] for TokiGo.
 ///
-/// "Pure White": a pure white canvas, hairline borders and the two-stop halo
-/// shadow. There is **no accent hue** — a primary action is ink, and the only
+/// "Clean Light": a near-white canvas, hairline borders, the Instagram-inspired
+/// brand blue for primary actions, and the two-stop halo shadow. The only other
 /// colours in the [ColorScheme] are semantic (error and the feedback roles).
-/// There is intentionally no dark variant.
+/// The dark variant lives in [dark].
 @immutable
 abstract final class AppTheme {
   /// System chrome for the light-only canvas.

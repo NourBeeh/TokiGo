@@ -2,6 +2,15 @@ class SearchFilters {
   final double? priceMin;
   final double? priceMax;
   final int? maxStops;
+
+  /// Restrict the flight list to **non-stop** flights only.
+  ///
+  /// It is a post-filter on the provider-returned list (like every other
+  /// filter) and never triggers a new search. It is deliberately separate
+  /// from [maxStops]: `maxStops` is the "up to N stops" ladder, while this is
+  /// the explicit "no stops at all" switch the flight form used to carry.
+  final bool directOnly;
+
   final double? minRating;
 
   /// Minimum hotel **star class** (1-5, the provider's own classification) —
@@ -24,6 +33,7 @@ class SearchFilters {
     this.priceMin,
     this.priceMax,
     this.maxStops,
+    this.directOnly = false,
     this.minRating,
     this.minStars,
     this.minSeats,
@@ -42,6 +52,7 @@ class SearchFilters {
     Object? priceMin = _unset,
     Object? priceMax = _unset,
     Object? maxStops = _unset,
+    Object? directOnly = _unset,
     Object? minRating = _unset,
     Object? minStars = _unset,
     Object? minSeats = _unset,
@@ -59,6 +70,9 @@ class SearchFilters {
           ? this.priceMax
           : (priceMax as num?)?.toDouble(),
       maxStops: identical(maxStops, _unset) ? this.maxStops : maxStops as int?,
+      directOnly: identical(directOnly, _unset)
+          ? this.directOnly
+          : directOnly as bool,
       minRating: identical(minRating, _unset)
           ? this.minRating
           : (minRating as num?)?.toDouble(),
@@ -99,6 +113,7 @@ class SearchFilters {
       priceMin == null &&
       priceMax == null &&
       maxStops == null &&
+      !directOnly &&
       minRating == null &&
       minStars == null &&
       minSeats == null &&

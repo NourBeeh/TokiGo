@@ -26,6 +26,24 @@
   "aiHintPhrase2": "Where do you want to go?",
   "aiHintPhrase3": "Hotels in Istanbul? Flights to Cairo?",
   "aiSearchSheetHint": "Where do you want to go?",
+  "askAssistantTitle": "Ask your assistant",
+  "askAssistantSubtitle": "Need help choosing? Compare these options with AI",
+  "askAssistantFlightPrompt": "Help me choose between these flight results from {origin} to {destination} on {date}",
+  "@askAssistantFlightPrompt": {
+    "placeholders": {
+      "origin": {"type": "String"},
+      "destination": {"type": "String"},
+      "date": {"type": "String"}
+    }
+  },
+  "askAssistantHotelPrompt": "Help me choose between these hotel results in {destination} from {checkIn} to {checkOut}",
+  "@askAssistantHotelPrompt": {
+    "placeholders": {
+      "destination": {"type": "String"},
+      "checkIn": {"type": "String"},
+      "checkOut": {"type": "String"}
+    }
+  },
   "aiSearchNoSuggestions": "No suggestions right now. Try a different prompt.",
   "aiSearchError": "Something went wrong. Please try again.",
   "aiSearchSuggestions": "Suggestions",
@@ -500,6 +518,7 @@
   "filterGuestScore": "Guest score",
   "filterStops": "Stops",
   "filterDirect": "Direct",
+  "filterDirectOnly": "Direct only",
   "filterAny": "Any",
   "filterAirlines": "Airlines",
   "flightIdleTitle": "Find your flight",

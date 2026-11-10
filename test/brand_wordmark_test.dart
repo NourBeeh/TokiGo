@@ -45,7 +45,7 @@ void main() {
 
       expect(styleOf(tester, 'Toki').color, AppColors.wordmarkInk);
       expect(styleOf(tester, 'Go').color, AppColors.brandRed);
-      expect(AppColors.wordmarkInk, AppColors.brand);
+      expect(AppColors.wordmarkInk, const Color(0xFF111111));
       expect(AppColors.brandRed, const Color(0xFFFF2D2D));
     });
 

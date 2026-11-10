@@ -257,18 +257,16 @@ class _PickerSheetState extends State<_PickerSheet> {
       return <PickerEntry>[...popular, ...rest];
     }
     final q = _normalize(_query);
-    return widget.entries
-        .where((e) {
-          final haystacks = <String>[
-            e.code,
-            e.name,
-            e.country ?? '',
-            e.countryCode ?? '',
-            ..._aliasesFor(e.code),
-          ];
-          return haystacks.any((h) => _normalize(h).contains(q));
-        })
-        .toList();
+    return widget.entries.where((e) {
+      final haystacks = <String>[
+        e.code,
+        e.name,
+        e.country ?? '',
+        e.countryCode ?? '',
+        ..._aliasesFor(e.code),
+      ];
+      return haystacks.any((h) => _normalize(h).contains(q));
+    }).toList();
   }
 
   static String _normalize(String value) {
@@ -342,7 +340,7 @@ class _PickerSheetState extends State<_PickerSheet> {
       padding: EdgeInsets.only(bottom: bottomInset),
       child: ConstrainedBox(
         // Cap the sheet at 85% of the height that is ACTUALLY available — the
-        // screen minus the keyboard. The shell's Scaffold already shortens the
+        // screen minus the keyboard. The host's Scaffold already shortens the
         // body when the keyboard is up (so the inset is 0 there), but the same
         // sheet can be opened from a root-navigator page, where the inset is
         // live; subtracting it here keeps both hosts overflow-free.
@@ -378,16 +376,13 @@ class _PickerSheetState extends State<_PickerSheet> {
                     TextField(
                       controller: _searchController,
                       onChanged: (v) => setState(() => _query = v),
-                      autofocus: true,
+                      autofocus: false,
                       decoration: InputDecoration(
                         prefixIcon: const Icon(Icons.search_rounded),
                         hintText: l10n?.pickerSearchHint ?? 'Search…',
                         suffixIcon: _query.isNotEmpty
                             ? IconButton(
-                                icon: const Icon(
-                                  Icons.close_rounded,
-                                  size: 18,
-                                ),
+                                icon: const Icon(Icons.close_rounded, size: 18),
                                 onPressed: () {
                                   _searchController.clear();
                                   setState(() => _query = '');
@@ -457,63 +452,63 @@ class _PickerTile extends StatelessWidget {
               horizontal: AppSpacing.lg,
               vertical: AppSpacing.md,
             ),
-          child: Row(
-            children: <Widget>[
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: context.tokigoColors.brandContainer,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                child: Center(
-                  child: Text(
-                    entry.code.length == 3
-                        ? entry.code
-                        : entry.code.substring(0, 2).toUpperCase(),
-                    style: typography.captionSemibold.copyWith(
-                      color: context.tokigoColors.brand,
+            child: Row(
+              children: <Widget>[
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: context.tokigoColors.brandContainer,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: Center(
+                    child: Text(
+                      entry.code.length == 3
+                          ? entry.code
+                          : entry.code.substring(0, 2).toUpperCase(),
+                      style: typography.captionSemibold.copyWith(
+                        color: context.tokigoColors.brand,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: Text(
-                            entry.name,
-                            style: typography.bodyLargeMedium.copyWith(
-                              color: context.tokigoColors.textPrimary,
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: Text(
+                              entry.name,
+                              style: typography.bodyLargeMedium.copyWith(
+                                color: context.tokigoColors.textPrimary,
+                              ),
                             ),
                           ),
-                        ),
-                        if (entry.isPopular)
-                          Icon(
-                            Icons.star_rounded,
-                            size: 14,
-                            color: context.tokigoColors.starFill,
-                          ),
-                      ],
-                    ),
-                    if (entry.country != null)
-                      Text(
-                        '${entry.country} · ${entry.code}',
-                        style: typography.caption.copyWith(
-                          color: context.tokigoColors.textTertiary,
-                        ),
+                          if (entry.isPopular)
+                            Icon(
+                              Icons.star_rounded,
+                              size: 14,
+                              color: context.tokigoColors.starFill,
+                            ),
+                        ],
                       ),
-                  ],
+                      if (entry.country != null)
+                        Text(
+                          '${entry.country} · ${entry.code}',
+                          style: typography.caption.copyWith(
+                            color: context.tokigoColors.textTertiary,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }

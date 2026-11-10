@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-/// Central colour palette for TokiGo — "Pure White" luxury.
+/// Central colour palette for TokiGo — "Clean Light", Instagram-inspired.
 ///
-/// A light-only identity on a **pure white canvas**: the app surface is white,
-/// and every card, sheet and bar is white too. Separation comes from LIGHT —
-/// a 1px hairline ([hairline]) plus the two-stop halo in `AppElevation` —
-/// never from a tinted background.
+/// A light identity on a **near-white canvas**: the app surface is #FAFAFA and
+/// cards/sheets are white. Separation comes from LIGHT — a 1px hairline
+/// ([hairline]) plus the two-stop halo in `AppElevation` — never from a tinted
+/// background. The accent is the brand blue [brand] (#0064E0), with a small
+/// purple→red→orange gradient reserved for the AI accents.
 ///
-/// **There is no accent hue.** The palette is white, ink and grey; the only
-/// colours left are semantic (success / warning / danger / info), and they are
+/// The remaining hues are semantic (success / warning / danger / info) and are
 /// state — never decoration. A rated star is ink ([starFill]); bronze/gold is
 /// gone at the root (owner decision, 2026-10-20).
 ///
@@ -17,53 +17,48 @@ import 'package:flutter/material.dart';
 @immutable
 abstract final class AppColors {
   // ---------------------------------------------------------------------------
-  // Action — the monochrome "brand" family.
+  // Action — the brand family.
   //
-  // The indigo is retired: a primary action is ink/charcoal and nothing in the
-  // chrome carries a hue. The names are kept because 30+ consumers read them as
-  // *intent* ("the app's own action colour"); the values are now monochrome.
-  // The wordmark keeps its own tokens ([brandRed], [wordmarkInk]) — the logo is
-  // not chrome.
+  // The brand is the Instagram-inspired blue #0064E0. The wordmark keeps its
+  // own tokens ([brandRed], [wordmarkInk]) — the logo is not chrome.
   // ---------------------------------------------------------------------------
-  static const Color brand = Color(0xFF111111);
+  static const Color brand = Color(0xFF0064E0);
   static const Color onBrand = Colors.white;
 
   /// Deeper step for pressed states and subtle depth.
-  static const Color brandDark = Color(0xFF000000);
+  static const Color brandDark = Color(0xFF0051B3);
 
   /// Lighter step (used where a brand tone sits on a dark fill / gradient).
-  static const Color brandLight = Color(0xFF1A1A1A);
+  static const Color brandLight = Color(0xFF3D8BEC);
 
-  static const Color brandContainer = Color(0xFFF5F5F5);
-  static const Color onBrandContainer = Color(0xFF111111);
+  static const Color brandContainer = Color(0xFFE7F3FE);
+  static const Color onBrandContainer = Color(0xFF005A9E);
 
   // ---------------------------------------------------------------------------
   // Ink primitives
   // ---------------------------------------------------------------------------
   /// The loudest ink — primary buttons, display type.
-  static const Color ink = Color(0xFF111111);
+  static const Color ink = Color(0xFF262626);
 
   /// The primary-button fill and the dark CTA bar.
-  static const Color charcoal = Color(0xFF141414);
+  static const Color charcoal = Color(0xFF121212);
   static const Color charcoalPressed = Color(0xFF000000);
 
   /// A **rated** star. Ink, not a hue (17.40:1 on white).
-  static const Color starFill = Color(0xFF1A1A1A);
+  static const Color starFill = Color(0xFF262626);
 
-  /// The unrated star outline (2.81:1 — graphic, always paired with
-  /// [starFill] or with a numeric score that carries the meaning).
-  static const Color starIdle = Color(0xFF9A9A9A);
+  /// The unrated star outline.
+  static const Color starIdle = Color(0xFF8E8E8E);
 
   // ---------------------------------------------------------------------------
-  // AI — no longer a colour
+  // AI — brand blue.
   // ---------------------------------------------------------------------------
-  /// The AI signature is ink on paper. The token survives so AI surfaces have
-  /// one name to reference; it deliberately resolves to the interface's own ink
-  /// (the violet is retired).
-  static const Color ai = Color(0xFF111111);
-  static const Color aiLight = Color(0xFF6E6E6E);
-  static const Color aiContainer = Color(0xFFFAFAFA);
-  static const Color onAiContainer = Color(0xFF111111);
+  /// The AI signature is the brand blue on a soft container. The token survives
+  /// so AI surfaces have one name to reference.
+  static const Color ai = Color(0xFF0064E0);
+  static const Color aiLight = Color(0xFF737373);
+  static const Color aiContainer = Color(0xFFF5F5F5);
+  static const Color onAiContainer = Color(0xFF262626);
 
   // ---------------------------------------------------------------------------
   // Semantic / feedback (the only hues in the system)
@@ -99,42 +94,43 @@ abstract final class AppColors {
 
   /// Class stars on the discover card — deliberately grey, not bronze: they
   /// describe the property's class, not the guest score.
-  static const Color classStar = Color(0xFF4A4A4A);
-  // Wordmark ink — the "Toki" half. The logotype's neutral half IS the brand
-  // ink, so the splash raster and the in-app mark carry the same #111111.
-  static const Color wordmarkInk = brand;
+  static const Color classStar = Color(0xFF8E8E8E);
+  // Wordmark ink — the "Toki" half. Kept at its own near-black (#111111) so
+  // the logo raster and the in-app mark never drift from the shipped branding
+  // assets; the app's text ink is [ink].
+  static const Color wordmarkInk = Color(0xFF111111);
   // Brand red — the "Go" in the TokiGo wordmark (single source of truth).
   static const Color brandRed = Color(0xFFFF2D2D);
-  static const Color info = Color(0xFF0284C7);
-  static const Color infoContainer = Color(0xFFE3F2FB);
+  static const Color info = Color(0xFF0064E0);
+  static const Color infoContainer = Color(0xFFE7F3FE);
 
   // -----------------------------------------------------------------------------
   // Light surfaces — pure white
   // -----------------------------------------------------------------------------
   /// The app canvas: pure white. Cards and sheets are white too, so the
   /// separator is [hairline] + the halo shadow — never a tinted background.
-  static const Color background = Color(0xFFFFFFFF);
+  static const Color background = Color(0xFFFAFAFA);
   static const Color surface = Colors.white;
 
   /// A neutral inset well (search fields, quiet blocks, selected states).
-  static const Color surfaceSecondary = Color(0xFFFAFAFA);
+  static const Color surfaceSecondary = Color(0xFFF5F5F5);
 
   /// Skeletons, image placeholders, disabled fills.
-  static const Color surfaceTertiary = Color(0xFFF5F5F5);
+  static const Color surfaceTertiary = Color(0xFFEFEFEF);
 
-  /// The default 1px border on white — ink at 6%.
-  static const Color hairline = Color(0x0F1A1A1A);
+  /// The default 1px border on white.
+  static const Color hairline = Color(0xFFEFEFEF);
 
-  /// Focus rings and dense dividers — ink at 12%.
-  static const Color hairlineStrong = Color(0x1F1A1A1A);
+  /// Focus rings and dense dividers.
+  static const Color hairlineStrong = Color(0xFFDBDBDB);
 
   /// The 4px focus halo around a focused field.
-  static const Color focusRing = Color(0x0A111111);
+  static const Color focusRing = Color(0x1F0064E0);
 
   /// Card and field borders (the same value as [hairline]; kept under its
   /// long-standing name so layout code reads naturally).
-  static const Color outline = Color(0x0F1A1A1A);
-  static const Color divider = Color(0x0F1A1A1A);
+  static const Color outline = Color(0xFFDBDBDB);
+  static const Color divider = Color(0xFFEFEFEF);
   static const Color overlay = Color(0x14000000); // scrim / focused overlay
 
   // -----------------------------------------------------------------------------
@@ -175,9 +171,9 @@ abstract final class AppColors {
   static const Color scrimStrong = Color(0x40000000);
 
   // Text
-  static const Color textPrimary = Color(0xFF1A1A1A);
-  static const Color textSecondary = Color(0xFF6E6E6E);
-  static const Color textTertiary = Color(0xFF9B9B9B);
+  static const Color textPrimary = Color(0xFF262626);
+  static const Color textSecondary = Color(0xFF737373);
+  static const Color textTertiary = Color(0xFF8E8E8E);
   static const Color textOnSurface = Color(0xFFFFFFFF);
 
   // -----------------------------------------------------------------------------
@@ -185,19 +181,19 @@ abstract final class AppColors {
   // -----------------------------------------------------------------------------
   /// The charcoal bar pinned under a detail surface. A COMPONENT colour, not
   /// a theme: the app stays light-only, there is no dark variant.
-  static const Color ctaBar = Color(0xFF141414);
+  static const Color ctaBar = Color(0xFF121212);
 
   /// Primary ink inside [ctaBar] (the price, the dates).
   static const Color onCtaBar = Color(0xFFFFFFFF);
 
   /// Secondary ink inside [ctaBar] (the muted line above the price).
-  static const Color onCtaBarVariant = Color(0xFFBFB5AC);
+  static const Color onCtaBarVariant = Color(0xFFA8A8A8);
 
   /// The inverted button inside [ctaBar].
   static const Color ctaBarButton = Color(0xFFFFFFFF);
 
   /// Its label.
-  static const Color onCtaBarButton = Color(0xFF1A1A1A);
+  static const Color onCtaBarButton = Color(0xFF262626);
 
   /// The bottom gradient under a hero photo (photo scrim).
   static const Color photoScrim = Color(0x73000000);
@@ -210,16 +206,16 @@ abstract final class AppColors {
   // The names survive because routing and the admin read them as *identities*
   // (a vertical still has an id); the values are monochrome.
   // -----------------------------------------------------------------------------
-  static const Color flightHue = Color(0xFF111111);
-  static const Color hotelHue = Color(0xFF111111);
-  static const Color carHue = Color(0xFF111111);
-  static const Color packageHue = Color(0xFF111111);
-  static const Color exploreHue = Color(0xFF111111);
-  static const Color groupsHue = Color(0xFF111111);
+  static const Color flightHue = Color(0xFF0064E0);
+  static const Color hotelHue = Color(0xFF0064E0);
+  static const Color carHue = Color(0xFF0064E0);
+  static const Color packageHue = Color(0xFF0064E0);
+  static const Color exploreHue = Color(0xFF0064E0);
+  static const Color groupsHue = Color(0xFF0064E0);
 
-  /// Paired containers for the search service tiles — white, like every tile.
-  static const Color flightContainer = Color(0xFFFFFFFF);
-  static const Color hotelContainer = Color(0xFFFFFFFF);
-  static const Color carContainer = Color(0xFFFFFFFF);
-  static const Color packageContainer = Color(0xFFFFFFFF);
+  /// Paired containers for the search service tiles.
+  static const Color flightContainer = Color(0xFFE7F3FE);
+  static const Color hotelContainer = Color(0xFFE7F3FE);
+  static const Color carContainer = Color(0xFFE7F3FE);
+  static const Color packageContainer = Color(0xFFE7F3FE);
 }

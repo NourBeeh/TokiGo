@@ -42,6 +42,7 @@ class FilterPanel extends StatefulWidget {
     this.amenities = const <String>[],
     this.transmissions = const <String>[],
     this.showStops = false,
+    this.showDirectOnly = false,
     this.showStars = false,
     this.showRating = false,
     this.showAirlines = false,
@@ -65,6 +66,11 @@ class FilterPanel extends StatefulWidget {
 
   /// Which optional sections to show (subject to the data above).
   final bool showStops;
+
+  /// Flight only: the dedicated "Direct only" switch. The stops ladder keeps
+  /// its "up to N stops" meaning; this is the explicit non-stop toggle.
+  final bool showDirectOnly;
+
   final bool showStars;
   final bool showRating;
   final bool showAirlines;
@@ -80,6 +86,7 @@ class _FilterPanelState extends State<FilterPanel> {
   double? _priceMin;
   double? _priceMax;
   int? _maxStops;
+  bool _directOnly = false;
   int? _minStars;
   double? _minRating;
   int? _minSeats;
@@ -88,7 +95,7 @@ class _FilterPanelState extends State<FilterPanel> {
   late List<String> _amenities;
 
   static const List<int?> _starOptions = <int?>[null, 5, 4, 3, 2];
-  static const List<int?> _stopOptions = <int?>[null, 0, 1, 2];
+  static const List<int?> _stopOptions = <int?>[null, 1, 2];
   static const List<double?> _ratingOptions = <double?>[null, 3, 4, 4.5];
   static const List<int?> _seatOptions = <int?>[null, 2, 4, 7];
 
@@ -98,6 +105,7 @@ class _FilterPanelState extends State<FilterPanel> {
     _priceMin = widget.filters.priceMin;
     _priceMax = widget.filters.priceMax;
     _maxStops = widget.filters.maxStops;
+    _directOnly = widget.filters.directOnly;
     _minStars = widget.filters.minStars;
     _minRating = widget.filters.minRating;
     _minSeats = widget.filters.minSeats;
@@ -127,6 +135,7 @@ class _FilterPanelState extends State<FilterPanel> {
       _effectivePriceMin != null ||
       _effectivePriceMax != null ||
       _maxStops != null ||
+      _directOnly ||
       _minStars != null ||
       _minRating != null ||
       _minSeats != null ||
@@ -138,6 +147,7 @@ class _FilterPanelState extends State<FilterPanel> {
     priceMin: _effectivePriceMin,
     priceMax: _effectivePriceMax,
     maxStops: _maxStops,
+    directOnly: _directOnly,
     minStars: _minStars,
     minRating: _minRating,
     minSeats: _minSeats,
@@ -158,6 +168,7 @@ class _FilterPanelState extends State<FilterPanel> {
       _priceMin = null;
       _priceMax = null;
       _maxStops = null;
+      _directOnly = false;
       _minStars = null;
       _minRating = null;
       _minSeats = null;
@@ -210,6 +221,7 @@ class _FilterPanelState extends State<FilterPanel> {
               ),
           ]),
         ),
+      if (widget.showDirectOnly) _directOnlySection(l10n),
       if (widget.showStops)
         _section(
           l10n.filterStops,
@@ -218,7 +230,6 @@ class _FilterPanelState extends State<FilterPanel> {
               SearchChoiceChip(
                 label: switch (stops) {
                   null => l10n.filterAny,
-                  0 => l10n.filterDirect,
                   _ => '≤ $stops',
                 },
                 selected: _maxStops == stops,
@@ -412,6 +423,22 @@ class _FilterPanelState extends State<FilterPanel> {
             }),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Flight only — the explicit non-stop toggle, kept separate from the stops
+  /// ladder so "up to N stops" keeps its own meaning.
+  Widget _directOnlySection(AppLocalizations l10n) {
+    return _section(
+      l10n.filterDirectOnly,
+      Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: SearchChoiceChip(
+          label: l10n.filterDirectOnly,
+          selected: _directOnly,
+          onTap: () => setState(() => _directOnly = !_directOnly),
+        ),
       ),
     );
   }

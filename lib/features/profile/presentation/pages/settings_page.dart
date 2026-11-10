@@ -72,7 +72,9 @@ class SettingsPage extends ConsumerWidget {
         child: AiEntranceAnimation(
           child: CustomScrollView(
             slivers: <Widget>[
-              SliverToBoxAdapter(child: AppPageHeader(subtitle: l10n.settingsSubtitle)),
+              SliverToBoxAdapter(
+                child: AppPageHeader(subtitle: l10n.settingsSubtitle),
+              ),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsetsDirectional.fromSTEB(
@@ -137,9 +139,8 @@ class SettingsPage extends ConsumerWidget {
                               if (!context.mounted) return;
                               switch (access) {
                                 case LocationAccess.granted:
-                                  ref
-                                      .read(geoRefreshProvider.notifier)
-                                      .state = ref.read(geoRefreshProvider) + 1;
+                                  ref.read(geoRefreshProvider.notifier).state =
+                                      ref.read(geoRefreshProvider) + 1;
                                   ref.invalidate(locationAccessProvider);
                                 case LocationAccess.deniedForever:
                                   await showLocationSettingsPrompt(
@@ -274,7 +275,7 @@ class SettingsPage extends ConsumerWidget {
     ref.read(localeProvider.notifier).setLocale(chosen);
   }
 
-  /// The theme sheet: Dark / Light / System.
+  /// The theme sheet: System / Light / Dark.
   Future<void> _pickTheme(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context)!;
     final ThemeMode current = ref.read(themeModeProvider);
@@ -285,9 +286,9 @@ class SettingsPage extends ConsumerWidget {
         title: l10n.settingsTheme,
         options: <_Option<ThemeMode>>[
           _Option<ThemeMode>(
-            value: ThemeMode.dark,
-            label: l10n.settingsThemeDark,
-            selected: current == ThemeMode.dark,
+            value: ThemeMode.system,
+            label: l10n.settingsThemeSystem,
+            selected: current == ThemeMode.system,
           ),
           _Option<ThemeMode>(
             value: ThemeMode.light,
@@ -295,9 +296,9 @@ class SettingsPage extends ConsumerWidget {
             selected: current == ThemeMode.light,
           ),
           _Option<ThemeMode>(
-            value: ThemeMode.system,
-            label: l10n.settingsThemeSystem,
-            selected: current == ThemeMode.system,
+            value: ThemeMode.dark,
+            label: l10n.settingsThemeDark,
+            selected: current == ThemeMode.dark,
           ),
         ],
       ),
@@ -374,7 +375,9 @@ class _GroupHeader extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: typography.label.copyWith(color: context.tokigoColors.textTertiary),
+        style: typography.label.copyWith(
+          color: context.tokigoColors.textTertiary,
+        ),
       ),
     );
   }
@@ -555,7 +558,9 @@ class _LanguageOptions extends StatelessWidget {
         for (final Locale locale in SettingsPage._languages) ...<Widget>[
           Text(
             locale.languageCode == 'ar' ? 'العربية' : 'English',
-            style: typography.caption.copyWith(color: context.tokigoColors.textSecondary),
+            style: typography.caption.copyWith(
+              color: context.tokigoColors.textSecondary,
+            ),
           ),
           if (locale.languageCode == current.languageCode) ...<Widget>[
             const SizedBox(width: AppSpacing.xs),
@@ -585,16 +590,19 @@ class _ThemeOptions extends StatelessWidget {
         ? AppTypography.forDark()
         : AppTypography.forLight();
     String label(ThemeMode m) => switch (m) {
-          ThemeMode.dark => l10n.settingsThemeDark,
-          ThemeMode.light => l10n.settingsThemeLight,
-          ThemeMode.system => l10n.settingsThemeSystem,
-        };
+      ThemeMode.dark => l10n.settingsThemeDark,
+      ThemeMode.light => l10n.settingsThemeLight,
+      ThemeMode.system => l10n.settingsThemeSystem,
+    };
     return Text(
       label(current),
-      style: typography.caption.copyWith(color: context.tokigoColors.textSecondary),
+      style: typography.caption.copyWith(
+        color: context.tokigoColors.textSecondary,
+      ),
     );
   }
 }
+
 class _Option<T> {
   const _Option({
     required this.value,
@@ -635,7 +643,9 @@ class _OptionSheet<T> extends StatelessWidget {
             ),
             child: Text(
               title,
-              style: typography.title.copyWith(color: context.tokigoColors.textPrimary),
+              style: typography.title.copyWith(
+                color: context.tokigoColors.textPrimary,
+              ),
             ),
           ),
           for (final _Option<T> option in options)

@@ -23,6 +23,7 @@ FlightOffer _flight({
   String id = 'f1',
   double price = 100,
   String currency = 'USD',
+  int? stops,
   CustomerPrice? quote,
 }) => FlightOffer(
   id: id,
@@ -38,6 +39,7 @@ FlightOffer _flight({
   arrivalTime: DateTime(2026, 1, 2, 6),
   airline: 'Emirates',
   flightNumber: 'EK 123',
+  stops: stops,
 );
 
 void main() {
@@ -159,6 +161,83 @@ void main() {
           budgetCurrency: 'USD',
         )),
         isFalse,
+      );
+    });
+  });
+
+  group('direct only filter', () {
+    test('keeps only non-stop flights when enabled', () {
+      final List<FlightOffer> offers = <FlightOffer>[
+        _flight(id: 'direct', stops: 0),
+        _flight(id: 'one-stop', stops: 1),
+        _flight(id: 'two-stop', stops: 2),
+      ];
+
+      final List<FlightOffer> filtered = applyFlightFilters(
+        offers,
+        const SearchFilters(directOnly: true),
+      );
+
+      expect(filtered.map((o) => o.id), <String>['direct']);
+    });
+
+    test('leaves the list untouched when disabled', () {
+      final List<FlightOffer> offers = <FlightOffer>[
+        _flight(id: 'direct', stops: 0),
+        _flight(id: 'one-stop', stops: 1),
+      ];
+
+      expect(
+        applyFlightFilters(offers, const SearchFilters(directOnly: false)),
+        hasLength(2),
+      );
+      // The default is off.
+      expect(applyFlightFilters(offers, const SearchFilters()), hasLength(2));
+    });
+
+    test('combines with the other filters', () {
+      final List<FlightOffer> offers = <FlightOffer>[
+        _flight(id: 'direct-cheap', stops: 0, price: 100),
+        _flight(id: 'direct-expensive', stops: 0, price: 900),
+        _flight(id: 'one-stop-cheap', stops: 1, price: 100),
+      ];
+
+      final List<FlightOffer> filtered = applyFlightFilters(
+        offers,
+        const SearchFilters(directOnly: true, priceMax: 500),
+      );
+
+      expect(filtered.map((o) => o.id), <String>['direct-cheap']);
+    });
+
+    test('clearing the filters restores the full list', () {
+      const SearchFilters filters = SearchFilters(
+        directOnly: true,
+        maxStops: 2,
+      );
+      expect(filters.isEmpty, isFalse);
+
+      final SearchFilters cleared = filters.copyWith(
+        directOnly: false,
+        maxStops: null,
+      );
+      expect(cleared.isEmpty, isTrue);
+
+      final List<FlightOffer> offers = <FlightOffer>[
+        _flight(id: 'direct', stops: 0),
+        _flight(id: 'one-stop', stops: 1),
+      ];
+      expect(applyFlightFilters(offers, cleared), hasLength(2));
+    });
+
+    test('an over-strict combination yields an empty list', () {
+      final List<FlightOffer> offers = <FlightOffer>[
+        _flight(id: 'one-stop', stops: 1),
+      ];
+
+      expect(
+        applyFlightFilters(offers, const SearchFilters(directOnly: true)),
+        isEmpty,
       );
     });
   });

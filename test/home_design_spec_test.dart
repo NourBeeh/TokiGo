@@ -12,11 +12,11 @@ import 'package:tokigo/l10n/app_localizations.dart';
 /// The owner's Home design spec, asserted directly: palette, search-bar
 /// geometry and the four quick-action cards.
 void main() {
-  const Color background = Color(0xFFFAF8F5);
+  const Color background = Color(0xFFFAFAFA);
   const Color surface = Color(0xFFFFFFFF);
-  const Color accent = Color(0xFF111111);
-  const Color hint = Color(0xFF757575);
-  const Color border = Color(0xFFE0DCD6);
+  const Color accent = Color(0xFF0064E0);
+  const Color hint = Color(0xFF8E8E8E);
+  const Color border = Color(0xFFDBDBDB);
 
   Widget app(Widget child, {Locale locale = const Locale('en')}) {
     final GoRouter router = GoRouter(

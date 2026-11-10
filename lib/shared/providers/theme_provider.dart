@@ -6,9 +6,10 @@ import 'package:tokigo/core/storage/offline_cache_providers.dart';
 
 /// Reactive app-wide theme mode (Dark / Light / System).
 ///
-/// Defaults to Dark for new installations. Persisted via the offline cache.
+/// Defaults to System for new installations, so the app follows the device's
+/// light/dark appearance. Persisted via the offline cache.
 class ThemeModeController extends Notifier<ThemeMode> {
-  ThemeModeController({this.initialMode = ThemeMode.dark});
+  ThemeModeController({this.initialMode = ThemeMode.system});
 
   static const String cacheKey = 'settings:themeMode';
 
@@ -16,8 +17,8 @@ class ThemeModeController extends Notifier<ThemeMode> {
 
   static ThemeMode fromStoredValue(Object? value) => switch (value) {
     'light' => ThemeMode.light,
-    'system' => ThemeMode.system,
-    _ => ThemeMode.dark,
+    'dark' => ThemeMode.dark,
+    _ => ThemeMode.system,
   };
 
   @override

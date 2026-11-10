@@ -105,6 +105,10 @@ List<FlightOffer> applyFlightFilters(
   if (filters.maxStops != null) {
     items = items.where((o) => (o.stops ?? 0) <= filters.maxStops!).toList();
   }
+  // Direct-only is a post-filter on the provider's list: it never re-requests.
+  if (filters.directOnly) {
+    items = items.where((o) => (o.stops ?? 0) == 0).toList();
+  }
   if (filters.airlines != null && filters.airlines!.isNotEmpty) {
     final selected = filters.airlines!.toSet();
     items = items.where((o) => selected.contains(o.airline)).toList();

@@ -137,7 +137,7 @@ void main() {
       final BoxDecoration decoration = field.decoration! as BoxDecoration;
       expect(
         decoration.color,
-        mode == ThemeMode.dark ? const Color(0xFF1A2338) : Colors.white,
+        mode == ThemeMode.dark ? const Color(0xFF1E1E1E) : Colors.white,
       );
       // The pill floats, so its halo follows the active theme.
       final BoxShadow halo = decoration.boxShadow!.single;

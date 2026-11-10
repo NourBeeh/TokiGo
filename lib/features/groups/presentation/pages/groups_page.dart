@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/app/widgets/app_chrome.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
 import 'package:tokigo/core/theme/app_colors.dart';
@@ -32,9 +31,6 @@ class GroupsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    // Under the persistent shell chrome Groups has no header of its own (the
-    // navigation bar identifies it).
-    final bool chromeVisible = AppChromeScope.visibleOf(context);
     final double effectiveBottomPadding = bottomPadding;
 
     return Scaffold(
@@ -44,10 +40,7 @@ class GroupsPage extends StatelessWidget {
           child: CustomScrollView(
             slivers: <Widget>[
               SliverToBoxAdapter(
-                child: AppPageHeader(
-                  visible: !chromeVisible,
-                  subtitle: l10n.groupsSubtitle,
-                ),
+                child: AppPageHeader(subtitle: l10n.groupsSubtitle),
               ),
               if (_groups.isEmpty)
                 SliverToBoxAdapter(
@@ -122,52 +115,51 @@ class _CreateGroupCard extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.lg),
             child: Row(
-            children: <Widget>[
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: context.tokigoColors.brand,
-                  shape: BoxShape.circle,
+              children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: context.tokigoColors.brand,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.add_rounded,
+                    size: 24,
+                    color: Colors.white,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.add_rounded,
-                  size: 24,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.lg),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      AppLocalizations.of(context)?.groupsCreateTrip ??
-                          'Create a group trip',
-                      style: typography.bodyLargeMedium.copyWith(
-                        color: context.tokigoColors.onBrandContainer,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xxs),
-                    Text(
-                      AppLocalizations.of(context)?.groupsPlanTogether ??
-                          'Plan together, decide together',
-                      style: typography.caption.copyWith(
-                        color: context.tokigoColors.onBrandContainer.withValues(
-                          alpha: 0.7,
+                const SizedBox(width: AppSpacing.lg),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        AppLocalizations.of(context)?.groupsCreateTrip ??
+                            'Create a group trip',
+                        style: typography.bodyLargeMedium.copyWith(
+                          color: context.tokigoColors.onBrandContainer,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: AppSpacing.xxs),
+                      Text(
+                        AppLocalizations.of(context)?.groupsPlanTogether ??
+                            'Plan together, decide together',
+                        style: typography.caption.copyWith(
+                          color: context.tokigoColors.onBrandContainer
+                              .withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: context.tokigoColors.onBrandContainer,
-              ),
-            ],
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: context.tokigoColors.onBrandContainer,
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -202,76 +194,76 @@ class _GroupCard extends StatelessWidget {
         child: InkWell(
           onTap: () {},
           child: Container(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: context.tokigoColors.outline),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Container(
-                    padding: const EdgeInsets.all(AppSpacing.sm),
-                    decoration: BoxDecoration(
-                      color: hue.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(color: context.tokigoColors.outline),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.sm),
+                      decoration: BoxDecoration(
+                        color: hue.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: Icon(Icons.groups_rounded, size: 20, color: hue),
                     ),
-                    child: Icon(Icons.groups_rounded, size: 20, color: hue),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          title,
-                          style: typography.bodyLargeMedium.copyWith(
-                            color: context.tokigoColors.textPrimary,
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            title,
+                            style: typography.bodyLargeMedium.copyWith(
+                              color: context.tokigoColors.textPrimary,
+                            ),
                           ),
-                        ),
-                        Text(
-                          destination,
-                          style: typography.caption.copyWith(
-                            color: context.tokigoColors.textTertiary,
+                          Text(
+                            destination,
+                            style: typography.caption.copyWith(
+                              color: context.tokigoColors.textTertiary,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Row(
-                children: <Widget>[
-                  Icon(
-                    Icons.calendar_today_rounded,
-                    size: 14,
-                    color: context.tokigoColors.textTertiary,
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                  Text(
-                    dateLabel,
-                    style: typography.caption.copyWith(
-                      color: context.tokigoColors.textSecondary,
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: <Widget>[
+                    Icon(
+                      Icons.calendar_today_rounded,
+                      size: 14,
+                      color: context.tokigoColors.textTertiary,
                     ),
-                  ),
-                  const Spacer(),
-                  _MemberAvatarStack(count: membersCount),
-                  const SizedBox(width: AppSpacing.sm),
-                  Text(
-                    '$membersCount/$maxMembers',
-                    style: typography.captionSemibold.copyWith(
-                      color: context.tokigoColors.textSecondary,
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(
+                      dateLabel,
+                      style: typography.caption.copyWith(
+                        color: context.tokigoColors.textSecondary,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    const Spacer(),
+                    _MemberAvatarStack(count: membersCount),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      '$membersCount/$maxMembers',
+                      style: typography.captionSemibold.copyWith(
+                        color: context.tokigoColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }

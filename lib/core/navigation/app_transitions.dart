@@ -163,9 +163,8 @@ CustomTransitionPage<void> fadeThroughPage({
 }
 
 /// A page transition that performs **no animation** — the incoming page
-/// simply takes the place of the outgoing one. Useful for the six
-/// top-level sections (`/`, `/flights`, `/hotels`, `/cars`, `/packages`,
-/// `/groups`) where the owner wants a content-changed feel without a slide.
+/// simply takes the place of the outgoing one. Used for Today (`/`), the app's
+/// launch surface, so the first frame never slides in.
 CustomTransitionPage<void> noTransitionPage({
   required Widget child,
   LocalKey? key,

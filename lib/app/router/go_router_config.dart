@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -46,8 +44,6 @@ import '../../features/search/presentation/pages/search_hub_page.dart';
 import '../../shared/widgets/placeholder_page.dart';
 import '../../shared/providers/onboarding_provider.dart';
 import '../config/app_config.dart';
-import '../shell.dart';
-import '../../core/storage/last_route_store.dart';
 import '../../shared/providers/last_route_provider.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -57,17 +53,18 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 /// intentionally off — do not lock the whole app behind auth.
 const bool _authRedirectEnabled = false;
 
-/// Tab branches of the bottom navigation shell.
-
+/// The app's route tree: Today at '/', with every other destination pushed on
+/// top of it.
 final goRouterProvider = Provider<GoRouter>((ref) {
   final authUser = ref.watch(authUserProvider);
   final onboarding = ref.watch(onboardingProvider);
-  // Reopen on the last page the traveller used (restored in main()).
-  final restoredLocation = ref.watch(lastInitialRouteProvider);
+  // The app always launches on Today. Tests may override this provider to
+  // start on a specific route.
+  final initialLocation = ref.watch(lastInitialRouteProvider);
 
   final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: restoredLocation,
+    initialLocation: initialLocation,
     redirect: (context, state) {
       // First-launch onboarding gate: show the intro exactly once, before
       // any other destination is reachable.
@@ -93,315 +90,282 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: <RouteBase>[
-      StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) {
-          return TokiGoShell(
-            navigationShell: navigationShell,
-            location: state.matchedLocation,
-          );
-        },
-        branches: <StatefulShellBranch>[
-          // ---- Home tab ----
-          StatefulShellBranch(
-            routes: <RouteBase>[
+      GoRoute(
+        path: '/',
+        name: 'home',
+        pageBuilder: (context, state) => noTransitionPage(
+          key: state.pageKey,
+          restorationId: state.pageKey.value,
+          name: 'home',
+          child: const HomePage(),
+        ),
+        routes: <GoRoute>[
+          GoRoute(
+            path: 'flights',
+            name: 'flights',
+            pageBuilder: (context, state) => slideFromRightPage(
+              key: state.pageKey,
+              restorationId: state.pageKey.value,
+              name: 'flights',
+              child: const SwipeFromRightToPop(child: FlightSearchPage()),
+            ),
+          ),
+          GoRoute(
+            path: 'hotels',
+            name: 'hotels',
+            pageBuilder: (context, state) => slideFromRightPage(
+              key: state.pageKey,
+              restorationId: state.pageKey.value,
+              name: 'hotels',
+              child: const SwipeFromRightToPop(child: HotelSearchPage()),
+            ),
+          ),
+          GoRoute(
+            path: 'cars',
+            name: 'cars',
+            pageBuilder: (context, state) => slideFromRightPage(
+              key: state.pageKey,
+              restorationId: state.pageKey.value,
+              name: 'cars',
+              child: const SwipeFromRightToPop(child: CarSearchPage()),
+            ),
+          ),
+          GoRoute(
+            path: 'packages',
+            name: 'packages',
+            pageBuilder: (context, state) => slideFromRightPage(
+              key: state.pageKey,
+              restorationId: state.pageKey.value,
+              name: 'packages',
+              child: const SwipeFromRightToPop(child: PackagesSearchPage()),
+            ),
+          ),
+          GoRoute(
+            path: 'offer-details',
+            name: 'offer_details',
+            // A deep link / restored location without its offer
+            // payload cannot render an offer: fall back to Home
+            // instead of throwing on `state.extra!`.
+            redirect: (context, state) => state.extra == null ? '/' : null,
+            pageBuilder: (context, state) => slideFromRightPage(
+              key: state.pageKey,
+              restorationId: state.pageKey.value,
+              name: 'offer_details',
+              child: SwipeFromRightToPop(
+                child: OfferDetailsPage(
+                  offer: state.extra!,
+                  hue: hueForOffer(state.extra),
+                ),
+              ),
+            ),
+          ),
+          // Discover tile → the city's own information page. The
+          // tapped HomeItem rides as `extra`; a missing/typed-wrong
+          // extra renders the page's honest "city not found" state.
+          GoRoute(
+            path: 'city',
+            name: 'city',
+            pageBuilder: (context, state) => slideFromRightPage(
+              key: state.pageKey,
+              restorationId: state.pageKey.value,
+              name: 'city',
+              child: SwipeFromRightToPop(
+                child: CityPage(
+                  city: state.extra is HomeItem
+                      ? state.extra as HomeItem
+                      : null,
+                ),
+              ),
+            ),
+          ),
+          GoRoute(
+            path: 'explore',
+            name: 'explore_cities',
+            pageBuilder: (context, state) => slideFromRightPage(
+              key: state.pageKey,
+              restorationId: state.pageKey.value,
+              name: 'explore_cities',
+              child: const SwipeFromRightToPop(child: ExploreCitiesPage()),
+            ),
+          ),
+          GoRoute(
+            path: 'bag',
+            name: 'bag',
+            pageBuilder: (context, state) => slideFromRightPage(
+              key: state.pageKey,
+              restorationId: state.pageKey.value,
+              name: 'bag',
+              child: SwipeFromRightToPop(
+                child: BagPage(
+                  initialLikes: state.uri.queryParameters['section'] == 'likes',
+                ),
+              ),
+            ),
+            routes: <GoRoute>[
               GoRoute(
-                path: '/',
-                name: 'home',
-                pageBuilder: (context, state) => noTransitionPage(
+                path: ':tripId',
+                name: 'trip_details',
+                pageBuilder: (context, state) => slideFromRightPage(
                   key: state.pageKey,
                   restorationId: state.pageKey.value,
-                  name: 'home',
-                  child: const HomePage(),
+                  name: 'trip_details',
+                  child: SwipeFromRightToPop(
+                    child: TripDetailsPage(
+                      tripId: state.pathParameters['tripId']!,
+                    ),
+                  ),
                 ),
-                routes: <GoRoute>[
-                  GoRoute(
-                    path: 'flights',
-                    name: 'flights',
-                    pageBuilder: (context, state) => noTransitionPage(
-                      key: state.pageKey,
-                      restorationId: state.pageKey.value,
-                      name: 'flights',
-                      child: const FlightSearchPage(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'hotels',
-                    name: 'hotels',
-                    pageBuilder: (context, state) => noTransitionPage(
-                      key: state.pageKey,
-                      restorationId: state.pageKey.value,
-                      name: 'hotels',
-                      child: const HotelSearchPage(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'cars',
-                    name: 'cars',
-                    pageBuilder: (context, state) => noTransitionPage(
-                      key: state.pageKey,
-                      restorationId: state.pageKey.value,
-                      name: 'cars',
-                      child: const CarSearchPage(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'packages',
-                    name: 'packages',
-                    pageBuilder: (context, state) => noTransitionPage(
-                      key: state.pageKey,
-                      restorationId: state.pageKey.value,
-                      name: 'packages',
-                      child: const PackagesSearchPage(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'offer-details',
-                    name: 'offer_details',
-                    // A deep link / restored location without its offer
-                    // payload cannot render an offer: fall back to Home
-                    // instead of throwing on `state.extra!`.
-                    redirect: (context, state) =>
-                        state.extra == null ? '/' : null,
-                    pageBuilder: (context, state) => slideFromRightPage(
-                      key: state.pageKey,
-                      restorationId: state.pageKey.value,
-                      name: 'offer_details',
-                      child: SwipeFromRightToPop(
-                        child: OfferDetailsPage(
-                          offer: state.extra!,
-                          hue: hueForOffer(state.extra),
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Discover tile → the city's own information page. The
-                  // tapped HomeItem rides as `extra`; a missing/typed-wrong
-                  // extra renders the page's honest "city not found" state.
-                  GoRoute(
-                    path: 'city',
-                    name: 'city',
-                    pageBuilder: (context, state) => slideFromRightPage(
-                      key: state.pageKey,
-                      restorationId: state.pageKey.value,
-                      name: 'city',
-                      child: SwipeFromRightToPop(
-                        child: CityPage(
-                          city: state.extra is HomeItem
-                              ? state.extra as HomeItem
-                              : null,
-                        ),
-                      ),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'explore',
-                    name: 'explore_cities',
-                    pageBuilder: (context, state) => slideFromRightPage(
-                      key: state.pageKey,
-                      restorationId: state.pageKey.value,
-                      name: 'explore_cities',
-                      child: const SwipeFromRightToPop(
-                        child: ExploreCitiesPage(),
-                      ),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'bag',
-                    name: 'bag',
-                    pageBuilder: (context, state) => slideFromRightPage(
-                      key: state.pageKey,
-                      restorationId: state.pageKey.value,
-                      name: 'bag',
-                      child: SwipeFromRightToPop(
-                        child: BagPage(
-                          initialLikes:
-                              state.uri.queryParameters['section'] == 'likes',
-                        ),
-                      ),
-                    ),
-                    routes: <GoRoute>[
-                      GoRoute(
-                        path: ':tripId',
-                        name: 'trip_details',
-                        pageBuilder: (context, state) => slideFromRightPage(
-                          key: state.pageKey,
-                          restorationId: state.pageKey.value,
-                          name: 'trip_details',
-                          child: SwipeFromRightToPop(
-                            child: TripDetailsPage(
-                              tripId: state.pathParameters['tripId']!,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  GoRoute(
-                    path: 'wishlist',
-                    name: 'wishlist',
-                    pageBuilder: (context, state) => slideFromRightPage(
-                      key: state.pageKey,
-                      restorationId: state.pageKey.value,
-                      name: 'wishlist',
-                      child: const SwipeFromRightToPop(child: WishlistPage()),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'edit-profile',
-                    name: 'edit_profile',
-                    pageBuilder: (context, state) => slideFromRightPage(
-                      key: state.pageKey,
-                      restorationId: state.pageKey.value,
-                      name: 'edit_profile',
-                      child: const SwipeFromRightToPop(
-                        child: EditProfilePage(),
-                      ),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'auth',
-                    name: 'auth',
-                    pageBuilder: (context, state) => slideFromRightPage(
-                      key: state.pageKey,
-                      restorationId: state.pageKey.value,
-                      name: 'auth',
-                      child: const SwipeFromRightToPop(child: AuthPage()),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'hotel-guests',
-                    name: 'hotel_guests',
-                    pageBuilder: (context, state) => slideFromRightPage(
-                      key: state.pageKey,
-                      restorationId: state.pageKey.value,
-                      name: 'hotel_guests',
-                      child: const SwipeFromRightToPop(
-                        child: HotelGuestDetailsPage(),
-                      ),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'booking/review',
-                    name: 'booking_review',
-                    pageBuilder: (context, state) => slideFromRightPage(
-                      key: state.pageKey,
-                      restorationId: state.pageKey.value,
-                      name: 'booking_review',
-                      child: const SwipeFromRightToPop(
-                        child: BookingReviewPage(),
-                      ),
-                    ),
-                    routes: <GoRoute>[
-                      GoRoute(
-                        path: 'passengers',
-                        name: 'booking_passengers',
-                        pageBuilder: (context, state) => slideFromRightPage(
-                          key: state.pageKey,
-                          restorationId: state.pageKey.value,
-                          name: 'booking_passengers',
-                          child: const SwipeFromRightToPop(
-                            child: PassengerDetailsPage(),
-                          ),
-                        ),
-                      ),
-                      GoRoute(
-                        path: 'add-ons',
-                        name: 'booking_add_ons',
-                        pageBuilder: (context, state) => slideFromRightPage(
-                          key: state.pageKey,
-                          restorationId: state.pageKey.value,
-                          name: 'booking_add_ons',
-                          child: const SwipeFromRightToPop(child: AddOnsPage()),
-                        ),
-                      ),
-                      GoRoute(
-                        path: 'checkout',
-                        name: 'booking_checkout',
-                        pageBuilder: (context, state) => slideFromRightPage(
-                          key: state.pageKey,
-                          restorationId: state.pageKey.value,
-                          name: 'booking_checkout',
-                          child: const SwipeFromRightToPop(
-                            child: CheckoutPage(),
-                          ),
-                        ),
-                      ),
-                      GoRoute(
-                        path: 'confirmation',
-                        name: 'booking_confirmation',
-                        pageBuilder: (context, state) => slideFromRightPage(
-                          key: state.pageKey,
-                          restorationId: state.pageKey.value,
-                          name: 'booking_confirmation',
-                          child: const SwipeFromRightToPop(
-                            child: BookingConfirmationPage(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  // NAV: the former tab pages live on the Home branch as
-                  // pushed routes — single-branch, Home-centric navigation.
-                  GoRoute(
-                    path: 'search',
-                    name: 'search',
-                    pageBuilder: (context, state) => slideFromRightPage(
-                      key: state.pageKey,
-                      restorationId: state.pageKey.value,
-                      name: 'search',
-                      child: const SwipeFromRightToPop(child: SearchHubPage()),
-                    ),
-                    routes: <GoRoute>[
-                      GoRoute(
-                        path: 'transfers',
-                        name: 'transfers',
-                        pageBuilder: (context, state) => slideFromRightPage(
-                          key: state.pageKey,
-                          restorationId: state.pageKey.value,
-                          name: 'transfers',
-                          child: const PlaceholderPageScaffold(
-                            routeName: 'transfers',
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  GoRoute(
-                    path: 'groups',
-                    name: 'groups',
-                    // Groups is parked (owner request). The nav tile is
-                    // hidden, and the route itself redirects to Home so a deep
-                    // link or a stale in-app link cannot open it.
-                    redirect: (context, state) =>
-                        AppConfig.groupsEnabled ? null : '/',
-                    pageBuilder: (context, state) => noTransitionPage(
-                      key: state.pageKey,
-                      restorationId: state.pageKey.value,
-                      name: 'groups',
-                      child: const GroupsPage(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'trip-builder',
-                    name: 'trip_builder',
-                    pageBuilder: (context, state) => slideFromRightPage(
-                      key: state.pageKey,
-                      restorationId: state.pageKey.value,
-                      name: 'trip_builder',
-                      child: const SwipeFromRightToPop(
-                        child: TripBuilderPage(),
-                      ),
-                    ),
-                  ),
-                ],
               ),
             ],
           ),
+          GoRoute(
+            path: 'wishlist',
+            name: 'wishlist',
+            pageBuilder: (context, state) => slideFromRightPage(
+              key: state.pageKey,
+              restorationId: state.pageKey.value,
+              name: 'wishlist',
+              child: const SwipeFromRightToPop(child: WishlistPage()),
+            ),
+          ),
+          GoRoute(
+            path: 'edit-profile',
+            name: 'edit_profile',
+            pageBuilder: (context, state) => slideFromRightPage(
+              key: state.pageKey,
+              restorationId: state.pageKey.value,
+              name: 'edit_profile',
+              child: const SwipeFromRightToPop(child: EditProfilePage()),
+            ),
+          ),
+          GoRoute(
+            path: 'auth',
+            name: 'auth',
+            pageBuilder: (context, state) => slideFromRightPage(
+              key: state.pageKey,
+              restorationId: state.pageKey.value,
+              name: 'auth',
+              child: const SwipeFromRightToPop(child: AuthPage()),
+            ),
+          ),
+          GoRoute(
+            path: 'hotel-guests',
+            name: 'hotel_guests',
+            pageBuilder: (context, state) => slideFromRightPage(
+              key: state.pageKey,
+              restorationId: state.pageKey.value,
+              name: 'hotel_guests',
+              child: const SwipeFromRightToPop(child: HotelGuestDetailsPage()),
+            ),
+          ),
+          GoRoute(
+            path: 'booking/review',
+            name: 'booking_review',
+            pageBuilder: (context, state) => slideFromRightPage(
+              key: state.pageKey,
+              restorationId: state.pageKey.value,
+              name: 'booking_review',
+              child: const SwipeFromRightToPop(child: BookingReviewPage()),
+            ),
+            routes: <GoRoute>[
+              GoRoute(
+                path: 'passengers',
+                name: 'booking_passengers',
+                pageBuilder: (context, state) => slideFromRightPage(
+                  key: state.pageKey,
+                  restorationId: state.pageKey.value,
+                  name: 'booking_passengers',
+                  child: const SwipeFromRightToPop(
+                    child: PassengerDetailsPage(),
+                  ),
+                ),
+              ),
+              GoRoute(
+                path: 'add-ons',
+                name: 'booking_add_ons',
+                pageBuilder: (context, state) => slideFromRightPage(
+                  key: state.pageKey,
+                  restorationId: state.pageKey.value,
+                  name: 'booking_add_ons',
+                  child: const SwipeFromRightToPop(child: AddOnsPage()),
+                ),
+              ),
+              GoRoute(
+                path: 'checkout',
+                name: 'booking_checkout',
+                pageBuilder: (context, state) => slideFromRightPage(
+                  key: state.pageKey,
+                  restorationId: state.pageKey.value,
+                  name: 'booking_checkout',
+                  child: const SwipeFromRightToPop(child: CheckoutPage()),
+                ),
+              ),
+              GoRoute(
+                path: 'confirmation',
+                name: 'booking_confirmation',
+                pageBuilder: (context, state) => slideFromRightPage(
+                  key: state.pageKey,
+                  restorationId: state.pageKey.value,
+                  name: 'booking_confirmation',
+                  child: const SwipeFromRightToPop(
+                    child: BookingConfirmationPage(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // NAV: the former tab pages live on the Home branch as
+          // pushed routes — single-branch, Home-centric navigation.
+          GoRoute(
+            path: 'search',
+            name: 'search',
+            pageBuilder: (context, state) => slideFromRightPage(
+              key: state.pageKey,
+              restorationId: state.pageKey.value,
+              name: 'search',
+              child: const SwipeFromRightToPop(child: SearchHubPage()),
+            ),
+            routes: <GoRoute>[
+              GoRoute(
+                path: 'transfers',
+                name: 'transfers',
+                pageBuilder: (context, state) => slideFromRightPage(
+                  key: state.pageKey,
+                  restorationId: state.pageKey.value,
+                  name: 'transfers',
+                  child: const PlaceholderPageScaffold(routeName: 'transfers'),
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: 'groups',
+            name: 'groups',
+            // Groups is parked (owner request). The nav tile is
+            // hidden, and the route itself redirects to Home so a deep
+            // link or a stale in-app link cannot open it.
+            redirect: (context, state) => AppConfig.groupsEnabled ? null : '/',
+            pageBuilder: (context, state) => slideFromRightPage(
+              key: state.pageKey,
+              restorationId: state.pageKey.value,
+              name: 'groups',
+              child: const SwipeFromRightToPop(child: GroupsPage()),
+            ),
+          ),
+          GoRoute(
+            path: 'trip-builder',
+            name: 'trip_builder',
+            pageBuilder: (context, state) => slideFromRightPage(
+              key: state.pageKey,
+              restorationId: state.pageKey.value,
+              name: 'trip_builder',
+              child: const SwipeFromRightToPop(child: TripBuilderPage()),
+            ),
+          ),
         ],
       ),
-      // Profile and Notifications — full, standalone pages. They are
-      // deliberately OUTSIDE the shell so they stack above every section with
-      // their own header and back control, never under the chrome.
+      // Profile and Notifications — full, standalone pages. They stack above
+      // Today with their own header and back control.
       GoRoute(
         path: '/profile',
         name: 'profile',
@@ -414,10 +378,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       // Settings is a root-level destination, like Profile: it is opened from
-      // the Profile page (which lives on the root navigator) and must not be a
-      // child of the Home shell branch. Pushing a shell-branch route while a
-      // root page is on top re-uses the shell page key and leaves the navigator
-      // showing a blank (black) screen after the settings button is tapped.
+      // the Profile page (which lives on the root navigator). Pushing a
+      // Home-branch route while a root page is on top re-uses the Home page key
+      // and leaves the navigator showing a blank (black) screen after the
+      // settings button is tapped.
       GoRoute(
         path: '/settings',
         name: 'settings',
@@ -437,9 +401,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           key: state.pageKey,
           restorationId: state.pageKey.value,
           name: 'notifications',
-          child: const SwipeFromRightToPop(
-            child: NotificationsPage(),
-          ),
+          child: const SwipeFromRightToPop(child: NotificationsPage()),
         ),
       ),
       // First-launch onboarding — shown when the Hive flag is unset.
@@ -454,11 +416,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           child: const OnboardingPage(),
         ),
       ),
-      // Full-screen AI chat — deliberately OUTSIDE the shell so the bottom
-      // bar does not render on top of it. The horizontal page transition
-      // keeps the unified motion language; visible and system Back controls
-      // pop the route.
-      // Admin panel — root route outside the shell (ADM-A2).
+      // Full-screen AI chat — a root route so Today's chrome does not render
+      // on top of it. The horizontal page transition keeps the unified motion
+      // language; visible and system Back controls pop the route.
+      // Admin panel — root route (ADM-A2).
       GoRoute(
         path: '/admin',
         name: 'admin',
@@ -498,14 +459,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
-
-  // Persist every location change so a cold relaunch lands back where the
-  // traveller was — the clipboard of the app's back stack, not a snapshot of
-  // the screen (stateless destinations only; see LastRouteStore).
-  router.routerDelegate.addListener(() {
-    final String location = router.state.uri.toString();
-    unawaited(LastRouteStore.write(location));
-  });
 
   return router;
 });

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/app/widgets/app_chrome.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_button.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
+import 'package:tokigo/core/widgets/ask_assistant_card.dart';
 import 'package:tokigo/core/widgets/detached_back_button.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
@@ -43,6 +43,7 @@ class SearchScaffold extends StatelessWidget {
     this.bodySlivers,
     this.embedded = false,
     this.bottomPadding = 0,
+    this.askAssistantPrompt,
   });
 
   /// The page's supporting line — the header's only identifying text
@@ -77,19 +78,22 @@ class SearchScaffold extends StatelessWidget {
   /// inset) so cards are never hidden behind it.
   final double bottomPadding;
 
+  /// Optional "Ask your assistant" prompt.
+  ///
+  /// When non-null, a compact [AskAssistantCard] is rendered above the results,
+  /// handing the existing AI chat route a useful prompt built from the current
+  /// search. Only the results pages set it — Home owns the full composer.
+  final String? askAssistantPrompt;
+
   @override
   Widget build(BuildContext context) {
     final tc = context.tokigoColors;
-    // Alongside the persistent shell chrome the section owns no header of its
-    // own (no back control, no description).
-    final bool chromeVisible = AppChromeScope.visibleOf(context);
     final double effectiveBottomPadding = bottomPadding;
     final Widget scrollView = AiEntranceAnimation(
       child: CustomScrollView(
         slivers: <Widget>[
           SliverToBoxAdapter(
             child: AppPageHeader(
-              visible: !chromeVisible,
               subtitle: subtitle,
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -103,14 +107,23 @@ class SearchScaffold extends StatelessWidget {
             sliver: SliverToBoxAdapter(child: form),
           ),
           if (bottomContent != null) SliverToBoxAdapter(child: bottomContent!),
+          if (askAssistantPrompt != null)
+            SliverPadding(
+              padding: const EdgeInsetsDirectional.only(
+                start: AppSpacing.lg,
+                end: AppSpacing.lg,
+                bottom: AppSpacing.sm,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: AskAssistantCard(prompt: askAssistantPrompt!),
+              ),
+            ),
           if (bodySlivers != null)
             ...bodySlivers!
           else
             SliverToBoxAdapter(child: body),
           if (effectiveBottomPadding > 0)
-            SliverToBoxAdapter(
-              child: SizedBox(height: effectiveBottomPadding),
-            ),
+            SliverToBoxAdapter(child: SizedBox(height: effectiveBottomPadding)),
         ],
       ),
     );
@@ -124,16 +137,11 @@ class SearchScaffold extends StatelessWidget {
       body: SafeArea(
         // `bottom: false` left the results' last row under the Android
         // navigation bar (the pill it was written for is gone).
-        child: chromeVisible
-            // Section routes are reached through the shell chrome; a detached
-            // back control here would contradict the no-back navigation.
-            ? scrollView
-            : DetachedBackButton(
-                // The header no longer draws the back control: the detaching
-                // one does, and it stays reachable once the header scrolls
-                // away.
-                child: scrollView,
-              ),
+        child: DetachedBackButton(
+          // The header no longer draws the back control: the detaching one
+          // does, and it stays reachable once the header scrolls away.
+          child: scrollView,
+        ),
       ),
     );
   }
@@ -195,7 +203,7 @@ class SearchFieldInput extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm + 4,
+              vertical: AppSpacing.sm,
             ),
             child: Row(
               children: <Widget>[
@@ -366,7 +374,7 @@ class SearchStepperInput extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm + 4,
+          vertical: AppSpacing.sm,
         ),
         child: Row(
           children: <Widget>[

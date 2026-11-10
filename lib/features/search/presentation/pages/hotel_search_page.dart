@@ -178,6 +178,21 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
 
   int get _nights => _checkOut.difference(_checkIn).inDays.abs().clamp(1, 999);
 
+  /// The prompt handed to the AI chat from the "Ask your assistant" card.
+  ///
+  /// Built only from what the traveller actually entered — destination and the
+  /// stay dates — never from a fabricated itinerary. Null when there is no
+  /// destination to describe.
+  String? _askAssistantPrompt(AppLocalizations l10n) {
+    final String destination = _destination.trim();
+    if (destination.isEmpty) return null;
+    return l10n.askAssistantHotelPrompt(
+      destination,
+      localizedMediumDate(context, _checkIn),
+      localizedMediumDate(context, _checkOut),
+    );
+  }
+
   /// The header line states a destination only once one produced the results
   /// on screen; before that it summarizes the form itself.
   String _summary(AppLocalizations l10n) {
@@ -235,123 +250,158 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
   }
 
   Widget _buildOccupancyEditor(AppLocalizations l10n) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        for (int i = 0; i < _occupancies.length; i++)
-          Container(
-            margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: context.tokigoColors.surface,
-              borderRadius: AppRadius.mdBorder,
-              border: Border.all(color: context.tokigoColors.outline),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    final typography = AppTypography.forLight();
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: context.tokigoColors.surface,
+        borderRadius: AppRadius.mdBorder,
+        border: Border.all(color: context.tokigoColors.outline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          for (int i = 0; i < _occupancies.length; i++) ...<Widget>[
+            if (i > 0) const Divider(height: AppSpacing.md),
+            Row(
               children: <Widget>[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text('${l10n.hotelRoomsCount(1)} ${i + 1}'),
-                    if (_occupancies.length > 1)
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded),
-                        onPressed: () => setState(() {
-                          final list = List<HotelRoomOccupancy>.from(_occupancies);
-                          list.removeAt(i);
-                          _occupancies = list;
-                        }),
-                      ),
-                  ],
+                Expanded(
+                  child: Text(
+                    '${l10n.hotelRoomsCount(1)} ${i + 1}',
+                    style: typography.captionSemibold.copyWith(
+                      color: context.tokigoColors.textSecondary,
+                    ),
+                  ),
                 ),
-                Row(
-                  children: <Widget>[
-                    const Text('Adults'),
-                    IconButton(
-                      icon: const Icon(Icons.remove),
-                      onPressed: () => setState(() {
-                        final r = _occupancies[i];
-                        if (r.adults > 1) {
-                          final list = List<HotelRoomOccupancy>.from(_occupancies);
-                          list[i] = r.copyWith(adults: r.adults - 1);
-                          _occupancies = list;
-                        }
-                      }),
-                    ),
-                    Text('${_occupancies[i].adults}'),
-                    IconButton(
-                      icon: const Icon(Icons.add),
-                      onPressed: () => setState(() {
-                        final r = _occupancies[i];
-                        final list = List<HotelRoomOccupancy>.from(_occupancies);
-                        list[i] = r.copyWith(adults: r.adults + 1);
-                        _occupancies = list;
-                      }),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: <Widget>[
-                    const Text('Children'),
-                    IconButton(
-                      icon: const Icon(Icons.remove),
-                      onPressed: () => setState(() {
-                        final r = _occupancies[i];
-                        if (r.childAges.isNotEmpty) {
-                          final ages = List<int>.from(r.childAges)..removeLast();
-                          final list = List<HotelRoomOccupancy>.from(_occupancies);
-                          list[i] = r.copyWith(childAges: ages);
-                          _occupancies = list;
-                        }
-                      }),
-                    ),
-                    Text('${_occupancies[i].children}'),
-                    IconButton(
-                      icon: const Icon(Icons.add),
-                      onPressed: () => setState(() {
-                        final r = _occupancies[i];
-                        final ages = List<int>.from(r.childAges)..add(5);
-                        final list = List<HotelRoomOccupancy>.from(_occupancies);
-                        list[i] = r.copyWith(childAges: ages);
-                        _occupancies = list;
-                      }),
-                    ),
-                  ],
-                ),
-                for (int c = 0; c < _occupancies[i].children; c++)
-                  DropdownButton<int>(
-                    value: _occupancies[i].childAges[c].clamp(0, 17),
-                    items: <int>[for (int a = 0; a <= 17; a++) a]
-                        .map((a) => DropdownMenuItem<int>(value: a, child: Text('$a')))
-                        .toList(),
-                    onChanged: (v) {
-                      if (v == null) return;
-                      setState(() {
-                        final r = _occupancies[i];
-                        final ages = List<int>.from(r.childAges);
-                        ages[c] = v;
-                        final list = List<HotelRoomOccupancy>.from(_occupancies);
-                        list[i] = r.copyWith(childAges: ages);
-                        _occupancies = list;
-                      });
-                    },
+                if (_occupancies.length > 1)
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 18),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => setState(() {
+                      final list = List<HotelRoomOccupancy>.from(_occupancies);
+                      list.removeAt(i);
+                      _occupancies = list;
+                    }),
                   ),
               ],
             ),
+            _compactOccupantStepper(
+              label: 'Adults',
+              value: _occupancies[i].adults,
+              onRemove: () => setState(() {
+                final r = _occupancies[i];
+                if (r.adults > 1) {
+                  final list = List<HotelRoomOccupancy>.from(_occupancies);
+                  list[i] = r.copyWith(adults: r.adults - 1);
+                  _occupancies = list;
+                }
+              }),
+              onAdd: () => setState(() {
+                final r = _occupancies[i];
+                final list = List<HotelRoomOccupancy>.from(_occupancies);
+                list[i] = r.copyWith(adults: r.adults + 1);
+                _occupancies = list;
+              }),
+            ),
+            _compactOccupantStepper(
+              label: 'Children',
+              value: _occupancies[i].children,
+              onRemove: () => setState(() {
+                final r = _occupancies[i];
+                if (r.childAges.isNotEmpty) {
+                  final ages = List<int>.from(r.childAges)..removeLast();
+                  final list = List<HotelRoomOccupancy>.from(_occupancies);
+                  list[i] = r.copyWith(childAges: ages);
+                  _occupancies = list;
+                }
+              }),
+              onAdd: () => setState(() {
+                final r = _occupancies[i];
+                final ages = List<int>.from(r.childAges)..add(5);
+                final list = List<HotelRoomOccupancy>.from(_occupancies);
+                list[i] = r.copyWith(childAges: ages);
+                _occupancies = list;
+              }),
+            ),
+            for (int c = 0; c < _occupancies[i].children; c++)
+              DropdownButton<int>(
+                value: _occupancies[i].childAges[c].clamp(0, 17),
+                isDense: true,
+                items: <int>[for (int a = 0; a <= 17; a++) a]
+                    .map((a) => DropdownMenuItem<int>(value: a, child: Text('$a')))
+                    .toList(),
+                onChanged: (v) {
+                  if (v == null) return;
+                  setState(() {
+                    final r = _occupancies[i];
+                    final ages = List<int>.from(r.childAges);
+                    ages[c] = v;
+                    final list = List<HotelRoomOccupancy>.from(_occupancies);
+                    list[i] = r.copyWith(childAges: ages);
+                    _occupancies = list;
+                  });
+                },
+              ),
+          ],
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  '${_occupancies.length} rooms · '
+                  '${_occupancies.fold<int>(0, (s, r) => s + r.adults)} adults · '
+                  '${_occupancies.fold<int>(0, (s, r) => s + r.children)} children',
+                  style: typography.caption.copyWith(
+                    color: context.tokigoColors.textSecondary,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add_rounded, size: 18),
+                visualDensity: VisualDensity.compact,
+                tooltip: 'Add room',
+                onPressed: () => setState(() {
+                  _occupancies = List<HotelRoomOccupancy>.from(_occupancies)
+                    ..add(const HotelRoomOccupancy(adults: 1));
+                }),
+              ),
+            ],
           ),
-        ElevatedButton(
-          onPressed: () => setState(() {
-            _occupancies = List<HotelRoomOccupancy>.from(_occupancies)
-              ..add(const HotelRoomOccupancy(adults: 1));
-          }),
-          child: const Text('Add room'),
+        ],
+      ),
+    );
+  }
+
+  /// One compact adult/children stepper line inside the occupancy card.
+  Widget _compactOccupantStepper({
+    required String label,
+    required int value,
+    required VoidCallback onRemove,
+    required VoidCallback onAdd,
+  }) {
+    final typography = AppTypography.forLight();
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: Text(
+            label,
+            style: typography.body.copyWith(
+              color: context.tokigoColors.textPrimary,
+            ),
+          ),
         ),
-        Text(
-          '${_occupancies.length} rooms · '
-          '${_occupancies.fold<int>(0, (s, r) => s + r.adults)} adults · '
-          '${_occupancies.fold<int>(0, (s, r) => s + r.children)} children',
+        _CompactStepButton(icon: Icons.remove_rounded, onTap: onRemove),
+        SizedBox(
+          width: 28,
+          child: Text(
+            '$value',
+            textAlign: TextAlign.center,
+            style: typography.bodyMedium.copyWith(
+              color: context.tokigoColors.textPrimary,
+            ),
+          ),
         ),
+        _CompactStepButton(icon: Icons.add_rounded, onTap: onAdd),
       ],
     );
   }
@@ -551,6 +601,8 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
       bodySlivers: lazyResults
           ? _buildResultSlivers(state, l10n, filters)
           : null,
+      // Only results get the assistant entry — never the empty form.
+      askAssistantPrompt: hasResults ? _askAssistantPrompt(l10n) : null,
     );
   }
 
@@ -799,6 +851,7 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
   // ── Form ────────────────────────────────────────────────────────────────
   Widget _buildForm(AppLocalizations l10n) {
     return Column(
+      key: const ValueKey<String>('hotel-search-form'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SearchFieldInput(
@@ -809,7 +862,7 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
           readOnly: true,
           onTap: _pickDestination,
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.sm),
         Row(
           children: [
             Expanded(
@@ -836,9 +889,9 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.sm),
         _buildOccupancyEditor(l10n),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.md),
         SearchSubmitButton(label: l10n.findHotels, onPressed: _search),
       ],
     );
@@ -1094,6 +1147,33 @@ class _DiscoverMoreButton extends StatelessWidget {
             textStyle: typography.bodyMedium.copyWith(
               fontWeight: FontWeight.w600,
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A small square stepper button for the compact occupancy card.
+class _CompactStepButton extends StatelessWidget {
+  const _CompactStepButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Pressable.wrap(
+      child: Material(
+        color: context.tokigoColors.brandContainer,
+        borderRadius: BorderRadius.circular(AppRadius.xs),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            width: 30,
+            height: 30,
+            child: Icon(icon, size: 18, color: context.tokigoColors.brand),
           ),
         ),
       ),

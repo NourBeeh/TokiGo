@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:tokigo/app/widgets/app_chrome.dart';
+import 'package:tokigo/app/widgets/home_nav_buttons.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -11,8 +13,10 @@ import 'package:tokigo/core/widgets/shimmer.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/features/home/domain/home_action.dart';
 import 'package:tokigo/features/home/presentation/home_controller.dart';
 import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_top_bar.dart';
 import 'package:tokigo/features/home/presentation/widgets/destination_cover_flow_carousel.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_section.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stays_carousel.dart';
@@ -93,7 +97,8 @@ class _HomePageState extends ConsumerState<HomePage>
     }
   }
 
-  /// The Home surface is the shell root '/' — sub-routes ('/flights',
+  /// The Home surface is Today, the router root '/' — sub-routes
+  /// ('/flights',
   /// '/hotels', ...) are their own pages; only returning to '/' counts.
   bool _isHomeLocation(String? location) => location == '/';
 
@@ -154,8 +159,9 @@ class _HomePageState extends ConsumerState<HomePage>
       // H1: pull-to-refresh removed by product decision — Home refreshes
       // prices/availability via live validation only (H2).
       //
-      // The keyboard resizes this body; the AI composer now lives in the
-      // pinned shell chrome above it.
+      // The wordmark row and the service navigation scroll away with the feed;
+      // the AI composer stays pinned at the top so it is always available.
+      // Section pages are pushed routes with their own header/back control.
       body: SafeArea(
         top: true,
         // The feed stays edge-to-edge under the navigation bar.
@@ -163,9 +169,55 @@ class _HomePageState extends ConsumerState<HomePage>
         child: CustomScrollView(
           controller: _feedController,
           slivers: <Widget>[
+            SliverToBoxAdapter(child: _buildHeader()),
+            const SliverPersistentHeader(
+              pinned: true,
+              delegate: _HomeComposerHeader(),
+            ),
+            SliverToBoxAdapter(child: _buildActionBar()),
             ..._feedSlivers(state, ref),
           ],
         ),
+      ),
+    );
+  }
+
+  /// The wordmark row — the Home header. It scrolls away with the feed.
+  Widget _buildHeader() {
+    return const Padding(
+      padding: EdgeInsetsDirectional.fromSTEB(
+        AppSpacing.lg,
+        AppSpacing.xs,
+        AppSpacing.lg,
+        0,
+      ),
+      child: HomeTopBar(),
+    );
+  }
+
+  /// The service navigation rail. It scrolls away with the feed, beneath the
+  /// pinned composer.
+  Widget _buildActionBar() {
+    final l10n = AppLocalizations.of(context)!;
+    final List<HomeActionDefinition> definitions = homeActionDefinitions(l10n);
+    final Map<HomeAction, String> paths = <HomeAction, String>{
+      for (final HomeActionDefinition definition in definitions)
+        definition.action: definition.path,
+    };
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(
+        top: AppSpacing.md,
+        bottom: AppSpacing.md,
+      ),
+      child: HomeActionBar(
+        definitions: definitions,
+        // Pushing (not `go`) keeps Home beneath the section page, so the
+        // section's back control returns to the dashboard.
+        onActionSelected: (HomeAction action) {
+          final String? path = paths[action];
+          if (path == null) return;
+          context.push(path);
+        },
       ),
     );
   }
@@ -178,9 +230,8 @@ class _HomePageState extends ConsumerState<HomePage>
 
   /// The dashboard's feed content as slivers.
   ///
-  /// The header, quick-action row and AI composer are provided by the
-  /// persistent shell chrome above this scroll view. This scroll view only
-  /// carries the feed content.
+  /// The header, AI composer and navigation bar are provided by [AppChrome]
+  /// above this scroll view. This scroll view only carries the feed content.
   List<Widget> _feedSlivers(HomeState state, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final List<HomeSection> visibleSections = state.sections
@@ -320,8 +371,31 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 }
 
+/// Pins the AI composer beneath the scrolling header.
+///
+/// A single fixed extent keeps the pin stable: no collapse animation, no
+/// extent thrash, and the composer's 56dp pill never resizes the feed. The
+/// wordmark row and the service rail above/below it scroll away normally.
+class _HomeComposerHeader extends SliverPersistentHeaderDelegate {
+  const _HomeComposerHeader();
+
+  @override
+  double get minExtent => AppChrome.pinnedHeight;
+
+  @override
+  double get maxExtent => AppChrome.pinnedHeight;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return const AppChrome();
+  }
+
+  @override
+  bool shouldRebuild(covariant _HomeComposerHeader oldDelegate) => false;
+}
+
 /// Centers an honest state (empty / offline) in the feed's remaining
-/// viewport, beneath the pinned shell chrome.
+/// viewport, beneath [AppChrome].
 ///
 /// The state scrolls only when its content genuinely cannot fit — a very
 /// small screen or a large system type scale — so the message is never

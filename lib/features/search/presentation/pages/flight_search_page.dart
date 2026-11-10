@@ -88,10 +88,9 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
   List<int> _childAges = <int>[];
   List<int> _infantAges = <int>[];
 
-  /// Restrict the search to non-stop flights (the `directOnly` field the
-  /// models have carried since the first release — now wired to the UI).
-  bool _directOnly = false;
-
+  /// Restrict the search to non-stop flights is now a RESULTS filter, not a
+  /// search-form control: the form asks the provider once, and the traveller
+  /// narrows the returned list in the filter sheet.
   /// The legs of a multi-city itinerary (owner decision, 2026-10-20). Empty
   /// until the traveller switches the trip type.
   final List<_LegDraft> _legs = <_LegDraft>[];
@@ -157,13 +156,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
   /// this session. A budget without a currency never filters anything (the
   /// app never converts a price).
   SearchFilters _effectiveFilters(SearchFilters base) {
-    final SearchFilters budgetAware = _applyBudget(base);
-    // Direct-flights-only forces maxStops: 0 on the applied filter set, the
-    // same semantics the airlines use for "non-stop only".
-    if (_directOnly) {
-      return budgetAware.copyWith(maxStops: 0);
-    }
-    return budgetAware;
+    return _applyBudget(base);
   }
 
   SearchFilters _applyBudget(SearchFilters base) {
@@ -250,6 +243,22 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
   }
 
   String _formatDate(DateTime date) => localizedMediumDate(context, date);
+
+  /// The prompt handed to the AI chat from the "Ask your assistant" card.
+  ///
+  /// Built only from what the traveller actually typed — origin, destination
+  /// and the departure date — never from a fabricated itinerary. Null when
+  /// there is no route to describe.
+  String? _askAssistantPrompt(AppLocalizations l10n) {
+    final String origin = _originCtrl.text.trim();
+    final String destination = _destCtrl.text.trim();
+    if (origin.isEmpty && destination.isEmpty) return null;
+    return l10n.askAssistantFlightPrompt(
+      origin,
+      destination,
+      _formatDate(_departure),
+    );
+  }
 
   /// The form sends a stable IATA code, but the field shows it plainly so a
   /// half-width card never has to truncate a long airport name.
@@ -432,7 +441,6 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
         market: _marketCountryCode,
         currency: ref.read(currencyProvider),
         cabinClass: _cabinToken,
-        directOnly: _directOnly,
       );
       _recordPassengerComposition(ref);
       _lastParams = params;
@@ -461,7 +469,6 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
       market: _marketCountryCode,
       currency: ref.read(currencyProvider),
       cabinClass: _cabinToken,
-      directOnly: _directOnly,
     );
     _recordPassengerComposition(ref);
     _lastParams = params;
@@ -508,6 +515,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
         priceFacet: priceFacetOf(results),
         airlines: airlinesOf(results),
         showStops: true,
+        showDirectOnly: true,
         showAirlines: true,
       ),
     );
@@ -634,6 +642,8 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
               ),
             ]
           : null,
+      // Only results get the assistant entry — never the empty form.
+      askAssistantPrompt: hasResults ? _askAssistantPrompt(l10n) : null,
     );
   }
 
@@ -817,7 +827,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm + 4,
+                    vertical: AppSpacing.sm,
                   ),
                   child: Row(
                     children: <Widget>[
@@ -915,36 +925,10 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
     if (picked != null && mounted) setState(() => _cabin = picked);
   }
 
-  Widget _buildDirectOnlyRow(AppLocalizations l10n) {
-    return Row(
-      children: <Widget>[
-        Transform.scale(
-          scale: 0.85,
-          alignment: AlignmentDirectional.centerStart,
-          child: Switch.adaptive(
-            value: _directOnly,
-            onChanged: (bool value) => setState(() => _directOnly = value),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _directOnly = !_directOnly),
-            child: Text(
-              l10n.directFlightsOnly,
-              style: AppTypography.forLight().body.copyWith(
-                    color: context.tokigoColors.textPrimary,
-                  ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   // ── Form ────────────────────────────────────────────────────────────────
   Widget _buildForm(AppLocalizations l10n) {
     return Column(
+      key: const ValueKey<String>('flight-search-form'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SearchSegmentedControl<_TripType>(
@@ -961,16 +945,14 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
           },
           onSelected: _setTripType,
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.sm),
         if (_multiCity)
           ..._buildMultiCity(l10n)
         else
           ..._buildSingleRoute(l10n),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.sm),
         _buildTravelersAndCabinRow(l10n),
         const SizedBox(height: AppSpacing.md),
-        _buildDirectOnlyRow(l10n),
-        const SizedBox(height: AppSpacing.lg),
         SearchSubmitButton(label: l10n.findFlights, onPressed: _search),
       ],
     );

@@ -87,6 +87,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiSearchSheetHint => 'Where do you want to go?';
 
   @override
+  String get askAssistantTitle => 'Ask your assistant';
+
+  @override
+  String get askAssistantSubtitle => 'Need help choosing? Compare these options with AI';
+
+  @override
+  String askAssistantFlightPrompt(String origin, String destination, String date) {
+    return 'Help me choose between these flight results from $origin to $destination on $date';
+  }
+
+  @override
+  String askAssistantHotelPrompt(String destination, String checkIn, String checkOut) {
+    return 'Help me choose between these hotel results in $destination from $checkIn to $checkOut';
+  }
+
+  @override
   String get aiSearchNoSuggestions => 'No suggestions right now. Try a different prompt.';
 
   @override
@@ -1412,6 +1428,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get filterDirect => 'Direct';
+
+  @override
+  String get filterDirectOnly => 'Direct only';
 
   @override
   String get filterAny => 'Any';

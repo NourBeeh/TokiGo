@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/theme/tokigo_gradients.dart';
 import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
@@ -231,9 +232,10 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                   ),
                 ),
               ),
-              // Send is the solid ink primary action. It uses the send glyph
+              // Send is the composer's primary action. It uses the send glyph
               // (not a second magnifier) because the job here is to submit the
-              // typed message to the AI, not to open a picker.
+              // typed message to the AI, not to open a picker. The gradient
+              // fill is the one decorative accent the composer carries.
               Semantics(
                 button: true,
                 label: l10n.aiSend,
@@ -248,7 +250,9 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                     child: Center(
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          color: widget.accentColor,
+                          // The signature Instagram ramp, used for ONE
+                          // accent only: the send action.
+                          gradient: TokiGoGradients.brandGradient(),
                           shape: BoxShape.circle,
                         ),
                         child: const SizedBox(
