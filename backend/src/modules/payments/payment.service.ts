@@ -721,7 +721,18 @@ export class PaymentService {
     // archived, so a redelivery can complete the effect exactly once.
     try {
       await this.attempts.getManager().transaction(async em => {
-        await this.attempts.transitionWithin(em, attempt.id, target);
+        const transition = await this.attempts.transitionWithin(em, attempt.id, target);
+        if (transition.outcome === 'conflict' && transition.attempt.status !== target) {
+          // Another writer moved the attempt to a state that contradicts this
+          // event's authoritative outcome. `transitionWithin` re-read the row
+          // and reported `conflict`; continuing would record a ledger effect
+          // (e.g. a CUSTOMER capture) and settle the event for an attempt that
+          // is NOT in that state. Roll back instead — the existing catch
+          // classifies this as the permanent `attempt_state_conflict`.
+          // A conflict where the row already reached `target` is an idempotent
+          // replay and is allowed to proceed.
+          throw new InvalidPaymentAttemptTransitionError(transition.attempt.status, target);
+        }
         if (target === 'succeeded') {
           await this.ledger.appendWithin(em, {
             bookingId: attempt.bookingId,

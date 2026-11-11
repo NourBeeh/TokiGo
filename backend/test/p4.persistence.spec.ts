@@ -1466,6 +1466,80 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
       expect(await app.webhookRepo.count()).toBe(1);
       expect(await app.legacyRepo.count()).toBe(1);
     });
+
+    it('C15. a losing compare-and-set race cannot record a capture for a declined attempt', async () => {
+      const app = buildApp();
+      const bookingId = await insertBooking({ authoritativePrice: 1000 });
+
+      // The gateway already reports SUCCEEDED for this payment.
+      const intent = await app.gateway.createPaymentIntent({
+        bookingId,
+        idempotencyKey: 'user-1:race-key',
+        amount: 1000,
+        currency: 'EGP',
+        market: 'EG',
+      });
+      await app.gateway.confirmPayment({
+        paymentId: intent.paymentId,
+        methodReference: 'CARD_SUCCESS',
+        idempotencyKey: 'gw-race',
+      });
+
+      // The durable attempt is still `pending` — the webhook path's expected
+      // pre-state for a 3DS-style settlement.
+      await ds.query(
+        `INSERT INTO payment_attempts
+           ("bookingId","userId","attemptNo","idempotencyKey",amount,currency,status,"gatewayId","gatewayRef")
+         VALUES ($1,'user-1',1,'race-attempt-key',1000,'EGP','pending','mock-egypt-gateway',$2)`,
+        [bookingId, intent.paymentId],
+      );
+
+      // Hold the row lock and move the attempt to `declined` WITHOUT committing.
+      // The webhook's compare-and-set UPDATE therefore loses the race and
+      // `transitionWithin` re-reads the row and reports `conflict`.
+      const lock = ds.createQueryRunner();
+      await lock.connect();
+      await lock.startTransaction();
+      await lock.query(
+        `UPDATE payment_attempts SET status = 'declined'
+         WHERE "bookingId" = $1 AND status = 'pending'`,
+        [bookingId],
+      );
+
+      const pending = app.service.handleWebhook(
+        signedEvent('evt-race', intent.paymentId, 'payment.succeeded'),
+      );
+
+      // Wait until the handler is genuinely blocked on the row lock, so the
+      // `conflict` branch (not the pre-update state-machine assert) runs.
+      const deadline = Date.now() + 5000;
+      let waiting = 0;
+      while (Date.now() < deadline) {
+        const rows: Array<{ waiting: number }> = await ds.query(
+          `SELECT count(*)::int AS waiting FROM pg_stat_activity
+            WHERE wait_event_type = 'Lock' AND query ILIKE '%payment_attempts%'`,
+        );
+        waiting = rows[0]?.waiting ?? 0;
+        if (waiting > 0) break;
+        await new Promise(r => setTimeout(r, 50));
+      }
+      expect(waiting).toBeGreaterThan(0);
+
+      await lock.commitTransaction();
+      const result = await pending;
+      await lock.release();
+
+      // The event is permanently rejected: the durable attempt contradicts the
+      // authoritative outcome, so NO capture may be recorded for it.
+      expect(result.status).toBe('REJECTED');
+      expect('reason' in result ? result.reason : '').toBe('attempt_state_conflict');
+      expect((await app.attemptRepo.find())[0].status).toBe('declined');
+      expect(await app.txnRepo.count()).toBe(0);
+      expect(await app.legacyRepo.count()).toBe(1);
+      const events = await app.webhookRepo.find();
+      expect(events[0].status).toBe('failed');
+      expect(events[0].outcome).toBe('attempt_state_conflict');
+    });
   });
 
   // =========================================================================
