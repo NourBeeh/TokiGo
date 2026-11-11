@@ -13,10 +13,10 @@ import 'package:tokigo/core/navigation/app_transitions.dart';
 
 /// Builds the central light [ThemeData] for TokiGo.
 ///
-/// "Clean Light": a near-white canvas, hairline borders, the Instagram-inspired
-/// brand blue for primary actions, and the two-stop halo shadow. The only other
-/// colours in the [ColorScheme] are semantic (error and the feedback roles).
-/// The dark variant lives in [dark].
+/// "Clean Light": a near-white canvas, hairline borders, the neutral ink accent
+/// for primary actions, and the two-stop halo shadow. The only other colours in
+/// the [ColorScheme] are semantic (error and the feedback roles). The dark
+/// variant lives in [dark].
 @immutable
 abstract final class AppTheme {
   /// System chrome for the light-only canvas.
@@ -50,13 +50,16 @@ abstract final class AppTheme {
     final tokens = AppTokens.standard();
     final palette = tokens.colors;
     final typography = AppTypography.forLight();
+    // The light canvas's own ink. Every hue-bearing token in the app resolves
+    // through [TokiGoColors], so the [ColorScheme] only needs the neutral step.
+    final TokiGoColors ink = TokiGoColors.light();
 
     final colorScheme = ColorScheme(
       brightness: Brightness.light,
-      primary: AppColors.brand,
-      onPrimary: AppColors.onBrand,
-      primaryContainer: AppColors.brandContainer,
-      onPrimaryContainer: AppColors.onBrandContainer,
+      primary: ink.brand,
+      onPrimary: ink.onBrand,
+      primaryContainer: ink.brandContainer,
+      onPrimaryContainer: ink.onBrandContainer,
       secondary: AppColors.ink,
       onSecondary: Colors.white,
       secondaryContainer: AppColors.surfaceTertiary,
@@ -77,7 +80,7 @@ abstract final class AppTheme {
       scrim: Colors.black,
       inverseSurface: palette.textPrimary,
       onInverseSurface: palette.surface,
-      inversePrimary: AppColors.brandLight,
+      inversePrimary: const Color(0xFF3A3A3A),
     );
 
     final base = ThemeData(
@@ -93,7 +96,7 @@ abstract final class AppTheme {
       extensions: <ThemeExtension<dynamic>>[TokiGoColors.light()],
       visualDensity: VisualDensity.adaptivePlatformDensity,
       splashFactory: NoSplash.splashFactory,
-      highlightColor: AppColors.brand.withValues(alpha: 0.08),
+      highlightColor: ink.brand.withValues(alpha: 0.08),
       splashColor: Colors.transparent,
       cardTheme: CardThemeData(
         color: palette.surface,
@@ -124,8 +127,8 @@ abstract final class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style:
             FilledButton.styleFrom(
-              backgroundColor: AppColors.brand,
-              foregroundColor: AppColors.onBrand,
+              backgroundColor: ink.brand,
+              foregroundColor: ink.onBrand,
               disabledBackgroundColor: AppColors.surfaceTertiary,
               disabledForegroundColor: AppColors.textTertiary,
               minimumSize: const Size(64, 52),
@@ -133,32 +136,32 @@ abstract final class AppTheme {
               textStyle: typography.bodyLargeMedium,
             ).copyWith(
               overlayColor: WidgetStatePropertyAll<Color>(
-                AppColors.brand.withValues(alpha: 0.08),
+                ink.brand.withValues(alpha: 0.08),
               ),
             ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style:
             OutlinedButton.styleFrom(
-              foregroundColor: AppColors.brand,
+              foregroundColor: ink.brand,
               side: const BorderSide(color: AppColors.hairlineStrong),
               minimumSize: const Size(64, 52),
               shape: RoundedRectangleBorder(borderRadius: AppRadius.mdBorder),
               textStyle: typography.bodyLargeMedium,
             ).copyWith(
               overlayColor: WidgetStatePropertyAll<Color>(
-                AppColors.brand.withValues(alpha: 0.08),
+                ink.brand.withValues(alpha: 0.08),
               ),
             ),
       ),
       textButtonTheme: TextButtonThemeData(
         style:
             TextButton.styleFrom(
-              foregroundColor: AppColors.brand,
+              foregroundColor: ink.brand,
               textStyle: typography.bodyLargeMedium,
             ).copyWith(
               overlayColor: WidgetStatePropertyAll<Color>(
-                AppColors.brand.withValues(alpha: 0.08),
+                ink.brand.withValues(alpha: 0.08),
               ),
             ),
       ),
@@ -191,7 +194,7 @@ abstract final class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: palette.surface,
-        indicatorColor: AppColors.brandContainer,
+        indicatorColor: ink.brandContainer,
         elevation: AppElevation.none,
         surfaceTintColor: Colors.transparent,
       ),

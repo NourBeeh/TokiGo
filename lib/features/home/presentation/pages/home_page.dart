@@ -33,7 +33,7 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   /// Last router location seen by this page — used to detect RETURNS to the
   /// Home surface (any sub-route popping back onto '/' Home root).
   String? _lastSeenLocation;
@@ -47,14 +47,35 @@ class _HomePageState extends ConsumerState<HomePage>
   final GlobalKey _discoverKey = GlobalKey();
   bool _scrollScheduled = false;
 
+  /// The wordmark row's hide/show animation.
+  ///
+  /// One controller, driven by the feed's scroll DIRECTION, animates the
+  /// header's height factor between 0 (hidden) and 1 (shown). The composer is
+  /// a separate pinned sliver, so it never moves with this value.
+  late final AnimationController _headerVisibility = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 220),
+    value: 1,
+  );
+
+  /// The scroll offset the header decision was last made at, so a stationary
+  /// or reversed drag does not retrigger the animation.
+  double _lastHeaderScrollOffset = 0;
+
+  /// How far the feed must move before the header reacts — a dead zone that
+  /// absorbs the jitter at a drag's start and stop.
+  static const double _headerScrollThreshold = 8;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _feedController.addListener(_onFeedScroll);
   }
 
   @override
   void dispose() {
+    _feedController.removeListener(_onFeedScroll);
     WidgetsBinding.instance.removeObserver(this);
     // Cannot look up ancestors in dispose — the router reference was saved at
     // hook time exactly for this.
@@ -62,7 +83,34 @@ class _HomePageState extends ConsumerState<HomePage>
     _hookedRouter = null;
     _routerHooked = false;
     _feedController.dispose();
+    _headerVisibility.dispose();
     super.dispose();
+  }
+
+  /// Hides the wordmark header while the feed travels AWAY from the top and
+  /// reveals it again when the traveller scrolls back toward the top.
+  ///
+  /// The animation is driven by direction alone, not by pixel parity: a fast
+  /// flick past the threshold still produces one smooth 220ms transition, and
+  /// a drag that reverses mid-flight simply reverses the same controller (no
+  /// jump, no second animation). The pinned composer is a separate sliver and
+  /// is never affected.
+  void _onFeedScroll() {
+    if (!_feedController.hasClients) return;
+    final double offset = _feedController.offset;
+    final double delta = offset - _lastHeaderScrollOffset;
+    if (delta.abs() < _headerScrollThreshold) return;
+    _lastHeaderScrollOffset = offset;
+    final bool scrollingAway = delta > 0;
+    final bool isAtTop = offset <= 0;
+    final double target = (scrollingAway && !isAtTop) ? 0 : 1;
+    if (_headerVisibility.value == target) return;
+    // A short, front-loaded ease so the header feels immediate but never snaps.
+    _headerVisibility.animateTo(
+      target,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   /// Hooks the router listener lazily (H2): the widget tree may host
@@ -159,8 +207,8 @@ class _HomePageState extends ConsumerState<HomePage>
       // H1: pull-to-refresh removed by product decision — Home refreshes
       // prices/availability via live validation only (H2).
       //
-      // The wordmark row and the service navigation scroll away with the feed;
-      // the AI composer stays pinned at the top so it is always available.
+      // The wordmark row animates its own visibility as the feed scrolls; the
+      // AI composer stays pinned at the top so it is always available.
       // Section pages are pushed routes with their own header/back control.
       body: SafeArea(
         top: true,
@@ -169,7 +217,29 @@ class _HomePageState extends ConsumerState<HomePage>
         child: CustomScrollView(
           controller: _feedController,
           slivers: <Widget>[
-            SliverToBoxAdapter(child: _buildHeader()),
+            // The wordmark row, wrapped in the scroll-driven visibility
+            // animation. It keeps its natural height (the feed scrolls behind
+            // it) and fades + slides out as one smooth transition; the pinned
+            // composer below is a separate sliver and never moves.
+            SliverToBoxAdapter(
+              child: AnimatedBuilder(
+                animation: _headerVisibility,
+                builder: (context, child) {
+                  final double t = Curves.easeOutCubic.transform(
+                    _headerVisibility.value,
+                  );
+                  if (t <= 0) return const SizedBox.shrink();
+                  return Opacity(
+                    opacity: t,
+                    child: FractionalTranslation(
+                      translation: Offset(0, -0.18 * (1 - t)),
+                      child: child,
+                    ),
+                  );
+                },
+                child: _buildHeader(),
+              ),
+            ),
             const SliverPersistentHeader(
               pinned: true,
               delegate: _HomeComposerHeader(),

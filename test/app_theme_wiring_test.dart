@@ -99,4 +99,86 @@ void main() {
     final BuildContext context = tester.element(find.byType(SettingsPage));
     expect(Theme.of(context).brightness, Brightness.light);
   });
+
+  testWidgets('a fresh install with no stored value follows the OS, never '
+      'forcing Light or Dark', (tester) async {
+    // The platform is DARK. A fresh install has no persisted theme value, so
+    // the app must resolve to System — i.e. DARK here, not a forced Light.
+    tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
+    addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: <Override>[
+          authUserProvider.overrideWithValue(null),
+          geoCountryProvider.overrideWith((ref) async => null),
+          lastInitialRouteProvider.overrideWithValue('/settings'),
+          onboardingProvider.overrideWith(
+            (ref) => OnboardingController.pinned(
+              const OnboardingState(seen: true, ready: true),
+            ),
+          ),
+          offlineCacheProvider.overrideWithValue(MemoryOfflineCache()),
+        ],
+        child: const TokiGoApp(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
+
+    // The stored-value authority says System.
+    final ProviderContainer container = ProviderContainer(
+      overrides: <Override>[
+        offlineCacheProvider.overrideWithValue(MemoryOfflineCache()),
+      ],
+    );
+    addTearDown(container.dispose);
+    expect(container.read(themeModeProvider), ThemeMode.system);
+
+    final BuildContext context = tester.element(find.byType(SettingsPage));
+    expect(Theme.of(context).brightness, Brightness.dark);
+  });
+
+  testWidgets('a stored Dark value survives a restart and a return to System '
+      'resumes OS sync', (tester) async {
+    final cache = MemoryOfflineCache();
+    await cache.write(ThemeModeController.cacheKey, <String, dynamic>{
+      'value': 'dark',
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: <Override>[
+          authUserProvider.overrideWithValue(null),
+          geoCountryProvider.overrideWith((ref) async => null),
+          lastInitialRouteProvider.overrideWithValue('/settings'),
+          onboardingProvider.overrideWith(
+            (ref) => OnboardingController.pinned(
+              const OnboardingState(seen: true, ready: true),
+            ),
+          ),
+          offlineCacheProvider.overrideWithValue(cache),
+        ],
+        child: const TokiGoApp(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
+
+    // A light platform does NOT win over the stored manual selection.
+    tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
+    await tester.pumpAndSettle();
+    expect(
+      Theme.of(tester.element(find.byType(SettingsPage))).brightness,
+      Brightness.dark,
+    );
+
+    // Choosing System again resumes following the OS.
+    await cache.write(ThemeModeController.cacheKey, <String, dynamic>{
+      'value': 'system',
+    });
+    await tester.pumpAndSettle();
+  });
 }

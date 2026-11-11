@@ -9,6 +9,10 @@ import 'package:tokigo/features/home/presentation/widgets/home_ai_search_field.d
 /// The wordmark row and the service navigation scroll away with the feed; the
 /// composer stays pinned at the top of Home so the traveller can always ask
 /// the assistant. It belongs to Home only — no other page renders it.
+///
+/// The band itself is TRANSPARENT: the pill carries the only edge (its halo),
+/// so the feed scrolls visibly beneath it and the composer reads as genuinely
+/// floating rather than as a solid stripe pinned over the content.
 class AppChrome extends StatelessWidget {
   const AppChrome({super.key});
 
@@ -18,7 +22,7 @@ class AppChrome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: HomeDesignTokens.backgroundOf(context),
+      color: Colors.transparent,
       child: Padding(
         padding: const EdgeInsetsDirectional.fromSTEB(
           AppSpacing.lg,

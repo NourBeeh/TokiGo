@@ -6,6 +6,10 @@ import 'package:flutter/material.dart';
 /// surface can resolve the correct value for the active brightness. The
 /// existing [AppColors] constants are retained for backward compatibility
 /// (light values) and will be migrated incrementally.
+///
+/// **The accent is NEUTRAL** in both palettes: the primary action fill is the
+/// canvas's own ink (near-black on the light canvas, near-white on the dark
+/// one), never a hue. Only semantic status colours carry a hue.
 @immutable
 class TokiGoColors extends ThemeExtension<TokiGoColors> {
   const TokiGoColors({
@@ -71,7 +75,7 @@ class TokiGoColors extends ThemeExtension<TokiGoColors> {
     required this.onCtaBarButton,
   });
 
-  // ---- Light palette (Instagram-inspired) ----
+  // ---- Light palette (neutral) ----
   factory TokiGoColors.light() => const TokiGoColors(
     background: Color(0xFFFAFAFA),
     surface: Color(0xFFFFFFFF),
@@ -86,18 +90,18 @@ class TokiGoColors extends ThemeExtension<TokiGoColors> {
     divider: Color(0xFFEFEFEF),
     hairline: Color(0xFFEFEFEF),
     hairlineStrong: Color(0xFFDBDBDB),
-    focusRing: Color(0x1F0064E0),
+    focusRing: Color(0x1F111111),
     overlay: Color(0x14000000),
-    brand: Color(0xFF0064E0),
+    brand: Color(0xFF111111),
     onBrand: Color(0xFFFFFFFF),
-    brandContainer: Color(0xFFE7F3FE),
-    onBrandContainer: Color(0xFF005A9E),
+    brandContainer: Color(0xFFF0F0F0),
+    onBrandContainer: Color(0xFF111111),
     ink: Color(0xFF262626),
     charcoal: Color(0xFF121212),
     charcoalPressed: Color(0xFF000000),
     starFill: Color(0xFF262626),
     starIdle: Color(0xFF8E8E8E),
-    ai: Color(0xFF0064E0),
+    ai: Color(0xFF111111),
     aiLight: Color(0xFF737373),
     aiContainer: Color(0xFFF5F5F5),
     onAiContainer: Color(0xFF262626),
@@ -115,8 +119,8 @@ class TokiGoColors extends ThemeExtension<TokiGoColors> {
     classStar: Color(0xFF8E8E8E),
     wordmarkInk: Color(0xFF111111),
     brandRed: Color(0xFFFF2D2D),
-    info: Color(0xFF0064E0),
-    infoContainer: Color(0xFFE7F3FE),
+    info: Color(0xFF262626),
+    infoContainer: Color(0xFFF0F0F0),
     onMedia: Color(0xFFFFFFFF),
     onMediaVariant: Color(0xB3FFFFFF),
     onMediaBorder: Color(0x40FFFFFF),
@@ -135,7 +139,7 @@ class TokiGoColors extends ThemeExtension<TokiGoColors> {
     onCtaBarButton: Color(0xFF262626),
   );
 
-  // ---- Dark palette (Instagram-inspired) ----
+  // ---- Dark palette (neutral) ----
   factory TokiGoColors.dark() => const TokiGoColors(
     background: Color(0xFF000000),
     surface: Color(0xFF121212),
@@ -150,18 +154,20 @@ class TokiGoColors extends ThemeExtension<TokiGoColors> {
     divider: Color(0xFF262626),
     hairline: Color(0xFF262626),
     hairlineStrong: Color(0xFF363636),
-    focusRing: Color(0x330A84FF),
+    focusRing: Color(0x33F5F5F5),
     overlay: Color(0x40000000),
-    brand: Color(0xFF0064E0),
-    onBrand: Color(0xFFFFFFFF),
-    brandContainer: Color(0xFF0A2A44),
-    onBrandContainer: Color(0xFF7AC2F7),
+    // The dark canvas's own ink is the light one: the primary action fill is
+    // near-white so it reads as a filled action on the black page.
+    brand: Color(0xFFF5F5F5),
+    onBrand: Color(0xFF000000),
+    brandContainer: Color(0xFF262626),
+    onBrandContainer: Color(0xFFF5F5F5),
     ink: Color(0xFFF5F5F5),
     charcoal: Color(0xFF000000),
     charcoalPressed: Color(0xFF000000),
     starFill: Color(0xFFF5F5F5),
     starIdle: Color(0xFF8E8E8E),
-    ai: Color(0xFF0064E0),
+    ai: Color(0xFFF5F5F5),
     aiLight: Color(0xFFA8A8A8),
     aiContainer: Color(0xFF1E1E1E),
     onAiContainer: Color(0xFFF5F5F5),
@@ -179,8 +185,8 @@ class TokiGoColors extends ThemeExtension<TokiGoColors> {
     classStar: Color(0xFFA8A8A8),
     wordmarkInk: Color(0xFFF5F5F5),
     brandRed: Color(0xFFFF5C5C),
-    info: Color(0xFF38BDF8),
-    infoContainer: Color(0xFF0F1F2A),
+    info: Color(0xFFF5F5F5),
+    infoContainer: Color(0xFF262626),
     onMedia: Color(0xFFFFFFFF),
     onMediaVariant: Color(0xB3FFFFFF),
     onMediaBorder: Color(0x40FFFFFF),
@@ -195,8 +201,10 @@ class TokiGoColors extends ThemeExtension<TokiGoColors> {
     ctaBar: Color(0xFF121212),
     onCtaBar: Color(0xFFFFFFFF),
     onCtaBarVariant: Color(0xFFA8A8A8),
-    ctaBarButton: Color(0xFF0064E0),
-    onCtaBarButton: Color(0xFFFFFFFF),
+    // The inverted button inside the charcoal bar — the canvas ink, so the
+    // bar's own action is neutral rather than a hue.
+    ctaBarButton: Color(0xFFF5F5F5),
+    onCtaBarButton: Color(0xFF262626),
   );
 
   final Color background;

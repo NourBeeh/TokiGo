@@ -47,6 +47,14 @@ WORDMARK_INK_W = 512  # 4x: 128dp of real ink
 BRANDING_CANVAS = (800, 320)  # Android 12+ branding slot, 200x80dp @4x
 BRANDING_INK_W = 640  # 4x: 160dp of real ink
 
+# The icon tile's fill MUST equal the splash page's background colour.
+#
+# Owner decision (2026-11): the launch page paints #111111 behind the artwork,
+# so a pure-black tile reads as a darker "plate" floating on the page — a visible
+# rectangle around the logo. The tile therefore carries the page colour, and the
+# only edge the mark has is its hairline border.
+PAGE_FIELD = (0x11, 0x11, 0x11)
+
 LIGHT_BORDER = (0xE4, 0xE4, 0xE7)
 DARK_BORDER = (0x2A, 0x2A, 0x2E)
 
@@ -88,18 +96,35 @@ def _scaled_ink(
 
 
 def _rounded_icon(path: Path, border: tuple[int, int, int]) -> Image.Image:
+    """The icon inside a squircle tile filled with the splash page's colour.
+
+    The icon masters are OPAQUE squares whose field is a solid colour
+    (#000000 for the dark mark), so compositing them as-is would paint a black
+    plate on the #111111 launch page. The field is therefore converted to
+    transparency and the squircle is filled with [PAGE_FIELD] instead — the
+    artwork keeps its exact glyph, proportions and rounded shape, and the tile
+    becomes invisible against the page. Only the hairline border remains as an
+    edge.
+    """
     icon = _load_rgba(path).resize(
         (ICON_SIZE, ICON_SIZE), Image.Resampling.LANCZOS
     )
+    # Key the icon's solid field to transparent, keeping the glyph.
+    icon = _key_field_to_transparent(icon)
     mask = Image.new("L", (ICON_SIZE, ICON_SIZE), 0)
     ImageDraw.Draw(mask).rounded_rectangle(
         (0, 0, ICON_SIZE - 1, ICON_SIZE - 1),
         radius=ICON_RADIUS,
         fill=255,
     )
-    icon.putalpha(mask)
+    # Multiply the keyed alpha by the squircle mask (putalpha would REPLACE the
+    # alpha and undo the field keying).
+    icon = _apply_mask(icon, mask)
 
-    tile = Image.new("RGBA", (ICON_SIZE, ICON_SIZE), (0, 0, 0, 0))
+    # Fill the squircle with the PAGE colour before compositing the glyph, so
+    # the tile is invisible against the splash page (no plate, no halo).
+    tile = Image.new("RGBA", (ICON_SIZE, ICON_SIZE), PAGE_FIELD + (255,))
+    tile.putalpha(mask)
     tile.alpha_composite(icon)
     ImageDraw.Draw(tile).rounded_rectangle(
         (0, 0, ICON_SIZE - 1, ICON_SIZE - 1),
@@ -108,6 +133,47 @@ def _rounded_icon(path: Path, border: tuple[int, int, int]) -> Image.Image:
         width=ICON_BORDER,
     )
     return tile
+
+
+def _apply_mask(icon: Image.Image, mask: Image.Image) -> Image.Image:
+    """Multiply the icon's alpha by [mask], preserving the keyed transparency."""
+    out = icon.copy()
+    src = icon.load()
+    m = mask.load()
+    dst = out.load()
+    for y in range(out.height):
+        for x in range(out.width):
+            r, g, b, a = src[x, y]
+            if a == 0:
+                continue
+            scale = m[x, y] / 255.0
+            dst[x, y] = (r, g, b, round(a * scale))
+    return out
+
+
+def _key_field_to_transparent(icon: Image.Image) -> Image.Image:
+    """Make an opaque icon master's flat field transparent.
+
+    The field is the colour of the corner pixel (the masters are a flat field
+    plus one glyph colour). Every pixel within a small tolerance of it becomes
+    transparent; the glyph keeps its full alpha. This is what lets the page's
+    own #111111 show through the tile.
+    """
+    field: tuple[int, int, int] = icon.getpixel((0, 0))[:3]  # type: ignore[index]
+    keyed = icon.copy()
+    pixels = keyed.load()
+    for y in range(keyed.height):
+        for x in range(keyed.width):
+            r, g, b, a = pixels[x, y]
+            if a == 0:
+                continue
+            if (
+                abs(r - field[0]) <= 8
+                and abs(g - field[1]) <= 8
+                and abs(b - field[2]) <= 8
+            ):
+                pixels[x, y] = (r, g, b, 0)
+    return keyed
 
 
 def _compose(icon_path: Path, wordmark_path: Path, border, out: Path) -> None:

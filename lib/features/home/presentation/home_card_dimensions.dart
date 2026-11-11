@@ -50,6 +50,14 @@ class HomeCardDimensions {
   /// Width of one Discover page as a fraction of the rail's width.
   static const double destinationViewportFraction = 0.9;
 
+  /// Width of one page in a mixed card rail (car / package / deal), as a
+  /// fraction of the rail's width.
+  ///
+  /// Owner decision (2026-11): EVERY Home card rail runs the same
+  /// [CoverFlowCarousel], so the page fraction is one shared value — the rails
+  /// differ in their card content, never in their swipe feel.
+  static const double cardRailViewportFraction = 0.8;
+
   // ── Sheet budgets ───────────────────────────────────────────────────────
 
   /// A stay sheet's content budget at the default text scale: name, class or

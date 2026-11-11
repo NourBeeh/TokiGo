@@ -9,6 +9,7 @@ import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 import 'package:tokigo/features/home/presentation/widgets/deal_card.dart';
+import 'package:tokigo/features/home/presentation/widgets/cover_flow_carousel.dart';
 import 'package:tokigo/features/home/presentation/widgets/destination_discovery_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/discovery_product_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/flight_recommendation_card.dart';
@@ -292,29 +293,17 @@ class HomeSectionWidget extends StatelessWidget {
       );
     }
 
-    // Fall through for non-hotel, non-destination items.
-    final cardHeight = HomeCardDimensions.cardHeightForType(primaryType);
-    final cardWidth = HomeCardDimensions.cardWidthForType(primaryType);
-
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        final double itemWidth = (constraints.maxWidth - AppSpacing.lg * 2)
-            .clamp(1.0, cardWidth)
-            .toDouble();
-
-        return SizedBox(
-          height: cardHeight + 8,
-          child: PageView.builder(
-            itemCount: items.length,
-            itemBuilder: (BuildContext context, int index) => Center(
-              child: SizedBox(
-                width: itemWidth,
-                child: _buildHorizontalItemCard(context, items[index]),
-              ),
-            ),
-          ),
-        );
-      },
+    // Fall through for non-hotel, non-destination items. They share the SAME
+    // 3D cover-flow mechanics as the Discover and stay rails (owner decision,
+    // 2026-11): one rail, one swipe feel, no second pager implementation.
+    return CoverFlowCarousel(
+      itemCount: items.length,
+      viewportFraction: HomeCardDimensions.cardRailViewportFraction,
+      height: HomeCardDimensions.cardHeightForType(primaryType) + 8,
+      itemBuilder: (context, index) => _buildHorizontalItemCard(
+        context,
+        items[index],
+      ),
     );
   }
 

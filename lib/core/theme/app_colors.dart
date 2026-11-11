@@ -1,38 +1,50 @@
 import 'package:flutter/material.dart';
 
-/// Central colour palette for TokiGo — "Clean Light", Instagram-inspired.
+/// Central colour palette for TokiGo — "Clean Light", neutral.
 ///
 /// A light identity on a **near-white canvas**: the app surface is #FAFAFA and
 /// cards/sheets are white. Separation comes from LIGHT — a 1px hairline
 /// ([hairline]) plus the two-stop halo in `AppElevation` — never from a tinted
-/// background. The accent is the brand blue [brand] (#0064E0), with a small
-/// purple→red→orange gradient reserved for the AI accents.
+/// background.
 ///
-/// The remaining hues are semantic (success / warning / danger / info) and are
-/// state — never decoration. A rated star is ink ([starFill]); bronze/gold is
-/// gone at the root (owner decision, 2026-10-20).
+/// **The accent is NEUTRAL.** There is no brand hue left in the chrome: the
+/// primary action fill, selection states, focus rings, chips, FAB-style discs and
+/// progress indicators all resolve to the active canvas's own ink
+/// ([brand] — near-black on the light canvas, near-white on the dark one). The
+/// wordmark keeps its own tokens ([brandRed], [wordmarkInk]) — the logo is not
+/// chrome — and every remaining hue is semantic and carries status only
+/// (success / warning / danger / info).
 ///
 /// This is a design primitive. Consumers should reference these tokens and
 /// let [AppTheme] map them onto the active [ThemeData] and [ColorScheme].
 @immutable
 abstract final class AppColors {
   // ---------------------------------------------------------------------------
-  // Action — the brand family.
+  // Action — the neutral ink family.
   //
-  // The brand is the Instagram-inspired blue #0064E0. The wordmark keeps its
-  // own tokens ([brandRed], [wordmarkInk]) — the logo is not chrome.
+  // The wordmark keeps its own tokens ([brandRed], [wordmarkInk]) — the logo is
+  // not chrome.
   // ---------------------------------------------------------------------------
-  static const Color brand = Color(0xFF0064E0);
+
+  /// The primary action fill: the active canvas's own ink.
+  ///
+  /// Owner decision (2026-11): the blue brand accent is retired from the chrome.
+  /// [AppTheme] resolves this per brightness, so a light page paints near-black
+  /// and a dark page paints near-white.
+  static const Color brand = Color(0xFF111111);
   static const Color onBrand = Colors.white;
 
-  /// Deeper step for pressed states and subtle depth.
-  static const Color brandDark = Color(0xFF0051B3);
+  /// Deeper step for pressed states and subtle depth (light canvas).
+  static const Color brandDark = Color(0xFF000000);
 
-  /// Lighter step (used where a brand tone sits on a dark fill / gradient).
-  static const Color brandLight = Color(0xFF3D8BEC);
+  /// Lighter step for a brand tone sitting on a dark fill.
+  static const Color brandLight = Color(0xFF3A3A3A);
 
-  static const Color brandContainer = Color(0xFFE7F3FE);
-  static const Color onBrandContainer = Color(0xFF005A9E);
+  /// The tinted container behind an ink-on-container label.
+  static const Color brandContainer = Color(0xFFF0F0F0);
+
+  /// Ink on [brandContainer].
+  static const Color onBrandContainer = Color(0xFF111111);
 
   // ---------------------------------------------------------------------------
   // Ink primitives
@@ -51,11 +63,10 @@ abstract final class AppColors {
   static const Color starIdle = Color(0xFF8E8E8E);
 
   // ---------------------------------------------------------------------------
-  // AI — brand blue.
+  // AI — the neutral assistant ink.
   // ---------------------------------------------------------------------------
-  /// The AI signature is the brand blue on a soft container. The token survives
-  /// so AI surfaces have one name to reference.
-  static const Color ai = Color(0xFF0064E0);
+  /// The AI signature is the same neutral ink as every other primary action.
+  static const Color ai = Color(0xFF111111);
   static const Color aiLight = Color(0xFF737373);
   static const Color aiContainer = Color(0xFFF5F5F5);
   static const Color onAiContainer = Color(0xFF262626);
@@ -101,8 +112,11 @@ abstract final class AppColors {
   static const Color wordmarkInk = Color(0xFF111111);
   // Brand red — the "Go" in the TokiGo wordmark (single source of truth).
   static const Color brandRed = Color(0xFFFF2D2D);
-  static const Color info = Color(0xFF0064E0);
-  static const Color infoContainer = Color(0xFFE7F3FE);
+
+  /// Informational state. Deliberately NOT a hue: it is the neutral ink, so an
+  /// "info" marker reads as emphasis rather than as a second brand colour.
+  static const Color info = Color(0xFF262626);
+  static const Color infoContainer = Color(0xFFF0F0F0);
 
   // -----------------------------------------------------------------------------
   // Light surfaces — pure white
@@ -124,8 +138,8 @@ abstract final class AppColors {
   /// Focus rings and dense dividers.
   static const Color hairlineStrong = Color(0xFFDBDBDB);
 
-  /// The 4px focus halo around a focused field.
-  static const Color focusRing = Color(0x1F0064E0);
+  /// The 4px focus halo around a focused field — ink, not a hue.
+  static const Color focusRing = Color(0x1F111111);
 
   /// Card and field borders (the same value as [hairline]; kept under its
   /// long-standing name so layout code reads naturally).
@@ -201,21 +215,21 @@ abstract final class AppColors {
   // -----------------------------------------------------------------------------
   // Feature hues — RETIRED from the chrome.
   //
-  // The Home nav tiles are white with ink glyphs (owner decision, 2026-10-20),
-  // so the per-vertical hues and their containers no longer paint anything.
-  // The names survive because routing and the admin read them as *identities*
-  // (a vertical still has an id); the values are monochrome.
+  // The Home nav tiles are white with ink glyphs, so the per-vertical hues and
+  // their containers no longer paint a COLOUR. The names survive because
+  // routing and the admin read them as *identities* (a vertical still has an
+  // id); the values are the neutral ink so no consumer reintroduces a hue.
   // -----------------------------------------------------------------------------
-  static const Color flightHue = Color(0xFF0064E0);
-  static const Color hotelHue = Color(0xFF0064E0);
-  static const Color carHue = Color(0xFF0064E0);
-  static const Color packageHue = Color(0xFF0064E0);
-  static const Color exploreHue = Color(0xFF0064E0);
-  static const Color groupsHue = Color(0xFF0064E0);
+  static const Color flightHue = Color(0xFF111111);
+  static const Color hotelHue = Color(0xFF111111);
+  static const Color carHue = Color(0xFF111111);
+  static const Color packageHue = Color(0xFF111111);
+  static const Color exploreHue = Color(0xFF111111);
+  static const Color groupsHue = Color(0xFF111111);
 
   /// Paired containers for the search service tiles.
-  static const Color flightContainer = Color(0xFFE7F3FE);
-  static const Color hotelContainer = Color(0xFFE7F3FE);
-  static const Color carContainer = Color(0xFFE7F3FE);
-  static const Color packageContainer = Color(0xFFE7F3FE);
+  static const Color flightContainer = Color(0xFFF0F0F0);
+  static const Color hotelContainer = Color(0xFFF0F0F0);
+  static const Color carContainer = Color(0xFFF0F0F0);
+  static const Color packageContainer = Color(0xFFF0F0F0);
 }

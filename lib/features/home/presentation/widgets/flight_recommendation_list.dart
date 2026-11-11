@@ -5,6 +5,7 @@ import 'package:tokigo/core/domain/models/home/home_types.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
+import 'package:tokigo/features/home/presentation/widgets/cover_flow_carousel.dart';
 import 'package:tokigo/features/home/presentation/widgets/flight_recommendation_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_card_loading.dart';
 
@@ -47,7 +48,6 @@ class FlightRecommendationList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final cardWidth = HomeCardDimensions.cardWidthForType(HomeCardType.flight);
     final cardHeight = HomeCardDimensions.cardHeightForType(
       HomeCardType.flight,
     );
@@ -97,43 +97,33 @@ class FlightRecommendationList extends StatelessWidget {
             ],
           ),
         ),
-        // Horizontal carousel of FlightRecommendationCards
-        LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-            final double itemWidth = (constraints.maxWidth - AppSpacing.lg * 2)
-                .clamp(1.0, cardWidth)
-                .toDouble();
-
-            return SizedBox(
-              height: cardHeight,
-              child: PageView.builder(
-                itemCount: tileCount,
-                itemBuilder: (BuildContext context, int index) {
-                  final HomeItem? item = isLoading ? null : displayItems[index];
-                  final Widget tile = item == null
-                      ? const FlightRecommendationCard(
-                          item: HomeItem(
-                            id: '',
-                            type: HomeCardType.flight,
-                            title: '',
-                          ),
-                          loading: true,
-                        )
-                      : FlightRecommendationCard(
-                          item: item,
-                          onTap: onTapFlight != null
-                              ? () => onTapFlight!(item)
-                              : null,
-                          onFavorite: onFavorite != null
-                              ? (value) => onFavorite!(item.id, value)
-                              : null,
-                        );
-
-                  return Center(
-                    child: SizedBox(width: itemWidth, child: tile),
-                  );
-                },
-              ),
+        // Horizontal carousel of FlightRecommendationCards.
+        //
+        // The SAME 3D cover flow as every other Home card rail (owner decision,
+        // 2026-11): one centred page with its neighbours peeking, tilted in 3D.
+        // No second pager implementation lives in this file.
+        CoverFlowCarousel(
+          itemCount: tileCount,
+          viewportFraction: HomeCardDimensions.cardRailViewportFraction,
+          height: cardHeight,
+          itemBuilder: (BuildContext context, int index) {
+            final HomeItem? item = isLoading ? null : displayItems[index];
+            if (item == null) {
+              return const FlightRecommendationCard(
+                item: HomeItem(
+                  id: '',
+                  type: HomeCardType.flight,
+                  title: '',
+                ),
+                loading: true,
+              );
+            }
+            return FlightRecommendationCard(
+              item: item,
+              onTap: onTapFlight != null ? () => onTapFlight!(item) : null,
+              onFavorite: onFavorite != null
+                  ? (value) => onFavorite!(item.id, value)
+                  : null,
             );
           },
         ),

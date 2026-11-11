@@ -1,34 +1,34 @@
 import 'package:flutter/material.dart';
 
-/// Centralized Instagram-inspired gradient accents.
+/// Centralized neutral accent ramps.
 ///
-/// The palette direction is Instagram's recognizable visual language: a
-/// signature purple → magenta → orange ramp used for SMALL accents only
-/// (the AI composer's send action, the "Ask your assistant" entry, the brand
-/// mark). Everything else stays on the neutral [TokiGoColors] surfaces so the
-/// gradients never take over a screen.
+/// **Owner decision (2026-11): the blue brand accent is retired.** The former
+/// Instagram purple → red → orange ramp carried a hue, so it is replaced by a
+/// neutral ink ramp: the same shape of gradient (a quiet dark-to-light step) with
+/// no colour, used for SMALL accents only — the AI assistant's identity mark and
+/// the "Ask your assistant" entry.
 ///
-/// The stops are shared by both themes — a gradient is a hue, not a surface,
-/// and the same ramp reads correctly on the light and the dark canvas.
+/// The stops are shared by both themes — a ramp is a VALUE step, not a surface,
+/// and the same neutral ramp reads correctly on the light and the dark canvas.
 @immutable
 abstract final class TokiGoGradients {
-  /// The signature Instagram ramp: purple → red/magenta → orange.
+  /// The signature ramp: near-black → mid ink. Neutral, never a hue.
   static const List<Color> brand = <Color>[
-    Color(0xFF833AB4),
-    Color(0xFFFD1D1D),
-    Color(0xFFFCB045),
+    Color(0xFF262626),
+    Color(0xFF5A5A5A),
+    Color(0xFF8E8E8E),
   ];
 
-  /// A tighter five-stop ramp for small rounded surfaces (pills, buttons).
+  /// A tighter multi-stop ramp for small rounded surfaces (pills, buttons).
   static const List<Color> brandSmooth = <Color>[
-    Color(0xFF5851DB),
-    Color(0xFF833AB4),
-    Color(0xFFC13584),
-    Color(0xFFE1306C),
-    Color(0xFFFD1D1D),
-    Color(0xFFF56040),
-    Color(0xFFF77737),
-    Color(0xFFFCAF45),
+    Color(0xFF111111),
+    Color(0xFF262626),
+    Color(0xFF3A3A3A),
+    Color(0xFF4F4F4F),
+    Color(0xFF666666),
+    Color(0xFF7D7D7D),
+    Color(0xFF949494),
+    Color(0xFFA8A8A8),
   ];
 
   /// The brand ramp as a left-to-right gradient (RTL-aware callers flip it).

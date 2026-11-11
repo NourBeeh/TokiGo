@@ -7,12 +7,12 @@ import 'package:tokigo/core/auth/auth_provider.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
+import 'package:tokigo/core/widgets/ai_robot_avatar.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/features/ai/application/ai_chat_page_providers.dart';
@@ -292,12 +292,9 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
             ),
             child: Column(
               children: [
-                Image.asset(
-                  'assets/images/TOKI AI.png',
-                  width: 96,
-                  height: 96,
-                  fit: BoxFit.contain,
-                ),
+                // The assistant's identity — the same robot that sits beside
+                // every reply, drawn larger here as the welcome hero.
+                const AiRobotAvatar(size: 96),
                 const SizedBox(height: AppSpacing.lg),
                 Text(
                   'Hi! Ask me about flights, hotels, and more…',
@@ -361,14 +358,18 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
 
     if (showTyping) {
       children.add(
-        const Align(
+        Align(
           alignment: Alignment.centerLeft,
           child: Padding(
-            padding: EdgeInsets.symmetric(
+            padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.lg,
               vertical: AppSpacing.xs,
             ),
-            child: TypingDots(),
+            // The assistant's identity is present while it is working, not only
+            // once the reply lands.
+            child: const _AssistantTurn(
+              child: TypingDots(),
+            ),
           ),
         ),
       );
@@ -541,6 +542,50 @@ class _FollowUpRow extends StatelessWidget {
 }
 
 // ───────────────────────────────────────────────────────────────────────────
+// Assistant turn chrome — the robot beside an AI message.
+// ───────────────────────────────────────────────────────────────────────────
+
+/// Places the assistant's robot at the leading edge of an AI turn.
+///
+/// ONE recipe for both a completed reply and the thinking indicator, so the
+/// assistant's identity never differs between the two states. The row is
+/// direction-aware: in RTL the robot lands on the right, matching the message
+/// bubble's own alignment. A user turn never goes through this widget.
+class _AssistantTurn extends StatelessWidget {
+  const _AssistantTurn({required this.child, this.robotSize = 32});
+
+  final Widget child;
+
+  /// Kept small: the robot is a sibling of the message, not a header.
+  final double robotSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool rtl = Directionality.of(context) == TextDirection.rtl;
+    final Widget robot = AiRobotAvatar(size: robotSize);
+    // LTR: robot, gap, message. RTL: message, gap, robot — the robot is always
+    // at the turn's LEADING edge, so it mirrors with the reading direction.
+    final List<Widget> children = rtl
+        ? <Widget>[
+            Flexible(child: child),
+            const SizedBox(width: kAiRobotGap),
+            robot,
+          ]
+        : <Widget>[
+            robot,
+            const SizedBox(width: kAiRobotGap),
+            Flexible(child: child),
+          ];
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      textDirection: TextDirection.ltr,
+      children: children,
+    );
+  }
+}
+
+// ───────────────────────────────────────────────────────────────────────────
 // Chat bubble
 // ───────────────────────────────────────────────────────────────────────────
 
@@ -604,6 +649,46 @@ class ChatBubble extends StatelessWidget {
       ],
     );
 
+    // The assistant's robot belongs to the TURN, not inside the bubble: it sits
+    // at the leading edge of the row, level with the message's first line, and
+    // a user turn never carries it.
+    final Widget bubble = Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm + 2,
+      ),
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.sizeOf(context).width * 0.72,
+      ),
+      decoration: BoxDecoration(
+        gradient: isUser
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  context.tokigoColors.brand,
+                  context.tokigoColors.textSecondary,
+                ],
+              )
+            : null,
+        color: isUser ? null : context.tokigoColors.surfaceSecondary,
+        border: isUser
+            ? null
+            : Border.all(color: context.tokigoColors.outline),
+        borderRadius: BorderRadiusDirectional.only(
+          topStart: Radius.circular(isUser ? AppRadius.lg : AppRadius.xs),
+          topEnd: Radius.circular(isUser ? AppRadius.xs : AppRadius.lg),
+          bottomStart: const Radius.circular(AppRadius.lg),
+          bottomEnd: const Radius.circular(AppRadius.lg),
+        ),
+      ),
+      child: content,
+    );
+
+    final Widget turn = isUser
+        ? bubble
+        : _AssistantTurn(robotSize: 32, child: bubble);
+
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: TweenAnimationBuilder<double>(
@@ -618,35 +703,11 @@ class ChatBubble extends StatelessWidget {
           ),
         ),
         child: Container(
-          margin: EdgeInsets.symmetric(
+          margin: const EdgeInsets.symmetric(
             vertical: AppSpacing.xs,
-            horizontal: isUser ? AppSpacing.lg : AppSpacing.lg,
+            horizontal: AppSpacing.lg,
           ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm + 2,
-          ),
-          constraints: BoxConstraints(
-            maxWidth: MediaQuery.sizeOf(context).width * 0.72,
-          ),
-          decoration: BoxDecoration(
-            gradient: isUser
-                ? LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [context.tokigoColors.brand, AppColors.brandLight],
-                  )
-                : null,
-            color: isUser ? null : context.tokigoColors.surfaceSecondary,
-            border: isUser ? null : Border.all(color: context.tokigoColors.outline),
-            borderRadius: BorderRadiusDirectional.only(
-              topStart: Radius.circular(isUser ? AppRadius.lg : AppRadius.xs),
-              topEnd: Radius.circular(isUser ? AppRadius.xs : AppRadius.lg),
-              bottomStart: const Radius.circular(AppRadius.lg),
-              bottomEnd: const Radius.circular(AppRadius.lg),
-            ),
-          ),
-          child: content,
+          child: turn,
         ),
       ),
     );

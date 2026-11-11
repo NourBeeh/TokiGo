@@ -51,7 +51,7 @@ void main() {
       expect(_contrastRatio(dark.textSecondary, dark.background), greaterThan(4.5));
     });
 
-    test('the brand fill clears AA for its on-brand label', () {
+    test('the primary action fill clears AA for its on-primary label', () {
       expect(_contrastRatio(light.onBrand, light.brand), greaterThan(4.5));
       expect(_contrastRatio(dark.onBrand, dark.brand), greaterThan(4.5));
     });
@@ -63,19 +63,39 @@ void main() {
       expect(darkLuma, greaterThan(10));
     });
 
-    test('the brand is the Instagram-inspired blue in both themes', () {
-      expect(light.brand, const Color(0xFF0064E0));
-      expect(dark.brand, const Color(0xFF0064E0));
+    test('the accent is NEUTRAL in both themes — no brand hue remains', () {
+      // Owner decision (2026-11): the blue #0064E0 accent is retired. The
+      // primary action fill is the canvas's own ink: near-black on the light
+      // canvas, near-white on the dark one.
+      expect(light.brand, const Color(0xFF111111));
+      expect(dark.brand, const Color(0xFFF5F5F5));
+      // Neither palette's accent may carry a hue.
+      expect(light.brand, isNot(const Color(0xFF0064E0)));
+      expect(dark.brand, isNot(const Color(0xFF0064E0)));
+      // The AI and info roles share the same neutral accent.
+      expect(light.ai, light.brand);
+      expect(dark.ai, dark.brand);
+      expect(light.info, light.ink);
+      expect(dark.info, dark.ink);
+      // The feature hues are neutral too, so no rail reintroduces a colour.
+      expect(light.brandContainer, const Color(0xFFF0F0F0));
+      expect(dark.brandContainer, const Color(0xFF262626));
     });
   });
 
   group('gradient accents', () {
-    test('the brand ramp is the Instagram purple → red → orange identity', () {
+    test('the accent ramp is neutral — a value step, never a hue', () {
+      // The former Instagram purple → red → orange ramp is retired: the ramp
+      // keeps the same shape but steps through ink.
       expect(TokiGoGradients.brand, const <Color>[
-        Color(0xFF833AB4),
-        Color(0xFFFD1D1D),
-        Color(0xFFFCB045),
+        Color(0xFF262626),
+        Color(0xFF5A5A5A),
+        Color(0xFF8E8E8E),
       ]);
+      for (final Color stop in TokiGoGradients.brandSmooth) {
+        expect(stop.red, stop.green, reason: 'a neutral stop has no hue');
+        expect(stop.green, stop.blue, reason: 'a neutral stop has no hue');
+      }
     });
 
     test('the gradient builders are RTL-aware by construction', () {
