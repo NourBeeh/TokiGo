@@ -87,6 +87,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aiSearchSheetHint => 'عايز تسافر فين؟';
 
   @override
+  String get aiChatSubtitle => 'مساعد توكي جو الذكي';
+
+  @override
   String get askAssistantTitle => 'اسأل مساعدك';
 
   @override
@@ -265,7 +268,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get homeStaysTitle => 'إقامات مقترحة';
+  String get homeStaysTitle => 'إقامات قريبة منك';
 
   @override
   String get homeContinuePlanning => 'كمّل تخطيطك';
@@ -827,13 +830,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get carsUnavailableTitle => 'تأجير السيارات قادم قريبًا';
 
   @override
-  String get carsUnavailableBody => 'نعمل على إضافة مزوّدي تأجير السيارات. الرحلات والفنادق متاحة الآن.';
+  String get carsUnavailableBody => 'نعمل على إضافة مزوّدي تأجير السيارات. الرحلات والإقامات متاحة الآن.';
 
   @override
   String get findFlights => 'ابحث عن رحلات';
 
   @override
-  String get findHotels => 'ابحث عن فنادق';
+  String get findHotels => 'ابحث عن إقامات';
 
   @override
   String get packagesSubtitle => 'برامج مُنسّقة متعددة الأيام';
@@ -923,7 +926,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get mapViewComingSoon => 'عرض الخريطة قريبًا';
 
   @override
-  String get mapIntegrationUnavailable => 'تكامل الخريطة غير متاح بعد. تُعرض النتائج في وضع القائمة.';
+  String get mapIntegrationUnavailable => 'تكامل الخريطة غير متاح بعد. ارجع إلى وضع القائمة لعرض النتائج.';
 
   @override
   String get carDropoffLocation => 'موقع التسليم';
@@ -1512,10 +1515,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get hotelIdleTitle => 'دوّر على إقامتك';
 
   @override
-  String get hotelIdleBody => 'اكتب الوجهة والتواريخ لعرض الغرف المتاحة.';
+  String get hotelIdleBody => 'أدخل وجهتك وتواريخ الإقامة لاستعراض الفنادق المتاحة ومقارنة أسعارها وتقييماتها.';
 
   @override
-  String get hotelEmptyTitle => 'مفيش فنادق';
+  String get hotelEmptyTitle => 'لا توجد إقامات';
 
   @override
   String get hotelEmptyBody => 'جرّب وجهة تانية أو تواريخ تانية';
@@ -1576,6 +1579,29 @@ class AppLocalizationsAr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String hotelRoomNumber(int n) {
+    return 'غرفة $n';
+  }
+
+  @override
+  String hotelChildrenCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count طفل',
+      many: '$count طفلاً',
+      few: '$count أطفال',
+      two: 'طفلان',
+      one: 'طفل واحد',
+      zero: 'لا أطفال',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get addRoom => 'أضف غرفة';
 
   @override
   String cityStaysCount(num count) {

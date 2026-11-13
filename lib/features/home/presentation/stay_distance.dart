@@ -30,6 +30,9 @@ double? stayDistanceToCenterKm({
     'long',
   ]);
   if (latitude == null || longitude == null) return null;
+  // A coordinate that cannot be a real position (a latitude of 200, a
+  // non-finite number) is never measured into a plausible-looking distance.
+  if (!_isValidLatitude(latitude) || !_isValidLongitude(longitude)) return null;
 
   final _Coordinate? center = _cityCenters[city.trim().toLowerCase()];
   if (center == null) return null;
@@ -65,6 +68,12 @@ double? _firstNumber(Map<String, dynamic> metadata, List<String> keys) {
 }
 
 double _radians(double degrees) => degrees * math.pi / 180;
+
+bool _isValidLatitude(double value) =>
+    value.isFinite && value >= -90 && value <= 90;
+
+bool _isValidLongitude(double value) =>
+    value.isFinite && value >= -180 && value <= 180;
 
 class _Coordinate {
   const _Coordinate(this.latitude, this.longitude);

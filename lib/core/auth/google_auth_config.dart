@@ -16,14 +16,18 @@ class GoogleAuthConfig {
   /// OAuth web client ID, e.g. `1234567890-abcdef.apps.googleusercontent.com`.
   static const String serverClientId = String.fromEnvironment(
     'GOOGLE_SERVER_CLIENT_ID',
-    defaultValue: '423433597936-erj0nejep60cs5g84s4goknhis6v8jle.apps.googleusercontent.com',
+    defaultValue:
+        '423433597936-erj0nejep60cs5g84s4goknhis6v8jle.apps.googleusercontent.com',
   );
 
   /// Optional iOS OAuth client ID. On iOS, google_sign_in needs either this or
-  /// a GoogleService-Info.plist. Provided via --dart-define=GOOGLE_IOS_CLIENT_ID.
+  /// a GoogleService-Info.plist. Defaults to the TokiGo iOS client whose
+  /// reversed URL scheme is registered in ios/Runner/Info.plist; override with
+  /// --dart-define=GOOGLE_IOS_CLIENT_ID for a different Google project.
   static const String iosClientId = String.fromEnvironment(
     'GOOGLE_IOS_CLIENT_ID',
-    defaultValue: '',
+    defaultValue:
+        '423433597936-uqb2274m2jk3eno1n41es30ssv44uau4.apps.googleusercontent.com',
   );
 
   /// False until the ID above is supplied; the sign-in button stays hidden

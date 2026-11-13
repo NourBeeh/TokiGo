@@ -8,10 +8,10 @@ import 'package:tokigo/features/ai/domain/ai_chat_message.dart';
 import 'package:tokigo/features/ai/presentation/pages/ai_chat_page.dart';
 // ignore: unused_import
 
-/// The assistant's robot identity (owner decision, 2026-11).
+/// The assistant's brand identity (owner decision, 2026-11).
 ///
 /// One asset, one size recipe, everywhere the assistant speaks:
-/// * a COMPLETED assistant reply carries the robot;
+/// * a COMPLETED assistant reply carries the brand mark;
 /// * a USER reply never does;
 /// * the thinking indicator carries it too, with the breathing pulse running;
 /// * the welcome hero reuses the same widget.
@@ -185,7 +185,50 @@ void main() {
     expect(find.text('Hi! Ask me about flights, hotels, and more…'), findsOneWidget);
   });
 
-  test('the shared asset is the one the AI welcome state already shipped', () {
-    expect(AiRobotAvatar.assetName, 'assets/images/TOKI AI.png');
+  test('the shared asset is the existing TokiGo brand mark', () {
+    expect(
+      AiRobotAvatar.lightAssetName,
+      'assets/icon/app_icon_adaptive_foreground_1024.png',
+    );
+    expect(
+      AiRobotAvatar.darkAssetName,
+      'assets/icon/app_icon_adaptive_dark_foreground_1024.png',
+    );
+  });
+
+  testWidgets('the light and dark surfaces pick their own transparent mark', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: const Scaffold(body: AiRobotAvatar(size: 32)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<Image>(find.byType(Image)).image,
+      isA<AssetImage>().having(
+        (AssetImage a) => a.assetName,
+        'assetName',
+        AiRobotAvatar.lightAssetName,
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        home: const Scaffold(body: AiRobotAvatar(size: 32)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<Image>(find.byType(Image)).image,
+      isA<AssetImage>().having(
+        (AssetImage a) => a.assetName,
+        'assetName',
+        AiRobotAvatar.darkAssetName,
+      ),
+    );
   });
 }

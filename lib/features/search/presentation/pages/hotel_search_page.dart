@@ -7,11 +7,11 @@ import 'package:tokigo/core/domain/models/search/hotel_search_params.dart';
 import 'package:tokigo/core/domain/models/search/hotel_room_occupancy.dart';
 import 'package:tokigo/core/memory/explicit_preference_signal.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
-import 'package:tokigo/core/theme/app_elevation.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/localized_date.dart';
+import 'package:tokigo/core/widgets/compact_stepper_row.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/core/widgets/search_filter_chips.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart';
@@ -25,10 +25,11 @@ import 'package:tokigo/features/search/domain/search_context.dart';
 import 'package:tokigo/features/search/domain/search_filters.dart';
 import 'package:tokigo/features/search/domain/search_view_mode.dart';
 import 'package:tokigo/features/search/domain/sort_option.dart';
+import 'package:tokigo/features/search/presentation/widgets/compact_search_summary.dart';
 import 'package:tokigo/features/search/presentation/widgets/destination_picker_sheet.dart';
 import 'package:tokigo/features/search/presentation/widgets/filter_panel.dart';
 import 'package:tokigo/features/search/presentation/widgets/hotel_overlap_card.dart';
-import 'package:tokigo/features/search/presentation/widgets/search_map_placeholder.dart';
+import 'package:tokigo/features/search/presentation/widgets/hotel_map_view.dart';
 import 'package:tokigo/features/search/presentation/widgets/search_scaffold.dart';
 import 'package:tokigo/features/search/presentation/widgets/search_states_view.dart';
 import 'package:tokigo/features/search/presentation/widgets/search_view_toggle.dart';
@@ -97,6 +98,9 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
   /// True while the user is editing a completed search: the summary card has
   /// been tapped open, so the full form shows again until the next search.
   bool _editing = false;
+
+  /// The hotel selected on the map (by its marker), if any.
+  String? _selectedOfferId;
 
   HotelSearchParams? _lastParams;
   bool _prefilled = false;
@@ -267,7 +271,7 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    '${l10n.hotelRoomsCount(1)} ${i + 1}',
+                    l10n.hotelRoomNumber(i + 1),
                     style: typography.captionSemibold.copyWith(
                       color: context.tokigoColors.textSecondary,
                     ),
@@ -285,37 +289,37 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
                   ),
               ],
             ),
-            _compactOccupantStepper(
+            CompactStepperRow(
               label: 'Adults',
               value: _occupancies[i].adults,
-              onRemove: () => setState(() {
-                final r = _occupancies[i];
-                if (r.adults > 1) {
-                  final list = List<HotelRoomOccupancy>.from(_occupancies);
-                  list[i] = r.copyWith(adults: r.adults - 1);
-                  _occupancies = list;
-                }
-              }),
-              onAdd: () => setState(() {
+              onDecrement: _occupancies[i].adults > 1
+                  ? () => setState(() {
+                      final r = _occupancies[i];
+                      final list = List<HotelRoomOccupancy>.from(_occupancies);
+                      list[i] = r.copyWith(adults: r.adults - 1);
+                      _occupancies = list;
+                    })
+                  : null,
+              onIncrement: () => setState(() {
                 final r = _occupancies[i];
                 final list = List<HotelRoomOccupancy>.from(_occupancies);
                 list[i] = r.copyWith(adults: r.adults + 1);
                 _occupancies = list;
               }),
             ),
-            _compactOccupantStepper(
+            CompactStepperRow(
               label: 'Children',
               value: _occupancies[i].children,
-              onRemove: () => setState(() {
-                final r = _occupancies[i];
-                if (r.childAges.isNotEmpty) {
-                  final ages = List<int>.from(r.childAges)..removeLast();
-                  final list = List<HotelRoomOccupancy>.from(_occupancies);
-                  list[i] = r.copyWith(childAges: ages);
-                  _occupancies = list;
-                }
-              }),
-              onAdd: () => setState(() {
+              onDecrement: _occupancies[i].childAges.isNotEmpty
+                  ? () => setState(() {
+                      final r = _occupancies[i];
+                      final ages = List<int>.from(r.childAges)..removeLast();
+                      final list = List<HotelRoomOccupancy>.from(_occupancies);
+                      list[i] = r.copyWith(childAges: ages);
+                      _occupancies = list;
+                    })
+                  : null,
+              onIncrement: () => setState(() {
                 final r = _occupancies[i];
                 final ages = List<int>.from(r.childAges)..add(5);
                 final list = List<HotelRoomOccupancy>.from(_occupancies);
@@ -348,9 +352,9 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  '${_occupancies.length} rooms · '
-                  '${_occupancies.fold<int>(0, (s, r) => s + r.adults)} adults · '
-                  '${_occupancies.fold<int>(0, (s, r) => s + r.children)} children',
+                  '${l10n.hotelRoomsCount(_occupancies.length)} · '
+                  '${l10n.hotelGuestsCount(_occupancies.fold<int>(0, (s, r) => s + r.adults))} · '
+                  '${l10n.hotelChildrenCount(_occupancies.fold<int>(0, (s, r) => s + r.children))}',
                   style: typography.caption.copyWith(
                     color: context.tokigoColors.textSecondary,
                   ),
@@ -359,7 +363,7 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
               IconButton(
                 icon: const Icon(Icons.add_rounded, size: 18),
                 visualDensity: VisualDensity.compact,
-                tooltip: 'Add room',
+                tooltip: l10n.addRoom,
                 onPressed: () => setState(() {
                   _occupancies = List<HotelRoomOccupancy>.from(_occupancies)
                     ..add(const HotelRoomOccupancy(adults: 1));
@@ -369,40 +373,6 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
           ),
         ],
       ),
-    );
-  }
-
-  /// One compact adult/children stepper line inside the occupancy card.
-  Widget _compactOccupantStepper({
-    required String label,
-    required int value,
-    required VoidCallback onRemove,
-    required VoidCallback onAdd,
-  }) {
-    final typography = AppTypography.forLight();
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: Text(
-            label,
-            style: typography.body.copyWith(
-              color: context.tokigoColors.textPrimary,
-            ),
-          ),
-        ),
-        _CompactStepButton(icon: Icons.remove_rounded, onTap: onRemove),
-        SizedBox(
-          width: 28,
-          child: Text(
-            '$value',
-            textAlign: TextAlign.center,
-            style: typography.bodyMedium.copyWith(
-              color: context.tokigoColors.textPrimary,
-            ),
-          ),
-        ),
-        _CompactStepButton(icon: Icons.add_rounded, onTap: onAdd),
-      ],
     );
   }
 
@@ -582,27 +552,72 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
     // Low Memory Killer treats as an app to reclaim. Small lists keep the
     // eager path — there is nothing to gain and the whole page stays
     // assertable in one frame.
+    final bool isMapView = _isMapView(state);
     final bool lazyResults =
         state.status == HotelSearchStatus.success &&
-        ref.watch(searchViewModeProvider) == SearchViewMode.list &&
+        !isMapView &&
         _visibleResults(state, filters).length > kSearchLazyResultsThreshold;
 
     return SearchScaffold(
       subtitle: _summary(l10n),
       embedded: widget.embedded,
       bottomPadding: widget.bottomPadding,
-      headerActions: const SearchViewToggle(),
       // Collapsed after a search: the reference's floating summary card.
       form: showSummary ? _buildSummaryCard(l10n) : _buildForm(l10n),
       bottomContent: hasResults ? _buildChipRow(l10n, filters) : null,
-      body: lazyResults
+      body: (lazyResults || isMapView)
           ? const SizedBox.shrink()
           : _buildResults(state, l10n, filters),
-      bodySlivers: lazyResults
-          ? _buildResultSlivers(state, l10n, filters)
+      bodySlivers: (lazyResults || isMapView)
+          ? <Widget>[
+              if (isMapView) ...<Widget>[
+                // The results toolbar stays above the map, so the globe
+                // control remains available to switch back to the list.
+                SliverToBoxAdapter(
+                  child: _buildResultsBar(
+                    l10n,
+                    _visibleResults(state, filters).length,
+                    filters,
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    // An explicit height: FlutterMap's own LayoutBuilder does
+                    // not support the intrinsic dimensions a
+                    // SliverFillRemaining would ask for.
+                    height: MediaQuery.sizeOf(context).height * 0.7,
+                    child: _buildMapView(state, filters),
+                  ),
+                ),
+              ] else
+                ..._buildResultSlivers(state, l10n, filters),
+            ]
           : null,
       // Only results get the assistant entry — never the empty form.
       askAssistantPrompt: hasResults ? _askAssistantPrompt(l10n) : null,
+    );
+  }
+
+  /// True while the map is the active view on a successful result set.
+  ///
+  /// The map is a real, tile-backed view (not a placeholder): it renders the
+  /// SAME filtered/sorted result set as the list, one marker per geolocated
+  /// stay, and a selected-hotel card that links to the result's details.
+  bool _isMapView(HotelSearchState state) =>
+      state.status == HotelSearchStatus.success &&
+      ref.watch(searchViewModeProvider) == SearchViewMode.map;
+
+  /// The map view, sized to fill the remaining viewport.
+  Widget _buildMapView(HotelSearchState state, SearchFilters filters) {
+    final List<HotelOffer> visible = _visibleResults(state, filters);
+    return HotelMapView(
+        key: const ValueKey<String>('hotel-map-view'),
+        offers: visible,
+        selectedOfferId: _selectedOfferId,
+        onOfferSelected: (HotelOffer offer) =>
+            setState(() => _selectedOfferId = offer.id),
+        onOpenDetails: (HotelOffer offer) =>
+            context.push('/offer-details', extra: offer),
     );
   }
 
@@ -641,7 +656,6 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
   // ── Summary card (results state) ────────────────────────────────────────
 
   Widget _buildSummaryCard(AppLocalizations l10n) {
-    final typography = AppTypography.forLight();
     final params = _lastParams;
     final String place = (params?.destination.isNotEmpty ?? false)
         ? params!.destination
@@ -657,77 +671,18 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
     final String meta =
         '$dates · ${l10n.hotelGuestsCount(params?.adults ?? _guests)}';
 
-    return Pressable.wrap(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: context.tokigoColors.surface,
-          borderRadius: AppRadius.lgBorder,
-          boxShadow: AppElevation.shadow(
-            background: context.tokigoColors.surface,
-            level: AppElevation.sm,
-          ),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: AppRadius.lgBorder,
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () => setState(() => _editing = true),
-            child: Semantics(
-              button: true,
-              label: '${l10n.editSearch}: $place, $meta',
-              child: Padding(
-                padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.md,
-                ),
-                child: Row(
-                  children: <Widget>[
-                    Icon(
-                      Icons.search_rounded,
-                      size: 20,
-                      color: context.tokigoColors.textPrimary,
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Text(
-                            place.isEmpty ? _summary(l10n) : place,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: typography.bodyLargeMedium.copyWith(
-                              color: context.tokigoColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            meta,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: typography.caption.copyWith(
-                              color: context.tokigoColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    IconButton(
-                      onPressed: _showFilters,
-                      tooltip: l10n.filtersAction,
-                      iconSize: 20,
-                      color: context.tokigoColors.textPrimary,
-                      icon: const Icon(Icons.tune_rounded),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
+    return CompactSearchSummary(
+      leadingIcon: Icons.search_rounded,
+      title: place.isEmpty ? _summary(l10n) : place,
+      meta: meta,
+      editLabel: l10n.editSearch,
+      onEdit: () => setState(() => _editing = true),
+      trailing: IconButton(
+        onPressed: _showFilters,
+        tooltip: l10n.filtersAction,
+        iconSize: 20,
+        color: context.tokigoColors.textPrimary,
+        icon: const Icon(Icons.tune_rounded),
       ),
     );
   }
@@ -821,6 +776,10 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
       ),
       child: Row(
         children: <Widget>[
+          // The list/map toggle lives in the results toolbar, beside the
+          // count and the sort/filter actions — not in the page header.
+          const SearchViewToggle(),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               l10n.hotelResultsCount(count),
@@ -931,7 +890,6 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
     AppLocalizations l10n,
     SearchFilters filters,
   ) {
-    final viewMode = ref.watch(searchViewModeProvider);
     final List<HotelOffer> wishlist = ref.watch(wishlistProvider);
 
     switch (state.status) {
@@ -949,9 +907,6 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
           ),
         );
       case HotelSearchStatus.success:
-        if (viewMode == SearchViewMode.map) {
-          return const SearchMapPlaceholder();
-        }
         // Phase 3C — provider-safe post-processing: filter then sort the
         // returned list (deterministic; the provider order stays the
         // "recommended" order).
@@ -1154,29 +1109,3 @@ class _DiscoverMoreButton extends StatelessWidget {
   }
 }
 
-/// A small square stepper button for the compact occupancy card.
-class _CompactStepButton extends StatelessWidget {
-  const _CompactStepButton({required this.icon, required this.onTap});
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Pressable.wrap(
-      child: Material(
-        color: context.tokigoColors.brandContainer,
-        borderRadius: BorderRadius.circular(AppRadius.xs),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: SizedBox(
-            width: 30,
-            height: 30,
-            child: Icon(icon, size: 18, color: context.tokigoColors.brand),
-          ),
-        ),
-      ),
-    );
-  }
-}

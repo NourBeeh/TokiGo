@@ -316,6 +316,25 @@ class HomeRepositoryImpl implements HomeRepository {
       final city = h['city']?.toString().trim();
       if (city != null && city.isNotEmpty) metadata['city'] = city;
 
+      // Coordinates (only when the provider actually sent them) are lifted
+      // verbatim so the card can show an honest distance and "Stays Near You"
+      // can rank by real distance. Absent coordinates stay absent — never
+      // invented, never defaulted to a city centre.
+      final Object? latitude = h['latitude'] ?? h['lat'];
+      final Object? longitude = h['longitude'] ?? h['lng'] ?? h['long'];
+      if (latitude is num) {
+        metadata['latitude'] = latitude.toDouble();
+      } else if (latitude is String) {
+        final double? parsed = double.tryParse(latitude.trim());
+        if (parsed != null) metadata['latitude'] = parsed;
+      }
+      if (longitude is num) {
+        metadata['longitude'] = longitude.toDouble();
+      } else if (longitude is String) {
+        final double? parsed = double.tryParse(longitude.trim());
+        if (parsed != null) metadata['longitude'] = parsed;
+      }
+
       // The rest of the stay's own facts. The card opens the hotel's DETAILS
       // page, which needs where it is, the window the rate belongs to, and the
       // room — all of them top-level fields, all of them things the client must

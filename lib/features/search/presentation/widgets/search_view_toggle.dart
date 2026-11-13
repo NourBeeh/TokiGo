@@ -28,24 +28,40 @@ class SearchViewToggle extends ConsumerWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isMap = mode == SearchViewMode.map;
+    // The label names the ACTION (what a press does), matching the tooltip.
+    final String label =
+        tooltip ?? (isMap ? l10n.viewList : l10n.viewMap);
+
+    void toggle() => ref.read(searchViewModeProvider.notifier).state =
+        isMap ? SearchViewMode.list : SearchViewMode.map;
 
     return Padding(
       padding: const EdgeInsets.all(2),
-      child: Pressable.wrap(
-        child: IconButton(
-          tooltip: tooltip ?? (isMap ? l10n.viewList : l10n.viewMap),
-          onPressed: () =>
-              ref.read(searchViewModeProvider.notifier).state = isMap
-              ? SearchViewMode.list
-              : SearchViewMode.map,
-          style: IconButton.styleFrom(
-            backgroundColor: isMap ? cs.primary : cs.surfaceContainerHighest,
-            foregroundColor: isMap ? cs.onPrimary : cs.onSurfaceVariant,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.pill),
+      // ONE accessible node: a button whose label names the action and whose
+      // selected state mirrors the current view. The inner Material button's
+      // own semantics are excluded so the control is announced once.
+      child: Semantics(
+        button: true,
+        selected: isMap,
+        label: label,
+        onTap: toggle,
+        child: ExcludeSemantics(
+          child: Pressable.wrap(
+            child: IconButton(
+              tooltip: label,
+              onPressed: toggle,
+              style: IconButton.styleFrom(
+                backgroundColor: isMap ? cs.primary : cs.surfaceContainerHighest,
+                foregroundColor: isMap ? cs.onPrimary : cs.onSurfaceVariant,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+              ),
+              // A GLOBE is the map control (owner decision, 2026-11): the
+              // button names the current view, the tooltip names the action.
+              icon: Icon(isMap ? Icons.public_rounded : Icons.view_list_rounded),
             ),
           ),
-          icon: Icon(isMap ? Icons.map_outlined : Icons.view_list_rounded),
         ),
       ),
     );

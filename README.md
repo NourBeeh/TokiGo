@@ -2,6 +2,13 @@
 
 A new Flutter project.
 
+## iOS
+
+The iOS target is configured for bundle ID `com.tokigo.tokigo` (iOS 15.0+) and
+can only be built/run on macOS. See [docs/release/ios.md](docs/release/ios.md)
+for the simulator/device/TestFlight steps, permissions, and the unsigned CI
+builds.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.

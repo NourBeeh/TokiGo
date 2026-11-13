@@ -26,6 +26,7 @@
   "aiHintPhrase2": "إلى أين تريد السفر؟",
   "aiHintPhrase3": "فنادق في إستنبول؟ رحلات إلى القاهرة؟",
   "aiSearchSheetHint": "عايز تسافر فين؟",
+  "aiChatSubtitle": "مساعد توكي جو الذكي",
   "askAssistantTitle": "اسأل مساعدك",
   "askAssistantSubtitle": "محتاج مساعدة في الاختيار؟ قارن الخيارات بالذكاء الاصطناعي",
   "askAssistantFlightPrompt": "ساعدني في الاختيار بين نتائج الرحلات هذه من {origin} إلى {destination} في {date}",
@@ -111,7 +112,7 @@
       "name": {}
     }
   },
-  "homeStaysTitle": "إقامات مقترحة",
+  "homeStaysTitle": "إقامات قريبة منك",
   "homeContinuePlanning": "كمّل تخطيطك",
   "homeWelcome": "أهلاً بعودتك",
   "homeWelcomeSub": "رحلات وأفكار مختارة لك",
@@ -301,9 +302,9 @@
   "packagesUnavailableTitle": "الإجازات قادمة قريبًا",
   "packagesUnavailableBody": "نعمل على إضافة مزوّدي الباكدجات. الرحلات والفنادق متاحة الآن.",
   "carsUnavailableTitle": "تأجير السيارات قادم قريبًا",
-  "carsUnavailableBody": "نعمل على إضافة مزوّدي تأجير السيارات. الرحلات والفنادق متاحة الآن.",
+  "carsUnavailableBody": "نعمل على إضافة مزوّدي تأجير السيارات. الرحلات والإقامات متاحة الآن.",
   "findFlights": "ابحث عن رحلات",
-  "findHotels": "ابحث عن فنادق",
+  "findHotels": "ابحث عن إقامات",
   "packagesSubtitle": "برامج مُنسّقة متعددة الأيام",
   "carsSubtitle": "تأجير سيارات بالقيادة الذاتية",
   "carsLiveSubtitle": "سيارات للإيجار في وجهتك",
@@ -333,7 +334,7 @@
   "bookingRevalidationFailed": "تعذّر إعادة التحقق من هذا العرض. حاول مرة أخرى.",
   "carPickupLocation": "موقع الاستلام",
   "mapViewComingSoon": "عرض الخريطة قريبًا",
-  "mapIntegrationUnavailable": "تكامل الخريطة غير متاح بعد. تُعرض النتائج في وضع القائمة.",
+  "mapIntegrationUnavailable": "تكامل الخريطة غير متاح بعد. ارجع إلى وضع القائمة لعرض النتائج.",
   "carDropoffLocation": "موقع التسليم",
   "carPickupHint": "موقع الاستلام",
   "carDropoffHint": "موقع التسليم",
@@ -533,8 +534,8 @@
   "flightRouteRequired": "اختر نقطة الانطلاق والوصول الأول.",
   "hotelDestination": "الوجهة",
   "hotelIdleTitle": "دوّر على إقامتك",
-  "hotelIdleBody": "اكتب الوجهة والتواريخ لعرض الغرف المتاحة.",
-  "hotelEmptyTitle": "مفيش فنادق",
+  "hotelIdleBody": "أدخل وجهتك وتواريخ الإقامة لاستعراض الفنادق المتاحة ومقارنة أسعارها وتقييماتها.",
+  "hotelEmptyTitle": "لا توجد إقامات",
   "hotelEmptyBody": "جرّب وجهة تانية أو تواريخ تانية",
   "hotelDestinationRequired": "اكتب الوجهة الأول.",
   "hotelSortTopRated": "الأعلى تقييمًا",
@@ -565,6 +566,23 @@
       }
     }
   },
+  "hotelRoomNumber": "غرفة {n}",
+  "@hotelRoomNumber": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "hotelChildrenCount": "{count, plural, zero{لا أطفال} one{طفل واحد} two{طفلان} few{{count} أطفال} many{{count} طفلاً} other{{count} طفل}}",
+  "@hotelChildrenCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addRoom": "أضف غرفة",
   "cityStaysCount": "{count, plural, =1{إقامة واحدة} other{{count} إقامة}}",
   "discoverTitle": "استكشف",
   "discoverMore": "اكتشف المزيد",

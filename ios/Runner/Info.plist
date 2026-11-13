@@ -14,6 +14,11 @@
 		<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 		<key>CFBundleInfoDictionaryVersion</key>
 		<string>6.0</string>
+		<key>CFBundleLocalizations</key>
+		<array>
+			<string>en</string>
+			<string>ar</string>
+		</array>
 		<key>CFBundleName</key>
 		<string>tokigo</string>
 		<key>CFBundleIconName</key>
@@ -98,8 +103,16 @@
 		<string>TokiGo uses your location to suggest a nearby departure airport.</string>
 		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 		<string>TokiGo uses your location to suggest a nearby departure airport.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>TokiGo lets you choose a photo from your library for your profile picture.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>TokiGo uses the microphone for voice search.</string>
+		<key>NSSpeechRecognitionUsageDescription</key>
+		<string>TokiGo converts your spoken search into text on this device.</string>
 		<key>NSUserNotificationsUsageDescription</key>
 		<string>TokiGo sends trip reminders and booking updates.</string>
+		<key>ITSAppUsesNonExemptEncryption</key>
+		<false/>
 		<key>UIStatusBarHidden</key>
 		<true/>
 		<key>UIViewControllerBasedStatusBarAppearance</key>

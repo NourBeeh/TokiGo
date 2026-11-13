@@ -26,6 +26,7 @@
   "aiHintPhrase2": "Where do you want to go?",
   "aiHintPhrase3": "Hotels in Istanbul? Flights to Cairo?",
   "aiSearchSheetHint": "Where do you want to go?",
+  "aiChatSubtitle": "TokiGo AI assistant",
   "askAssistantTitle": "Ask your assistant",
   "askAssistantSubtitle": "Need help choosing? Compare these options with AI",
   "askAssistantFlightPrompt": "Help me choose between these flight results from {origin} to {destination} on {date}",
@@ -111,7 +112,7 @@
       "name": {}
     }
   },
-  "homeStaysTitle": "Stays recommended",
+  "homeStaysTitle": "Stays Near You",
   "homeContinuePlanning": "Continue planning",
   "homeWelcome": "Welcome back",
   "homeWelcomeSub": "Trips and ideas picked for you",
@@ -302,9 +303,9 @@
   "packagesUnavailableTitle": "Holidays are coming soon",
   "packagesUnavailableBody": "We are onboarding package providers. Flights and hotels are live today.",
   "carsUnavailableTitle": "Cars Rental is coming soon",
-  "carsUnavailableBody": "We are onboarding car-rental providers. Flights and hotels are live today.",
+  "carsUnavailableBody": "We are onboarding car-rental providers. Flights and stays are live today.",
   "findFlights": "Find flights",
-  "findHotels": "Find hotels",
+  "findHotels": "Find stays",
   "packagesSubtitle": "Curated multi-day programs",
   "carsSubtitle": "Self-drive rental cars",
   "carsLiveSubtitle": "Rental cars at your destination",
@@ -334,7 +335,7 @@
   "bookingRevalidationFailed": "We could not re-check this offer. Please try again.",
   "carPickupLocation": "Pickup location",
   "mapViewComingSoon": "Map view coming soon",
-  "mapIntegrationUnavailable": "Map integration is not yet available. Results are shown in list view.",
+  "mapIntegrationUnavailable": "Map integration is not yet available. Switch back to the list view to see the results.",
   "carDropoffLocation": "Dropoff location",
   "carPickupHint": "Pickup location",
   "carDropoffHint": "Dropoff location",
@@ -541,8 +542,8 @@
   "flightRouteRequired": "Choose where you are flying from and to first.",
   "hotelDestination": "Destination",
   "hotelIdleTitle": "Find your perfect stay",
-  "hotelIdleBody": "Enter a destination and your dates to see available rooms.",
-  "hotelEmptyTitle": "No hotels found",
+  "hotelIdleBody": "Enter your destination and stay dates to browse available hotels and compare their prices and guest ratings.",
+  "hotelEmptyTitle": "No stays found",
   "hotelEmptyBody": "Try a different destination or dates",
   "hotelDestinationRequired": "Enter a destination first.",
   "hotelSortTopRated": "Top rated",
@@ -573,6 +574,23 @@
       }
     }
   },
+  "hotelRoomNumber": "Room {n}",
+  "@hotelRoomNumber": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "hotelChildrenCount": "{count, plural, =1{1 child} other{{count} children}}",
+  "@hotelChildrenCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addRoom": "Add room",
   "cityStaysCount": "{count, plural, =1{1 stay} other{{count} stays}}",
   "discoverTitle": "Explore",
   "discoverMore": "Discover more",

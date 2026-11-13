@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 
-/// The ONE robot identity for every AI surface.
+/// The ONE brand identity for every AI surface.
 ///
-/// A small, locally stored illustration ([_robotAsset]) drawn beside each
-/// assistant turn, inside the thinking indicator and in the welcome hero — so
-/// the assistant has the same face everywhere it speaks. The artwork is
-/// `assets/images/TOKI AI.png` (transparent background), which the AI chat
-/// welcome state already used; this widget makes that single asset the shared
-/// identity instead of a one-off.
+/// A small, transparent TokiGo brand mark drawn beside each assistant turn,
+/// inside the thinking indicator and in the welcome hero — so the assistant
+/// has the same face everywhere it speaks. The artwork is the EXISTING brand
+/// mark (`assets/icon/app_icon_adaptive_foreground_1024.png`, with its dark
+/// counterpart for dark surfaces); no new logo is drawn, recoloured or
+/// redrawn, and the source assets are left untouched.
 ///
 /// While the assistant is thinking or loading, [animate] adds a gentle
 /// breathing pulse (a slow scale + a soft ink halo) — quiet motion, no
@@ -23,15 +23,26 @@ import 'package:tokigo/core/theme/tokigo_colors.dart';
 class AiRobotAvatar extends StatefulWidget {
   const AiRobotAvatar({super.key, this.size = 32, this.animate = false});
 
-  /// The robot's box. 32 keeps it a quiet sibling of a text line; the welcome
+  /// The mark's box. 32 keeps it a quiet sibling of a text line; the welcome
   /// hero passes a larger value.
   final double size;
 
   /// Whether the breathing pulse is running (thinking / loading).
   final bool animate;
 
-  /// The asset the identity is drawn from.
-  static const String assetName = 'assets/images/TOKI AI.png';
+  /// The brand mark for LIGHT surfaces (transparent black parasol).
+  static const String lightAssetName =
+      'assets/icon/app_icon_adaptive_foreground_1024.png';
+
+  /// The brand mark for DARK surfaces (transparent white parasol).
+  static const String darkAssetName =
+      'assets/icon/app_icon_adaptive_dark_foreground_1024.png';
+
+  /// The brand-mark asset for the active brightness.
+  static String assetNameFor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? darkAssetName
+      : lightAssetName;
 
   @override
   State<AiRobotAvatar> createState() => _AiRobotAvatarState();
@@ -113,16 +124,16 @@ class _AiRobotAvatarState extends State<AiRobotAvatar>
     );
   }
 
-  /// The artwork itself, contained so its own proportions are preserved.
+  /// The brand artwork itself, contained so its own proportions are preserved.
   Widget _mark(Color ink) {
     return Image.asset(
-      AiRobotAvatar.assetName,
+      AiRobotAvatar.assetNameFor(context),
       width: widget.size,
       height: widget.size,
       fit: BoxFit.contain,
       excludeFromSemantics: true,
       errorBuilder: (context, _, _) => Icon(
-        Icons.smart_toy_rounded,
+        Icons.beach_access_rounded,
         size: widget.size * 0.7,
         color: ink,
       ),
@@ -130,5 +141,5 @@ class _AiRobotAvatarState extends State<AiRobotAvatar>
   }
 }
 
-/// The standard gap between the robot and the message it belongs to.
+/// The standard gap between the brand mark and the message it belongs to.
 const double kAiRobotGap = AppSpacing.sm;

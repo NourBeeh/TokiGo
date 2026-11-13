@@ -32,7 +32,15 @@ class HomeAiSearchField extends StatefulWidget {
     super.key,
     this.accentColor,
     this.focusNode,
+    this.controller,
+    this.compact = false,
   });
+
+  /// The standard composer pill height.
+  static const double height = 48;
+
+  /// The slimmer secondary-search pill height.
+  static const double compactHeight = 44;
 
   /// Optional ink override for the leading glyph and the trailing actions.
   ///
@@ -45,21 +53,36 @@ class HomeAiSearchField extends StatefulWidget {
   /// can be tracked. Falls back to an internal node when not provided.
   final FocusNode? focusNode;
 
+  /// Optional lifted text controller, so a host that rebuilds this field as
+  /// part of a scrolling header can preserve the traveller's draft.
+  final TextEditingController? controller;
+
+  /// The compact secondary variant: a slimmer pill with no mic/send actions,
+  /// used by the Home secondary search revealed while the feed scrolls.
+  final bool compact;
+
   @override
   State<HomeAiSearchField> createState() => _HomeAiSearchFieldState();
 }
 
 class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
-  final TextEditingController _textCtrl = TextEditingController();
+  late final TextEditingController _textCtrl =
+      widget.controller ?? TextEditingController();
+  bool get _ownsTextController => widget.controller == null;
   late final FocusNode _focusNode = widget.focusNode ?? FocusNode();
   bool get _ownsFocusNode => widget.focusNode == null;
+
+  /// The active pill height: the slimmer compact variant or the standard one.
+  double get _fieldHeight => widget.compact
+      ? HomeAiSearchField.compactHeight
+      : HomeAiSearchField.height;
 
   // Duplicate-submission guard.
   bool _submitting = false;
 
   @override
   void dispose() {
-    _textCtrl.dispose();
+    if (_ownsTextController) _textCtrl.dispose();
     if (_ownsFocusNode) _focusNode.dispose();
     super.dispose();
   }
@@ -133,14 +156,16 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
     return TapRegion(
       onTapOutside: (_) => _focusNode.unfocus(),
       child: AnimatedContainer(
-        key: const ValueKey<String>('home-ai-composer'),
+        key: ValueKey<String>(
+          widget.compact ? 'home-ai-compact-search' : 'home-ai-composer',
+        ),
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOutCubic,
-        constraints: const BoxConstraints(minHeight: 56),
+        constraints: BoxConstraints(minHeight: _fieldHeight),
         decoration: BoxDecoration(
           color: HomeDesignTokens.surfaceOf(context),
-          // Fully rounded: a 32 radius on a 56dp-tall box is a stadium.
-          borderRadius: BorderRadius.circular(32),
+          // Fully rounded: a stadium pill at both heights.
+          borderRadius: BorderRadius.circular(_fieldHeight / 2),
           // Owner decision (2026-11): the composer is a FLOATING pill — its
           // edge comes from the soft halo below, not from a 1dp border, so it
           // reads as hovering over the feed instead of being boxed into it.
@@ -163,7 +188,11 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
               // send action submits the current query.
               Expanded(
                 child: TextField(
-                  key: const ValueKey<String>('home-ai-composer-field'),
+                  key: ValueKey<String>(
+                    widget.compact
+                        ? 'home-ai-compact-field'
+                        : 'home-ai-composer-field',
+                  ),
                   controller: _textCtrl,
                   focusNode: _focusNode,
                   decoration: InputDecoration(
@@ -201,31 +230,34 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
-              // Voice — opens the chat where the live microphone lives.
-              Semantics(
-                button: true,
-                label: l10n.voiceSearch,
-                child: InkResponse(
-                  onTap: () => _openChat(),
-                  customBorder: const CircleBorder(),
-                  radius: 22,
-                  child: SizedBox(
-                    width: _trailingActionSize,
-                    height: _trailingActionSize,
-                    child: Center(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: ink.withValues(alpha: 0.10),
-                          shape: BoxShape.circle,
-                        ),
-                        child: SizedBox(
-                          width: 34,
-                          height: 34,
-                          child: Center(
-                            child: Icon(
-                              Icons.mic_rounded,
-                              size: 19,
-                              color: ink,
+              // The compact secondary variant carries no mic/send actions.
+              if (!widget.compact) ...<Widget>[
+                // Voice — opens the chat where the live microphone lives.
+                Semantics(
+                  button: true,
+                  label: l10n.voiceSearch,
+                  child: InkResponse(
+                    onTap: () => _openChat(),
+                    customBorder: const CircleBorder(),
+                    radius: 22,
+                    child: SizedBox(
+                      width: _trailingActionSize,
+                      height: _trailingActionSize,
+                      child: Center(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: ink.withValues(alpha: 0.10),
+                            shape: BoxShape.circle,
+                          ),
+                          child: SizedBox(
+                            width: 34,
+                            height: 34,
+                            child: Center(
+                              child: Icon(
+                                Icons.mic_rounded,
+                                size: 19,
+                                color: ink,
+                              ),
                             ),
                           ),
                         ),
@@ -233,39 +265,43 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                     ),
                   ),
                 ),
-              ),
-              // Send is the composer's primary action. It uses the send glyph
-              // (not a second magnifier) because the job here is to submit the
-              // typed message to the AI, not to open a picker. The fill is the
-              // Home ink — black on the light canvas, white on the dark one —
-              // with the glyph inverted so it always clears AA on the disc.
-              Semantics(
-                button: true,
-                label: l10n.aiSend,
-                child: InkResponse(
-                  key: const ValueKey<String>('home-ai-composer-send'),
-                  onTap: _submit,
-                  customBorder: const CircleBorder(),
-                  radius: 22,
-                  child: SizedBox(
-                    width: _trailingActionSize,
-                    height: _trailingActionSize,
-                    child: Center(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: ink,
-                          shape: BoxShape.circle,
-                        ),
-                        child: SizedBox(
-                          width: 34,
-                          height: 34,
-                          child: Center(
-                            child: Icon(
-                              Icons.send_rounded,
-                              size: 20,
-                              color: ink.computeLuminance() > 0.5
-                                  ? Colors.black
-                                  : Colors.white,
+                // Send is the composer's primary action. It uses the send glyph
+                // (not a second magnifier) because the job here is to submit the
+                // typed message to the AI, not to open a picker. The fill is the
+                // Home ink — black on the light canvas, white on the dark one —
+                // with the glyph inverted so it always clears AA on the disc.
+                Semantics(
+                  button: true,
+                  label: l10n.aiSend,
+                  child: InkResponse(
+                    key: ValueKey<String>(
+                      widget.compact
+                          ? 'home-ai-compact-send'
+                          : 'home-ai-composer-send',
+                    ),
+                    onTap: _submit,
+                    customBorder: const CircleBorder(),
+                    radius: 22,
+                    child: SizedBox(
+                      width: _trailingActionSize,
+                      height: _trailingActionSize,
+                      child: Center(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: ink,
+                            shape: BoxShape.circle,
+                          ),
+                          child: SizedBox(
+                            width: 34,
+                            height: 34,
+                            child: Center(
+                              child: Icon(
+                                Icons.send_rounded,
+                                size: 20,
+                                color: ink.computeLuminance() > 0.5
+                                    ? Colors.black
+                                    : Colors.white,
+                              ),
                             ),
                           ),
                         ),
@@ -273,8 +309,8 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.xs),
+                const SizedBox(width: AppSpacing.xs),
+              ],
             ],
           ),
         ),

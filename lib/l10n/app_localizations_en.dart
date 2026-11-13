@@ -87,6 +87,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiSearchSheetHint => 'Where do you want to go?';
 
   @override
+  String get aiChatSubtitle => 'TokiGo AI assistant';
+
+  @override
   String get askAssistantTitle => 'Ask your assistant';
 
   @override
@@ -265,7 +268,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get homeStaysTitle => 'Stays recommended';
+  String get homeStaysTitle => 'Stays Near You';
 
   @override
   String get homeContinuePlanning => 'Continue planning';
@@ -824,13 +827,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get carsUnavailableTitle => 'Cars Rental is coming soon';
 
   @override
-  String get carsUnavailableBody => 'We are onboarding car-rental providers. Flights and hotels are live today.';
+  String get carsUnavailableBody => 'We are onboarding car-rental providers. Flights and stays are live today.';
 
   @override
   String get findFlights => 'Find flights';
 
   @override
-  String get findHotels => 'Find hotels';
+  String get findHotels => 'Find stays';
 
   @override
   String get packagesSubtitle => 'Curated multi-day programs';
@@ -920,7 +923,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mapViewComingSoon => 'Map view coming soon';
 
   @override
-  String get mapIntegrationUnavailable => 'Map integration is not yet available. Results are shown in list view.';
+  String get mapIntegrationUnavailable => 'Map integration is not yet available. Switch back to the list view to see the results.';
 
   @override
   String get carDropoffLocation => 'Dropoff location';
@@ -1505,10 +1508,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hotelIdleTitle => 'Find your perfect stay';
 
   @override
-  String get hotelIdleBody => 'Enter a destination and your dates to see available rooms.';
+  String get hotelIdleBody => 'Enter your destination and stay dates to browse available hotels and compare their prices and guest ratings.';
 
   @override
-  String get hotelEmptyTitle => 'No hotels found';
+  String get hotelEmptyTitle => 'No stays found';
 
   @override
   String get hotelEmptyBody => 'Try a different destination or dates';
@@ -1560,6 +1563,25 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String hotelRoomNumber(int n) {
+    return 'Room $n';
+  }
+
+  @override
+  String hotelChildrenCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count children',
+      one: '1 child',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get addRoom => 'Add room';
 
   @override
   String cityStaysCount(num count) {

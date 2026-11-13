@@ -210,7 +210,7 @@ class CityPage extends StatelessWidget {
                 bottom: false,
                 child: Padding(
                   padding: const EdgeInsetsDirectional.only(top: AppSpacing.xs),
-                  child: AppBackButton(variant: AppIconActionVariant.disc),
+                  child: AppBackButton(variant: AppIconActionVariant.plain),
                 ),
               ),
             ),

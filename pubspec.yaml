@@ -57,6 +57,8 @@ dependencies:
   google_sign_in: ^7.2.0
   image_picker: ^1.1.2
   permission_handler: ^13.0.2
+  flutter_map: ^8.3.2
+  latlong2: ^0.10.1
 
 dependency_overrides:
   flutter_secure_storage_linux: 1.1.0
@@ -137,6 +139,12 @@ flutter:
   # App image assets (placeholders + future real imagery)
   assets:
     - assets/images/
+    # The EXISTING TokiGo brand mark, reused as the AI assistant identity and
+    # the chat watermark. Both masters are transparent (black mark for light
+    # surfaces, white for dark); no new logo is drawn and the source assets in
+    # assets/icon/ are left untouched.
+    - assets/icon/app_icon_adaptive_foreground_1024.png
+    - assets/icon/app_icon_adaptive_dark_foreground_1024.png
 
   # Premium type system: Manrope (Latin) + Cairo (Arabic), variable fonts.
   fonts:

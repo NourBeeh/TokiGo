@@ -61,6 +61,7 @@ class CardFavorite extends StatelessWidget {
     this.enabled = true,
     this.onImage = false,
     this.heartColor,
+    this.showPlatter = true,
   });
 
   final bool value;
@@ -73,6 +74,13 @@ class CardFavorite extends StatelessWidget {
 
   /// Active heart colour; defaults to the brand-red semantic token.
   final Color? heartColor;
+
+  /// Whether to draw the white disc platter behind the heart.
+  ///
+  /// The Home stay card draws the heart directly on the photo (no platter);
+  /// the other card surfaces keep the disc so the control reads identically
+  /// everywhere else.
+  final bool showPlatter;
 
   @override
   Widget build(BuildContext context) {
@@ -94,11 +102,10 @@ class CardFavorite extends StatelessWidget {
       ),
     );
 
-    final Widget box = HeartPlatter(
-      diameter: size,
-      strongShadow: onImage,
-      child: heartIcon(size * 0.5),
-    );
+    final Widget heartMark = heartIcon(size * 0.5);
+    final Widget box = showPlatter
+        ? HeartPlatter(diameter: size, strongShadow: onImage, child: heartMark)
+        : heartMark;
 
     // The visual disc may be smaller, but the tappable area is always expanded
     // to at least a 48×48dp accessible hit target (Material guidance).

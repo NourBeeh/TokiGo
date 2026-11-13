@@ -285,9 +285,7 @@ void main() {
     expect(_actionBar(), findsOneWidget);
   });
 
-  testWidgets('the AI composer stays visible while the feed scrolls', (
-    tester,
-  ) async {
+  testWidgets('the AI composer scrolls away with the header', (tester) async {
     _setPhoneSize(tester);
     await tester.pumpWidget(_app(router: _router()));
     await tester.pumpAndSettle();
@@ -295,15 +293,18 @@ void main() {
     await tester.drag(find.byType(CustomScrollView), const Offset(0, -400));
     await tester.pumpAndSettle();
 
-    expect(_composer(), findsOneWidget);
-    // The composer is pinned: it stays fully inside the viewport.
-    final Rect viewport = tester.getRect(find.byType(CustomScrollView));
-    final Rect composer = tester.getRect(_composer());
-    expect(composer.top, greaterThanOrEqualTo(viewport.top));
-    expect(composer.bottom, lessThanOrEqualTo(viewport.bottom));
+    // The composer is part of the scrollable header: it is either disposed
+    // with the header sliver or entirely above the viewport.
+    if (_composer().evaluate().isNotEmpty) {
+      final Rect viewport = tester.getRect(find.byType(CustomScrollView));
+      final Rect composer = tester.getRect(_composer());
+      expect(composer.bottom, lessThanOrEqualTo(viewport.top));
+    } else {
+      expect(_composer(), findsNothing);
+    }
   });
 
-  testWidgets('the Home header scrolls away and the composer stays pinned', (
+  testWidgets('the Home header scrolls away as one section and returns', (
     tester,
   ) async {
     _setPhoneSize(tester);
@@ -315,15 +316,17 @@ void main() {
     await tester.drag(find.byType(CustomScrollView), const Offset(0, -400));
     await tester.pumpAndSettle();
 
-    // The wordmark row has scrolled out of view (its sliver is disposed once
-    // it leaves the viewport's cache extent)…
+    // The whole original header — wordmark, composer and navigation — has
+    // scrolled out together.
     expect(find.byType(HomeTopBar), findsNothing);
-
-    // …while the composer is still fully visible.
-    final Rect viewport = tester.getRect(find.byType(CustomScrollView));
-    final Rect composer = tester.getRect(_composer());
-    expect(composer.top, greaterThanOrEqualTo(viewport.top));
-    expect(composer.bottom, lessThanOrEqualTo(viewport.bottom));
+    if (_composer().evaluate().isNotEmpty) {
+      expect(
+        tester.getRect(_composer()).bottom,
+        lessThanOrEqualTo(
+          tester.getRect(find.byType(CustomScrollView)).top,
+        ),
+      );
+    }
 
     // Scrolling back restores the header.
     await tester.drag(find.byType(CustomScrollView), const Offset(0, 400));
@@ -332,6 +335,7 @@ void main() {
       tester.getRect(find.byType(HomeTopBar)).bottom,
       greaterThan(0),
     );
+    expect(_composer(), findsOneWidget);
   });
 
   testWidgets('the composer stays pinned when the keyboard opens', (

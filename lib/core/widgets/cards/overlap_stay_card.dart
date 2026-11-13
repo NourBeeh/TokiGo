@@ -49,6 +49,7 @@ class OverlapStayCard extends StatelessWidget {
     this.margin,
     this.aspectRatio = 4 / 3,
     this.heartSize = 40,
+    this.showHeartPlatter = true,
     this.loading = false,
   });
 
@@ -75,6 +76,7 @@ class OverlapStayCard extends StatelessWidget {
        isFavorite = false,
        enabled = false,
        heartSize = 40,
+       showHeartPlatter = true,
        loading = true;
 
   /// The photo alone — the heart and the class pill are drawn by this card on
@@ -120,6 +122,10 @@ class OverlapStayCard extends StatelessWidget {
   final double aspectRatio;
   final double heartSize;
 
+  /// Whether the favourite heart draws its white disc platter. The Home stay
+  /// card turns it off (the heart sits directly on the photo).
+  final bool showHeartPlatter;
+
   /// Skeleton state — same geometry, no data. See the class comment.
   final bool loading;
 
@@ -158,6 +164,7 @@ class OverlapStayCard extends StatelessWidget {
                 onFavorite: onFavorite,
                 isFavorite: isFavorite,
                 heartSize: heartSize,
+                showHeartPlatter: showHeartPlatter,
                 title: title,
                 rating: rating,
                 location: location,
@@ -177,6 +184,7 @@ class OverlapStayCard extends StatelessWidget {
               onFavorite: onFavorite,
               isFavorite: isFavorite,
               heartSize: heartSize,
+              showHeartPlatter: showHeartPlatter,
               title: title,
               rating: rating,
               location: location,
@@ -214,6 +222,7 @@ class _StayBody extends StatelessWidget {
     required this.onFavorite,
     required this.isFavorite,
     required this.heartSize,
+    required this.showHeartPlatter,
     required this.title,
     required this.rating,
     required this.location,
@@ -231,6 +240,7 @@ class _StayBody extends StatelessWidget {
   final ValueChanged<bool>? onFavorite;
   final bool isFavorite;
   final double heartSize;
+  final bool showHeartPlatter;
   final String title;
   final double? rating;
   final String? location;
@@ -275,7 +285,7 @@ class _StayBody extends StatelessWidget {
                 PositionedDirectional(
                   top: AppSpacing.md,
                   start: AppSpacing.md,
-                  child: _ClassPill(stars: starClass),
+                  child: StayClassPill(stars: starClass),
                 ),
               if (onFavorite != null)
                 PositionedDirectional(
@@ -286,6 +296,7 @@ class _StayBody extends StatelessWidget {
                     onChanged: onFavorite,
                     size: heartSize,
                     onImage: true,
+                    showPlatter: showHeartPlatter,
                   ),
                 ),
             ],
@@ -381,21 +392,21 @@ class _StaySheet extends StatelessWidget {
             if (loading)
               CardSkeleton.text(width: _ratingWidth, height: _ratingHeight)
             else
-              _RatingLine(rating: rating!),
+              StayRatingLine(rating: rating!),
           ],
           if (showLocation) ...<Widget>[
             const SizedBox(height: AppSpacing.xs),
             if (loading)
               CardSkeleton.text(width: _locationWidth, height: _locationHeight)
             else
-              _LocationLine(text: location!, onTap: onLocationTap),
+              StayLocationLine(text: location!, onTap: onLocationTap),
           ],
           if (showDistance) ...<Widget>[
             const SizedBox(height: AppSpacing.xxs),
             if (loading)
               CardSkeleton.text(width: _distanceWidth, height: _distanceHeight)
             else
-              _DistanceLine(text: distanceText!),
+              StayDistanceLine(text: distanceText!),
           ],
           if (showPrice) ...<Widget>[
             const SizedBox(height: AppSpacing.md),
@@ -408,7 +419,7 @@ class _StaySheet extends StatelessWidget {
               alignment: AlignmentDirectional.centerStart,
               child: loading
                   ? CardSkeleton.price(width: _priceWidth, height: _priceHeight)
-                  : _PriceLine(
+                  : StayPriceLine(
                       amountText: amountText,
                       currency: currency,
                       unit: unit,
@@ -423,8 +434,8 @@ class _StaySheet extends StatelessWidget {
 
 /// The hotel's own class, as a quiet glass pill over the photo. It is a fact
 /// (the provider's classification), not a promotional badge.
-class _ClassPill extends StatelessWidget {
-  const _ClassPill({required this.stars});
+class StayClassPill extends StatelessWidget {
+  const StayClassPill({super.key, required this.stars});
 
   final int stars;
 
@@ -459,8 +470,8 @@ class _ClassPill extends StatelessWidget {
   }
 }
 
-class _RatingLine extends StatelessWidget {
-  const _RatingLine({required this.rating});
+class StayRatingLine extends StatelessWidget {
+  const StayRatingLine({super.key, required this.rating});
 
   final double rating;
 
@@ -489,8 +500,8 @@ class _RatingLine extends StatelessWidget {
   }
 }
 
-class _LocationLine extends StatelessWidget {
-  const _LocationLine({required this.text, this.onTap});
+class StayLocationLine extends StatelessWidget {
+  const StayLocationLine({super.key, required this.text, this.onTap});
 
   final String text;
   final VoidCallback? onTap;
@@ -532,8 +543,8 @@ class _LocationLine extends StatelessWidget {
   }
 }
 
-class _DistanceLine extends StatelessWidget {
-  const _DistanceLine({required this.text});
+class StayDistanceLine extends StatelessWidget {
+  const StayDistanceLine({super.key, required this.text});
 
   final String text;
 
@@ -562,8 +573,9 @@ class _DistanceLine extends StatelessWidget {
   }
 }
 
-class _PriceLine extends StatelessWidget {
-  const _PriceLine({
+class StayPriceLine extends StatelessWidget {
+  const StayPriceLine({
+    super.key,
     required this.amountText,
     required this.currency,
     this.unit,

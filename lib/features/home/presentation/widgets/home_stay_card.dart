@@ -12,6 +12,7 @@ import 'package:tokigo/features/home/presentation/home_stay_offer.dart';
 import 'package:tokigo/features/home/presentation/open_stay_map.dart';
 import 'package:tokigo/features/home/presentation/stay_distance.dart';
 import 'package:tokigo/features/home/presentation/widgets/cached_hotel_image.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_split_stay_card.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart';
 import 'package:tokigo/features/profile/application/wishlist_controller.dart';
 import 'package:tokigo/features/search/domain/stay_price.dart';
@@ -28,6 +29,8 @@ class HomeStayCard extends ConsumerWidget {
     this.margin,
     this.onTap,
     this.aspectRatio = 4 / 3,
+    this.splitLayout = false,
+    this.showHeartPlatter = true,
     this.loading = false,
   });
 
@@ -37,6 +40,8 @@ class HomeStayCard extends ConsumerWidget {
     super.key,
     this.margin,
     this.aspectRatio = 4 / 3,
+    this.splitLayout = false,
+    this.showHeartPlatter = true,
   }) : item = const HomeItem(id: '', type: HomeCardType.hotel, title: ''),
        onTap = null,
        loading = true;
@@ -54,6 +59,14 @@ class HomeStayCard extends ConsumerWidget {
   /// The Home rail uses a wider image than other stay surfaces.
   final double aspectRatio;
 
+  /// Home's "Stays Near You" rail uses the horizontal 60/40 split card; every
+  /// other surface keeps the photo-above-sheet [OverlapStayCard].
+  final bool splitLayout;
+
+  /// Whether the favourite heart draws its white disc platter. The Home rail
+  /// draws the heart directly on the photo.
+  final bool showHeartPlatter;
+
   /// Skeleton state — same geometry, no data. The card delegates to
   /// [OverlapStayCard]'s loading state, so the placeholder is the same card.
   final bool loading;
@@ -62,6 +75,12 @@ class HomeStayCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     if (loading) {
+      if (splitLayout) {
+        return HomeSplitStayCard.loading(
+          margin: margin,
+          semanticsLabel: l10n?.hotelLoading ?? 'Loading hotel',
+        );
+      }
       return OverlapStayCard.skeleton(
         margin: margin,
         aspectRatio: aspectRatio,
@@ -123,12 +142,57 @@ class HomeStayCard extends ConsumerWidget {
         ? false
         : ref.watch(wishlistProvider).any((HotelOffer o) => o.id == offer.id);
 
+    // A review average is shown ONLY when real review data backs it: a score
+    // with no review count is never displayed (and never invented).
+    final bool hasRealReviews = (item.reviewCount ?? 0) > 0;
+
+    final VoidCallback? openStay = _openStay(context, offer: offer, city: city);
+    final ValueChanged<bool>? toggleFavorite = offer == null
+        ? null
+        : (bool saved) =>
+              ref.read(wishlistProvider.notifier).setSaved(offer, saved);
+    final bool enabled = onTap != null || offer != null || city.isNotEmpty;
+    final String currency = money?.currency ?? item.currency ?? '';
+
+    // Home's "Stays Near You" rail: a horizontal 60/40 split with the photo on
+    // the starting side. Every other surface keeps the photo-above-sheet card.
+    if (splitLayout) {
+      return HomeSplitStayCard(
+        media: StayPhoto(item: item),
+        title: item.title,
+        starClass: starClass,
+        rating: hasRealReviews ? item.rating : null,
+        reviewCount: hasRealReviews ? item.reviewCount : null,
+        location: location.isEmpty ? null : location,
+        onLocationTap: location.isEmpty
+            ? null
+            : () => openStayInMaps(
+                name: item.title,
+                location: location,
+                latitude: latitude,
+                longitude: longitude,
+              ),
+        distanceText: distanceText,
+        amountText: amountText,
+        currency: currency,
+        unit: unit,
+        enabled: enabled,
+        margin: margin,
+        isFavorite: isSaved,
+        onFavorite: toggleFavorite,
+        showHeartPlatter: showHeartPlatter,
+        // Owner decision (2026-10-25): the stay opens ITSELF. Sending the
+        // traveller to a city search hid the hotel they had just tapped.
+        onTap: onTap ?? openStay,
+      );
+    }
+
     return OverlapStayCard(
       media: StayPhoto(item: item),
       title: item.title,
       starClass: starClass,
-      rating: item.rating,
-      reviewCount: item.reviewCount,
+      rating: hasRealReviews ? item.rating : null,
+      reviewCount: hasRealReviews ? item.reviewCount : null,
       location: location.isEmpty ? null : location,
       onLocationTap: location.isEmpty
           ? null
@@ -140,20 +204,17 @@ class HomeStayCard extends ConsumerWidget {
             ),
       distanceText: distanceText,
       amountText: amountText,
-      currency: money?.currency ?? item.currency ?? '',
+      currency: currency,
       unit: unit,
-      enabled: onTap != null || offer != null || city.isNotEmpty,
+      enabled: enabled,
       margin: margin,
       aspectRatio: aspectRatio,
       isFavorite: isSaved,
-      onFavorite: offer == null
-          ? null
-          : (bool saved) => ref
-              .read(wishlistProvider.notifier)
-              .setSaved(offer, saved),
+      onFavorite: toggleFavorite,
+      showHeartPlatter: showHeartPlatter,
       // Owner decision (2026-10-25): the stay opens ITSELF. Sending the
       // traveller to a city search hid the hotel they had just tapped.
-      onTap: onTap ?? _openStay(context, offer: offer, city: city),
+      onTap: onTap ?? openStay,
     );
   }
 

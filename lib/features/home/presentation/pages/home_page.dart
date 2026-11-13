@@ -14,9 +14,11 @@ import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
 import 'package:tokigo/features/home/domain/home_action.dart';
+import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
 import 'package:tokigo/features/home/presentation/home_controller.dart';
 import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_top_bar.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_ai_search_field.dart';
 import 'package:tokigo/features/home/presentation/widgets/destination_cover_flow_carousel.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_section.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stays_carousel.dart';
@@ -40,42 +42,53 @@ class _HomePageState extends ConsumerState<HomePage>
   bool _routerHooked = false;
   GoRouter? _hookedRouter;
 
-  /// The feed's scroll position (only needed to honour a [HomeScrollTarget]).
+  /// The feed's scroll position (only needed to honour a [HomeScrollTarget]
+  /// and to drive the secondary search reveal).
   final ScrollController _feedController = ScrollController();
+
+  /// The navigation rail whose ACTUAL disappearance drives the secondary
+  /// search. Its render box is measured against the viewport on every scroll
+  /// frame — never a guessed scroll offset.
+  final GlobalKey _navKey = GlobalKey();
+
+  /// The Home scroll view, used as the coordinate space for the rail's
+  /// visibility measurement.
+  final GlobalKey _scrollKey = GlobalKey();
 
   /// Anchors the Discover section so another page can land on it.
   final GlobalKey _discoverKey = GlobalKey();
   bool _scrollScheduled = false;
 
-  /// The wordmark row's hide/show animation.
-  ///
-  /// One controller, driven by the feed's scroll DIRECTION, animates the
-  /// header's height factor between 0 (hidden) and 1 (shown). The composer is
-  /// a separate pinned sliver, so it never moves with this value.
-  late final AnimationController _headerVisibility = AnimationController(
+  /// Drives the secondary compact search's entrance from above the viewport.
+  late final AnimationController _searchReveal = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 220),
-    value: 1,
   );
 
-  /// The scroll offset the header decision was last made at, so a stationary
-  /// or reversed drag does not retrigger the animation.
-  double _lastHeaderScrollOffset = 0;
+  /// Whether the navigation rail has fully left the viewport.
+  bool _navGone = false;
 
-  /// How far the feed must move before the header reacts — a dead zone that
-  /// absorbs the jitter at a drag's start and stop.
-  static const double _headerScrollThreshold = 8;
+  /// The original composer's draft, lifted so it survives the header being
+  /// scrolled out of the viewport and back.
+  final TextEditingController _composerTextController = TextEditingController();
+
+  /// Guards the post-frame visibility measurement, so a scroll frame schedules
+  /// at most one re-measurement.
+  bool _revealScheduled = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _feedController.addListener(_onFeedScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _updateSearchReveal());
   }
 
   @override
   void dispose() {
     _feedController.removeListener(_onFeedScroll);
+    _searchReveal.dispose();
+    _composerTextController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     // Cannot look up ancestors in dispose — the router reference was saved at
     // hook time exactly for this.
@@ -83,34 +96,47 @@ class _HomePageState extends ConsumerState<HomePage>
     _hookedRouter = null;
     _routerHooked = false;
     _feedController.dispose();
-    _headerVisibility.dispose();
     super.dispose();
   }
 
-  /// Hides the wordmark header while the feed travels AWAY from the top and
-  /// reveals it again when the traveller scrolls back toward the top.
+  /// Drives the secondary search from the navigation rail's ACTUAL position.
   ///
-  /// The animation is driven by direction alone, not by pixel parity: a fast
-  /// flick past the threshold still produces one smooth 220ms transition, and
-  /// a drag that reverses mid-flight simply reverses the same controller (no
-  /// jump, no second animation). The pinned composer is a separate sliver and
-  /// is never affected.
+  /// The rail's render box is measured against the scroll view's viewport on
+  /// every scroll frame, so the reveal begins at the exact frame the final
+  /// navigation item leaves the screen — not at a guessed scroll offset — and
+  /// reverses naturally when the rail returns.
   void _onFeedScroll() {
+    // The scroll notification arrives BEFORE the frame's layout, so the rail's
+    // render box still holds its previous position. Measure after the frame,
+    // when the layout reflects the new scroll offset.
+    if (_revealScheduled) return;
+    _revealScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _revealScheduled = false;
+      if (mounted) _updateSearchReveal();
+    });
+  }
+
+  void _updateSearchReveal() {
     if (!_feedController.hasClients) return;
-    final double offset = _feedController.offset;
-    final double delta = offset - _lastHeaderScrollOffset;
-    if (delta.abs() < _headerScrollThreshold) return;
-    _lastHeaderScrollOffset = offset;
-    final bool scrollingAway = delta > 0;
-    final bool isAtTop = offset <= 0;
-    final double target = (scrollingAway && !isAtTop) ? 0 : 1;
-    if (_headerVisibility.value == target) return;
-    // A short, front-loaded ease so the header feels immediate but never snaps.
-    _headerVisibility.animateTo(
-      target,
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-    );
+    final BuildContext? navContext = _navKey.currentContext;
+    final BuildContext? scrollContext = _scrollKey.currentContext;
+    if (navContext == null || scrollContext == null) return;
+    final RenderBox? navBox = navContext.findRenderObject() as RenderBox?;
+    final RenderBox? scrollBox = scrollContext.findRenderObject() as RenderBox?;
+    if (navBox == null || scrollBox == null) return;
+    if (!navBox.hasSize || !scrollBox.hasSize) return;
+    final double navBottom = navBox
+        .localToGlobal(Offset(0, navBox.size.height), ancestor: scrollBox)
+        .dy;
+    final bool gone = navBottom <= 0;
+    if (gone == _navGone) return;
+    _navGone = gone;
+    if (gone) {
+      _searchReveal.forward();
+    } else {
+      _searchReveal.reverse();
+    }
   }
 
   /// Hooks the router listener lazily (H2): the widget tree may host
@@ -207,66 +233,71 @@ class _HomePageState extends ConsumerState<HomePage>
       // H1: pull-to-refresh removed by product decision — Home refreshes
       // prices/availability via live validation only (H2).
       //
-      // The wordmark row animates its own visibility as the feed scrolls; the
-      // AI composer stays pinned at the top so it is always available.
+      // The original header (wordmark, AI composer, navigation) is part of
+      // the scrollable content; the compact search overlay appears only after
+      // the navigation rail has left the viewport.
       // Section pages are pushed routes with their own header/back control.
       body: SafeArea(
         top: true,
         // The feed stays edge-to-edge under the navigation bar.
         bottom: false,
-        child: CustomScrollView(
-          controller: _feedController,
-          slivers: <Widget>[
-            // The wordmark row, wrapped in the scroll-driven visibility
-            // animation. It keeps its natural height (the feed scrolls behind
-            // it) and fades + slides out as one smooth transition; the pinned
-            // composer below is a separate sliver and never moves.
-            SliverToBoxAdapter(
-              child: AnimatedBuilder(
-                animation: _headerVisibility,
-                builder: (context, child) {
-                  final double t = Curves.easeOutCubic.transform(
-                    _headerVisibility.value,
-                  );
-                  if (t <= 0) return const SizedBox.shrink();
-                  return Opacity(
-                    opacity: t,
-                    child: FractionalTranslation(
-                      translation: Offset(0, -0.18 * (1 - t)),
-                      child: child,
-                    ),
-                  );
-                },
-                child: _buildHeader(),
-              ),
+        child: Stack(
+          children: <Widget>[
+            CustomScrollView(
+              key: _scrollKey,
+              controller: _feedController,
+              slivers: <Widget>[
+                // The original Home header — wordmark, AI composer and
+                // navigation — is part of the scrollable content. It leaves the
+                // viewport naturally as the feed scrolls.
+                SliverToBoxAdapter(child: _buildOriginalHeader()),
+                ..._feedSlivers(state, ref),
+              ],
             ),
-            const SliverPersistentHeader(
-              pinned: true,
-              delegate: _HomeComposerHeader(),
+            // The secondary compact search. It is an OVERLAY: it never changes
+            // the scroll extent of the original content, and it is only
+            // revealed once the navigation rail has completely left the
+            // viewport.
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: _SecondarySearchOverlay(controller: _searchReveal),
             ),
-            SliverToBoxAdapter(child: _buildActionBar()),
-            ..._feedSlivers(state, ref),
           ],
         ),
       ),
     );
   }
 
-  /// The wordmark row — the Home header. It scrolls away with the feed.
-  Widget _buildHeader() {
-    return const Padding(
-      padding: EdgeInsetsDirectional.fromSTEB(
-        AppSpacing.lg,
-        AppSpacing.xs,
-        AppSpacing.lg,
-        0,
-      ),
-      child: HomeTopBar(),
+  /// The original Home header: wordmark, AI composer and navigation, as one
+  /// continuous section of the scrollable content.
+  ///
+  /// Nothing here is pinned. The wordmark, the original AI search box and the
+  /// navigation buttons all leave the viewport together as the feed scrolls.
+  Widget _buildOriginalHeader() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        const Padding(
+          padding: EdgeInsetsDirectional.fromSTEB(
+            AppSpacing.lg,
+            AppSpacing.xs,
+            AppSpacing.lg,
+            0,
+          ),
+          child: SizedBox(height: 42, child: HomeTopBar()),
+        ),
+        // The original AI composer — the same widget the pinned slot used.
+        AppChrome(controller: _composerTextController),
+        _buildActionBar(),
+      ],
     );
   }
 
-  /// The service navigation rail. It scrolls away with the feed, beneath the
-  /// pinned composer.
+  /// The service navigation rail. It scrolls away with the feed; its real
+  /// position drives the secondary search reveal.
   Widget _buildActionBar() {
     final l10n = AppLocalizations.of(context)!;
     final List<HomeActionDefinition> definitions = homeActionDefinitions(l10n);
@@ -279,15 +310,18 @@ class _HomePageState extends ConsumerState<HomePage>
         top: AppSpacing.md,
         bottom: AppSpacing.md,
       ),
-      child: HomeActionBar(
-        definitions: definitions,
-        // Pushing (not `go`) keeps Home beneath the section page, so the
-        // section's back control returns to the dashboard.
-        onActionSelected: (HomeAction action) {
-          final String? path = paths[action];
-          if (path == null) return;
-          context.push(path);
-        },
+      child: KeyedSubtree(
+        key: _navKey,
+        child: HomeActionBar(
+          definitions: definitions,
+          // Pushing (not `go`) keeps Home beneath the section page, so the
+          // section's back control returns to the dashboard.
+          onActionSelected: (HomeAction action) {
+            final String? path = paths[action];
+            if (path == null) return;
+            context.push(path);
+          },
+        ),
       ),
     );
   }
@@ -300,8 +334,9 @@ class _HomePageState extends ConsumerState<HomePage>
 
   /// The dashboard's feed content as slivers.
   ///
-  /// The header, AI composer and navigation bar are provided by [AppChrome]
-  /// above this scroll view. This scroll view only carries the feed content.
+  /// The original header (wordmark, AI composer and navigation) scrolls as
+  /// the first section of this same scroll view. This method only carries the
+  /// feed content that follows it.
   List<Widget> _feedSlivers(HomeState state, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final List<HomeSection> visibleSections = state.sections
@@ -378,7 +413,22 @@ class _HomePageState extends ConsumerState<HomePage>
                 ),
               ),
             ),
-            SliverToBoxAdapter(child: HomeStaysCarousel(items: visibleHotels)),
+            SliverToBoxAdapter(
+              child: HomeStaysCarousel(
+                items: visibleHotels,
+                // Home's "Stays Near You" rail uses the approved horizontal
+                // 60/40 split and draws the heart directly on the photo.
+                splitLayout: true,
+                showHeartPlatter: false,
+                // The card is the SAME measured width and height as a
+                // Trending Destinations city card: the city rail's page
+                // fraction and its pageWidth / ratio height.
+                viewportFraction:
+                    HomeCardDimensions.destinationViewportFraction,
+                cardHeightBuilder:
+                    HomeStaysCarousel.splitCardHeightFor,
+              ),
+            ),
             const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
           ],
           // Breathing room under the last card / section.
@@ -441,35 +491,53 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 }
 
-/// Pins the AI composer beneath the scrolling header.
+/// The secondary compact search, pinned as an overlay at the top of Home.
 ///
-/// A single fixed extent keeps the pin stable: no collapse animation, no
-/// extent thrash, and the composer's 56dp pill never resizes the feed. The
-/// wordmark row and the service rail above/below it scroll away normally.
-class _HomeComposerHeader extends SliverPersistentHeaderDelegate {
-  const _HomeComposerHeader();
+/// It is a SEPARATE control from the original AI composer — which scrolls away
+/// with the header — and owns its own state. It enters from above the viewport
+/// when the navigation rail has completely left the screen, and exits upward
+/// when the rail returns.
+///
+/// It is an OVERLAY, not a sliver: it never changes the scroll extent of the
+/// original content, and it never overlaps the original header (which has
+/// already left the viewport before the overlay is revealed).
+class _SecondarySearchOverlay extends StatelessWidget {
+  const _SecondarySearchOverlay({required this.controller});
+
+  final AnimationController controller;
 
   @override
-  double get minExtent => AppChrome.pinnedHeight;
-
-  @override
-  double get maxExtent => AppChrome.pinnedHeight;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return const AppChrome();
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      ignoring: controller.value == 0,
+      child: SlideTransition(
+        position: Tween<Offset>(begin: const Offset(0, -1), end: Offset.zero)
+            .animate(
+          CurvedAnimation(parent: controller, curve: Curves.easeOutCubic),
+        ),
+        child: SizedBox(
+          height: AppChrome.pinnedHeight,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            child: Center(
+              child: HomeAiSearchField(
+                compact: true,
+                accentColor: HomeDesignTokens.accentOf(context),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
-
-  @override
-  bool shouldRebuild(covariant _HomeComposerHeader oldDelegate) => false;
 }
 
 /// Centers an honest state (empty / offline) in the feed's remaining
-/// viewport, beneath [AppChrome].
+/// viewport, beneath the original header.
 ///
 /// The state scrolls only when its content genuinely cannot fit — a very
 /// small screen or a large system type scale — so the message is never
-/// clipped and never overlaps the pinned chrome.
+/// clipped and never overlaps the compact search overlay.
 ///
 /// This used to be a `LayoutBuilder`, which cannot answer intrinsic
 /// dimensions: `RenderSliverFillRemaining.performLayout` always asks its
@@ -562,7 +630,18 @@ class _StaysSkeletonList extends StatelessWidget {
             child: ShimmerBox(height: 24, width: 180),
           ),
         ),
-        HomeStaysCarousel(items: const <HomeItem>[], loading: true),
+        // The SAME geometry the loaded "Stays Near You" rail uses: the split
+        // layout, the 60/40 card, the Discover page fraction and the city
+        // card's height. A skeleton at any other size makes the feed jump
+        // when the real stays land.
+        HomeStaysCarousel(
+          items: const <HomeItem>[],
+          loading: true,
+          splitLayout: true,
+          showHeartPlatter: false,
+          viewportFraction: HomeCardDimensions.destinationViewportFraction,
+          cardHeightBuilder: HomeStaysCarousel.splitCardHeightFor,
+        ),
       ],
     );
   }

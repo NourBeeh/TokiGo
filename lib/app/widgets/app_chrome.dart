@@ -4,20 +4,24 @@ import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_ai_search_field.dart';
 
-/// The pinned Home AI composer.
+/// The Home AI composer — the original search box.
 ///
-/// The wordmark row and the service navigation scroll away with the feed; the
-/// composer stays pinned at the top of Home so the traveller can always ask
-/// the assistant. It belongs to Home only — no other page renders it.
+/// It is part of the scrollable Home header: the wordmark, this composer and
+/// the service navigation all leave the viewport together as the feed scrolls.
+/// It belongs to Home only — no other page renders it.
 ///
 /// The band itself is TRANSPARENT: the pill carries the only edge (its halo),
-/// so the feed scrolls visibly beneath it and the composer reads as genuinely
-/// floating rather than as a solid stripe pinned over the content.
+/// so it reads as a floating pill rather than a solid stripe.
 class AppChrome extends StatelessWidget {
-  const AppChrome({super.key});
+  const AppChrome({super.key, this.controller});
 
-  /// The pinned composer's fixed height: the 56dp pill plus its padding.
-  static const double pinnedHeight = 56 + AppSpacing.md * 2;
+  /// Optional lifted text controller, so the composer's draft survives the
+  /// header being scrolled out of the viewport and back.
+  final TextEditingController? controller;
+
+  /// The pinned composer's fixed height: the pill plus its padding.
+  static const double pinnedHeight =
+      HomeAiSearchField.height + AppSpacing.md * 2;
 
   @override
   Widget build(BuildContext context) {
@@ -31,8 +35,9 @@ class AppChrome extends StatelessWidget {
           AppSpacing.md,
         ),
         child: SizedBox(
-          height: 56,
+          height: HomeAiSearchField.height,
           child: HomeAiSearchField(
+            controller: controller,
             accentColor: HomeDesignTokens.accentOf(context),
           ),
         ),

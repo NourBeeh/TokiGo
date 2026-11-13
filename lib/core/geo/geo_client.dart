@@ -71,7 +71,12 @@ class GeoClient {
     return resolveCountry();
   }
 
-  /// One silent GPS attempt: only when permission is ALREADY granted.
+  /// One silent GPS attempt, ONLY when permission is already granted.
+  /// Returns null on any failure (denied / service off / timeout / platform
+  /// unavailable). Never prompts, never stores, never retries in a loop.
+  Future<Position?> currentPosition() => _positionProvider();
+
+  /// The default silent GPS attempt: only when permission is ALREADY granted.
   /// Permission-denied/service-off/anything-else → null (no prompt, no
   /// block, no retry loop).
   static Future<Position?> _defaultPosition() async {

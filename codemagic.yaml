@@ -1,20 +1,61 @@
 workflows:
-  flutter-workflow:
-    name: Flutter Workflow
+  ios-unsigned:
+    name: iOS Unsigned Build
     instance_type: mac_mini_m2
+    max_build_duration: 60
     environment:
-      flutter: stable
+      flutter: 3.50.0
+      xcode: latest
+      cocoapods: default
+      vars:
+        # Override at build time in the Codemagic UI for a physical device,
+        # e.g. http://192.168.1.3:3000
+        API_BASE_URL: ''
+    scripts:
+      - name: Flutter version
+        script: flutter --version
+
+      - name: Install dependencies
+        script: flutter pub get
+
+      - name: Build iOS (unsigned)
+        script: |
+          set -e
+          ARGS=(build ios --release --no-codesign)
+          if [ -n "${API_BASE_URL}" ]; then
+            ARGS+=(--dart-define=API_BASE_URL="${API_BASE_URL}")
+            if [[ "${API_BASE_URL}" =~ ^http://(10\.[0-9]+\.[0-9]+\.[0-9]+|172\.(1[6-9]|2[0-9]|3[0-1])\.[0-9]+\.[0-9]+|192\.168\.[0-9]+\.[0-9]+)(:[0-9]+)?(/.*)?$ ]]; then
+              ARGS+=(--dart-define=ALLOW_INSECURE_LOCAL_API=true)
+            fi
+          fi
+          flutter "${ARGS[@]}"
+
+      - name: Package unsigned IPA
+        script: |
+          set -e
+          rm -rf Payload
+          mkdir -p Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/
+          zip -r TokiGo-unsigned.ipa Payload
+          ls -lh TokiGo-unsigned.ipa
+
+    artifacts:
+      - TokiGo-unsigned.ipa
+      - build/ios/iphoneos/Runner.app
+
+  android-release:
+    name: Android Release APK
+    instance_type: linux_x2
+    max_build_duration: 60
+    environment:
+      flutter: 3.50.0
+      java: 17
     scripts:
       - name: Install dependencies
-        script: flutter packages pub get
-      - name: Build iOS
-        script: flutter build ios --release --no-codesign
-      - name: Build Android
+        script: flutter pub get
+
+      - name: Build APK (release)
         script: flutter build apk --release
+
     artifacts:
-      - build/ios/ipa/*.ipa
       - build/app/outputs/flutter-apk/*.apk
-    publishing:
-      email:
-        recipients:
-          - user@example.com

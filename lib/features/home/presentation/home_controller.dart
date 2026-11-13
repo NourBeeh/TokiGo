@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
+import 'package:tokigo/core/geo/user_location.dart';
 import 'package:tokigo/core/network/user_facing_message.dart';
 import 'package:tokigo/core/network/network_status.dart';
 import 'package:tokigo/core/repositories/contracts/home_repository.dart';
 import 'package:tokigo/features/home/application/home_live_validation_service.dart';
 import 'package:tokigo/features/home/domain/home_composer.dart';
 import 'package:tokigo/features/home/domain/home_greeting.dart';
+import 'package:tokigo/features/home/presentation/nearby_stay_ranking.dart';
 
 enum HomeStatus { loading, success, empty, error, partial, developmentPreview }
 
@@ -66,6 +68,7 @@ class HomeController extends StateNotifier<HomeState> {
     this._countryCode,
     this._languageCode,
     this._currencyCode,
+    this._location,
   }) : super(const HomeState()) {
     _startUp();
   }
@@ -104,6 +107,11 @@ class HomeController extends StateNotifier<HomeState> {
   /// = AUTO: the backend applies the market currency). Null function in
   /// tests/legacy wiring keeps the backend default.
   final String? Function()? _currencyCode;
+
+  /// Resolves a valid user location at request time, when permission is
+  /// already granted and a fix is available. Null in tests/legacy wiring
+  /// keeps the backend order (the honest fallback).
+  final Future<UserLocation?> Function()? _location;
 
   /// Guards against duplicate validation jobs for the same snapshot (§15).
   bool _validationInFlight = false;
@@ -590,6 +598,7 @@ class HomeController extends StateNotifier<HomeState> {
     // fall back to the launch market for everyone.
     final country = _countryCode?.call()?.trim().toUpperCase();
     final currency = _currencyCode?.call()?.trim().toUpperCase();
+    final UserLocation? location = await (_location?.call() ?? Future<UserLocation?>.value(null));
     final result = await repository.getRecommendedHotels(
       countryCode: (country != null && country.length == 2) ? country : null,
       languageCode: _languageCode?.call() ?? 'en',
@@ -598,7 +607,14 @@ class HomeController extends StateNotifier<HomeState> {
     result.when(
       success: (hotels) {
         if (hotels.isNotEmpty) {
-          state = state.copyWith(recommendedHotels: hotels);
+          // Truthful "Stays Near You": with a valid location, rank by real
+          // distance nearest-first; without one, keep the backend order.
+          final List<HomeItem> ranked = NearbyStayRanking.rankNearestFirst(
+            hotels,
+            latitude: location?.latitude,
+            longitude: location?.longitude,
+          );
+          state = state.copyWith(recommendedHotels: ranked);
           // The R-4 rail feeds the authenticated "Picked for You" section —
           // re-run the deterministic composition so the rail lands in place.
           //

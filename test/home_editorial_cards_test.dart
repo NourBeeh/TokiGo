@@ -130,7 +130,7 @@ void main() {
         find.byWidgetPredicate(
           (widget) =>
               widget is Container &&
-              widget.constraints?.minHeight == 56 &&
+              widget.constraints?.minHeight == 48 &&
               widget.decoration is BoxDecoration,
         ),
       );

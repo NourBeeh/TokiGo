@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tokigo/core/auth/auth_provider.dart';
 import 'package:tokigo/core/memory/explicit_preference_signal.dart';
+import 'package:tokigo/core/widgets/compact_stepper_row.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/core/widgets/search_filter_chips.dart';
 import 'package:tokigo/features/search/application/providers/search_providers.dart';
 import 'package:tokigo/features/search/application/controllers/flight_search_controller.dart';
 import 'package:tokigo/core/domain/models/search/flight_search_params.dart';
+import 'package:tokigo/features/search/presentation/widgets/compact_search_summary.dart';
 import 'package:tokigo/features/search/presentation/widgets/search_scaffold.dart';
 import 'package:tokigo/features/search/presentation/widgets/search_states_view.dart';
 import 'package:tokigo/features/search/presentation/widgets/destination_picker_sheet.dart';
@@ -98,6 +100,11 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
   _FlightSort _sort = _FlightSort.recommended;
 
   FlightSearchParams? _lastParams;
+
+  /// True while the traveller is editing a completed search: the full form
+  /// shows again until the next successful search collapses it back into the
+  /// compact summary.
+  bool _editing = false;
   bool _prefilled = false;
   bool _originSuggestionStarted = false;
   String? _marketCountryCode;
@@ -444,6 +451,9 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
       );
       _recordPassengerComposition(ref);
       _lastParams = params;
+      // A new search has started: the compact summary takes over again as
+      // soon as it succeeds.
+      _editing = false;
       ref.read(flightSearchControllerProvider.notifier).search(params);
       return;
     }
@@ -472,6 +482,9 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
     );
     _recordPassengerComposition(ref);
     _lastParams = params;
+    // A new search has started: the compact summary takes over again as soon
+    // as it succeeds.
+    _editing = false;
     ref.read(flightSearchControllerProvider.notifier).search(params);
   }
 
@@ -577,6 +590,11 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
     final filters = _effectiveFilters(ref.watch(flightFiltersProvider));
     final hasResults =
         state.status == SearchStatus.success && state.results.isNotEmpty;
+    // Collapse the form into the compact summary only after a successful,
+    // non-empty search — never during loading, and never on an error or an
+    // empty result. Editing reopens the form without touching the results,
+    // the filters or the sorting; the summary returns on the next success.
+    final bool showSummary = hasResults && !_editing && _lastParams != null;
     // One chip instance per build: computing it twice also meant two different
     // chip states could be read between the null check and the render.
     final budgetChip = hasResults ? _buildBudgetChip(l10n) : null;
@@ -592,7 +610,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
       subtitle: l10n.flightSearchSubtitle,
       embedded: widget.embedded,
       bottomPadding: widget.bottomPadding,
-      form: _buildForm(l10n),
+      form: showSummary ? _buildSummaryCard(l10n) : _buildForm(l10n),
       // Sorting and filtering only make sense once there is something to sort.
       bottomContent: hasResults
           ? Column(
@@ -698,58 +716,49 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
               while (infantAges.length > infants) infantAges.removeLast();
             }
 
-            Widget stepper(String label, int value, VoidCallback dec, VoidCallback inc) {
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Text(label),
-                  Row(
-                    children: <Widget>[
-                      IconButton(onPressed: dec, icon: const Icon(Icons.remove)),
-                      Text('$value'),
-                      IconButton(onPressed: inc, icon: const Icon(Icons.add)),
-                    ],
-                  ),
-                ],
-              );
-            }
-
+            // The SAME shared row the hotel occupancy card uses: label
+            // typography, value box and +/- control geometry (owner decision,
+            // 2026-11). A null callback renders that control disabled, so the
+            // row's own minimum/maximum is visible rather than a silent no-op.
             return SafeArea(
               top: false,
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    stepper(
-                      l10n.passengersCount(adults),
-                      adults,
-                      () => setSheetState(() {
-                        if (adults > 1) adults--;
-                      }),
-                      () => setSheetState(() {
-                        if (adults + children + infants < 9) adults++;
-                      }),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                    CompactStepperRow(
+                      label: 'Adults',
+                      value: adults,
+                      onDecrement: adults > 1
+                          ? () => setSheetState(() => adults--)
+                          : null,
+                      onIncrement: adults + children + infants < 9
+                          ? () => setSheetState(() => adults++)
+                          : null,
                     ),
-                    stepper(
-                      'Children',
-                      children,
-                      () => setSheetState(() {
-                        if (children > 0) {
-                          children--;
-                          syncCounts();
-                        }
-                      }),
-                      () => setSheetState(() {
-                        if (adults + children + infants < 9) {
-                          children++;
-                          syncCounts();
-                        }
-                      }),
+                    CompactStepperRow(
+                      label: 'Children',
+                      value: children,
+                      onDecrement: children > 0
+                          ? () => setSheetState(() {
+                              children--;
+                              syncCounts();
+                            })
+                          : null,
+                      onIncrement: adults + children + infants < 9
+                          ? () => setSheetState(() {
+                              children++;
+                              syncCounts();
+                            })
+                          : null,
                     ),
                     for (int i = 0; i < children; i++)
                       DropdownButton<int>(
                         value: childAges[i].clamp(2, 17),
+                        isDense: true,
                         items: <int>[
                           for (int a = 2; a <= 17; a++) a
                         ].map((a) => DropdownMenuItem<int>(value: a, child: Text('$a'))).toList(),
@@ -758,25 +767,27 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
                           setSheetState(() => childAges[i] = v);
                         },
                       ),
-                    stepper(
-                      'Infants',
-                      infants,
-                      () => setSheetState(() {
-                        if (infants > 0) {
-                          infants--;
-                          syncCounts();
-                        }
-                      }),
-                      () => setSheetState(() {
-                        if (infants < adults && adults + children + infants < 9) {
-                          infants++;
-                          syncCounts();
-                        }
-                      }),
+                    CompactStepperRow(
+                      label: 'Infants',
+                      value: infants,
+                      onDecrement: infants > 0
+                          ? () => setSheetState(() {
+                              infants--;
+                              syncCounts();
+                            })
+                          : null,
+                      onIncrement: infants < adults &&
+                              adults + children + infants < 9
+                          ? () => setSheetState(() {
+                              infants++;
+                              syncCounts();
+                            })
+                          : null,
                     ),
                     for (int i = 0; i < infants; i++)
                       DropdownButton<int>(
                         value: infantAges[i].clamp(0, 1),
+                        isDense: true,
                         items: const <int>[0, 1]
                             .map((a) => DropdownMenuItem<int>(value: a, child: Text('$a')))
                             .toList(),
@@ -798,7 +809,8 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
                       },
                       child: const Text('Done'),
                     ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             );
@@ -924,6 +936,50 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
     );
     if (picked != null && mounted) setState(() => _cabin = picked);
   }
+
+  // ── Summary card (results state) ────────────────────────────────────────
+
+  /// The compact summary shown after a successful search. Tapping it reopens
+  /// the full form with every criterion preserved — origin, destination,
+  /// dates, trip type, cabin, passengers, child/infant ages and multi-city
+  /// legs — while the results, filters and sorting stay untouched until a
+  /// new search succeeds.
+  Widget _buildSummaryCard(AppLocalizations l10n) {
+    final params = _lastParams!;
+    final String title = params.effectiveLegs.length > 1
+        ? '${params.effectiveLegs.first.origin} → '
+              '${params.effectiveLegs.first.destination} '
+              '+${params.effectiveLegs.length - 1}'
+        : '${params.origin} → ${params.destination}';
+    // MaterialLocalizations carries the month names for the active language —
+    // the same source the form fields read.
+    final MaterialLocalizations ml = MaterialLocalizations.of(context);
+    final String dates = params.returnDate != null
+        ? '${ml.formatShortMonthDay(params.departureDate)} – '
+              '${ml.formatShortMonthDay(params.returnDate!)}'
+        : ml.formatShortMonthDay(params.departureDate);
+    final String travellers = l10n.passengersCount(
+      params.adults + params.children + params.infants,
+    );
+    final String meta = '$dates · $travellers · '
+        '${_cabinLabelForToken(l10n, params.cabinClass)}';
+    return CompactSearchSummary(
+      leadingIcon: Icons.flight_takeoff_rounded,
+      title: title,
+      meta: meta,
+      editLabel: l10n.editSearch,
+      onEdit: () => setState(() => _editing = true),
+    );
+  }
+
+  /// The cabin label for the token the last search actually sent.
+  String _cabinLabelForToken(AppLocalizations l10n, String token) =>
+      switch (token) {
+        'premium_economy' => l10n.cabinPremiumEconomy,
+        'business' => l10n.cabinBusiness,
+        'first' => l10n.cabinFirst,
+        _ => l10n.cabinEconomy,
+      };
 
   // ── Form ────────────────────────────────────────────────────────────────
   Widget _buildForm(AppLocalizations l10n) {

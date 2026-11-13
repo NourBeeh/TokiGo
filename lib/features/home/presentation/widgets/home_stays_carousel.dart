@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/domain/models/home/home_item.dart';
@@ -27,7 +29,10 @@ class HomeStaysCarousel extends StatelessWidget {
     this.onItemTap,
     this.itemBuilder,
     this.sheetTextHeight = staysSheetTextHeight,
+    this.splitLayout = false,
+    this.showHeartPlatter = true,
     this.loading = false,
+    this.cardHeightBuilder,
   });
 
   /// The stays to page through. The caller guarantees this is not empty
@@ -51,6 +56,14 @@ class HomeStaysCarousel extends StatelessWidget {
   /// space the city card can never fill.
   final double sheetTextHeight;
 
+  /// Whether the rail renders Home's horizontal 60/40 split card. Only the
+  /// Home "Stays Near You" rail opts in; the AI answer rails keep the
+  /// photo-above-sheet card.
+  final bool splitLayout;
+
+  /// Whether the favourite heart draws its white disc platter.
+  final bool showHeartPlatter;
+
   /// Skeleton state — the SAME rail with placeholder cards.
   ///
   /// The rail's height, page width and page fraction are read from the same
@@ -58,6 +71,15 @@ class HomeStaysCarousel extends StatelessWidget {
   /// the real stays will. One page only: pretending there are stays to swipe
   /// before any exists would be a lie.
   final bool loading;
+
+  /// Overrides the rail's card height.
+  ///
+  /// The Home "Stays Near You" split rail supplies
+  /// [splitCardHeightFor] so its card is the exact same measured width and
+  /// height as a Trending Destinations city card. Null (the default) keeps the
+  /// photo-above-sheet budget derived from [mediaAspectRatio] and
+  /// [sheetTextHeight].
+  final double Function(double pageWidth, double textScale)? cardHeightBuilder;
 
   /// A city sheet's content budget at the default text scale: name, place,
   /// one description line and the pinned action row.
@@ -96,6 +118,22 @@ class HomeStaysCarousel extends StatelessWidget {
     return media - _sheetPadding + sheetTextHeight * textScale + _sheetSlack;
   }
 
+  /// The split card's height, matching the Trending Destinations city card.
+  ///
+  /// The city card's geometry is the source of truth: a page of [pageWidth] is
+  /// `pageWidth / destinationMediaAspectRatio` tall. The split card adopts
+  /// that exact height at the default text scale, and grows with the
+  /// traveller's text scale — its information column carries the stay's
+  /// decision facts, which the city card's scrim copy does not, so a larger
+  /// scale must not clip them.
+  static double splitCardHeightFor(double pageWidth, double textScale) {
+    final double cityHeight =
+        pageWidth / HomeCardDimensions.destinationMediaAspectRatio;
+    final double contentHeight =
+        HomeCardDimensions.staySheetTextHeight * textScale;
+    return math.max(cityHeight, contentHeight);
+  }
+
   /// The rail height for the current viewport — shared with the loading
   /// skeleton so the feed does not jump when the real stays land.
   static double railHeight(
@@ -121,11 +159,14 @@ class HomeStaysCarousel extends StatelessWidget {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         final double pageWidth = constraints.maxWidth * viewportFraction;
-        final double height = HomeStaysCarousel.cardHeightFor(
-          pageWidth,
-          HomeStaysCarousel._textScaleOf(context),
-          sheetTextHeight: sheetTextHeight,
-        );
+        final double textScale = HomeStaysCarousel._textScaleOf(context);
+        final double height =
+            cardHeightBuilder?.call(pageWidth, textScale) ??
+            HomeStaysCarousel.cardHeightFor(
+              pageWidth,
+              textScale,
+              sheetTextHeight: sheetTextHeight,
+            );
 
         return CoverFlowCarousel(
           itemCount: loading ? 1 : items.length,
@@ -139,12 +180,16 @@ class HomeStaysCarousel extends StatelessWidget {
                 ? HomeStayCard.loading(
                     margin: EdgeInsets.zero,
                     aspectRatio: HomeStaysCarousel.mediaAspectRatio,
+                    splitLayout: splitLayout,
+                    showHeartPlatter: showHeartPlatter,
                   )
                 : itemBuilder?.call(context, items[index]) ??
                     HomeStayCard(
                       item: items[index],
                       margin: EdgeInsets.zero,
                       aspectRatio: HomeStaysCarousel.mediaAspectRatio,
+                      splitLayout: splitLayout,
+                      showHeartPlatter: showHeartPlatter,
                       onTap: onItemTap == null
                           ? null
                           : () => onItemTap!(items[index]),

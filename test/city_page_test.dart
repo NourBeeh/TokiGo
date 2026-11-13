@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/widgets/app_icon_action.dart';
 import 'package:tokigo/features/home/presentation/pages/city_page.dart';
 
 /// The Discover city tile opens this page instead of a pre-filtered search.
@@ -120,5 +121,24 @@ void main() {
     await tester.pump();
 
     expect(find.textContaining('Photo:'), findsNothing);
+  });
+
+  testWidgets('the back control keeps its position and has no white disc', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(_host(CityPage(city: _city())));
+
+    // The city page's back control is the PLAIN floating variant: the disc's
+    // geometry, no white circular fill.
+    final AppIconAction action = tester.widget<AppIconAction>(
+      find.byType(AppIconAction),
+    );
+    expect(action.variant, AppIconActionVariant.plain);
+
+    // It stays pinned at the page's top-start corner.
+    final Rect viewport = tester.getRect(find.byType(CityPage));
+    final Rect back = tester.getRect(find.byType(AppIconAction));
+    expect(back.top, lessThan(viewport.top + 80));
+    expect(back.left, lessThan(viewport.center.dx));
   });
 }

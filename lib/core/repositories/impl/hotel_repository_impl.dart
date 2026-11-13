@@ -195,6 +195,12 @@ class HotelRepositoryImpl implements HotelRepository {
       final CustomerPrice? customerPrice = rawCustomerPrice is Map
           ? CustomerPrice.fromJson(Map<String, dynamic>.from(rawCustomerPrice))
           : null;
+      // The provider's own metadata (coordinates, address, distance, stars)
+      // reaches the client verbatim. The map view and the details page read
+      // it; a missing map stays absent — never invented.
+      final Map<String, dynamic> metadata = item['metadata'] is Map
+          ? Map<String, dynamic>.from(item['metadata'] as Map)
+          : const <String, dynamic>{};
       return HotelOffer(
         id: item['id']?.toString() ?? '',
         providerId: item['providerId']?.toString() ?? 'nuitee',
@@ -203,6 +209,7 @@ class HotelRepositoryImpl implements HotelRepository {
         price: (item['price'] as num?)?.toDouble() ?? 0,
         currency: item['currency']?.toString() ?? 'USD',
         customerPrice: customerPrice,
+        metadata: metadata,
         city: item['city']?.toString() ?? '',
         country: item['country']?.toString() ?? '',
         checkIn:

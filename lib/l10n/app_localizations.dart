@@ -251,6 +251,12 @@ abstract class AppLocalizations {
   /// **'Where do you want to go?'**
   String get aiSearchSheetHint;
 
+  /// No description provided for @aiChatSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'TokiGo AI assistant'**
+  String get aiChatSubtitle;
+
   /// No description provided for @askAssistantTitle.
   ///
   /// In en, this message translates to:
@@ -590,7 +596,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeStaysTitle.
   ///
   /// In en, this message translates to:
-  /// **'Stays recommended'**
+  /// **'Stays Near You'**
   String get homeStaysTitle;
 
   /// No description provided for @homeContinuePlanning.
@@ -1688,7 +1694,7 @@ abstract class AppLocalizations {
   /// No description provided for @carsUnavailableBody.
   ///
   /// In en, this message translates to:
-  /// **'We are onboarding car-rental providers. Flights and hotels are live today.'**
+  /// **'We are onboarding car-rental providers. Flights and stays are live today.'**
   String get carsUnavailableBody;
 
   /// No description provided for @findFlights.
@@ -1700,7 +1706,7 @@ abstract class AppLocalizations {
   /// No description provided for @findHotels.
   ///
   /// In en, this message translates to:
-  /// **'Find hotels'**
+  /// **'Find stays'**
   String get findHotels;
 
   /// No description provided for @packagesSubtitle.
@@ -1880,7 +1886,7 @@ abstract class AppLocalizations {
   /// No description provided for @mapIntegrationUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Map integration is not yet available. Results are shown in list view.'**
+  /// **'Map integration is not yet available. Switch back to the list view to see the results.'**
   String get mapIntegrationUnavailable;
 
   /// No description provided for @carDropoffLocation.
@@ -2990,13 +2996,13 @@ abstract class AppLocalizations {
   /// No description provided for @hotelIdleBody.
   ///
   /// In en, this message translates to:
-  /// **'Enter a destination and your dates to see available rooms.'**
+  /// **'Enter your destination and stay dates to browse available hotels and compare their prices and guest ratings.'**
   String get hotelIdleBody;
 
   /// No description provided for @hotelEmptyTitle.
   ///
   /// In en, this message translates to:
-  /// **'No hotels found'**
+  /// **'No stays found'**
   String get hotelEmptyTitle;
 
   /// No description provided for @hotelEmptyBody.
@@ -3052,6 +3058,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 room} other{{count} rooms}}'**
   String hotelRoomsCount(int count);
+
+  /// No description provided for @hotelRoomNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Room {n}'**
+  String hotelRoomNumber(int n);
+
+  /// No description provided for @hotelChildrenCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 child} other{{count} children}}'**
+  String hotelChildrenCount(int count);
+
+  /// No description provided for @addRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Add room'**
+  String get addRoom;
 
   /// No description provided for @cityStaysCount.
   ///

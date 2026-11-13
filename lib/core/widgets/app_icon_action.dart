@@ -18,6 +18,11 @@ enum AppIconActionVariant {
   /// rather than a hairline, so it stays legible over both light and dark
   /// images. This is One UI's detached back button.
   disc,
+
+  /// Floating chrome with the disc's GEOMETRY but NO fill and NO shadow — the
+  /// glyph sits directly on the surface beneath it. Used where a filled circle
+  /// would compete with the page's own hero (the city page's back control).
+  plain,
 }
 
 /// The single source of truth for icon actions in app chrome.
@@ -86,10 +91,19 @@ class AppIconAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool disc = variant == AppIconActionVariant.disc;
+    // `plain` keeps the disc's floating geometry (44dp box, 20dp glyph) but
+    // draws no fill and no shadow, so the control keeps its exact position
+    // while the page's own hero shows through.
+    final bool plain = variant == AppIconActionVariant.plain;
+    final bool floating = disc || plain;
     final Color ink = enabled
         ? (color ??
-              (disc ? AppColors.textPrimary : context.tokigoColors.textPrimary))
-        : (disc ? AppColors.textSecondary : context.tokigoColors.textTertiary);
+              (floating
+                  ? (disc ? AppColors.textPrimary : AppColors.onMedia)
+                  : context.tokigoColors.textPrimary))
+        : (floating
+              ? (disc ? AppColors.textSecondary : AppColors.onMediaVariant)
+              : context.tokigoColors.textTertiary);
 
     bool pressed = false;
     final Widget sized = StatefulBuilder(
@@ -120,16 +134,17 @@ class AppIconAction extends StatelessWidget {
               child: AnimatedAlign(
                 duration: swapDuration,
                 curve: Curves.easeOutCubic,
-                alignment: disc
+                alignment: floating
                     ? AlignmentDirectional.center
                     : AlignmentDirectional.centerStart,
                 child: AnimatedContainer(
                   duration: swapDuration,
                   curve: Curves.easeOutCubic,
-                  width: disc ? discDiameter : bareGlyph,
-                  height: disc ? discDiameter : bareGlyph,
+                  width: floating ? discDiameter : bareGlyph,
+                  height: floating ? discDiameter : bareGlyph,
                   // The disc shadow is removed while pressed; scale provides
-                  // feedback without a ripple or shadow burst.
+                  // feedback without a ripple or shadow burst. `plain` has no
+                  // decoration at all — the glyph floats on the surface.
                   decoration: disc
                       ? BoxDecoration(
                           color: context.tokigoColors.onMediaFill,
@@ -145,7 +160,7 @@ class AppIconAction extends StatelessWidget {
                   child: Center(
                     child: Icon(
                       icon,
-                      size: disc ? 20 : 22,
+                      size: floating ? 20 : 22,
                       color: ink,
                       semanticLabel: semanticLabel,
                     ),

@@ -6,7 +6,9 @@ import 'package:tokigo/core/events/events_tracker.dart';
 import 'package:tokigo/core/geo/country_options.dart';
 import 'package:tokigo/core/geo/geo_client.dart';
 import 'package:tokigo/core/geo/location_permission_providers.dart'
-    show geoRefreshProvider;
+    show geoRefreshProvider, locationAccessProvider;
+import 'package:tokigo/core/geo/location_permission_service.dart';
+import 'package:tokigo/core/geo/user_location.dart';
 import 'package:tokigo/core/network/http_api_client.dart';
 import 'package:tokigo/core/profile/profile_repository.dart';
 import 'package:tokigo/core/repositories/impl/home_repository_impl.dart';
@@ -114,6 +116,21 @@ final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
 /// Geo client for country resolution.
 final geoClientProvider = Provider<GeoClient>((ref) {
   return GeoClient(ref.watch(apiClientProvider));
+});
+
+/// The traveller's coarse position, ONLY when location permission is already
+/// granted (never prompts) and a fix is actually available. Null otherwise —
+/// the honest fallback. Used solely to rank "Stays Near You" by real distance;
+/// never persisted, never sent anywhere.
+final userLocationProvider = FutureProvider<UserLocation?>((ref) async {
+  final LocationAccess access = await ref.watch(locationAccessProvider.future);
+  if (access != LocationAccess.granted) return null;
+  final position = await ref.watch(geoClientProvider).currentPosition();
+  if (position == null) return null;
+  return UserLocation(
+    latitude: position.latitude,
+    longitude: position.longitude,
+  );
 });
 
 /// Phase 1C — Profile/Geo/Events/AI-rerank clients. All reuse the shared
@@ -283,6 +300,10 @@ final homeControllerProvider = StateNotifierProvider<HomeController, HomeState>(
       },
       languageCode: () => ref.read(localeProvider).languageCode,
       currencyCode: () => ref.read(currencyProvider),
+      // Truthful "Stays Near You": read (not watch) so a position change does
+      // not rebuild the controller; resolved per request. Null when permission
+      // is not granted or no fix exists — the rail keeps the backend order.
+      location: () => ref.read(userLocationProvider.future),
       contextBuilder: (recommendedHotels) async {
         // 1) R-4 recommended hotels → deterministic candidates (real data
         //    only; the AI is never a product source).

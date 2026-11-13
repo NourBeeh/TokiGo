@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:tokigo/app/widgets/home_nav_buttons.dart';
+import 'package:tokigo/app/widgets/app_chrome.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
@@ -17,12 +19,16 @@ import 'package:tokigo/features/home/presentation/widgets/home_top_bar.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
-/// Home's scroll header contract (owner decision, 2026-11).
+/// Home header scroll architecture (owner decision, 2026-11).
 ///
-/// * the wordmark row animates away when the feed scrolls AWAY from the top and
-///   animates back when the traveller returns toward the top;
-/// * the transition is a single smooth animation, not a jump;
-/// * the pinned AI composer NEVER moves with the header and is never hidden.
+/// The ORIGINAL header — wordmark, AI composer and navigation rail — is part
+/// of the scrollable page content and leaves the viewport naturally. A
+/// SEPARATE compact search overlay enters from above only after the final
+/// navigation item has completely disappeared, and exits upward when the rail
+/// returns. The overlay never changes the scroll extent.
+///
+/// Every test measures real widget rectangles and visibility across scroll
+/// states — no opacity flags or internal state are asserted.
 class _Repo implements HomeRepository {
   _Repo(this.sections, this.hotels);
 
@@ -52,7 +58,8 @@ class _Repo implements HomeRepository {
     String? countryCode,
     String languageCode = 'en',
     String? currency,
-  }) async => ApiResult<List<HomeItem>>.success(hotels);
+  }) async =>
+      ApiResult<List<HomeItem>>.success(hotels);
 
   @override
   Future<ApiResult<void>> refresh() async => const ApiResult<void>.success(null);
@@ -103,7 +110,7 @@ HomeController _controller() => HomeController(
       currencyCode: null,
     );
 
-Widget _app() => ProviderScope(
+Widget _app({Locale locale = const Locale('en')}) => ProviderScope(
       overrides: <Override>[
         homeControllerProvider.overrideWith((ref) => _controller()),
         geoCountryProvider.overrideWith((ref) async => null),
@@ -116,10 +123,33 @@ Widget _app() => ProviderScope(
               path: '/',
               builder: (context, state) => const HomePage(),
             ),
+            GoRoute(
+              path: '/ai-chat',
+              builder: (context, state) {
+                final Object? extra = state.extra;
+                return Scaffold(
+                  body: Text(extra == null ? 'AI:empty' : 'AI:$extra'),
+                );
+              },
+            ),
+            for (final String path in <String>[
+              '/flights',
+              '/hotels',
+              '/cars',
+              '/packages',
+              '/groups',
+            ])
+              GoRoute(
+                path: path,
+                builder: (context, state) => Scaffold(
+                  appBar: AppBar(),
+                  body: Text('Section: $path'),
+                ),
+              ),
           ],
         ),
         theme: AppTheme.light(),
-        locale: const Locale('en'),
+        locale: locale,
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
           AppLocalizations.delegate,
@@ -130,81 +160,388 @@ Widget _app() => ProviderScope(
       ),
     );
 
+Finder _topBar() => find.byType(HomeTopBar);
 Finder _composer() => find.byKey(const ValueKey<String>('home-ai-composer'));
+Finder _compact() =>
+    find.byKey(const ValueKey<String>('home-ai-compact-search'));
+Finder _nav() => find.byType(HomeActionBar);
+Finder _scrollable() => find
+    .descendant(
+      of: find.byType(CustomScrollView),
+      matching: find.byType(Scrollable),
+    )
+    .first;
+
+Future<void> _pump(WidgetTester tester, {Locale locale = const Locale('en')}) async {
+  tester.view.physicalSize = const Size(1120, 1400);
+  tester.view.devicePixelRatio = 2;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  await tester.pumpWidget(_app(locale: locale));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _jump(
+  WidgetTester tester,
+  ScrollableState scrollable,
+  double offset,
+) async {
+  scrollable.position.jumpTo(offset);
+  await tester.pumpAndSettle();
+}
+
+Rect _viewport(WidgetTester tester) => tester.getRect(find.byType(CustomScrollView));
+
+bool _visible(Rect rect, Rect viewport) =>
+    rect.bottom > viewport.top && rect.top < viewport.bottom;
+
+/// The scroll offset at which the navigation rail has fully left the
+/// viewport. Measured from the live layout, never hard-coded.
+double _navThreshold(WidgetTester tester) => tester.getRect(_nav()).bottom;
 
 void main() {
-  testWidgets('scrolling away hides the wordmark row smoothly', (tester) async {
-    tester.view.physicalSize = const Size(1120, 1400);
-    tester.view.devicePixelRatio = 2;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  group('the original header is part of the scrollable content', () {
+    testWidgets('at the top the complete original header is visible', (
+      tester,
+    ) async {
+      await _pump(tester);
+      final Rect viewport = _viewport(tester);
 
-    await tester.pumpWidget(_app());
-    await tester.pumpAndSettle();
+      expect(_topBar(), findsOneWidget);
+      expect(_composer(), findsOneWidget);
+      expect(_nav(), findsOneWidget);
 
-    expect(find.byType(HomeTopBar), findsOneWidget);
-    final Rect composerBox = tester.getRect(
-      find.byKey(const ValueKey<String>('home-ai-composer')),
-    );
+      expect(_visible(tester.getRect(_topBar()), viewport), isTrue);
+      expect(_visible(tester.getRect(_composer()), viewport), isTrue);
+      expect(_visible(tester.getRect(_nav()), viewport), isTrue);
 
-    // A long drag away from the top: the header animates out.
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -400));
-    await tester.pumpAndSettle();
+      // The compact search is parked above the viewport, fully hidden.
+      final Rect compact = tester.getRect(_compact());
+      expect(compact.bottom, lessThanOrEqualTo(viewport.top + 0.5));
+    });
 
-    // The header has been hidden by the animation (its widget is removed once
-    // the visibility factor reaches zero)…
-    expect(find.byType(HomeTopBar), findsNothing);
+    testWidgets('the header scrolls with the page and is not pinned', (
+      tester,
+    ) async {
+      await _pump(tester);
+      final ScrollableState scrollable = tester.state(_scrollable());
 
-    // …and the pinned composer keeps exactly its SIZE and width (it never
-    // collapses or is displaced sideways by the header's disappearance).
-    final Rect composerAfter = tester.getRect(_composer());
-    expect(composerAfter.size, composerBox.size);
-    expect(composerAfter.left, composerBox.left);
-    expect(composerAfter.right, composerBox.right);
+      final Rect topBefore = tester.getRect(_topBar());
+      final Rect composerBefore = tester.getRect(_composer());
+      final Rect navBefore = tester.getRect(_nav());
+
+      await _jump(tester, scrollable, 50);
+
+      // Every header element moved up by exactly the scroll delta.
+      expect(tester.getRect(_topBar()).top, closeTo(topBefore.top - 50, 0.5));
+      expect(
+        tester.getRect(_composer()).top,
+        closeTo(composerBefore.top - 50, 0.5),
+      );
+      expect(tester.getRect(_nav()).top, closeTo(navBefore.top - 50, 0.5));
+
+      // The compact search is still hidden while the rail is visible.
+      expect(
+        tester.getRect(_compact()).bottom,
+        lessThanOrEqualTo(_viewport(tester).top + 0.5),
+      );
+    });
+
+    testWidgets('the wordmark disappears naturally', (tester) async {
+      await _pump(tester);
+      final ScrollableState scrollable = tester.state(_scrollable());
+      final double threshold = _navThreshold(tester);
+
+      await _jump(tester, scrollable, threshold + 40);
+
+      // The header sliver is disposed once it leaves the cache extent; if it
+      // is still materialised, it must be entirely above the viewport.
+      if (_topBar().evaluate().isNotEmpty) {
+        expect(
+          tester.getRect(_topBar()).bottom,
+          lessThanOrEqualTo(_viewport(tester).top + 0.5),
+        );
+      } else {
+        expect(_topBar(), findsNothing);
+      }
+    });
+
+    testWidgets('the original search box disappears naturally', (tester) async {
+      await _pump(tester);
+      final ScrollableState scrollable = tester.state(_scrollable());
+      final double threshold = _navThreshold(tester);
+
+      await _jump(tester, scrollable, threshold + 40);
+
+      if (_composer().evaluate().isNotEmpty) {
+        expect(
+          tester.getRect(_composer()).bottom,
+          lessThanOrEqualTo(_viewport(tester).top + 0.5),
+        );
+      } else {
+        expect(_composer(), findsNothing);
+      }
+    });
   });
 
-  testWidgets('scrolling back toward the top reveals the header again', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1120, 1400);
-    tester.view.devicePixelRatio = 2;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  group('the secondary compact search', () {
+    testWidgets('does not appear while any navigation item remains visible', (
+      tester,
+    ) async {
+      await _pump(tester);
+      final ScrollableState scrollable = tester.state(_scrollable());
+      final double threshold = _navThreshold(tester);
 
-    await tester.pumpWidget(_app());
-    await tester.pumpAndSettle();
+      // Five pixels before the rail's bottom leaves: it is still visible.
+      await _jump(tester, scrollable, threshold - 5);
+      expect(_visible(tester.getRect(_nav()), _viewport(tester)), isTrue);
+      expect(
+        tester.getRect(_compact()).bottom,
+        lessThanOrEqualTo(_viewport(tester).top + 0.5),
+      );
+    });
 
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -400));
-    await tester.pumpAndSettle();
-    expect(find.byType(HomeTopBar), findsNothing);
+    testWidgets('enters from above only after the final nav item disappears', (
+      tester,
+    ) async {
+      await _pump(tester);
+      final ScrollableState scrollable = tester.state(_scrollable());
+      final double threshold = _navThreshold(tester);
 
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, 400));
-    await tester.pumpAndSettle();
-    expect(find.byType(HomeTopBar), findsOneWidget);
-    expect(
-      tester.getRect(find.byType(HomeTopBar)).bottom,
-      greaterThan(0),
-    );
-  });
+      await _jump(tester, scrollable, threshold + 5);
 
-  testWidgets('the pinned composer is always fully inside the viewport', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1120, 1400);
-    tester.view.devicePixelRatio = 2;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+      final Rect compact = tester.getRect(_compact());
+      final Rect viewport = _viewport(tester);
+      expect(compact.top, greaterThanOrEqualTo(viewport.top - 0.5));
+      expect(compact.bottom, lessThanOrEqualTo(viewport.bottom + 0.5));
+    });
 
-    await tester.pumpWidget(_app());
-    await tester.pumpAndSettle();
+    testWidgets('animates downward from above the viewport', (tester) async {
+      await _pump(tester);
+      final ScrollableState scrollable = tester.state(_scrollable());
+      final double threshold = _navThreshold(tester);
 
-    for (final double delta in <double>[-120, -260, -140, 300]) {
-      await tester.drag(find.byType(CustomScrollView), Offset(0, delta));
+      scrollable.position.jumpTo(threshold + 5);
+      // One frame lays out and runs the post-frame visibility measurement,
+      // which starts the entrance.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 40));
+
+      final Rect mid = tester.getRect(_compact());
+      // Part-way through the entrance it is still descending from above.
+      expect(mid.top, lessThan(0));
+      expect(mid.bottom, greaterThan(-AppChrome.pinnedHeight - 0.5));
+
       await tester.pumpAndSettle();
-      final Rect viewport = tester.getRect(find.byType(CustomScrollView));
-      final Rect composer = tester.getRect(_composer());
-      expect(composer.top, greaterThanOrEqualTo(viewport.top - 0.5));
-      expect(composer.bottom, lessThanOrEqualTo(viewport.bottom + 0.5));
-    }
+      final Rect pinned = tester.getRect(_compact());
+      expect(pinned.top, greaterThanOrEqualTo(_viewport(tester).top - 0.5));
+    });
+
+    testWidgets('remains pinned during further downward scrolling', (
+      tester,
+    ) async {
+      await _pump(tester);
+      final ScrollableState scrollable = tester.state(_scrollable());
+      final double threshold = _navThreshold(tester);
+
+      await _jump(tester, scrollable, threshold + 5);
+      final Rect pinned = tester.getRect(_compact());
+
+      await _jump(tester, scrollable, threshold + 250);
+      expect(tester.getRect(_compact()), pinned);
+    });
+
+    testWidgets('exits upward and the header returns on reverse scrolling', (
+      tester,
+    ) async {
+      await _pump(tester);
+      final ScrollableState scrollable = tester.state(_scrollable());
+      final double threshold = _navThreshold(tester);
+
+      await _jump(tester, scrollable, threshold + 50);
+      expect(
+        tester.getRect(_compact()).top,
+        greaterThanOrEqualTo(_viewport(tester).top - 0.5),
+      );
+
+      await _jump(tester, scrollable, 0);
+      expect(
+        tester.getRect(_compact()).bottom,
+        lessThanOrEqualTo(_viewport(tester).top + 0.5),
+      );
+      expect(_topBar(), findsOneWidget);
+      expect(tester.getRect(_topBar()).bottom, greaterThan(0));
+      expect(_composer(), findsOneWidget);
+      expect(_nav(), findsOneWidget);
+    });
+
+    testWidgets('no frame shows both search boxes in the viewport', (
+      tester,
+    ) async {
+      await _pump(tester);
+      final ScrollableState scrollable = tester.state(_scrollable());
+      final double threshold = _navThreshold(tester);
+
+      for (final double offset in <double>[
+        0,
+        threshold - 20,
+        threshold - 5,
+        threshold,
+        threshold + 5,
+        threshold + 40,
+        threshold + 120,
+      ]) {
+        await _jump(tester, scrollable, offset);
+        final Rect viewport = _viewport(tester);
+        final bool composerVisible = _composer().evaluate().isNotEmpty &&
+            _visible(tester.getRect(_composer()), viewport);
+        final bool compactVisible = _visible(tester.getRect(_compact()), viewport);
+        expect(
+          composerVisible && compactVisible,
+          isFalse,
+          reason: 'both search boxes visible at offset $offset',
+        );
+      }
+    });
+
+    testWidgets('the overlay does not change the scroll extent', (tester) async {
+      await _pump(tester);
+      final ScrollableState scrollable = tester.state(_scrollable());
+      final double extentBefore = scrollable.position.maxScrollExtent;
+      final Rect topBefore = tester.getRect(_topBar());
+
+      final double threshold = _navThreshold(tester);
+      await _jump(tester, scrollable, threshold + 5);
+
+      expect(scrollable.position.maxScrollExtent, extentBefore);
+
+      // Back at the top the header occupies exactly its original rectangle:
+      // the overlay never shifted the content.
+      await _jump(tester, scrollable, 0);
+      expect(tester.getRect(_topBar()).top, closeTo(topBefore.top, 0.5));
+      expect(tester.getRect(_topBar()).bottom, closeTo(topBefore.bottom, 0.5));
+    });
+  });
+
+  group('state and robustness', () {
+    testWidgets('the original AI composer keeps its draft across scrolling', (
+      tester,
+    ) async {
+      await _pump(tester);
+      final ScrollableState scrollable = tester.state(_scrollable());
+      final double threshold = _navThreshold(tester);
+
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('home-ai-composer-field')),
+        'hotel in Cairo',
+      );
+      await tester.pump();
+
+      await _jump(tester, scrollable, threshold + 50);
+      await _jump(tester, scrollable, 0);
+
+      // The draft survived the header being scrolled out and back.
+      final TextField field = tester.widget<TextField>(
+        find.byKey(const ValueKey<String>('home-ai-composer-field')),
+      );
+      expect(field.controller?.text, 'hotel in Cairo');
+
+      // The composer is still functional.
+      await tester.tap(
+        find.byKey(const ValueKey<String>('home-ai-composer-send')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('AI:hotel in Cairo'), findsOneWidget);
+    });
+
+    testWidgets('the behavior works in Arabic RTL', (tester) async {
+      await _pump(tester, locale: const Locale('ar'));
+      final ScrollableState scrollable = tester.state(_scrollable());
+      final Rect viewport = _viewport(tester);
+
+      // At the top the whole header is visible.
+      expect(_visible(tester.getRect(_topBar()), viewport), isTrue);
+      expect(_visible(tester.getRect(_composer()), viewport), isTrue);
+      expect(_visible(tester.getRect(_nav()), viewport), isTrue);
+      expect(
+        tester.getRect(_compact()).bottom,
+        lessThanOrEqualTo(viewport.top + 0.5),
+      );
+
+      final double threshold = _navThreshold(tester);
+      await _jump(tester, scrollable, threshold - 5);
+      expect(
+        tester.getRect(_compact()).bottom,
+        lessThanOrEqualTo(viewport.top + 0.5),
+      );
+
+      await _jump(tester, scrollable, threshold + 5);
+      final Rect pinned = tester.getRect(_compact());
+      expect(pinned.top, greaterThanOrEqualTo(viewport.top - 0.5));
+      expect(pinned.bottom, lessThanOrEqualTo(viewport.bottom + 0.5));
+
+      await _jump(tester, scrollable, 0);
+      expect(
+        tester.getRect(_compact()).bottom,
+        lessThanOrEqualTo(viewport.top + 0.5),
+      );
+      expect(_visible(tester.getRect(_topBar()), viewport), isTrue);
+    });
+
+    testWidgets('fast scrolling and reversal settle in the correct state', (
+      tester,
+    ) async {
+      await _pump(tester);
+
+      // A fast fling down past the whole header: the compact search pins.
+      await tester.fling(find.byType(CustomScrollView), const Offset(0, -1200), 2400);
+      await tester.pumpAndSettle();
+      final Rect viewport = _viewport(tester);
+      final Rect pinned = tester.getRect(_compact());
+      expect(pinned.top, greaterThanOrEqualTo(viewport.top - 0.5));
+      expect(pinned.bottom, lessThanOrEqualTo(viewport.bottom + 0.5));
+
+      // A fast fling back up: the compact search exits and the header returns.
+      await tester.fling(find.byType(CustomScrollView), const Offset(0, 1200), 2400);
+      await tester.pumpAndSettle();
+      expect(
+        tester.getRect(_compact()).bottom,
+        lessThanOrEqualTo(viewport.top + 0.5),
+      );
+      expect(_topBar(), findsOneWidget);
+      expect(tester.getRect(_topBar()).bottom, greaterThan(0));
+    });
+
+    testWidgets('Home cards, carousels and navigation remain functional', (
+      tester,
+    ) async {
+      await _pump(tester);
+      final ScrollableState scrollable = tester.state(_scrollable());
+
+      // The loaded feed renders the approved cards.
+      expect(find.text('City 0'), findsWidgets);
+
+      // A navigation tile still pushes its section route.
+      await tester.tap(find.byKey(const ValueKey<String>('home-action-flights')));
+      await tester.pumpAndSettle();
+      expect(find.text('Section: /flights'), findsOneWidget);
+
+      // Returning to Home restores the header and the feed.
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(_topBar(), findsOneWidget);
+      expect(_composer(), findsOneWidget);
+      expect(_nav(), findsOneWidget);
+      expect(find.text('City 0'), findsWidgets);
+
+      // The Discover cover-flow carousel is still swipeable.
+      await tester.drag(find.byType(PageView).first, const Offset(-300, 0));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      // The recommended stays rail renders its cards further down the feed.
+      await _jump(tester, scrollable, 600);
+      expect(find.text('Hotel 0'), findsWidgets);
+    });
   });
 }

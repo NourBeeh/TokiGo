@@ -19,6 +19,7 @@ import 'package:tokigo/features/ai/application/ai_chat_page_providers.dart';
 import 'package:tokigo/features/ai/application/ai_state.dart';
 import 'package:tokigo/features/ai/domain/ai_chat_message.dart';
 import 'package:tokigo/features/ai/domain/ai_query_context.dart';
+import 'package:tokigo/features/ai/presentation/widgets/ai_chat_watermark.dart';
 import 'package:tokigo/features/ai/presentation/widgets/chat_search_widgets.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_section.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart'
@@ -234,27 +235,36 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     return Scaffold(
       backgroundColor: scheme.surface,
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            if (voiceState.failure != null)
-              VoiceFailureBanner(
-                message: voiceState.failure!.message,
-                onDismiss: () => ref
-                    .read(voiceSearchControllerProvider.notifier)
-                    .dismissFailure(),
-              ),
-            Expanded(
-              child:
-                  aiState.messages.isEmpty && aiState.status != AiStatus.loading
-                  ? _buildWelcome(context)
-                  : _buildThread(aiState),
+        child: Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            // The brand watermark sits behind the whole surface — quiet, inert
+            // and never between the traveller and a message.
+            const Positioned.fill(child: AiChatWatermark()),
+            Column(
+              children: [
+                _buildHeader(context),
+                if (voiceState.failure != null)
+                  VoiceFailureBanner(
+                    message: voiceState.failure!.message,
+                    onDismiss: () => ref
+                        .read(voiceSearchControllerProvider.notifier)
+                        .dismissFailure(),
+                  ),
+                Expanded(
+                  child:
+                      aiState.messages.isEmpty &&
+                          aiState.status != AiStatus.loading
+                      ? _buildWelcome(context)
+                      : _buildThread(aiState),
+                ),
+                Divider(
+                  height: 1,
+                  color: scheme.outlineVariant.withValues(alpha: 0.4),
+                ),
+                _buildInputBar(context, voiceState),
+              ],
             ),
-            Divider(
-              height: 1,
-              color: scheme.outlineVariant.withValues(alpha: 0.4),
-            ),
-            _buildInputBar(context, voiceState),
           ],
         ),
       ),
@@ -271,10 +281,15 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
   /// no top actions. Returning is via this button, the system back
   /// button/gesture (Android).
   ///
-  /// Rendering it through [AppPageHeader] (no title) keeps the control on the
-  /// same gutter and geometry as every other pushed page.
+  /// Rendering it through [AppPageHeader] keeps the control on the same
+  /// gutter and geometry as every other pushed page, with the page's
+  /// identifying line in the subtitle slot.
   Widget _buildHeader(BuildContext context) {
-    return const AppPageHeader();
+    // The page's identifying line — the only text in the header, matching
+    // every other pushed page's subtitle slot.
+    return AppPageHeader(
+      subtitle: AppLocalizations.of(context)!.aiChatSubtitle,
+    );
   }
 
   Widget _buildWelcome(BuildContext context) {
@@ -368,6 +383,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
             // The assistant's identity is present while it is working, not only
             // once the reply lands.
             child: const _AssistantTurn(
+              animate: true,
               child: TypingDots(),
             ),
           ),
@@ -552,17 +568,25 @@ class _FollowUpRow extends StatelessWidget {
 /// direction-aware: in RTL the robot lands on the right, matching the message
 /// bubble's own alignment. A user turn never goes through this widget.
 class _AssistantTurn extends StatelessWidget {
-  const _AssistantTurn({required this.child, this.robotSize = 32});
+  const _AssistantTurn({
+    required this.child,
+    this.robotSize = 32,
+    this.animate = false,
+  });
 
   final Widget child;
 
   /// Kept small: the robot is a sibling of the message, not a header.
   final double robotSize;
 
+  /// Whether the brand mark runs its breathing pulse — the thinking/loading
+  /// state. A completed reply passes the default (false) and stays static.
+  final bool animate;
+
   @override
   Widget build(BuildContext context) {
     final bool rtl = Directionality.of(context) == TextDirection.rtl;
-    final Widget robot = AiRobotAvatar(size: robotSize);
+    final Widget robot = AiRobotAvatar(size: robotSize, animate: animate);
     // LTR: robot, gap, message. RTL: message, gap, robot — the robot is always
     // at the turn's LEADING edge, so it mirrors with the reading direction.
     final List<Widget> children = rtl

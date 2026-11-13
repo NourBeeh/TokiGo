@@ -27,6 +27,7 @@ import 'package:tokigo/features/home/presentation/widgets/home_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_discovery_stay_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_section.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stay_card.dart';
+import 'package:tokigo/features/home/presentation/widgets/home_split_stay_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stays_carousel.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
@@ -716,9 +717,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       // Discover + Stays placeholders are the real cards in their loading state.
+      // The Stays skeleton is the approved split card, so the feed does not
+      // jump when the real stays land.
       expect(find.byType(HomeDiscoveryStayCard), findsOneWidget);
       expect(find.byType(HomeStayCard), findsOneWidget);
-      expect(find.byType(OverlapStayCard), findsOneWidget);
+      expect(find.byType(HomeSplitStayCard), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       // The feed lands: the same widgets switch to their loaded state.

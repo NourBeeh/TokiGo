@@ -75,13 +75,13 @@ void main() {
         find.byWidgetPredicate(
           (Widget w) =>
               w is Container &&
-              w.constraints?.minHeight == 56 &&
+              w.constraints?.minHeight == 48 &&
               w.decoration is BoxDecoration,
         ),
       );
       final BoxDecoration decoration = field.decoration! as BoxDecoration;
 
-      expect(tester.getSize(find.byType(HomeAiSearchField)).height, 56);
+      expect(tester.getSize(find.byType(HomeAiSearchField)).height, 48);
       expect(decoration.color, surface);
       // The pill floats over the feed, so it carries its own soft halo.
       final BoxShadow halo = decoration.boxShadow!.single;
@@ -93,7 +93,7 @@ void main() {
       expect(decoration.border, isNull);
       expect(
         decoration.borderRadius,
-        equals(BorderRadius.circular(32)),
+        equals(BorderRadius.circular(24)),
       );
 
       // Leading search glyph in the accent, on the leading edge of the field.
