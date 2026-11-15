@@ -4,6 +4,7 @@ import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
@@ -89,17 +90,41 @@ class HomeSectionWidget extends StatelessWidget {
                   ),
                 ),
                 if (_isDestinationOnlySection)
+                  // Owner decision (2026-11): the Explore section's "view all"
+                  // affordance is a SMALL, obviously pressable chip — not a
+                  // bare text link that reads as a label.
                   Pressable(
                     onTap: () => context.push('/explore'),
-                    child: TextButton(
-                      onPressed: () => context.push('/explore'),
-                      // Home's ink, not the theme's brand blue: the section
-                      // header is part of the neutral Home canvas (owner
-                      // decision, 2026-11).
-                      style: TextButton.styleFrom(
-                        foregroundColor: HomeDesignTokens.accentOf(context),
+                    child: Container(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.xs,
                       ),
-                      child: Text(l10n?.exploreFilterAll ?? 'All'),
+                      decoration: BoxDecoration(
+                        color: HomeDesignTokens.surfaceOf(context),
+                        borderRadius: AppRadius.pillBorder,
+                        border: Border.all(
+                          color: HomeDesignTokens.borderOf(context),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Text(
+                            l10n?.viewAll ?? 'View all',
+                            style: AppTypography.forLight().captionSemibold
+                                .copyWith(
+                                  color: HomeDesignTokens.accentOf(context),
+                                ),
+                          ),
+                          const SizedBox(width: AppSpacing.xxs),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 14,
+                            color: HomeDesignTokens.accentOf(context),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
               ],

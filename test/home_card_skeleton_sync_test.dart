@@ -738,7 +738,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.text('Lisbona'), findsWidgets);
+      // The feed lands with the bundled Explore catalog leading it.
+      expect(find.text('Paris'), findsWidgets);
       expect(tester.takeException(), isNull);
       // The controller is owned by the provider container, which disposes it
       // when the ProviderScope unmounts at the end of the test.
@@ -767,8 +768,10 @@ void main() {
 
       // The snapshot is restored first, so cached cards render immediately —
       // through the current widgets, never a legacy path.
-      expect(find.byType(HomeDiscoveryStayCard), findsOneWidget);
-      expect(find.text('Lisbona'), findsWidgets);
+      // The restored snapshot merges into the catalog rail, so more
+      // than one destination card is built.
+      expect(find.byType(HomeDiscoveryStayCard), findsWidgets);
+      expect(find.text('Paris'), findsWidgets);
       expect(tester.takeException(), isNull);
 
       completer.complete(

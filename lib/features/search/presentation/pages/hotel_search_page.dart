@@ -559,7 +559,9 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
         _visibleResults(state, filters).length > kSearchLazyResultsThreshold;
 
     return SearchScaffold(
-      subtitle: _summary(l10n),
+      // Before a search the header states what the page is for (the same
+      // contract as Flights/Cars/Packages); after one it summarizes the search.
+      subtitle: _lastParams == null ? l10n.staysSubtitle : _summary(l10n),
       embedded: widget.embedded,
       bottomPadding: widget.bottomPadding,
       // Collapsed after a search: the reference's floating summary card.

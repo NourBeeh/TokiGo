@@ -3916,6 +3916,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{name}'**
   String destinationRegionName(String name);
+
+  /// No description provided for @staysSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stays that fit your trip'**
+  String get staysSubtitle;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

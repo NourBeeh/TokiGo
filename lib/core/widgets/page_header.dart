@@ -79,7 +79,6 @@ class AppPageHeader extends StatelessWidget {
     final TextStyle description = typography.body.copyWith(
       color: context.tokigoColors.textTertiary,
     );
-    final bool rtl = appTextDirection == TextDirection.rtl;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
@@ -94,17 +93,16 @@ class AppPageHeader extends StatelessWidget {
           children: <Widget>[
             Row(
               children: <Widget>[
-                if (rtl) ...<Widget>[
-                  if (trailing != null) trailing!,
-                  Expanded(child: _descriptionBlock(description)),
-                  const SizedBox(width: AppSpacing.sm),
-                  _backControl(),
-                ] else ...<Widget>[
-                  _backControl(),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(child: _descriptionBlock(description)),
-                  if (trailing != null) trailing!,
-                ],
+                // ONE child order for BOTH directions. [Directionality] mirrors
+                // the row, so the back control lands on the START edge — left in
+                // LTR, right in RTL — with the description hugging it and the
+                // trailing action on the END edge. The previous explicit RTL
+                // branch reversed the children instead, which left the back
+                // chevron on the left in Arabic next to a right-aligned title.
+                _backControl(),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(child: _descriptionBlock(description)),
+                ?trailing,
               ],
             ),
             if (steps case final Widget progress) ...<Widget>[

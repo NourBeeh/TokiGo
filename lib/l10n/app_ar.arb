@@ -3,15 +3,15 @@
   "appTitle": "TokiGo",
   "navHome": "الرئيسية",
   "navSearch": "بحث",
-  "navGroups": "الجروبات",
+  "navGroups": "المجموعات",
   "navExplore": "استكشف",
   "navAi": "المساعد الذكي",
   "bag": "رحلاتي",
-    "bagSubtitle": "حجوزاتك المؤكدة وحالتها وأرقامها المرجعية.",
+  "bagSubtitle": "حجوزاتك المؤكدة وحالتها وأرقامها المرجعية.",
   "notifications": "الإشعارات",
-    "notificationsSubtitle": "تحديثات الحجز وتنبيهات الأسعار والتذكيرات.",
+  "notificationsSubtitle": "تحديثات الحجز وتنبيهات الأسعار والتذكيرات.",
   "profile": "الملف الشخصي",
-    "profileSubtitle": "حسابك ورحلاتك وتفضيلاتك.",
+  "profileSubtitle": "حسابك ورحلاتك وتفضيلاتك.",
   "profileGuestTitle": "أنت تتصفّح كضيف",
   "profileGuestBody": "سجّل دخولك للحفاظ على رحلاتك وتفضيلاتك.",
   "profileTraveller": "مسافر",
@@ -32,17 +32,29 @@
   "askAssistantFlightPrompt": "ساعدني في الاختيار بين نتائج الرحلات هذه من {origin} إلى {destination} في {date}",
   "@askAssistantFlightPrompt": {
     "placeholders": {
-      "origin": {"type": "String"},
-      "destination": {"type": "String"},
-      "date": {"type": "String"}
+      "origin": {
+        "type": "String"
+      },
+      "destination": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
     }
   },
   "askAssistantHotelPrompt": "ساعدني في الاختيار بين نتائج الفنادق هذه في {destination} من {checkIn} إلى {checkOut}",
   "@askAssistantHotelPrompt": {
     "placeholders": {
-      "destination": {"type": "String"},
-      "checkIn": {"type": "String"},
-      "checkOut": {"type": "String"}
+      "destination": {
+        "type": "String"
+      },
+      "checkIn": {
+        "type": "String"
+      },
+      "checkOut": {
+        "type": "String"
+      }
     }
   },
   "aiSearchNoSuggestions": "مفيش اقتراحات دلوقتي. جرب صيغة تانية.",
@@ -121,15 +133,15 @@
   "searchCars": "تأجير سيارات",
   "searchPackages": "إجازات",
   "homeNavActivities": "أنشطة",
-  "homeNavGroups": "الجروبات",
+  "homeNavGroups": "المجموعات",
   "homeNavTrips": "رحلاتي",
   "searchTransfers": " transfére المطار",
-  "groupsTitle": "الجروبات",
+  "groupsTitle": "المجموعات",
   "groupsSubtitle": "خططوا معًا وسافروا معًا",
   "viewAll": "عرض الكل",
   "continueAsGuest": "الاستكشاف كضيف",
   "signIn": "تسجيل الدخول",
-    "authSubtitle": "احفظ رحلاتك ومفضلتك وتفضيلاتك في حساب واحد.",
+  "authSubtitle": "احفظ رحلاتك ومفضلتك وتفضيلاتك في حساب واحد.",
   "continueWithGoogle": "المتابعة باستخدام Google",
   "googleSignInNotConfigured": "تسجيل الدخول باستخدام Google غير مُعدّ.",
   "signInSheetTitle": "سجّل دخولك عشان تحفظ",
@@ -141,14 +153,14 @@
   "signInSheetNotNow": "مش دلوقتي",
   "signOut": "تسجيل الخروج",
   "settings": "الإعدادات",
-    "settingsSubtitle": "اللغة والمظهر والعملة والحساب.",
+  "settingsSubtitle": "اللغة والمظهر والعملة والحساب.",
   "language": "اللغة",
   "currency": "العملة",
   "wishlist": "المفضلة",
-    "wishlistSubtitle": "الإقامات اللي حفظتها بسعر المزوّد.",
+  "wishlistSubtitle": "الإقامات اللي حفظتها بسعر المزوّد.",
   "myTrips": "رحلاتي",
   "tripDetails": "تفاصيل الرحلة",
-    "tripDetailsSubtitle": "كل اللي الحجز بيحمله فعلًا.",
+  "tripDetailsSubtitle": "كل اللي الحجز بيحمله فعلًا.",
   "upcoming": "القادمة",
   "cancelled": "ملغاة",
   "past": "السابقة",
@@ -177,11 +189,11 @@
   "tripTypeBooking": "حجز",
   "readyToBook": "جاهز للحجز؟",
   "reviewBooking": "مراجعة الحجز",
-    "reviewBookingSubtitle": "راجع العرض والمسافرين والإجمالي قبل الدفع.",
+  "reviewBookingSubtitle": "راجع العرض والمسافرين والإجمالي قبل الدفع.",
   "passengerDetails": "بيانات المسافرين",
-    "passengerDetailsSubtitle": "مين اللي مسافر وازاي نوصل لك.",
+  "passengerDetailsSubtitle": "مين اللي مسافر وازاي نوصل لك.",
   "addOns": "إضافات",
-    "addOnsSubtitle": "شنط إضافية ومقاعد ووجبات بيعها المزوّد.",
+  "addOnsSubtitle": "شنط إضافية ومقاعد ووجبات بيعها المزوّد.",
   "bookingStepOf": "الخطوة {current} من {total}",
   "checkoutPaymentMethod": "طريقة الدفع",
   "checkoutCard": "بطاقة ائتمان / خصم",
@@ -190,7 +202,7 @@
   "checkoutPriceBreakdown": "تفاصيل السعر",
   "checkoutProcessing": "جاري تنفيذ الدفع…",
   "payment": "الدفع",
-    "paymentSubtitle": "ادفع إجمالي المزوّد للرحلة دي.",
+  "paymentSubtitle": "ادفع إجمالي المزوّد للرحلة دي.",
   "confirmation": "التأكيد",
   "bookNow": "احجز الآن",
   "total": "الإجمالي",
@@ -431,7 +443,7 @@
   "tripBuilderAddProducts": "أضف إلى رحلتك",
   "tripBuilderSelected": "اختيارات رحلتك",
   "tripBuilderEmpty": "اختار فندقًا أو رحلة طيران أو سيارة لإضافتها هنا.",
-    "tripBuilderSubtitle": "اجمع فنادق ورحلات طيران وسيارات في مخطط واحد.",
+  "tripBuilderSubtitle": "اجمع فنادق ورحلات طيران وسيارات في مخطط واحد.",
   "tripBuilderRemove": "إزالة من الرحلة",
   "tripBuilderTotal": "الإجمالي الحالي",
   "tripBuilderTotalNote": "الإجمالي يجمع أسعار الاختيارات الحالية. قد تختلف العملة بين المزودين، والحجز والدفع يتمان لكل اختيار عبر المزود.",
@@ -470,7 +482,13 @@
   "flightAddLeg": "أضف رحلة أخرى",
   "flightRemoveLeg": "احذف الرحلة",
   "flightLegLabel": "الرحلة {n}",
-  "@flightLegLabel": {"placeholders": {"n": {"type": "int"}}},
+  "@flightLegLabel": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "flightLegsIncomplete": "أكمل بيانات كل رحلة قبل البحث",
   "flightLegsMax": "الرحلة متعددة المدن 최대 6 رحلات",
   "tripTypeRoundTrip": "ذهاب وعودة",
@@ -836,7 +854,7 @@
   "locationCountrySaveFailed": "تعذر حفظ البلد. حاول مرة أخرى.",
   "settingsCountry": "البلد",
   "editProfile": "تعديل البروفايل",
-    "editProfileSubtitle": "اسمك وبيانات اتصالك وجنسيتك.",
+  "editProfileSubtitle": "اسمك وبيانات اتصالك وجنسيتك.",
   "firstName": "الاسم الأول",
   "middleName": "الاسم الأوسط",
   "lastName": "اسم العائلة",
@@ -876,16 +894,17 @@
     }
   },
   "hotelOpenLocationInMaps": "افتح الموقع في الخرائط",
-  "destinationCityName": "{name, select, abu_dhabi{أبو ظبي} alexandria{الإسكندرية} amsterdam{أمستردام} antalya{أنطاليا} aswan{أسوان} athens{أثينا} bali{بالي} bangkok{بانكوك} barcelona{برشلونة} beirut{بيروت} berlin{برلين} cairo{القاهرة} cancun{كانكون} cape_town{كيب تاون} casablanca{الدار البيضاء} dahab{دهب} doha{الدوحة} dubai{دبي} gudauri{جوداوري} hong_kong{هونغ كونغ} hurghada{الغردقة} innsbruck{إنسبروك} istanbul{إسطنبول} jeddah{جدة} kuala_lumpur{كوالالمبور} kuwait_city{الكويت} lisbon{لشبونة} london{لندن} luxor{الأقصر} madrid{مدريد} maldives{المالديف} marrakech{مراكش} marsa_alam{مرسى علم} miami{ميامي} milan{ميلان} munich{ميونخ} muscat{مسقط} new_york{نيويورك} nice{نيس} nuweiba{نويبع} oslo{أوسلو} paris{باريس} prague{براغ} rio_de_janeiro{ريو دي جانيرو} riyadh{الرياض} rome{روما} rovaniemi{رو�انييمي} santorini{سانتوريني} shahdag{شاهداغ} sharm_el_sheikh{شرم الشيخ} singapore{سنغافورة} sydney{سيدني} tokyo{طوكيو} venice{البندقية} vienna{فيينا} amman{عمّان} other{{name}}}",
+  "destinationCityName": "{name, select, abu_dhabi{أبو ظبي} alexandria{الإسكندرية} amsterdam{أمستردام} antalya{أنطاليا} aswan{أسوان} athens{أثينا} bali{بالي} bangkok{بانكوك} barcelona{برشلونة} beirut{بيروت} berlin{برلين} cairo{القاهرة} cancun{كانكون} cape_town{كيب تاون} casablanca{الدار البيضاء} dahab{دهب} doha{الدوحة} dubai{دبي} gudauri{جوداوري} hong_kong{هونغ كونغ} hurghada{الغردقة} innsbruck{إنسبروك} istanbul{إسطنبول} jeddah{جدة} kuala_lumpur{كوالالمبور} kuwait_city{الكويت} lisbon{لشبونة} london{لندن} luxor{الأقصر} madrid{مدريد} maldives{المالديف} marrakech{مراكش} marsa_alam{مرسى علم} miami{ميامي} milan{ميلان} munich{ميونخ} muscat{مسقط} new_york{نيويورك} nice{نيس} nuweiba{نويبع} oslo{أوسلو} paris{باريس} prague{براغ} rio_de_janeiro{ريو دي جانيرو} riyadh{الرياض} rome{روما} rovaniemi{رو�انييمي} santorini{سانتوريني} shahdag{شاهداغ} sharm_el_sheikh{شرم الشيخ} singapore{سنغافورة} sydney{سيدني} tokyo{طوكيو} venice{البندقية} vienna{فيينا} amman{عمّان} fez{فاس} tunis{تونس} goreme{غوريم} petra{البتراء} lyon{ليون} florence{فلورنسا} naples{نابولي} seville{إشبيلية} porto{بورتو} edinburgh{إدنبرة} zurich{زيورخ} reykjavik{ريكيافيك} stockholm{ستوكهولم} copenhagen{كوبنهاغن} helsinki{هلسنكي} budapest{بودابست} kyoto{كيوتو} osaka{أوساكا} seoul{سول} denpasar{دينباسار} jakarta{جاكرتا} shanghai{شنغهاي} beijing{بكين} agra{أغرا} new_delhi{نيودلهي} male{مالِه} colombo{كولومبو} kathmandu{كاتماندو} los_angeles{لوس أنجلوس} san_francisco{سان فرانسيسكو} las_vegas{لاس فيغاس} honolulu{هونولولو} mexico_city{مكسيكو سيتي} havana{هافانا} panama_city{مدينة بنما} s_o_paulo{ساو باولو} buenos_aires{بوينس آيرس} lima{ليما} cusco{كوسكو} cartagena{قرطاجنة} santiago{سانتياغو} johannesburg{جوهانسبرغ} nairobi{نيروبي} zanzibar_city{مدينة زنجبار} port_louis{بورت لويس} melbourne{ملبورن} brisbane{برزبين} queenstown{كوينزتاون} auckland{أوكلاند} suva{سوفا} other{{name}}}",
   "@destinationCityName": {
     "placeholders": {
       "name": {}
     }
   },
-  "destinationRegionName": "{name, select, australia{أستراليا} austria{النمسا} brazil{البرازيل} czechia{التشيك} egypt{مصر} finland{فنلندا} france{فرنسا} georgia{جورجيا} germany{ألمانيا} greece{اليونان} hong_kong{هونغ كونغ} indonesia{إندونيسيا} italy{إيطاليا} japan{اليابان} jordan{الأردن} kuwait{الكويت} maldives{المالديف} malaysia{ماليزيا} mexico{المكسيك} morocco{المغرب} netherlands{هولندا} norway{النرويج} oman{عُمان} portugal{البرتغال} qatar{قطر} saudi_arabia{السعودية} singapore{سنغافورة} south_africa{جنوب أفريقيا} spain{إسبانيا} thailand{تايلاند} turkey{تركيا} united_arab_emirates{الإمارات العربية المتحدة} united_kingdom{المملكة المتحدة} united_states{الولايات المتحدة} other{{name}}}",
+  "destinationRegionName": "{name, select, australia{أستراليا} austria{النمسا} brazil{البرازيل} czechia{التشيك} egypt{مصر} finland{فنلندا} france{فرنسا} georgia{جورجيا} germany{ألمانيا} greece{اليونان} hong_kong{هونغ كونغ} indonesia{إندونيسيا} italy{إيطاليا} japan{اليابان} jordan{الأردن} kuwait{الكويت} maldives{المالديف} malaysia{ماليزيا} mexico{المكسيك} morocco{المغرب} netherlands{هولندا} norway{النرويج} oman{عُمان} portugal{البرتغال} qatar{قطر} saudi_arabia{السعودية} singapore{سنغافورة} south_africa{جنوب أفريقيا} spain{إسبانيا} thailand{تايلاند} turkey{تركيا} united_arab_emirates{الإمارات العربية المتحدة} united_kingdom{المملكة المتحدة} united_states{الولايات المتحدة} middle_east_north_africa{الشرق الأوسط وشمال أفريقيا} europe{أوروبا} asia{آسيا} north_america{أمريكا الشمالية} south_america{أمريكا الجنوبية} sub_saharan_africa{أفريقيا جنوب الصحراء} oceania{أوقيانوسيا} other{{name}}}",
   "@destinationRegionName": {
     "placeholders": {
       "name": {}
     }
-  }
+  },
+  "staysSubtitle": "إقامات تناسب رحلتك"
 }

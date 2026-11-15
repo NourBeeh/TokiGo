@@ -252,7 +252,7 @@ void main() {
     expect(find.text('طيران'), findsOneWidget);
     expect(find.text('إقامات'), findsOneWidget);
     expect(find.text('أنشطة'), findsOneWidget);
-    expect(find.text('الجروبات'), findsOneWidget);
+    expect(find.text('المجموعات'), findsOneWidget);
     expect(
       Directionality.of(tester.element(find.byType(HomeActionBar))),
       TextDirection.rtl,
@@ -276,7 +276,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(scrollable.position.pixels, greaterThan(0));
     // The lazy row builds the last tile only once the row travels.
-    expect(find.text('الجروبات'), findsOneWidget);
+    expect(find.text('المجموعات'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

@@ -1,0 +1,926 @@
+{
+ "catalog": [
+  {
+   "id": "cairo",
+   "name": "Cairo",
+   "country": "Egypt",
+   "region": "Middle East & North Africa",
+   "q": [
+    "Great Pyramids of Giza panorama",
+    "Great Sphinx of Giza",
+    "Cairo skyline Nile"
+   ]
+  },
+  {
+   "id": "luxor",
+   "name": "Luxor",
+   "country": "Egypt",
+   "region": "Middle East & North Africa",
+   "q": [
+    "Karnak Temple Luxor",
+    "Luxor Temple"
+   ]
+  },
+  {
+   "id": "aswan",
+   "name": "Aswan",
+   "country": "Egypt",
+   "region": "Middle East & North Africa",
+   "q": [
+    "Philae Temple Aswan",
+    "Abu Simbel temples"
+   ]
+  },
+  {
+   "id": "sharm_el_sheikh",
+   "name": "Sharm El Sheikh",
+   "country": "Egypt",
+   "region": "Middle East & North Africa",
+   "q": [
+    "Sharm El Sheikh Red Sea beach",
+    "Ras Muhammad Sharm"
+   ]
+  },
+  {
+   "id": "hurghada",
+   "name": "Hurghada",
+   "country": "Egypt",
+   "region": "Middle East & North Africa",
+   "q": [
+    "Hurghada Red Sea marina",
+    "Hurghada beach"
+   ]
+  },
+  {
+   "id": "alexandria",
+   "name": "Alexandria",
+   "country": "Egypt",
+   "region": "Middle East & North Africa",
+   "q": [
+    "Alexandria corniche",
+    "Bibliotheca Alexandrina",
+    "Qaitbay Citadel Alexandria"
+   ]
+  },
+  {
+   "id": "marrakech",
+   "name": "Marrakech",
+   "country": "Morocco",
+   "region": "Middle East & North Africa",
+   "q": [
+    "Jemaa el-Fnaa Marrakech",
+    "Koutoubia Mosque Marrakech"
+   ]
+  },
+  {
+   "id": "casablanca",
+   "name": "Casablanca",
+   "country": "Morocco",
+   "region": "Middle East & North Africa",
+   "q": [
+    "Hassan II Mosque Casablanca"
+   ]
+  },
+  {
+   "id": "fes",
+   "name": "Fez",
+   "country": "Morocco",
+   "region": "Middle East & North Africa",
+   "q": [
+    "Fez medina Chouara",
+    "Al Quaraouiyine Fez"
+   ]
+  },
+  {
+   "id": "tunis",
+   "name": "Tunis",
+   "country": "Tunisia",
+   "region": "Middle East & North Africa",
+   "q": [
+    "Tunis medina",
+    "Bardo Museum Tunis",
+    "Carthage Tunis"
+   ]
+  },
+  {
+   "id": "istanbul",
+   "name": "Istanbul",
+   "country": "Turkey",
+   "region": "Europe",
+   "q": [
+    "Hagia Sophia Istanbul",
+    "Blue Mosque Istanbul",
+    "Bosphorus Istanbul skyline"
+   ]
+  },
+  {
+   "id": "goreme",
+   "name": "Göreme",
+   "country": "Turkey",
+   "region": "Europe",
+   "q": [
+    "Goreme Cappadocia fairy chimneys",
+    "Cappadocia hot air balloons"
+   ]
+  },
+  {
+   "id": "dubai",
+   "name": "Dubai",
+   "country": "United Arab Emirates",
+   "region": "Middle East & North Africa",
+   "q": [
+    "Dubai skyline Burj Khalifa",
+    "Burj Al Arab Dubai"
+   ]
+  },
+  {
+   "id": "abu_dhabi",
+   "name": "Abu Dhabi",
+   "country": "United Arab Emirates",
+   "region": "Middle East & North Africa",
+   "q": [
+    "Sheikh Zayed Grand Mosque Abu Dhabi"
+   ]
+  },
+  {
+   "id": "doha",
+   "name": "Doha",
+   "country": "Qatar",
+   "region": "Middle East & North Africa",
+   "q": [
+    "Doha skyline West Bay",
+    "Museum of Islamic Art Doha"
+   ]
+  },
+  {
+   "id": "muscat",
+   "name": "Muscat",
+   "country": "Oman",
+   "region": "Middle East & North Africa",
+   "q": [
+    "Sultan Qaboos Grand Mosque Muscat",
+    "Muscat corniche"
+   ]
+  },
+  {
+   "id": "amman",
+   "name": "Amman",
+   "country": "Jordan",
+   "region": "Middle East & North Africa",
+   "q": [
+    "Amman citadel Jordan",
+    "Amman skyline"
+   ]
+  },
+  {
+   "id": "petra",
+   "name": "Petra",
+   "country": "Jordan",
+   "region": "Middle East & North Africa",
+   "q": [
+    "Petra Treasury Jordan",
+    "Petra Siq"
+   ]
+  },
+  {
+   "id": "paris",
+   "name": "Paris",
+   "country": "France",
+   "region": "Europe",
+   "q": [
+    "Eiffel Tower Paris",
+    "Paris skyline Sacre Coeur"
+   ]
+  },
+  {
+   "id": "nice",
+   "name": "Nice",
+   "country": "France",
+   "region": "Europe",
+   "q": [
+    "Promenade des Anglais Nice",
+    "Nice France old town"
+   ]
+  },
+  {
+   "id": "lyon",
+   "name": "Lyon",
+   "country": "France",
+   "region": "Europe",
+   "q": [
+    "Lyon Vieux Lyon",
+    "Basilica of Notre-Dame de Fourvière Lyon"
+   ]
+  },
+  {
+   "id": "rome",
+   "name": "Rome",
+   "country": "Italy",
+   "region": "Europe",
+   "q": [
+    "Colosseum Rome",
+    "Rome skyline St Peter"
+   ]
+  },
+  {
+   "id": "venice",
+   "name": "Venice",
+   "country": "Italy",
+   "region": "Europe",
+   "q": [
+    "Grand Canal Venice",
+    "St Mark Square Venice"
+   ]
+  },
+  {
+   "id": "milan",
+   "name": "Milan",
+   "country": "Italy",
+   "region": "Europe",
+   "q": [
+    "Milan Cathedral Duomo",
+    "Galleria Vittorio Emanuele Milan"
+   ]
+  },
+  {
+   "id": "florence",
+   "name": "Florence",
+   "country": "Italy",
+   "region": "Europe",
+   "q": [
+    "Florence Duomo Santa Maria del Fiore",
+    "Ponte Vecchio Florence"
+   ]
+  },
+  {
+   "id": "naples",
+   "name": "Naples",
+   "country": "Italy",
+   "region": "Europe",
+   "q": [
+    "Naples skyline Mount Vesuvius",
+    "Naples waterfront"
+   ]
+  },
+  {
+   "id": "barcelona",
+   "name": "Barcelona",
+   "country": "Spain",
+   "region": "Europe",
+   "q": [
+    "Sagrada Familia Barcelona",
+    "Park Guell Barcelona"
+   ]
+  },
+  {
+   "id": "madrid",
+   "name": "Madrid",
+   "country": "Spain",
+   "region": "Europe",
+   "q": [
+    "Madrid skyline",
+    "Royal Palace of Madrid"
+   ]
+  },
+  {
+   "id": "seville",
+   "name": "Seville",
+   "country": "Spain",
+   "region": "Europe",
+   "q": [
+    "Seville Cathedral Giralda",
+    "Plaza de España Seville"
+   ]
+  },
+  {
+   "id": "lisbon",
+   "name": "Lisbon",
+   "country": "Portugal",
+   "region": "Europe",
+   "q": [
+    "Lisbon tram 28",
+    "Belem Tower Lisbon"
+   ]
+  },
+  {
+   "id": "porto",
+   "name": "Porto",
+   "country": "Portugal",
+   "region": "Europe",
+   "q": [
+    "Porto Ribeira",
+    "Dom Luis I Bridge Porto"
+   ]
+  },
+  {
+   "id": "london",
+   "name": "London",
+   "country": "United Kingdom",
+   "region": "Europe",
+   "q": [
+    "Tower Bridge London",
+    "Big Ben London skyline"
+   ]
+  },
+  {
+   "id": "edinburgh",
+   "name": "Edinburgh",
+   "country": "United Kingdom",
+   "region": "Europe",
+   "q": [
+    "Edinburgh Castle",
+    "Royal Mile Edinburgh"
+   ]
+  },
+  {
+   "id": "amsterdam",
+   "name": "Amsterdam",
+   "country": "Netherlands",
+   "region": "Europe",
+   "q": [
+    "Amsterdam canal houses",
+    "Amsterdam skyline"
+   ]
+  },
+  {
+   "id": "prague",
+   "name": "Prague",
+   "country": "Czechia",
+   "region": "Europe",
+   "q": [
+    "Charles Bridge Prague",
+    "Prague Castle skyline"
+   ]
+  },
+  {
+   "id": "vienna",
+   "name": "Vienna",
+   "country": "Austria",
+   "region": "Europe",
+   "q": [
+    "St Stephen Cathedral Vienna",
+    "Vienna skyline"
+   ]
+  },
+  {
+   "id": "berlin",
+   "name": "Berlin",
+   "country": "Germany",
+   "region": "Europe",
+   "q": [
+    "Brandenburg Gate Berlin",
+    "Berlin skyline"
+   ]
+  },
+  {
+   "id": "munich",
+   "name": "Munich",
+   "country": "Germany",
+   "region": "Europe",
+   "q": [
+    "Marienplatz Munich",
+    "Neuschwanstein Castle Bavaria"
+   ]
+  },
+  {
+   "id": "zurich",
+   "name": "Zurich",
+   "country": "Switzerland",
+   "region": "Europe",
+   "q": [
+    "Zurich old town Grossmunster",
+    "Zurich lake skyline"
+   ]
+  },
+  {
+   "id": "athens",
+   "name": "Athens",
+   "country": "Greece",
+   "region": "Europe",
+   "q": [
+    "Parthenon Athens",
+    "Acropolis Athens"
+   ]
+  },
+  {
+   "id": "santorini",
+   "name": "Santorini",
+   "country": "Greece",
+   "region": "Europe",
+   "q": [
+    "Oia Santorini",
+    "Fira Santorini caldera"
+   ]
+  },
+  {
+   "id": "reykjavik",
+   "name": "Reykjavik",
+   "country": "Iceland",
+   "region": "Europe",
+   "q": [
+    "Hallgrimskirkja Reykjavik",
+    "Reykjavik harbour"
+   ]
+  },
+  {
+   "id": "oslo",
+   "name": "Oslo",
+   "country": "Norway",
+   "region": "Europe",
+   "q": [
+    "Oslo Opera House",
+    "Oslo fjord skyline"
+   ]
+  },
+  {
+   "id": "stockholm",
+   "name": "Stockholm",
+   "country": "Sweden",
+   "region": "Europe",
+   "q": [
+    "Stockholm Gamla Stan",
+    "Stockholm skyline"
+   ]
+  },
+  {
+   "id": "copenhagen",
+   "name": "Copenhagen",
+   "country": "Denmark",
+   "region": "Europe",
+   "q": [
+    "Nyhavn Copenhagen",
+    "Copenhagen skyline"
+   ]
+  },
+  {
+   "id": "helsinki",
+   "name": "Helsinki",
+   "country": "Finland",
+   "region": "Europe",
+   "q": [
+    "Helsinki Cathedral",
+    "Helsinki skyline"
+   ]
+  },
+  {
+   "id": "budapest",
+   "name": "Budapest",
+   "country": "Hungary",
+   "region": "Europe",
+   "q": [
+    "Hungarian Parliament Budapest",
+    "Chain Bridge Budapest"
+   ]
+  },
+  {
+   "id": "tokyo",
+   "name": "Tokyo",
+   "country": "Japan",
+   "region": "Asia",
+   "q": [
+    "Tokyo Tower",
+    "Shibuya Crossing Tokyo",
+    "Tokyo skyline"
+   ]
+  },
+  {
+   "id": "kyoto",
+   "name": "Kyoto",
+   "country": "Japan",
+   "region": "Asia",
+   "q": [
+    "Fushimi Inari Kyoto",
+    "Kinkaku-ji Kyoto",
+    "Arashiyama bamboo grove"
+   ]
+  },
+  {
+   "id": "osaka",
+   "name": "Osaka",
+   "country": "Japan",
+   "region": "Asia",
+   "q": [
+    "Osaka Castle",
+    "Dotonbori Osaka"
+   ]
+  },
+  {
+   "id": "seoul",
+   "name": "Seoul",
+   "country": "South Korea",
+   "region": "Asia",
+   "q": [
+    "Gyeongbokgung Palace Seoul",
+    "Seoul skyline Namsan"
+   ]
+  },
+  {
+   "id": "bangkok",
+   "name": "Bangkok",
+   "country": "Thailand",
+   "region": "Asia",
+   "q": [
+    "Wat Arun Bangkok",
+    "Grand Palace Bangkok"
+   ]
+  },
+  {
+   "id": "singapore",
+   "name": "Singapore",
+   "country": "Singapore",
+   "region": "Asia",
+   "q": [
+    "Marina Bay Sands Singapore",
+    "Gardens by the Bay Singapore"
+   ]
+  },
+  {
+   "id": "denpasar",
+   "name": "Denpasar",
+   "country": "Indonesia",
+   "region": "Asia",
+   "q": [
+    "Denpasar Bali",
+    "Uluwatu Temple Bali",
+    "Tegallalang rice terraces Bali"
+   ]
+  },
+  {
+   "id": "jakarta",
+   "name": "Jakarta",
+   "country": "Indonesia",
+   "region": "Asia",
+   "q": [
+    "Jakarta skyline",
+    "National Monument Jakarta"
+   ]
+  },
+  {
+   "id": "kuala_lumpur",
+   "name": "Kuala Lumpur",
+   "country": "Malaysia",
+   "region": "Asia",
+   "q": [
+    "Petronas Towers Kuala Lumpur",
+    "Batu Caves Kuala Lumpur"
+   ]
+  },
+  {
+   "id": "hong_kong",
+   "name": "Hong Kong",
+   "country": "Hong Kong",
+   "region": "Asia",
+   "q": [
+    "Hong Kong skyline Victoria Harbour",
+    "Victoria Peak Hong Kong"
+   ]
+  },
+  {
+   "id": "shanghai",
+   "name": "Shanghai",
+   "country": "China",
+   "region": "Asia",
+   "q": [
+    "Shanghai skyline Bund",
+    "Oriental Pearl Tower Shanghai"
+   ]
+  },
+  {
+   "id": "beijing",
+   "name": "Beijing",
+   "country": "China",
+   "region": "Asia",
+   "q": [
+    "Forbidden City Beijing",
+    "Great Wall of China Mutianyu"
+   ]
+  },
+  {
+   "id": "agra",
+   "name": "Agra",
+   "country": "India",
+   "region": "Asia",
+   "q": [
+    "Taj Mahal Agra"
+   ]
+  },
+  {
+   "id": "new_delhi",
+   "name": "New Delhi",
+   "country": "India",
+   "region": "Asia",
+   "q": [
+    "India Gate New Delhi",
+    "Lotus Temple Delhi"
+   ]
+  },
+  {
+   "id": "male",
+   "name": "Malé",
+   "country": "Maldives",
+   "region": "Asia",
+   "q": [
+    "Male Maldives aerial",
+    "Maldives beach resort"
+   ]
+  },
+  {
+   "id": "colombo",
+   "name": "Colombo",
+   "country": "Sri Lanka",
+   "region": "Asia",
+   "q": [
+    "Colombo skyline",
+    "Gangaramaya Temple Colombo"
+   ]
+  },
+  {
+   "id": "kathmandu",
+   "name": "Kathmandu",
+   "country": "Nepal",
+   "region": "Asia",
+   "q": [
+    "Boudhanath Kathmandu",
+    "Kathmandu Durbar Square"
+   ]
+  },
+  {
+   "id": "new_york",
+   "name": "New York",
+   "country": "United States",
+   "region": "North America",
+   "q": [
+    "Statue of Liberty New York",
+    "Manhattan skyline"
+   ]
+  },
+  {
+   "id": "los_angeles",
+   "name": "Los Angeles",
+   "country": "United States",
+   "region": "North America",
+   "q": [
+    "Hollywood Sign Los Angeles",
+    "Santa Monica Pier"
+   ]
+  },
+  {
+   "id": "san_francisco",
+   "name": "San Francisco",
+   "country": "United States",
+   "region": "North America",
+   "q": [
+    "Golden Gate Bridge San Francisco"
+   ]
+  },
+  {
+   "id": "miami",
+   "name": "Miami",
+   "country": "United States",
+   "region": "North America",
+   "q": [
+    "Miami South Beach",
+    "Miami skyline"
+   ]
+  },
+  {
+   "id": "las_vegas",
+   "name": "Las Vegas",
+   "country": "United States",
+   "region": "North America",
+   "q": [
+    "Las Vegas Strip skyline"
+   ]
+  },
+  {
+   "id": "honolulu",
+   "name": "Honolulu",
+   "country": "United States",
+   "region": "North America",
+   "q": [
+    "Waikiki Beach Honolulu",
+    "Diamond Head Honolulu"
+   ]
+  },
+  {
+   "id": "cancun",
+   "name": "Cancún",
+   "country": "Mexico",
+   "region": "North America",
+   "q": [
+    "Cancun beach hotel zone",
+    "Chichen Itza"
+   ]
+  },
+  {
+   "id": "mexico_city",
+   "name": "Mexico City",
+   "country": "Mexico",
+   "region": "North America",
+   "q": [
+    "Mexico City Zocalo",
+    "Angel of Independence Mexico City"
+   ]
+  },
+  {
+   "id": "havana",
+   "name": "Havana",
+   "country": "Cuba",
+   "region": "North America",
+   "q": [
+    "Havana Malecón",
+    "Havana old town"
+   ]
+  },
+  {
+   "id": "panama_city",
+   "name": "Panama City",
+   "country": "Panama",
+   "region": "North America",
+   "q": [
+    "Panama City skyline",
+    "Panama Canal"
+   ]
+  },
+  {
+   "id": "rio_de_janeiro",
+   "name": "Rio de Janeiro",
+   "country": "Brazil",
+   "region": "South America",
+   "q": [
+    "Christ the Redeemer Rio de Janeiro",
+    "Sugarloaf Mountain Rio"
+   ]
+  },
+  {
+   "id": "sao_paulo",
+   "name": "São Paulo",
+   "country": "Brazil",
+   "region": "South America",
+   "q": [
+    "São Paulo skyline",
+    "Ibirapuera Park São Paulo"
+   ]
+  },
+  {
+   "id": "buenos_aires",
+   "name": "Buenos Aires",
+   "country": "Argentina",
+   "region": "South America",
+   "q": [
+    "Obelisco Buenos Aires",
+    "La Boca Buenos Aires"
+   ]
+  },
+  {
+   "id": "lima",
+   "name": "Lima",
+   "country": "Peru",
+   "region": "South America",
+   "q": [
+    "Lima Miraflores skyline",
+    "Machu Picchu"
+   ]
+  },
+  {
+   "id": "cusco",
+   "name": "Cusco",
+   "country": "Peru",
+   "region": "South America",
+   "q": [
+    "Cusco Plaza de Armas",
+    "Sacsayhuaman Cusco"
+   ]
+  },
+  {
+   "id": "cartagena",
+   "name": "Cartagena",
+   "country": "Colombia",
+   "region": "South America",
+   "q": [
+    "Cartagena old town walls",
+    "Castillo San Felipe Cartagena"
+   ]
+  },
+  {
+   "id": "santiago",
+   "name": "Santiago",
+   "country": "Chile",
+   "region": "South America",
+   "q": [
+    "Santiago skyline Andes",
+    "Santa Lucia Hill Santiago"
+   ]
+  },
+  {
+   "id": "cape_town",
+   "name": "Cape Town",
+   "country": "South Africa",
+   "region": "Sub-Saharan Africa",
+   "q": [
+    "Table Mountain Cape Town",
+    "Cape Town skyline"
+   ]
+  },
+  {
+   "id": "johannesburg",
+   "name": "Johannesburg",
+   "country": "South Africa",
+   "region": "Sub-Saharan Africa",
+   "q": [
+    "Johannesburg skyline",
+    "Apartheid Museum Johannesburg"
+   ]
+  },
+  {
+   "id": "nairobi",
+   "name": "Nairobi",
+   "country": "Kenya",
+   "region": "Sub-Saharan Africa",
+   "q": [
+    "Nairobi skyline",
+    "Nairobi National Park"
+   ]
+  },
+  {
+   "id": "zanzibar_city",
+   "name": "Zanzibar City",
+   "country": "Tanzania",
+   "region": "Sub-Saharan Africa",
+   "q": [
+    "Stone Town Zanzibar",
+    "Zanzibar beach"
+   ]
+  },
+  {
+   "id": "port_louis",
+   "name": "Port Louis",
+   "country": "Mauritius",
+   "region": "Sub-Saharan Africa",
+   "q": [
+    "Port Louis Mauritius",
+    "Mauritius beach lagoon"
+   ]
+  },
+  {
+   "id": "sydney",
+   "name": "Sydney",
+   "country": "Australia",
+   "region": "Oceania",
+   "q": [
+    "Sydney Opera House",
+    "Sydney Harbour Bridge"
+   ]
+  },
+  {
+   "id": "melbourne",
+   "name": "Melbourne",
+   "country": "Australia",
+   "region": "Oceania",
+   "q": [
+    "Melbourne skyline",
+    "Great Ocean Road Twelve Apostles"
+   ]
+  },
+  {
+   "id": "brisbane",
+   "name": "Brisbane",
+   "country": "Australia",
+   "region": "Oceania",
+   "q": [
+    "Brisbane skyline",
+    "South Bank Brisbane"
+   ]
+  },
+  {
+   "id": "queenstown",
+   "name": "Queenstown",
+   "country": "New Zealand",
+   "region": "Oceania",
+   "q": [
+    "Queenstown New Zealand lake",
+    "Remarkables Queenstown"
+   ]
+  },
+  {
+   "id": "auckland",
+   "name": "Auckland",
+   "country": "New Zealand",
+   "region": "Oceania",
+   "q": [
+    "Auckland skyline Sky Tower",
+    "Auckland harbour"
+   ]
+  },
+  {
+   "id": "suva",
+   "name": "Suva",
+   "country": "Fiji",
+   "region": "Oceania",
+   "q": [
+    "Suva Fiji",
+    "Fiji island beach"
+   ]
+  }
+ ]
+}

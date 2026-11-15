@@ -2101,4 +2101,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String destinationRegionName(String name) {
     return '$name';
   }
+
+  @override
+  String get staysSubtitle => 'Stays that fit your trip';
 }

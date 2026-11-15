@@ -106,8 +106,11 @@ void main() {
     await tester.pumpWidget(_app(controller: _controller()));
     await tester.pumpAndSettle();
 
-    // The empty message renders and no layout exception was thrown.
-    expect(find.text('No recommendations right now'), findsOneWidget);
+    // The bundled Explore catalog means Home is never truly empty: an empty
+    // BACKEND feed still renders the curated rail. This keeps the original
+    // regression guard — the feed must lay out with no intrinsic-dimensions
+    // crash — while asserting the new, correct behaviour.
+    expect(find.text('Paris'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 }

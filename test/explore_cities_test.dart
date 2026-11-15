@@ -152,18 +152,23 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Oslo'), findsOneWidget);
-    expect(find.text('Bergen'), findsOneWidget);
-    expect(find.text('Cairo'), findsOneWidget);
-
-    await tester.enterText(find.byType(TextField), 'Oslo');
+    // The Explore page now renders the bundled catalog as well as the
+    // backend's Discover cards, so the grid virtualizes and the backend
+    // entries sit far down the list. Search is what makes them reachable.
+    //
+    // 'Bergen' exists ONLY in the injected backend data (not in the catalog),
+    // so it proves backend destinations survive the merge.
+    await tester.enterText(find.byType(TextField), 'Bergen');
     await tester.pumpAndSettle();
-    expect(find.text('Oslo'), findsNWidgets(2));
-    expect(find.text('Bergen'), findsNothing);
+    // The search field's own EditableText also matches, so assert on the tile.
+    expect(find.byKey(const ValueKey<String>('explore-city-bergen')),
+        findsOneWidget);
+    // A catalog city is filtered out by the same query.
+    expect(find.text('Cairo'), findsNothing);
 
-    await tester.tap(find.byKey(const ValueKey<String>('explore-city-oslo')));
+    await tester.tap(find.byKey(const ValueKey<String>('explore-city-bergen')));
     await tester.pumpAndSettle();
-    expect(find.text('City opened: Oslo'), findsOneWidget);
+    expect(find.text('City opened: Bergen'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

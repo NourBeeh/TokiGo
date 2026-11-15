@@ -139,6 +139,11 @@ flutter:
   # App image assets (placeholders + future real imagery)
   assets:
     - assets/images/
+    # Explore city photography. One bundled photo per catalog city, resolved
+    # through the city id by the explore image registry — never a remote URL,
+    # so a city card renders on a first offline launch with no download.
+    - assets/explore/cities/
+    - assets/explore/manifest.json
     # The EXISTING TokiGo brand mark, reused as the AI assistant identity and
     # the chat watermark. Both masters are transparent (black mark for light
     # surfaces, white for dark); no new logo is drawn and the source assets in

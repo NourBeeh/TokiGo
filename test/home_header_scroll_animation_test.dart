@@ -518,8 +518,9 @@ void main() {
       await _pump(tester);
       final ScrollableState scrollable = tester.state(_scrollable());
 
-      // The loaded feed renders the approved cards.
-      expect(find.text('City 0'), findsWidgets);
+      // The loaded feed renders the approved cards — the bundled
+      // Explore catalog leads it.
+      expect(find.text('Paris'), findsWidgets);
 
       // A navigation tile still pushes its section route.
       await tester.tap(find.byKey(const ValueKey<String>('home-action-flights')));
@@ -532,7 +533,8 @@ void main() {
       expect(_topBar(), findsOneWidget);
       expect(_composer(), findsOneWidget);
       expect(_nav(), findsOneWidget);
-      expect(find.text('City 0'), findsWidgets);
+      // The bundled Explore catalog leads the restored feed.
+      expect(find.text('Paris'), findsWidgets);
 
       // The Discover cover-flow carousel is still swipeable.
       await tester.drag(find.byType(PageView).first, const Offset(-300, 0));

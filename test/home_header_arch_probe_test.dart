@@ -155,7 +155,9 @@ void main() {
       find.byType(HomeTopBar),
       _composer(),
       find.byType(HomeActionBar),
-      find.text('City 0'),
+      // The bundled Explore catalog leads the feed, so the card
+      // asserted here is its first curated city.
+      find.text('Paris'),
     ]) {
       expect(
         find.descendant(

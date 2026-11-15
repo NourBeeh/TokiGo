@@ -255,7 +255,7 @@ void main() {
       expect(find.text('إقامات'), findsOneWidget);
       expect(find.text('تأجير سيارات'), findsOneWidget);
       expect(find.text('أنشطة'), findsOneWidget);
-      expect(find.text('الجروبات'), findsOneWidget);
+      expect(find.text('المجموعات'), findsOneWidget);
       // Trips left the bar (owner decision, 2026-11).
       expect(find.text('رحلاتي'), findsNothing);
       expect(

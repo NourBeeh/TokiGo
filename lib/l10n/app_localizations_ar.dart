@@ -18,7 +18,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get navSearch => 'بحث';
 
   @override
-  String get navGroups => 'الجروبات';
+  String get navGroups => 'المجموعات';
 
   @override
   String get navExplore => 'استكشف';
@@ -295,7 +295,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeNavActivities => 'أنشطة';
 
   @override
-  String get homeNavGroups => 'الجروبات';
+  String get homeNavGroups => 'المجموعات';
 
   @override
   String get homeNavTrips => 'رحلاتي';
@@ -304,7 +304,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get searchTransfers => ' transfére المطار';
 
   @override
-  String get groupsTitle => 'الجروبات';
+  String get groupsTitle => 'المجموعات';
 
   @override
   String get groupsSubtitle => 'خططوا معًا وسافروا معًا';
@@ -2188,6 +2188,56 @@ class AppLocalizationsAr extends AppLocalizations {
         'venice': 'البندقية',
         'vienna': 'فيينا',
         'amman': 'عمّان',
+        'fez': 'فاس',
+        'tunis': 'تونس',
+        'goreme': 'غوريم',
+        'petra': 'البتراء',
+        'lyon': 'ليون',
+        'florence': 'فلورنسا',
+        'naples': 'نابولي',
+        'seville': 'إشبيلية',
+        'porto': 'بورتو',
+        'edinburgh': 'إدنبرة',
+        'zurich': 'زيورخ',
+        'reykjavik': 'ريكيافيك',
+        'stockholm': 'ستوكهولم',
+        'copenhagen': 'كوبنهاغن',
+        'helsinki': 'هلسنكي',
+        'budapest': 'بودابست',
+        'kyoto': 'كيوتو',
+        'osaka': 'أوساكا',
+        'seoul': 'سول',
+        'denpasar': 'دينباسار',
+        'jakarta': 'جاكرتا',
+        'shanghai': 'شنغهاي',
+        'beijing': 'بكين',
+        'agra': 'أغرا',
+        'new_delhi': 'نيودلهي',
+        'male': 'مالِه',
+        'colombo': 'كولومبو',
+        'kathmandu': 'كاتماندو',
+        'los_angeles': 'لوس أنجلوس',
+        'san_francisco': 'سان فرانسيسكو',
+        'las_vegas': 'لاس فيغاس',
+        'honolulu': 'هونولولو',
+        'mexico_city': 'مكسيكو سيتي',
+        'havana': 'هافانا',
+        'panama_city': 'مدينة بنما',
+        's_o_paulo': 'ساو باولو',
+        'buenos_aires': 'بوينس آيرس',
+        'lima': 'ليما',
+        'cusco': 'كوسكو',
+        'cartagena': 'قرطاجنة',
+        'santiago': 'سانتياغو',
+        'johannesburg': 'جوهانسبرغ',
+        'nairobi': 'نيروبي',
+        'zanzibar_city': 'مدينة زنجبار',
+        'port_louis': 'بورت لويس',
+        'melbourne': 'ملبورن',
+        'brisbane': 'برزبين',
+        'queenstown': 'كوينزتاون',
+        'auckland': 'أوكلاند',
+        'suva': 'سوفا',
         'other': '$name',
       },
     );
@@ -2233,9 +2283,19 @@ class AppLocalizationsAr extends AppLocalizations {
         'united_arab_emirates': 'الإمارات العربية المتحدة',
         'united_kingdom': 'المملكة المتحدة',
         'united_states': 'الولايات المتحدة',
+        'middle_east_north_africa': 'الشرق الأوسط وشمال أفريقيا',
+        'europe': 'أوروبا',
+        'asia': 'آسيا',
+        'north_america': 'أمريكا الشمالية',
+        'south_america': 'أمريكا الجنوبية',
+        'sub_saharan_africa': 'أفريقيا جنوب الصحراء',
+        'oceania': 'أوقيانوسيا',
         'other': '$name',
       },
     );
     return '$_temp0';
   }
+
+  @override
+  String get staysSubtitle => 'إقامات تناسب رحلتك';
 }

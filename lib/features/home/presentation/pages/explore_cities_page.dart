@@ -10,6 +10,8 @@ import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/ui/app_message_state.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
+import 'package:tokigo/features/home/domain/explore_catalog.dart';
+import 'package:tokigo/features/home/domain/explore_catalog_item.dart';
 import 'package:tokigo/features/home/presentation/destination_localization.dart';
 import 'package:tokigo/features/home/presentation/home_controller.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_discovery_stay_card.dart';
@@ -174,7 +176,10 @@ class _ExploreCitiesPageState extends ConsumerState<ExploreCitiesPage> {
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     final HomeState state = ref.watch(homeControllerProvider);
-    final List<HomeItem> cities = discoverCitiesFromSections(state.sections);
+    // The full destination catalog. The bundled catalog is the base; any
+    // destination cards the backend publishes are merged in, so View All shows
+    // everything without a second page or a parallel flow.
+    final List<HomeItem> cities = _allCities(state);
     final List<HomeItem> visibleCities = filterDiscoverCities(
       cities,
       query: _query,
@@ -252,6 +257,23 @@ class _ExploreCitiesPageState extends ConsumerState<ExploreCitiesPage> {
         ),
       ),
     );
+  }
+
+  /// The complete destination catalog: the bundled catalog first, then any
+  /// destination cards from the Home feed, de-duplicated by id.
+  ///
+  /// The bundled catalog guarantees the page is never empty on a first offline
+  /// launch; backend cards extend it when the feed has them.
+  List<HomeItem> _allCities(HomeState state) {
+    final Map<String, HomeItem> byId = <String, HomeItem>{
+      for (final HomeItem item in exploreCitiesToHomeItems(exploreCities))
+        item.id: item,
+    };
+    for (final HomeItem item
+        in discoverCitiesFromSections(state.sections)) {
+      byId[item.id] = item;
+    }
+    return byId.values.toList(growable: false);
   }
 
   Widget _buildCities({

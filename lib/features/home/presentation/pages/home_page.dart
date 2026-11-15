@@ -14,6 +14,7 @@ import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
 import 'package:tokigo/features/home/domain/home_action.dart';
+import 'package:tokigo/features/home/domain/explore_home_section.dart';
 import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
 import 'package:tokigo/features/home/presentation/home_controller.dart';
 import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
@@ -326,6 +327,36 @@ class _HomePageState extends ConsumerState<HomePage>
     );
   }
 
+  /// The sections Home renders.
+  ///
+  /// OWNER DECISION (2026-11): Home shows exactly two things — the **Explore**
+  /// destination rail and the **Stays Near You** rail. Every other backend
+  /// section ("Recommended for you", "Tour packages", "Experiences & stories",
+  /// …) is dropped permanently.
+  ///
+  /// Nothing real is lost by dropping the chrome: the backend's destination
+  /// cards are still merged INTO Explore, and its stay cards still feed the
+  /// Stays rail through [HomeState.recommendedHotels] (with the composed
+  /// picked-for-you/hotel section as the fallback). Only the extra section
+  /// headings and layouts disappear.
+  List<HomeSection> _exploreSections(HomeState state) {
+    final HomeSection bundled = buildHomeExploreSection();
+    final List<HomeItem> backendDestinations = <HomeItem>[
+      for (final HomeSection section in state.sections)
+        if (_isDiscoverSection(section))
+          ...section.items.where(
+            (HomeItem item) => item.type == HomeCardType.destination,
+          ),
+    ];
+    if (backendDestinations.isEmpty) return <HomeSection>[bundled];
+    return <HomeSection>[
+      mergeBackendDestinations(
+        bundled,
+        backendDestinations: backendDestinations,
+      ),
+    ];
+  }
+
   /// A section whose items are all destinations is Home's Discover section
   /// (DS-6) — the anchor the results page scrolls to.
   static bool _isDiscoverSection(HomeSection section) =>
@@ -339,10 +370,7 @@ class _HomePageState extends ConsumerState<HomePage>
   /// feed content that follows it.
   List<Widget> _feedSlivers(HomeState state, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final List<HomeSection> visibleSections = state.sections
-        .where(_isDiscoverSection)
-        .take(1)
-        .toList();
+    final List<HomeSection> visibleSections = _exploreSections(state);
     final HomeSection? pickedForYou = state.sections
         .where(
           (HomeSection section) =>
@@ -372,9 +400,17 @@ class _HomePageState extends ConsumerState<HomePage>
           SliverToBoxAdapter(child: _DiscoverSkeletonList()),
           SliverToBoxAdapter(child: _StaysSkeletonList()),
         ];
+      // The bundled Explore catalog is on-device, so a FAILED feed (offline,
+      // server down) must not blank Home: the rail still renders. The global
+      // offline banner already tells the traveller what happened.
+      case HomeStatus.error when visibleSections.isNotEmpty:
       case HomeStatus.success:
       case HomeStatus.partial:
       case HomeStatus.developmentPreview:
+      // The bundled Explore catalog guarantees cities on a first offline
+      // launch, so an empty BACKEND feed is not an empty Home: the rail still
+      // renders. Only a genuinely empty catalog shows the empty state below.
+      case HomeStatus.empty when visibleSections.isNotEmpty:
         return <Widget>[
           // Owner decision (2026-10-26): Discover leads the feed — the city
           // rail is the traveller's first "where next?" cue, and Stays
