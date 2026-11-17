@@ -927,5 +927,14 @@
       }
     }
   },
-  "staysSubtitle": "Stays that fit your trip"
+  "staysSubtitle": "Stays that fit your trip",
+  "offerAirline": "Airline",
+  "offerFlightNumber": "Flight number",
+  "offerDeparture": "Departure",
+  "offerArrival": "Arrival",
+  "offerStops": "Stops",
+  "offerLayoverLabel": "Layover",
+  "flightCardShowDetails": "Flight details",
+  "flightCardHideDetails": "Hide details",
+  "flightCardViewOffer": "View offer and book"
 }

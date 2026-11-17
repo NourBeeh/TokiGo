@@ -109,6 +109,11 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
   bool _originSuggestionStarted = false;
   String? _marketCountryCode;
 
+  /// The offer whose result card is expanded inline. Null when every card is
+  /// collapsed. ONE id only, so tapping another card moves the expansion to
+  /// it instead of opening a second panel.
+  String? _expandedOfferId;
+
   /// Phase 4C — the traveller's own budget (from the explicit AI memory)
   /// with its currency. Null when there is no budget, when the traveller
   /// opted out, or when the budget was stated WITHOUT a currency: the app
@@ -454,6 +459,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
       // A new search has started: the compact summary takes over again as
       // soon as it succeeds.
       _editing = false;
+      _expandedOfferId = null;
       ref.read(flightSearchControllerProvider.notifier).search(params);
       return;
     }
@@ -485,6 +491,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
     // A new search has started: the compact summary takes over again as soon
     // as it succeeds.
     _editing = false;
+    _expandedOfferId = null;
     ref.read(flightSearchControllerProvider.notifier).search(params);
   }
 
@@ -507,6 +514,14 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
     if (params != null) {
       ref.read(flightSearchControllerProvider.notifier).search(params);
     }
+  }
+
+  /// Expands [offerId], or collapses it when it is already the open card.
+  /// The flag lives here, so the page can guarantee a single open card.
+  void _toggleExpanded(String offerId) {
+    setState(() {
+      _expandedOfferId = _expandedOfferId == offerId ? null : offerId;
+    });
   }
 
   void _selectSort(_FlightSort sort) {
@@ -654,7 +669,10 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
                   final offer = visible[index];
                   return FlightSearchCard(
                     offer: offer,
-                    onTap: () => context.push('/offer-details', extra: offer),
+                    expanded: _expandedOfferId == offer.id,
+                    onToggleExpanded: () => _toggleExpanded(offer.id),
+                    onViewDetails: () =>
+                        context.push('/offer-details', extra: offer),
                   );
                 },
               ),
@@ -1249,7 +1267,9 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
         for (final offer in items)
           FlightSearchCard(
             offer: offer,
-            onTap: () => context.push('/offer-details', extra: offer),
+            expanded: _expandedOfferId == offer.id,
+            onToggleExpanded: () => _toggleExpanded(offer.id),
+            onViewDetails: () => context.push('/offer-details', extra: offer),
           ),
       ],
     );

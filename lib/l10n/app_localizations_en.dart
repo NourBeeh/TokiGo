@@ -2104,4 +2104,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get staysSubtitle => 'Stays that fit your trip';
+
+  @override
+  String get offerAirline => 'Airline';
+
+  @override
+  String get offerFlightNumber => 'Flight number';
+
+  @override
+  String get offerDeparture => 'Departure';
+
+  @override
+  String get offerArrival => 'Arrival';
+
+  @override
+  String get offerStops => 'Stops';
+
+  @override
+  String get offerLayoverLabel => 'Layover';
+
+  @override
+  String get flightCardShowDetails => 'Flight details';
+
+  @override
+  String get flightCardHideDetails => 'Hide details';
+
+  @override
+  String get flightCardViewOffer => 'View offer and book';
 }

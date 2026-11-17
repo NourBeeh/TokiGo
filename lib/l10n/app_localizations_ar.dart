@@ -2298,4 +2298,31 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get staysSubtitle => 'إقامات تناسب رحلتك';
+
+  @override
+  String get offerAirline => 'شركة الطيران';
+
+  @override
+  String get offerFlightNumber => 'رقم الرحلة';
+
+  @override
+  String get offerDeparture => 'المغادرة';
+
+  @override
+  String get offerArrival => 'الوصول';
+
+  @override
+  String get offerStops => 'المحطات';
+
+  @override
+  String get offerLayoverLabel => 'التوقف';
+
+  @override
+  String get flightCardShowDetails => 'تفاصيل الرحلة';
+
+  @override
+  String get flightCardHideDetails => 'إخفاء التفاصيل';
+
+  @override
+  String get flightCardViewOffer => 'عرض العرض والحجز';
 }

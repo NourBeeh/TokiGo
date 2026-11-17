@@ -174,12 +174,14 @@ class AppButton extends StatelessWidget {
                       : null,
                   child: LayoutBuilder(
                     builder: (BuildContext context, BoxConstraints constraints) {
-                      // Only an expanded button in a bounded width needs to give
-                      // the label room to shrink; in an unbounded horizontal
-                      // context (a scrollable row) a flex child is illegal, and
-                      // the button correctly shrink-wraps instead.
-                      final bool flexibleLabel =
-                          expanded && constraints.hasBoundedWidth;
+                      // A bounded width needs to give the label room to
+                      // shrink — whether the button expands or not. A
+                      // non-expanded button still receives a tight width when
+                      // it sits in a vertical list, so without this its label
+                      // would overflow (seen on the trip-details cancel action
+                      // at 320dp). In an unbounded horizontal context (a
+                      // scrollable row) the button correctly shrink-wraps.
+                      final bool flexibleLabel = constraints.hasBoundedWidth;
                       final Widget labelText = Text(
                         label,
                         style: textStyle,

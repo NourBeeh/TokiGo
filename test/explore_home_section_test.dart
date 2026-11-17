@@ -12,6 +12,8 @@ import 'package:tokigo/core/network/api_result.dart';
 import 'package:tokigo/core/repositories/contracts/home_repository.dart';
 import 'package:tokigo/core/theme/app_theme.dart';
 import 'package:tokigo/features/home/domain/explore_catalog.dart';
+import 'package:tokigo/features/home/domain/explore_catalog_item.dart';
+import 'package:tokigo/features/home/domain/explore_home_section.dart';
 import 'package:tokigo/features/home/presentation/home_controller.dart';
 import 'package:tokigo/features/home/presentation/pages/explore_cities_page.dart';
 import 'package:tokigo/features/home/presentation/pages/home_page.dart';
@@ -278,6 +280,229 @@ void main() {
     expect(Directionality.of(tester.element(find.byType(Scaffold).first)),
         TextDirection.rtl);
     expect(find.text('استكشف'), findsWidgets);
+  });
+
+  group('backend merge protection', () {
+    HomeItem catalogItem(String id) =>
+        exploreCityToHomeItem(exploreCityById(id)!);
+
+    test('matching backend id with no image keeps the bundled photo', () {
+      final HomeItem catalog = catalogItem('oslo');
+      final HomeItem merged = mergeExploreDestination(
+        catalog,
+        HomeItem(
+          id: 'oslo',
+          type: HomeCardType.destination,
+          title: 'Oslo',
+          imageUrl: null,
+        ),
+      );
+      expect(merged.imageUrl, catalog.imageUrl);
+      expect(merged.imageUrl, 'assets/explore/cities/oslo.webp');
+    });
+
+    test('matching backend id with an empty image keeps the bundled photo', () {
+      final HomeItem catalog = catalogItem('oslo');
+      final HomeItem merged = mergeExploreDestination(
+        catalog,
+        HomeItem(
+          id: 'oslo',
+          type: HomeCardType.destination,
+          title: 'Oslo',
+          imageUrl: '',
+        ),
+      );
+      expect(merged.imageUrl, catalog.imageUrl);
+    });
+
+    test('matching backend id with a valid bundled image uses it', () {
+      final HomeItem merged = mergeExploreDestination(
+        catalogItem('oslo'),
+        HomeItem(
+          id: 'oslo',
+          type: HomeCardType.destination,
+          title: 'Oslo',
+          imageUrl: 'assets/explore/cities/lyon.webp',
+        ),
+      );
+      expect(merged.imageUrl, 'assets/explore/cities/lyon.webp');
+    });
+
+    test('a remote backend image is ignored (Explore stays bundled-only)', () {
+      final HomeItem catalog = catalogItem('oslo');
+      final HomeItem merged = mergeExploreDestination(
+        catalog,
+        HomeItem(
+          id: 'oslo',
+          type: HomeCardType.destination,
+          title: 'Oslo',
+          imageUrl: 'https://example.com/oslo.jpg',
+        ),
+      );
+      expect(merged.imageUrl, catalog.imageUrl);
+    });
+
+    test('incomplete backend data does not erase catalog content', () {
+      final HomeItem catalog = catalogItem('oslo');
+      final HomeItem merged = mergeExploreDestination(
+        catalog,
+        HomeItem(
+          id: 'oslo',
+          type: HomeCardType.destination,
+          title: '',
+          subtitle: '',
+          description: '',
+          imageUrl: '',
+          metadata: const <String, dynamic>{
+            'imageCredit': null,
+            'imageLicense': '',
+          },
+        ),
+      );
+      expect(merged.title, catalog.title);
+      expect(merged.subtitle, catalog.subtitle);
+      expect(merged.description, catalog.description);
+      expect(merged.imageUrl, catalog.imageUrl);
+      expect(merged.metadata['imageCredit'], catalog.metadata['imageCredit']);
+      expect(merged.metadata['imageLicense'], catalog.metadata['imageLicense']);
+    });
+
+    test('valid backend fields override the catalog per field', () {
+      final HomeItem catalog = catalogItem('oslo');
+      final HomeItem merged = mergeExploreDestination(
+        catalog,
+        HomeItem(
+          id: 'oslo',
+          type: HomeCardType.destination,
+          title: 'Oslo Updated',
+          description: 'A fresh backend description',
+          imageUrl: null,
+          metadata: const <String, dynamic>{
+            'country': 'Norway',
+            'region': 'Europe',
+          },
+        ),
+      );
+      expect(merged.id, 'oslo');
+      expect(merged.title, 'Oslo Updated');
+      expect(merged.description, 'A fresh backend description');
+      expect(merged.imageUrl, catalog.imageUrl);
+      expect(merged.metadata['country'], 'Norway');
+      expect(merged.metadata['region'], 'Europe');
+    });
+
+    test('duplicate backend destinations collapse into one merged entry', () {
+      final HomeSection section = buildAllCitiesSection();
+      final HomeItem dup1 = HomeItem(
+        id: 'oslo',
+        type: HomeCardType.destination,
+        title: 'Oslo',
+        imageUrl: null,
+      );
+      final HomeItem dup2 = HomeItem(
+        id: 'oslo',
+        type: HomeCardType.destination,
+        title: 'Oslo',
+        imageUrl: 'assets/explore/cities/lyon.webp',
+      );
+      final HomeSection merged = mergeBackendDestinations(
+        section,
+        backendDestinations: <HomeItem>[dup1, dup2],
+      );
+      final List<HomeItem> oslo =
+          merged.items.where((HomeItem i) => i.id == 'oslo').toList();
+      expect(oslo.length, 1);
+      expect(oslo.first.imageUrl, 'assets/explore/cities/lyon.webp');
+      expect(merged.items.length, section.items.length);
+    });
+
+    test('a backend-only destination is appended', () {
+      final HomeSection section = buildAllCitiesSection();
+      final int before = section.items.length;
+      final HomeSection merged = mergeBackendDestinations(
+        section,
+        backendDestinations: <HomeItem>[
+          HomeItem(
+            id: 'bergen',
+            type: HomeCardType.destination,
+            title: 'Bergen',
+            imageUrl: null,
+          ),
+        ],
+      );
+      expect(merged.items.length, before + 1);
+      expect(merged.items.last.id, 'bergen');
+    });
+
+    test('offline catalog is unchanged when there are no backend destinations',
+        () {
+      final HomeSection section = buildAllCitiesSection();
+      final HomeSection merged = mergeBackendDestinations(
+        section,
+        backendDestinations: const <HomeItem>[],
+      );
+      expect(merged.items.map((HomeItem i) => i.id),
+          section.items.map((HomeItem i) => i.id));
+      for (final HomeItem item in merged.items) {
+        expect(item.imageUrl, isNotNull);
+        expect(item.imageUrl, startsWith('assets/'));
+      }
+    });
+  });
+
+  group('View All chip direction', () {
+    testWidgets('RTL places the chip on the trailing edge and opens Explore',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(720, 1480);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(_app(const HomePage(), locale: const Locale('ar')));
+      await tester.pumpAndSettle();
+
+      expect(
+        Directionality.of(tester.element(find.byType(Scaffold).first)),
+        TextDirection.rtl,
+      );
+
+      final Finder chip = find.text('عرض الكل');
+      expect(chip, findsOneWidget);
+      final double width =
+          tester.view.physicalSize.width / tester.view.devicePixelRatio;
+      // RTL: the trailing chip sits on the LEFT half of the header row.
+      expect(tester.getCenter(chip).dx, lessThan(width / 2));
+
+      await tester.tap(chip);
+      await tester.pumpAndSettle();
+      expect(find.byType(ExploreCitiesPage), findsOneWidget);
+    });
+
+    testWidgets('LTR keeps the chip on the trailing edge and opens Explore',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(720, 1480);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(_app(const HomePage()));
+      await tester.pumpAndSettle();
+
+      expect(
+        Directionality.of(tester.element(find.byType(Scaffold).first)),
+        TextDirection.ltr,
+      );
+
+      final Finder chip = find.text('View all');
+      expect(chip, findsOneWidget);
+      final double width =
+          tester.view.physicalSize.width / tester.view.devicePixelRatio;
+      expect(tester.getCenter(chip).dx, greaterThan(width / 2));
+
+      await tester.tap(chip);
+      await tester.pumpAndSettle();
+      expect(find.byType(ExploreCitiesPage), findsOneWidget);
+    });
   });
 }
 

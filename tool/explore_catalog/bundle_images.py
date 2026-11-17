@@ -65,7 +65,7 @@ def encode_webp(img: Image.Image, target_bytes: int, quality: int = 82) -> bytes
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--manifest", required=True,
-                    help="verified manifest JSON (from generate_catalog.py)")
+                    help="verified manifest JSON (from gen.py)")
     ap.add_argument("--out-dir", required=True)
     ap.add_argument("--width", type=int, default=1000)
     ap.add_argument("--target-kb", type=int, default=165)

@@ -79,6 +79,15 @@ AUDIENCES = {
 }
 
 
+def normalized(value: str) -> str:
+    """Collapse all whitespace runs to single spaces and trim the ends.
+
+    The Dart catalog flattens the same fields through [dart_string], so the
+    manifest must normalize identically or the two records drift apart.
+    """
+    return " ".join(value.split())
+
+
 def dart_string(value: str) -> str:
     """Escape a value for a Dart single-quoted string literal.
 
@@ -144,12 +153,12 @@ def main():
 
     lines = [
         "// GENERATED FILE — do not edit by hand.",
-        "// Regenerate with tool/explore_catalog/generate_catalog.py.",
+        "// Regenerate with tool/explore_catalog/gen.py.",
         "//",
         "// Each entry carries the VERIFIED photo metadata for its own bundled",
         "// asset (license, author, source). The full record — including the",
         "// source file URL the image was downloaded from — lives in",
-        "// assets/explore/cities/manifest.json.",
+        "// assets/explore/manifest.json.",
         "library;",
         "",
         "import 'package:tokigo/features/home/domain/explore_catalog.dart';",
@@ -167,7 +176,10 @@ def main():
         lines.append(f"    region: {dart_string(c['region'])},")
         lines.append(f"    asset: 'assets/explore/cities/{cid}.webp',")
         if cand.get("desc"):
-            lines.append(f"    subtitle: {dart_string(cand['desc'][:80])},")
+            # Store the FULL description. The card truncates visually with an
+            # ellipsis; the catalog must never cut the data itself, or the city
+            # page loses the tail of the sentence.
+            lines.append(f"    subtitle: {dart_string(cand['desc'])},")
         moods = MOODS.get(cid, [])
         if moods:
             lines.append("    tags: <String>["
@@ -195,9 +207,9 @@ def main():
             "asset": f"assets/explore/cities/{e['city']['id']}.webp",
             "source": e["cand"]["file"],
             "sourceTitle": e["cand"]["title"],
-            "author": e["cand"]["artist"],
+            "author": normalized(e["cand"]["artist"]),
             "license": e["cand"]["license"],
-            "description": e["cand"].get("desc", ""),
+            "description": normalized(e["cand"].get("desc", "")),
             "sourceWidth": e["cand"]["w"],
             "sourceHeight": e["cand"]["h"],
             "downloadUrl": e["cand"]["thumb"],

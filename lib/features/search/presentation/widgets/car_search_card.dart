@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:intl/intl.dart';
 import 'package:tokigo/core/domain/models/offers/car_offer.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
@@ -12,6 +11,11 @@ import 'package:tokigo/core/widgets/cards/card.dart';
 /// Composes shared Card Design System primitives: CardImage, CardBadge, CardFeatureList,
 /// CardCancellation, CardPriceBlock.
 /// NO CTA button - entire card is tappable → Car Details (booking review flow).
+///
+/// On compact widths (< 360dp) the same components STACK — image on top, text
+/// below — because a 45% text column leaves under ~100dp on a 320dp phone,
+/// which cannot hold the discount badge, the vehicle facts and the favourite
+/// control without clipping.
 class CarSearchCard extends StatelessWidget {
   const CarSearchCard({
     super.key,
@@ -45,6 +49,13 @@ class CarSearchCard extends StatelessWidget {
   final bool isFavorite;
   final bool enabled;
   final bool loading;
+
+  /// Width under which the card stacks its image above its text.
+  ///
+  /// Matches the app's compact breakpoint so the card follows the same
+  /// response as the rest of the surfaces ([HomeCardDimensions] /
+  /// `BaseCard`'s own < 360dp padding tightening).
+  static const double kStackBelowWidth = 360;
 
   int get _rentalDays {
     final diff = data.dropoffTime.difference(data.pickupTime);
@@ -121,9 +132,6 @@ class CarSearchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tc = context.tokigoColors;
-    final scheme = Theme.of(context).colorScheme;
-
     if (loading) {
       return BaseCard(
         onTap: null,
@@ -170,128 +178,190 @@ class CarSearchCard extends StatelessWidget {
         horizontal: AppSpacing.md,
         vertical: AppSpacing.sm,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Image section - approximately 50-55% width
-          Expanded(
-            flex: 55,
-            child: AspectRatio(
-              aspectRatio: 4 / 3,
-              child: CardImage(
-                url: data.imageUrl,
-                fallbackIcon: Icons.directions_car,
-                semanticLabel: data.title,
-                fit: BoxFit.cover,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Compare the SCREEN width, not the already-inset child width: the
+          // card's margins and padding would otherwise push a regular 412dp
+          // phone under the threshold.
+          final double screenWidth =
+              MediaQuery.maybeSizeOf(context)?.width ?? constraints.maxWidth;
+          final bool stacked = screenWidth < kStackBelowWidth;
+          final Widget image = CardImage(
+            url: data.imageUrl,
+            fallbackIcon: Icons.directions_car,
+            semanticLabel: data.title,
+            fit: BoxFit.cover,
+          );
+          if (stacked) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                AspectRatio(aspectRatio: 16 / 9, child: image),
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: _buildPanel(
+                    context: context,
+                    features: features,
+                    discountPercent: discountPercent,
+                    hasDiscount: hasDiscount,
+                    hasOrSimilar: hasOrSimilar,
+                    mileagePolicy: mileagePolicy,
+                    hasFreeCancellation: hasFreeCancellation,
+                    cancellationLabel: _cancellationLabel,
+                    rentalDays: rentalDays,
+                    // The panel owns its height in the stacked layout, so the
+                    // bottom-anchored price does not need the spacer.
+                    anchorPrice: false,
+                  ),
+                ),
+              ],
+            );
+          }
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              // Image section - approximately 50-55% width
+              Expanded(
+                flex: 55,
+                child: AspectRatio(aspectRatio: 4 / 3, child: image),
               ),
-            ),
+              // Content section - approximately 45-50% width
+              Expanded(
+                flex: 45,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: _buildPanel(
+                    context: context,
+                    features: features,
+                    discountPercent: discountPercent,
+                    hasDiscount: hasDiscount,
+                    hasOrSimilar: hasOrSimilar,
+                    mileagePolicy: mileagePolicy,
+                    hasFreeCancellation: hasFreeCancellation,
+                    cancellationLabel: _cancellationLabel,
+                    rentalDays: rentalDays,
+                    anchorPrice: true,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// The card's information column, shared by the horizontal and stacked
+  /// layouts so the two presentations can never drift apart.
+  Widget _buildPanel({
+    required BuildContext context,
+    required List<String> features,
+    required int? discountPercent,
+    required bool hasDiscount,
+    required bool hasOrSimilar,
+    required String? mileagePolicy,
+    required bool hasFreeCancellation,
+    required String? cancellationLabel,
+    required int rentalDays,
+    required bool anchorPrice,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        // Discount badge + favorite row. A Wrap (not a Row) so the two
+        // controls move onto a second line instead of clipping when the text
+        // column is narrow; with room they sit on one line, favourite at the
+        // end, exactly as before.
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: <Widget>[
+            if (hasDiscount && discountPercent != null)
+              CardBadge(
+                label: '$discountPercent% OFF',
+                icon: Icons.local_offer,
+                variant: CardBadgeVariant.tinted,
+                type: BadgeType.discount,
+              ),
+            if (onFavorite != null)
+              CardFavorite(value: isFavorite, onChanged: onFavorite),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        // Vehicle model
+        Text(
+          data.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        // Or similar
+        if (hasOrSimilar)
+          Text(
+            'or similar',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
-          // Content section - approximately 45-50% width
-          Expanded(
-            flex: 45,
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Discount badge + favorite row
-                  Row(
-                    children: [
-                      if (hasDiscount && discountPercent != null) ...[
-                        CardBadge(
-                          label: '$discountPercent% OFF',
-                          icon: Icons.local_offer,
-                          variant: CardBadgeVariant.tinted,
-                          type: BadgeType.discount,
-                        ),
-                        const SizedBox(width: AppSpacing.xs),
-                      ],
-                      const Spacer(),
-                      if (onFavorite != null)
-                        CardFavorite(value: isFavorite, onChanged: onFavorite),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  // Vehicle model
-                  Text(
-                    data.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  // Or similar
-                  if (hasOrSimilar)
-                    Text(
-                      'or similar',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                  const SizedBox(height: AppSpacing.xs),
-                  // Vehicle class
-                  CardBadge(
-                    label: data.carType,
-                    variant: CardBadgeVariant.tinted,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  // Features (transmission, seats, luggage)
-                  if (features.isNotEmpty)
-                    CardFeatureList(
-                      features: features,
-                      direction: Axis.horizontal,
-                    ),
-                  const Spacer(),
-                  // Rental duration + mileage
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today_outlined,
-                        size: 14,
-                        color: scheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: AppSpacing.xxs),
-                      Flexible(
-                        child: Text(
-                          '$rentalDays day${rentalDays > 1 ? 's' : ''}'
-                          '${mileagePolicy != null ? ' · $mileagePolicy' : ''}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: scheme.onSurfaceVariant),
-                        ),
-                      ),
-                    ],
-                  ),
-                  // Free cancellation
-                  if (hasFreeCancellation) ...[
-                    const SizedBox(height: AppSpacing.xs),
-                    CardCancellation(
-                      label: _cancellationLabel ?? 'Free cancellation',
-                      freeCancellation: true,
-                    ),
-                  ],
-                  const SizedBox(height: AppSpacing.sm),
-                  // Price anchored consistently at the bottom-end
-                  Align(
-                    alignment: AlignmentDirectional.centerEnd,
-                    child: CardPriceBlock(
-                      currentPrice: data.price,
-                      currency: data.currency,
-                      showCurrency: true,
-                      unit: 'day',
-                      perDay: data.price,
-                      total: rentalDays > 1 ? data.price * rentalDays : null,
-                    ),
-                  ),
-                ],
+        const SizedBox(height: AppSpacing.xs),
+        // Vehicle class
+        CardBadge(label: data.carType, variant: CardBadgeVariant.tinted),
+        const SizedBox(height: AppSpacing.sm),
+        // Features (transmission, seats, luggage)
+        if (features.isNotEmpty)
+          CardFeatureList(features: features, direction: Axis.horizontal),
+        // The spacer only exists where the panel is height-constrained (the
+        // horizontal layout stretches the panel to the photo's height).
+        if (anchorPrice) const Spacer(),
+        // Rental duration + mileage
+        Row(
+          children: <Widget>[
+            Icon(
+              Icons.calendar_today_outlined,
+              size: 14,
+              color: scheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: AppSpacing.xxs),
+            Flexible(
+              child: Text(
+                '$rentalDays day${rentalDays > 1 ? 's' : ''}'
+                '${mileagePolicy != null ? ' · $mileagePolicy' : ''}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
               ),
             ),
+          ],
+        ),
+        // Free cancellation
+        if (hasFreeCancellation) ...<Widget>[
+          const SizedBox(height: AppSpacing.xs),
+          CardCancellation(
+            label: cancellationLabel ?? 'Free cancellation',
+            freeCancellation: true,
           ),
         ],
-      ),
+        const SizedBox(height: AppSpacing.sm),
+        // Price anchored consistently at the bottom-end
+        Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: CardPriceBlock(
+            currentPrice: data.price,
+            currency: data.currency,
+            showCurrency: true,
+            unit: 'day',
+            perDay: data.price,
+            total: rentalDays > 1 ? data.price * rentalDays : null,
+          ),
+        ),
+      ],
     );
   }
 
@@ -301,59 +371,89 @@ class CarSearchCard extends StatelessWidget {
 }
 
 /// Skeleton for [CarSearchCard] — mirrors the real card's geometry
-/// (image column + content column with anchored bottom price) with no fake data.
+/// (image + content column with anchored bottom price) with no fake data,
+/// stacking below [CarSearchCard.kStackBelowWidth] exactly like the real card.
 class _LoadingSkeleton extends StatelessWidget {
   const _LoadingSkeleton();
 
   @override
   Widget build(BuildContext context) {
-    final tc = context.tokigoColors;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Image section — same ~55% flex as the real card
-        Expanded(
-          flex: 55,
-          child: AspectRatio(aspectRatio: 4 / 3, child: CardSkeleton.image()),
-        ),
-        // Content section — same ~45% flex
-        Expanded(
-          flex: 45,
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Badge row
-                CardSkeleton.chip(width: 72),
-                CardSkeleton.gap(height: AppSpacing.xs),
-                // Vehicle model
-                CardSkeleton.title(height: 16),
-                CardSkeleton.gap(height: AppSpacing.xs),
-                // Category badge
-                CardSkeleton.chip(width: 64),
-                CardSkeleton.gap(height: AppSpacing.sm),
-                // Features
-                Row(
-                  children: [
-                    CardSkeleton.chip(width: 64),
-                    CardSkeleton.hGap(width: AppSpacing.xs),
-                    CardSkeleton.chip(width: 56),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                // Rental duration
-                CardSkeleton.text(width: 88),
-                CardSkeleton.gap(height: AppSpacing.sm),
-                // Price anchored bottom-end (matches real card)
-                Align(
-                  alignment: AlignmentDirectional.centerEnd,
-                  child: CardSkeleton.price(width: 96),
-                ),
-              ],
+    final Widget image = CardSkeleton.image();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double screenWidth =
+            MediaQuery.maybeSizeOf(context)?.width ?? constraints.maxWidth;
+        final bool stacked = screenWidth < CarSearchCard.kStackBelowWidth;
+        if (stacked) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              AspectRatio(aspectRatio: 16 / 9, child: image),
+              const Padding(
+                padding: EdgeInsets.all(AppSpacing.md),
+                child: _SkeletonPanel(),
+              ),
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            // Image section — same ~55% flex as the real card
+            Expanded(
+              flex: 55,
+              child: AspectRatio(aspectRatio: 4 / 3, child: image),
             ),
-          ),
+            // Content section — same ~45% flex
+            Expanded(
+              flex: 45,
+              child: const Padding(
+                padding: EdgeInsets.all(AppSpacing.md),
+                child: _SkeletonPanel(),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SkeletonPanel extends StatelessWidget {
+  const _SkeletonPanel();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        // Badge row
+        CardSkeleton.chip(width: 72),
+        CardSkeleton.gap(height: AppSpacing.xs),
+        // Vehicle model
+        CardSkeleton.title(height: 16),
+        CardSkeleton.gap(height: AppSpacing.xs),
+        // Category badge
+        CardSkeleton.chip(width: 64),
+        CardSkeleton.gap(height: AppSpacing.sm),
+        // Features
+        Row(
+          children: <Widget>[
+            CardSkeleton.chip(width: 64),
+            CardSkeleton.hGap(width: AppSpacing.xs),
+            CardSkeleton.chip(width: 56),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        // Rental duration
+        CardSkeleton.text(width: 88),
+        CardSkeleton.gap(height: AppSpacing.sm),
+        // Price anchored bottom-end (matches real card)
+        Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: CardSkeleton.price(width: 96),
         ),
       ],
     );

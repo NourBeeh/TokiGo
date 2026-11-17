@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/domain/models/offers/display_price.dart';
 import 'package:tokigo/core/domain/models/offers/flight_offer.dart';
+import 'package:tokigo/core/theme/app_motion.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/ui/localized_date.dart';
 import 'package:tokigo/core/widgets/cards/card.dart';
 import 'package:tokigo/features/search/domain/flight_duration.dart';
 import 'package:tokigo/features/search/presentation/widgets/flight_route_line.dart';
@@ -17,12 +21,16 @@ import 'package:tokigo/l10n/app_localizations.dart';
 /// 3. Secondary row: stops text / cabin / baggage chips / seats availability
 /// 4. Warning badges (self-transfer, airport change, risky connection)
 ///
-/// The whole card is tappable → Flight Details (/booking/review).
+/// The whole card is tappable → it toggles the inline itinerary ([expanded]),
+/// or collapses it again when it is already open. The expanded panel carries
+/// the action that continues to Flight Details.
 class FlightSearchCard extends StatelessWidget {
   const FlightSearchCard({
     super.key,
     this.offer,
-    this.onTap,
+    this.expanded = false,
+    this.onToggleExpanded,
+    this.onViewDetails,
     this.onFavorite,
     this.isFavorite = false,
     this.enabled = true,
@@ -32,7 +40,9 @@ class FlightSearchCard extends StatelessWidget {
   /// Skeleton constructor — renders the card's loading state with no data.
   const FlightSearchCard.loading({super.key})
     : offer = null,
-      onTap = null,
+      expanded = false,
+      onToggleExpanded = null,
+      onViewDetails = null,
       onFavorite = null,
       isFavorite = false,
       enabled = false,
@@ -40,7 +50,16 @@ class FlightSearchCard extends StatelessWidget {
 
   /// The flight offer. Null only in the skeleton/loading state.
   final FlightOffer? offer;
-  final VoidCallback? onTap;
+
+  /// Whether the inline itinerary is revealed.
+  final bool expanded;
+
+  /// Toggles [expanded]. The page owns the flag, so only one card can be open
+  /// at a time; null leaves the card display-only.
+  final VoidCallback? onToggleExpanded;
+
+  /// Continues to the existing offer-details route from the expanded panel.
+  final VoidCallback? onViewDetails;
 
   /// Favorite toggle callback; null hides the favorite affordance.
   final ValueChanged<bool>? onFavorite;
@@ -52,21 +71,19 @@ class FlightSearchCard extends StatelessWidget {
   /// which never reads offer data.
   FlightOffer get data => offer!;
 
-  /// The provider's marketing number already carries the carrier code
-  /// ("EK 123", "DE2017"). It must NEVER be invented from the airline's
-  /// display name — "Emirates" is not the carrier code "EM".
-  ///
-  /// A number that already has a space, or a bare numeric flight number
-  /// ("985"), is shown verbatim; a glued alphanumeric prefix is only given a
-  /// readable space ("DE2017" → "DE 2017").
-  String _formatFlightNumber() {
-    final raw = data.flightNumber.trim();
-    if (raw.isEmpty) return raw;
-    final match = RegExp(
-      r'^([A-Za-z]{2}|[A-Za-z]\d|\d[A-Za-z])(\d+)$',
-    ).firstMatch(raw);
-    if (match == null) return raw;
-    return '${match.group(1)!.toUpperCase()} ${match.group(2)}';
+  String _formatFlightNumber() => _flightNumberText(data.flightNumber);
+
+  /// Reveals [child] by animating its height; under reduce motion the panel
+  /// swaps immediately instead. The effect is stripped, never slowed down.
+  Widget _reveal(Widget child, {required bool reduceMotion}) {
+    if (reduceMotion) return child;
+    return AnimatedSize(
+      duration: AppMotion.normal,
+      curve: AppMotion.standard,
+      alignment: Alignment.topCenter,
+      clipBehavior: Clip.hardEdge,
+      child: child,
+    );
   }
 
   String _calculateDuration() =>
@@ -230,6 +247,9 @@ class FlightSearchCard extends StatelessWidget {
     final tc = context.tokigoColors;
     final scheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
+    // Reduce motion strips the reveal entirely (the same rule the cover-flow
+    // carousel applies to its 3D transforms) rather than slowing it down.
+    final bool reduceMotion = MediaQuery.reduceMotionOf(context);
 
     if (loading) {
       return BaseCard(
@@ -312,11 +332,17 @@ class FlightSearchCard extends StatelessWidget {
             'Only ${seatsLeft.toInt()} seats left',
       if (recommendationBadge != null) recommendationBadge.label!,
       if (warnings.isNotEmpty) warnings.map((w) => w.label).join(', '),
+      // The card itself is the expand/collapse control, so its state is part
+      // of what a screen reader announces.
+      if (onToggleExpanded != null)
+        expanded
+            ? (l10n?.flightCardHideDetails ?? 'Hide details')
+            : (l10n?.flightCardShowDetails ?? 'Flight details'),
     ];
     final semanticLabel = semanticParts.join(', ');
 
     return BaseCard(
-      onTap: onTap,
+      onTap: onToggleExpanded,
       enabled: enabled,
       semanticsLabel: semanticLabel,
       margin: const EdgeInsetsDirectional.symmetric(
@@ -421,6 +447,21 @@ class FlightSearchCard extends StatelessWidget {
                   const SizedBox(width: AppSpacing.xs),
                   CardFavorite(value: isFavorite, onChanged: onFavorite),
                 ],
+                // Expansion affordance. It turns with the state so the control
+                // reads as "open" without a label competing with the price.
+                if (onToggleExpanded != null) ...[
+                  const SizedBox(width: AppSpacing.xxs),
+                  AnimatedRotation(
+                    turns: expanded ? 0.5 : 0,
+                    duration: reduceMotion ? Duration.zero : AppMotion.normal,
+                    curve: AppMotion.standard,
+                    child: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 20,
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ],
             ),
             // ── 2. Route strip — the visual anchor ─────────────────────
@@ -481,6 +522,34 @@ class FlightSearchCard extends StatelessWidget {
                 spacing: AppSpacing.xs,
                 runSpacing: AppSpacing.xs,
                 children: warnings,
+              ),
+            ],
+            // ── 5. Inline itinerary ────────────────────────────────────
+            // Built ONLY while expanded, so a collapsed feed carries no
+            // off-screen detail and the reveal can animate its height from
+            // zero. The reveal clips as it grows, which is what keeps the
+            // expansion from jumping the scroll position.
+            if (onToggleExpanded != null) ...<Widget>[
+              const SizedBox(height: AppSpacing.md),
+              _reveal(
+                expanded
+                    ? _FlightExpandedDetails(
+                        offer: data,
+                        priceText: formatCardPrice(
+                          price: displayPrice.amount,
+                          currency: displayPrice.currency,
+                        ),
+                        totalText: displayTotal == null
+                            ? null
+                            : formatCardPrice(
+                                price: displayTotal.amount,
+                                currency: displayTotal.currency,
+                              ),
+                        onToggle: onToggleExpanded!,
+                        onViewOffer: onViewDetails,
+                      )
+                    : const SizedBox(width: double.infinity),
+                reduceMotion: reduceMotion,
               ),
             ],
           ],
@@ -594,6 +663,268 @@ class _LoadingSkeleton extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+/// Readable form of the provider's marketing flight number.
+///
+/// The number already carries the carrier code ("EK 123", "DE2017"); it is
+/// NEVER derived from the airline's display name — "Emirates" is not the
+/// carrier code "EM". A number that already has a space, or a bare numeric
+/// number ("985"), is shown verbatim; a glued alphanumeric prefix only gains a
+/// readable space ("DE2017" → "DE 2017").
+String _flightNumberText(String raw) {
+  final value = raw.trim();
+  if (value.isEmpty) return value;
+  final match = RegExp(
+    r'^([A-Za-z]{2}|[A-Za-z]\d|\d[A-Za-z])(\d+)$',
+  ).firstMatch(value);
+  if (match == null) return value;
+  return '${match.group(1)!.toUpperCase()} ${match.group(2)}';
+}
+
+/// The itinerary revealed inline by tapping a result card.
+///
+/// Every row is guarded by the presence of the provider's own value, so a
+/// fact the provider omitted simply has no row — the panel can never state an
+/// empty or invented field. The collapsed card's route strip is not repeated
+/// here; this panel adds the full dates, the connection detail and the fare
+/// facts, then hands off to the existing offer-details route.
+class _FlightExpandedDetails extends StatelessWidget {
+  const _FlightExpandedDetails({
+    required this.offer,
+    required this.priceText,
+    required this.totalText,
+    required this.onToggle,
+    required this.onViewOffer,
+  });
+
+  final FlightOffer offer;
+
+  /// Already-formatted primary amount ("EGP 5000"); formatting stays with the
+  /// card so the expanded panel and the collapsed header agree.
+  final String priceText;
+
+  /// Already-formatted stay total, when the provider quoted one.
+  final String? totalText;
+
+  /// Collapses the card again.
+  final VoidCallback onToggle;
+
+  /// Continues to the existing offer-details route.
+  final VoidCallback? onViewOffer;
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
+    final typography = AppTypography.forLight();
+    final l10n = AppLocalizations.of(context)!;
+
+    final DateTime departure = offer.departureTime;
+    final DateTime arrival = offer.arrivalTime;
+    final bool nextDay = !_sameDay(departure, arrival);
+    final int stops = offer.stops ?? 0;
+    final String? layover = offer.metadata['layoverDuration']?.toString();
+    final String? aircraft = offer.metadata['aircraft']?.toString();
+    final String? fareFamily = offer.metadata['fareFamily']?.toString();
+    final bool refundable = offer.metadata['refundable'] == true;
+    final String? baggage = _baggageValue(offer.metadata['baggage']);
+    final String? cabin = (offer.cabinClass ?? '').isEmpty
+        ? null
+        : offer.cabinClass;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: tc.surfaceTertiary,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            l10n.flightCardShowDetails,
+            style: typography.captionSemibold.copyWith(color: tc.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          if (offer.airline.isNotEmpty)
+            _FactRow(label: l10n.offerAirline, value: offer.airline),
+          if (offer.flightNumber.isNotEmpty)
+            _FactRow(
+              label: l10n.offerFlightNumber,
+              value: _flightNumberText(offer.flightNumber),
+            ),
+          _FactRow(
+            label: l10n.offerDeparture,
+            value: _dateTime(context, departure, offer.origin),
+          ),
+          _FactRow(
+            label: l10n.offerArrival,
+            value:
+                '${_dateTime(context, arrival, offer.destination)}'
+                '${nextDay ? ' (+1)' : ''}',
+          ),
+          _FactRow(
+            label: l10n.offerDuration,
+            value: flightDurationBetween(departure, arrival),
+          ),
+          _FactRow(label: l10n.offerStops, value: l10n.offerStopsCount(stops)),
+          if (layover != null && layover.isNotEmpty)
+            _FactRow(label: l10n.offerLayoverLabel, value: layover),
+          if (cabin != null)
+            _FactRow(label: l10n.offerCabin, value: cabin),
+          if (baggage != null)
+            _FactRow(label: l10n.offerBaggage, value: baggage),
+          if (aircraft != null && aircraft.isNotEmpty)
+            _FactRow(label: l10n.offerAircraft, value: aircraft),
+          if (fareFamily != null && fareFamily.isNotEmpty)
+            _FactRow(label: l10n.offerFare, value: fareFamily),
+          if (refundable)
+            _FactRow(
+              label: l10n.offerRefundable,
+              value: l10n.offerRefundableYes,
+            ),
+          const SizedBox(height: AppSpacing.xs),
+          Divider(height: 1, thickness: 1, color: tc.hairline),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  l10n.offerPrice,
+                  style: typography.caption.copyWith(color: tc.textTertiary),
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                    priceText,
+                    style: typography.titleMedium.copyWith(
+                      color: tc.textPrimary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  if (totalText != null)
+                    Text(
+                      l10n.offerCardTotal(totalText!),
+                      style: typography.caption.copyWith(
+                        color: tc.textTertiary,
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            l10n.offerPriceNote,
+            style: typography.caption.copyWith(color: tc.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          // A wrap, not a row: the two actions keep their full labels and move
+          // to a second line on a narrow phone instead of overflowing.
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.xs,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: <Widget>[
+              CardPrimaryAction(
+                label: l10n.flightCardViewOffer,
+                onPressed: onViewOffer,
+                icon: Icons.open_in_new_rounded,
+                expanded: false,
+              ),
+              TextButton(
+                onPressed: onToggle,
+                style: TextButton.styleFrom(
+                  foregroundColor: tc.brand,
+                  minimumSize: const Size(48, 44),
+                ),
+                child: Text(l10n.flightCardHideDetails),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// "1 Dec 2026, 10:00 · CAI" — the full date the collapsed route strip
+  /// compresses to a bare time. A missing airport code is dropped, not
+  /// replaced with a dash.
+  static String _dateTime(
+    BuildContext context,
+    DateTime date,
+    String airport,
+  ) {
+    final String day = localizedMediumDate(context, date);
+    final String time =
+        '${date.hour.toString().padLeft(2, '0')}:'
+        '${date.minute.toString().padLeft(2, '0')}';
+    return airport.isEmpty ? '$day, $time' : '$day, $time · $airport';
+  }
+
+  static bool _sameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  /// Provider baggage, verbatim: `{quantity, type}` → `1 × checked`. Null
+  /// when the provider sent nothing usable.
+  static String? _baggageValue(dynamic baggage) {
+    if (baggage is Map) {
+      final quantity = baggage['quantity'];
+      final type = baggage['type']?.toString();
+      if (quantity != null && type != null && type.isNotEmpty) {
+        return '$quantity × $type';
+      }
+      if (quantity != null) return '$quantity';
+      return null;
+    }
+    final text = baggage?.toString() ?? '';
+    return text.isEmpty ? null : text;
+  }
+}
+
+/// One label / value line of the expanded itinerary.
+class _FactRow extends StatelessWidget {
+  const _FactRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
+    final typography = AppTypography.forLight();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: typography.caption.copyWith(color: tc.textTertiary),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: typography.captionSemibold.copyWith(
+                color: tc.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

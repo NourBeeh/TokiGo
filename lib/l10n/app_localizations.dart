@@ -3922,6 +3922,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Stays that fit your trip'**
   String get staysSubtitle;
+
+  /// No description provided for @offerAirline.
+  ///
+  /// In en, this message translates to:
+  /// **'Airline'**
+  String get offerAirline;
+
+  /// No description provided for @offerFlightNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Flight number'**
+  String get offerFlightNumber;
+
+  /// No description provided for @offerDeparture.
+  ///
+  /// In en, this message translates to:
+  /// **'Departure'**
+  String get offerDeparture;
+
+  /// No description provided for @offerArrival.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival'**
+  String get offerArrival;
+
+  /// No description provided for @offerStops.
+  ///
+  /// In en, this message translates to:
+  /// **'Stops'**
+  String get offerStops;
+
+  /// No description provided for @offerLayoverLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Layover'**
+  String get offerLayoverLabel;
+
+  /// No description provided for @flightCardShowDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Flight details'**
+  String get flightCardShowDetails;
+
+  /// No description provided for @flightCardHideDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide details'**
+  String get flightCardHideDetails;
+
+  /// No description provided for @flightCardViewOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'View offer and book'**
+  String get flightCardViewOffer;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

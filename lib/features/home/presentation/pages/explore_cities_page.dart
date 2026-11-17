@@ -12,6 +12,7 @@ import 'package:tokigo/core/widgets/page_header.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/features/home/domain/explore_catalog.dart';
 import 'package:tokigo/features/home/domain/explore_catalog_item.dart';
+import 'package:tokigo/features/home/domain/explore_home_section.dart';
 import 'package:tokigo/features/home/presentation/destination_localization.dart';
 import 'package:tokigo/features/home/presentation/home_controller.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_discovery_stay_card.dart';
@@ -271,7 +272,12 @@ class _ExploreCitiesPageState extends ConsumerState<ExploreCitiesPage> {
     };
     for (final HomeItem item
         in discoverCitiesFromSections(state.sections)) {
-      byId[item.id] = item;
+      final HomeItem? existing = byId[item.id];
+      // Merge per field so a backend record with a missing/empty/remote image
+      // cannot drop the city's bundled photo. A backend-only city (no catalog
+      // match) is appended unchanged.
+      byId[item.id] =
+          existing == null ? item : mergeExploreDestination(existing, item);
     }
     return byId.values.toList(growable: false);
   }

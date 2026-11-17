@@ -906,5 +906,14 @@
       "name": {}
     }
   },
-  "staysSubtitle": "إقامات تناسب رحلتك"
+  "staysSubtitle": "إقامات تناسب رحلتك",
+  "offerAirline": "شركة الطيران",
+  "offerFlightNumber": "رقم الرحلة",
+  "offerDeparture": "المغادرة",
+  "offerArrival": "الوصول",
+  "offerStops": "المحطات",
+  "offerLayoverLabel": "التوقف",
+  "flightCardShowDetails": "تفاصيل الرحلة",
+  "flightCardHideDetails": "إخفاء التفاصيل",
+  "flightCardViewOffer": "عرض العرض والحجز"
 }

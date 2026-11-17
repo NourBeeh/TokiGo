@@ -13,6 +13,7 @@ import 'package:tokigo/features/home/domain/explore_catalog_integrity.dart';
 import 'package:tokigo/features/home/domain/explore_catalog_item.dart';
 import 'package:tokigo/features/home/domain/explore_city_image.dart';
 import 'package:tokigo/features/home/domain/explore_home_section.dart';
+import 'package:tokigo/features/home/presentation/pages/city_page.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_discovery_stay_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_section_titles.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
@@ -250,6 +251,94 @@ void main() {
       final AppLocalizations ar = lookupAppLocalizations(const Locale('ar'));
       expect(ar.destinationCityName(city.name.toLowerCase().replaceAll(' ', '_')),
           isNot(equals(city.name.toLowerCase().replaceAll(' ', '_'))));
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('description integrity', () {
+    Map<String, dynamic> manifest() {
+      final File manifest = File('assets/explore/manifest.json');
+      return jsonDecode(manifest.readAsStringSync()) as Map<String, dynamic>;
+    }
+
+    Map<String, String> manifestDescriptions() {
+      final List<dynamic> images = manifest()['images'] as List<dynamic>;
+      return <String, String>{
+        for (final dynamic entry in images)
+          Map<String, dynamic>.from(entry)['cityId'] as String:
+              (Map<String, dynamic>.from(entry)['description'] as String? ??
+                      '')
+                  .trim(),
+      };
+    }
+
+    test('every catalog description is the full manifest description', () {
+      final Map<String, String> byId = manifestDescriptions();
+      for (final ExploreCity city in kExploreCities) {
+        final String expected =
+            byId[city.id]!.replaceAll(RegExp(r'\s+'), ' ').trim();
+        expect(city.subtitle ?? '', expected,
+            reason: '${city.id} description is truncated or altered');
+      }
+    });
+
+    test('no description is still cut at the old 80-character limit', () {
+      final Map<String, String> byId = manifestDescriptions();
+      int longOnes = 0;
+      for (final ExploreCity city in kExploreCities) {
+        final String source = byId[city.id]!;
+        if (source.length <= 80) continue;
+        longOnes++;
+        expect(city.subtitle ?? '', source.replaceAll(RegExp(r'\s+'), ' ').trim(),
+            reason: '${city.id} is still cut at 80 characters');
+      }
+      expect(longOnes, greaterThan(0),
+          reason: 'expected some source descriptions longer than 80 chars');
+    });
+
+    test('catalog provenance matches the manifest record for every city', () {
+      final List<dynamic> images = manifest()['images'] as List<dynamic>;
+      final Map<String, Map<String, dynamic>> byId =
+          <String, Map<String, dynamic>>{
+        for (final dynamic entry in images)
+          Map<String, dynamic>.from(entry)['cityId'] as String:
+              Map<String, dynamic>.from(entry),
+      };
+      for (final ExploreCity city in kExploreCities) {
+        final Map<String, dynamic> image = byId[city.id]!;
+        expect(city.imageCredit, image['author'],
+            reason: '${city.id} author mismatch');
+        expect(city.imageLicense, image['license'],
+            reason: '${city.id} license mismatch');
+        expect(city.imageSource, image['source'],
+            reason: '${city.id} source mismatch');
+        expect(city.asset, image['asset'], reason: '${city.id} asset mismatch');
+      }
+    });
+
+    testWidgets('the city page shows the complete catalog description',
+        (WidgetTester tester) async {
+      final ExploreCity city = kExploreCities
+          .firstWhere((ExploreCity c) => (c.subtitle ?? '').length > 80);
+      final HomeItem item = exploreCityToHomeItem(city);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          locale: const Locale('en'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: CityPage(city: item),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(city.subtitle!), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

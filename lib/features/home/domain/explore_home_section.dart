@@ -59,9 +59,11 @@ HomeSection buildAllCitiesSection() {
 /// Appends backend destination cards to the curated selection, de-duplicated
 /// by id, and returns the resulting Home section.
 ///
-/// The catalog cities are never dropped: a backend item with the same id
-/// replaces the catalog entry (the backend's own copy of the same city), and
-/// anything else is appended after the curated rail.
+/// The catalog cities are never dropped: a backend item with the same id is
+/// merged FIELD BY FIELD into the catalog entry (see
+/// [mergeExploreDestination]) rather than replacing it wholesale, so an
+/// incomplete backend record cannot strip a city's bundled photo or its
+/// verified provenance. Anything else is appended after the curated rail.
 HomeSection mergeBackendDestinations(
   HomeSection explore, {
   required List<HomeItem> backendDestinations,
@@ -73,9 +75,11 @@ HomeSection mergeBackendDestinations(
   for (final HomeItem item in backendDestinations) {
     if (item.id.trim().isEmpty) continue;
     if (byId.containsKey(item.id)) {
-      // Same city from the backend: keep ONE entry, the backend's copy.
+      // Same city from the backend: merge the backend's facts into the
+      // catalog entry, keeping the catalog's bundled image unless the backend
+      // carries a valid one of its own.
       final int index = items.indexWhere((HomeItem e) => e.id == item.id);
-      items[index] = item;
+      items[index] = mergeExploreDestination(items[index], item);
       continue;
     }
     byId[item.id] = item;
@@ -90,4 +94,70 @@ HomeSection mergeBackendDestinations(
     isPaginated: explore.isPaginated,
     metadata: explore.metadata,
   );
+}
+
+/// True when [imageUrl] is a usable bundled Explore photo.
+///
+/// Explore cards are bundled-only by contract: a remote URL would introduce
+/// network loading, and an empty/garbage string would blank the card. So only
+/// an `assets/...` path counts as a valid image here; anything else
+/// (null, empty, http(s), other schemes) is ignored by the merge.
+bool isValidExploreImageSource(String? imageUrl) {
+  final String value = (imageUrl ?? '').trim();
+  return value.startsWith('assets/');
+}
+
+/// Merges a backend destination into its catalog counterpart, field by field.
+///
+/// The catalog entry is the base and keeps its identity (id, type) and every
+/// fact the backend does not actually provide. A backend field wins only when
+/// it carries a real value:
+///
+/// * [HomeItem.imageUrl] wins only when it is a bundled asset path
+///   ([isValidExploreImageSource]) — otherwise the catalog's photo stays, so a
+///   backend record with a missing/empty/remote image can never remove it.
+/// * [HomeItem.title], [HomeItem.subtitle], [HomeItem.description] and
+///   [HomeItem.tags] win only when non-empty after trimming.
+/// * [HomeItem.metadata] is overlaid key by key, skipping null/empty backend
+///   values so incomplete backend data cannot erase catalog provenance.
+/// * Scalar facts ([HomeItem.price], [HomeItem.rating], …) win when non-null.
+///
+/// The result is a normal [HomeItem]; no remote image loading is introduced.
+HomeItem mergeExploreDestination(HomeItem catalog, HomeItem backend) {
+  final Map<String, dynamic> metadata = <String, dynamic>{...catalog.metadata};
+  backend.metadata.forEach((String key, Object? value) {
+    if (value == null) return;
+    if (value is String && value.trim().isEmpty) return;
+    metadata[key] = value;
+  });
+
+  return HomeItem(
+    // Catalog identity is stable: the id and card type never change.
+    id: catalog.id,
+    type: catalog.type,
+    title: backend.title.trim().isNotEmpty ? backend.title : catalog.title,
+    subtitle: _nonEmpty(backend.subtitle) ?? catalog.subtitle,
+    description: _nonEmpty(backend.description) ?? catalog.description,
+    imageUrl: isValidExploreImageSource(backend.imageUrl)
+        ? backend.imageUrl
+        : catalog.imageUrl,
+    price: backend.price ?? catalog.price,
+    currency: backend.currency ?? catalog.currency,
+    customerPrice: backend.customerPrice ?? catalog.customerPrice,
+    rating: backend.rating ?? catalog.rating,
+    reviewCount: backend.reviewCount ?? catalog.reviewCount,
+    badge: backend.badge ?? catalog.badge,
+    highlights: backend.highlights.isNotEmpty
+        ? backend.highlights
+        : catalog.highlights,
+    tags: backend.tags.isNotEmpty ? backend.tags : catalog.tags,
+    actionLabel: backend.actionLabel ?? catalog.actionLabel,
+    rawPrice: backend.rawPrice ?? catalog.rawPrice,
+    metadata: metadata,
+  );
+}
+
+String? _nonEmpty(String? value) {
+  final String trimmed = (value ?? '').trim();
+  return trimmed.isEmpty ? null : trimmed;
 }
