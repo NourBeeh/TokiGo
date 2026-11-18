@@ -83,6 +83,89 @@ void main() {
     });
   });
 
+  group('Phase 3.2 monochrome policy', () {
+    // Owner decision: the UI is strictly black/white/grey. The only red left in
+    // the product is the TokiGo wordmark (brandRed / wordmarkOnMedia).
+    bool isNeutral(Color c) {
+      final int argb = c.toARGB32();
+      final int r = (argb >> 16) & 0xFF;
+      final int g = (argb >> 8) & 0xFF;
+      final int b = argb & 0xFF;
+      return r == g && g == b;
+    }
+
+    Map<String, Color> uiRoles(TokiGoColors c) => <String, Color>{
+          'primary': c.primary,
+          'onPrimary': c.onPrimary,
+          'primaryContainer': c.primaryContainer,
+          'onPrimaryContainer': c.onPrimaryContainer,
+          'onDangerContainer': c.onDangerContainer,
+          'danger': c.danger,
+          'dangerContainer': c.dangerContainer,
+          'heart': c.heart,
+          'success': c.success,
+          'successContainer': c.successContainer,
+          'onSuccessContainer': c.onSuccessContainer,
+          'successStrong': c.successStrong,
+          'warning': c.warning,
+          'warningContainer': c.warningContainer,
+          'onWarningContainer': c.onWarningContainer,
+          'warningInk': c.warningInk,
+          'info': c.info,
+          'infoContainer': c.infoContainer,
+        };
+
+    test('every UI semantic role is neutral in both themes', () {
+      for (final TokiGoColors c in <TokiGoColors>[light, dark]) {
+        uiRoles(c).forEach((String role, Color value) {
+          expect(isNeutral(value), isTrue, reason: '$role carries a hue');
+        });
+      }
+    });
+
+    test('the wordmark keeps its red — the single permitted exception', () {
+      expect(light.brandRed, const Color(0xFFFF2D2D));
+      expect(dark.brandRed, const Color(0xFFFF5C5C));
+      expect(light.brandRed.toARGB32() >> 16, greaterThan(0));
+      expect(light.wordmarkOnMedia, const Color(0xFFFFC9C9));
+    });
+
+    test('the neutral status inks clear AA on their containers', () {
+      expect(
+        _contrastRatio(light.onSuccessContainer, light.successContainer),
+        greaterThan(4.5),
+      );
+      expect(
+        _contrastRatio(dark.onSuccessContainer, dark.successContainer),
+        greaterThan(4.5),
+      );
+      expect(
+        _contrastRatio(light.onWarningContainer, light.warningContainer),
+        greaterThan(4.5),
+      );
+      expect(
+        _contrastRatio(dark.onWarningContainer, dark.warningContainer),
+        greaterThan(4.5),
+      );
+      expect(
+        _contrastRatio(light.onDangerContainer, light.dangerContainer),
+        greaterThan(4.5),
+      );
+      expect(
+        _contrastRatio(dark.onDangerContainer, dark.dangerContainer),
+        greaterThan(4.5),
+      );
+      expect(
+        _contrastRatio(light.onPrimaryContainer, light.primaryContainer),
+        greaterThan(4.5),
+      );
+      expect(
+        _contrastRatio(dark.onPrimaryContainer, dark.primaryContainer),
+        greaterThan(4.5),
+      );
+    });
+  });
+
   group('gradient accents', () {
     test('the accent ramp is neutral — a value step, never a hue', () {
       // The former Instagram purple → red → orange ramp is retired: the ramp

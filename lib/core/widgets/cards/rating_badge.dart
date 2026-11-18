@@ -5,9 +5,9 @@ import 'package:tokigo/core/theme/app_typography.dart';
 
 /// The circular score disc that sits on a photo's top corner.
 ///
-/// The reference paints a white numeral on green. Plain [context.tokigoColors.success]
-/// #16A34A with white is only 3.4:1 — below AA — so the disc uses
-/// [context.tokigoColors.successStrong] #15803D (5.0:1) instead.
+/// The reference paints a white numeral on a coloured disc. This design is
+/// strictly monochrome, so the disc uses the neutral ink
+/// [context.tokigoColors.successStrong] (#262626, 15.1:1 with white) instead.
 ///
 /// The score is passed pre-formatted because the system is used on a 10-point
 /// scale and a 5-point scale in different verticals; the widget never guesses.

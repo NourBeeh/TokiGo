@@ -72,36 +72,30 @@ abstract final class AppColors {
   static const Color onAiContainer = Color(0xFF262626);
 
   // ---------------------------------------------------------------------------
-  // Semantic / feedback (the only hues in the system)
+  // Semantic / feedback — strictly monochrome. Meaning is carried by icon and
+  // label; hue is reserved for the TokiGo wordmark alone.
   // ---------------------------------------------------------------------------
-  static const Color success = Color(0xFF16A34A);
-  static const Color successContainer = Color(0xFFE5F6EC);
+  static const Color success = Color(0xFF262626);
+  static const Color successContainer = Color(0xFFEFEFEF);
 
-  /// The green that carries WHITE text — the rating badge above all.
-  ///
-  /// [success] #16A34A with white measures 3.4:1 and fails AA, so anything that
-  /// paints a white numeral on green uses this darker step instead (5.0:1).
-  /// Keep [success] for green text on a light container.
-  static const Color successStrong = Color(0xFF15803D);
+  /// The rating badge fill — the neutral ink, which carries WHITE text (15.1:1).
+  static const Color successStrong = Color(0xFF262626);
 
-  /// AA-passing green for text ON [successContainer] (6.4:1).
-  /// [success] itself is only 2.9:1 there.
-  static const Color onSuccessContainer = Color(0xFF166534);
-  static const Color warning = Color(0xFFD97706);
-  static const Color warningContainer = Color(0xFFFCF1E3);
+  /// AA-passing ink for text ON [successContainer].
+  static const Color onSuccessContainer = Color(0xFF262626);
+  static const Color warning = Color(0xFF262626);
+  static const Color warningContainer = Color(0xFFF5F5F5);
 
-  /// AA-passing amber for text ON [warningContainer] (6.4:1).
-  /// [warning] itself is only 2.9:1 there.
-  static const Color onWarningContainer = Color(0xFF92400E);
+  /// AA-passing ink for text ON [warningContainer].
+  static const Color onWarningContainer = Color(0xFF262626);
 
-  /// Warning text on WHITE (5.02:1).
-  static const Color warningInk = Color(0xFFB45309);
-  static const Color danger = Color(0xFFE11D48);
-  static const Color dangerContainer = Color(0xFFFCEAEF);
+  /// Warning text on WHITE.
+  static const Color warningInk = Color(0xFF262626);
+  static const Color danger = Color(0xFF262626);
+  static const Color dangerContainer = Color(0xFFF0F0F0);
 
-  /// The favourite heart fill. Same tone as [danger] — named for what it is,
-  /// so a card never has to reach for a semantic token to paint a heart.
-  static const Color heart = Color(0xFFE11D48);
+  /// The favourite heart fill — neutral, like every other interactive tone.
+  static const Color heart = Color(0xFF262626);
 
   /// Class stars on the discover card — deliberately grey, not bronze: they
   /// describe the property's class, not the guest score.
