@@ -705,7 +705,7 @@ void main() {
       );
     }
 
-    testWidgets('initial loading with no cached data shows the skeletons', (
+    testWidgets('initial loading renders the bundled Explore rail + Stays skeleton', (
       WidgetTester tester,
     ) async {
       phoneSize(tester);
@@ -716,10 +716,12 @@ void main() {
       await tester.pumpWidget(pageHost(controller));
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Discover + Stays placeholders are the real cards in their loading state.
+      // Explore is bundled on-device, so it renders immediately while the feed
+      // is still pending — no full-page skeleton on a slow/unreachable backend.
       // The Stays skeleton is the approved split card, so the feed does not
       // jump when the real stays land.
-      expect(find.byType(HomeDiscoveryStayCard), findsOneWidget);
+      expect(find.byType(HomeDiscoveryStayCard), findsWidgets);
+      expect(find.text('Paris'), findsWidgets);
       expect(find.byType(HomeStayCard), findsOneWidget);
       expect(find.byType(HomeSplitStayCard), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -799,11 +801,11 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.byType(HomeDiscoveryStayCard), findsOneWidget);
+      expect(find.byType(HomeDiscoveryStayCard), findsWidgets);
       expect(find.byType(HomeStayCard), findsOneWidget);
       expect(
         Directionality.of(
-          tester.element(find.byType(HomeDiscoveryStayCard)),
+          tester.element(find.byType(HomeDiscoveryStayCard).first),
         ),
         TextDirection.rtl,
       );

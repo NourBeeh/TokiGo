@@ -20,7 +20,6 @@ import 'package:tokigo/features/home/presentation/home_controller.dart';
 import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_top_bar.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_ai_search_field.dart';
-import 'package:tokigo/features/home/presentation/widgets/destination_cover_flow_carousel.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_section.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stays_carousel.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart';
@@ -360,6 +359,33 @@ class _HomePageState extends ConsumerState<HomePage>
     ];
   }
 
+  /// The Explore rail as a sliver list.
+  ///
+  /// Shared by the loading, empty and success states so the bundled catalog is
+  /// rendered immediately — the feed can add backend destinations on top, but
+  /// it must never be a precondition for Explore to exist.
+  List<Widget> _exploreRailSlivers(List<HomeSection> visibleSections) {
+    return <Widget>[
+      SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) => HomeSectionWidget(
+            // ONE anchor for the Discover section — a GlobalKey may only
+            // ever sit on a single widget.
+            key: index == 0 ? _discoverKey : null,
+            section: visibleSections[index],
+            onFlightTap: (HomeItem flight) =>
+                _selectFlightForBooking(ref, flight),
+            onViewAllFlights: () => context.push('/flights'),
+            onFavorite: (flightId, value) {
+              // Handle wishlist change
+            },
+          ),
+          childCount: visibleSections.length,
+        ),
+      ),
+    ];
+  }
+
   /// A section whose items are all destinations is Home's Discover section
   /// (DS-6) — the anchor the results page scrolls to.
   static bool _isDiscoverSection(HomeSection section) =>
@@ -403,9 +429,13 @@ class _HomePageState extends ConsumerState<HomePage>
               const <HomeItem>[]);
     switch (state.status) {
       case HomeStatus.loading:
-        return const <Widget>[
-          SliverToBoxAdapter(child: _DiscoverSkeletonList()),
-          SliverToBoxAdapter(child: _StaysSkeletonList()),
+        return <Widget>[
+          // The bundled Explore catalog is on-device, so it NEVER waits for the
+          // feed: on a slow or unreachable backend the cities are already on
+          // screen instead of a full-page skeleton. Only the Stays rail (which
+          // is provider-backed) stays in its loading state.
+          ..._exploreRailSlivers(visibleSections),
+          const SliverToBoxAdapter(child: _StaysSkeletonList()),
         ];
       // The bundled Explore catalog is on-device, so a FAILED feed (offline,
       // server down) must not blank Home: the rail still renders. The global
@@ -422,23 +452,7 @@ class _HomePageState extends ConsumerState<HomePage>
           // Owner decision (2026-10-26): Discover leads the feed — the city
           // rail is the traveller's first "where next?" cue, and Stays
           // follows it.
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) => HomeSectionWidget(
-                // ONE anchor for the Discover section — a GlobalKey may only
-                // ever sit on a single widget.
-                key: index == 0 ? _discoverKey : null,
-                section: visibleSections[index],
-                onFlightTap: (HomeItem flight) =>
-                    _selectFlightForBooking(ref, flight),
-                onViewAllFlights: () => context.push('/flights'),
-                onFavorite: (flightId, value) {
-                  // Handle wishlist change
-                },
-              ),
-              childCount: visibleSections.length,
-            ),
-          ),
+          ..._exploreRailSlivers(visibleSections),
           // Recommended stays (doc 17 §3.5): section header + card A, paged
           // horizontally — one stay per swipe (owner decision, 2026-10-25).
           // Phase 1B: the composer renders these as "Picked for You" for
@@ -621,46 +635,6 @@ class _CenteredFeedState extends StatelessWidget {
 }
 
 // ─── Discover (card D) ────────────────────────────────────────────────────────
-
-/// The loading state of the Discover rail.
-///
-/// Discover leads the feed, so its placeholder leads the loading feed too. It
-/// is the SAME [DestinationCoverFlowCarousel] the loaded feed uses, in its
-/// loading state: the rail height, page width and photo ratio are the rail's
-/// own, so nothing moves when the first city lands. One page only — the
-/// skeleton never pretends there are cities to swipe before any has arrived.
-class _DiscoverSkeletonList extends StatelessWidget {
-  const _DiscoverSkeletonList();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        const Padding(
-          padding: EdgeInsetsDirectional.fromSTEB(
-            AppSpacing.lg,
-            AppSpacing.xl,
-            AppSpacing.lg,
-            AppSpacing.md,
-          ),
-          child: Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: ShimmerBox(
-              height: AppSpacing.xl,
-              width: HomeCardDimensions.sectionTitleSkeletonWidth,
-            ),
-          ),
-        ),
-        DestinationCoverFlowCarousel(
-          items: const <HomeItem>[],
-          onItemTap: null,
-          loading: true,
-        ),
-      ],
-    );
-  }
-}
 
 // ─── Recommended stays (card A) ───────────────────────────────────────────────
 
