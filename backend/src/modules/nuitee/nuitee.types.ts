@@ -16,6 +16,8 @@ export interface NuiteeSearchParams {
   occupancies?: { adults: number; children?: number[] }[];
   /** ISO-2 country of the city. Omitted → resolved from the city table. */
   country?: string;
+  /** Guest residency/nationality required by the provider. Default EG. */
+  nationality?: string;
   /** Hotel content language. Omitted preserves Nuitee's default (English). */
   language?: 'en' | 'ar';
 }

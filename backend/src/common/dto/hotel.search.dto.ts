@@ -92,6 +92,15 @@ export class HotelSearchDto {
   @Matches(/^[A-Za-z]{2}$/)
   country?: string | null;
 
+  /**
+   * Guest residency/nationality (ISO-3166-1 alpha-2). The provider requires
+   * it for pricing; it defaults to EG and is part of the cache identity.
+   */
+  @IsOptional()
+  @IsString()
+  @Matches(/^[A-Za-z]{2}$/)
+  nationality?: string | null;
+
   /** MarketContext selector (ISO-3166-1 alpha-2). Display currency/locale. */
   @IsOptional()
   @IsString()

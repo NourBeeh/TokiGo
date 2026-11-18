@@ -1,9 +1,24 @@
-import { Controller, Get, Query, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { OptimizeImageDto } from '../../common/dto/image.dto';
 import {
   ImageProxyService,
   IMAGE_CDN_CACHE_CONTROL,
 } from './image-proxy.service';
+import { ImageProcessingService } from './image-processing.service';
+import { ImageService } from './image.service';
 
 /**
  * `GET /images/hotel?src=<original>&w=480&f=webp`
@@ -15,7 +30,11 @@ import {
  */
 @Controller('images')
 export class ImagesController {
-  constructor(private readonly proxy: ImageProxyService) {}
+  constructor(
+    private readonly proxy: ImageProxyService,
+    private readonly processing: ImageProcessingService,
+    private readonly stored: ImageService,
+  ) {}
 
   @Get('hotel')
   async hotel(
@@ -61,5 +80,37 @@ export class ImagesController {
     }
 
     res.status(200).send(image.bytes);
-  }
-}
+      }
+
+      /**
+       * Optimize a provider image into the CDN and persist its metadata.
+       * Runs in the background when Redis is available, inline otherwise.
+       */
+      @Post('hotel-image')
+      @UseGuards(JwtAuthGuard)
+      async optimize(@Req() req: Request, @Body() dto: OptimizeImageDto) {
+        return this.processing.request({
+          sourceUrl: dto.sourceUrl,
+          hotelId: dto.hotelId ?? null,
+          width: dto.width,
+        });
+      }
+
+      /** Stored image metadata (CDN URL + encoding facts). Never binary data. */
+      @Get('hotel-image/:id')
+      async storedImage(@Param('id', ParseUUIDPipe) id: string) {
+        const image = await this.stored.findById(id);
+        if (!image) {
+          return { error: 'not_found' };
+        }
+        return {
+          id: image.id,
+          hotelId: image.hotelId ?? null,
+          cdnUrl: image.cdnUrl,
+          width: image.width ?? null,
+          height: image.height ?? null,
+          contentType: image.contentType,
+          cacheControl: image.cacheControl,
+        };
+      }
+    }

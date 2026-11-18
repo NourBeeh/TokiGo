@@ -111,6 +111,14 @@
 		<string>TokiGo converts your spoken search into text on this device.</string>
 		<key>NSUserNotificationsUsageDescription</key>
 		<string>TokiGo sends trip reminders and booking updates.</string>
+		<key>NSAppTransportSecurity</key>
+		<dict>
+			<!-- Debug/local development only: allows the app to reach the backend
+			     over cleartext HTTP on the local network (localhost / 192.168.x.x).
+			     Release builds should serve the API over HTTPS instead. -->
+			<key>NSAllowsLocalNetworking</key>
+			<true/>
+		</dict>
 		<key>ITSAppUsesNonExemptEncryption</key>
 		<false/>
 		<key>UIStatusBarHidden</key>

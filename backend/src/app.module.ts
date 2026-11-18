@@ -7,6 +7,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 import googleConfig from './config/google.config';
+import meilisearchConfig from './config/meilisearch.config';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ProvidersModule } from './modules/providers/providers.module';
@@ -26,13 +27,15 @@ import { RecommendModule } from './modules/recommend/recommend.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { MemoryModule } from './modules/memory/memory.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
+import { DiscoveryModule } from './modules/discovery/discovery.module';
+import { QueueModule } from './common/queue/queue.module';
 
 @Module({
   imports: [
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 30 }]),
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, jwtConfig, googleConfig],
+      load: [databaseConfig, jwtConfig, googleConfig, meilisearchConfig],
       envFilePath: ['.env', '../.env'],
     }),
     TypeOrmModule.forRootAsync({
@@ -86,6 +89,8 @@ import { BookingsModule } from './modules/bookings/bookings.module';
     PaymentsModule,
     MemoryModule,
     BookingsModule,
+    DiscoveryModule,
+    QueueModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

@@ -91,7 +91,8 @@ export class NuiteeService implements HotelProvider {
         checkin: checkInStr,
         checkout: checkOutStr,
         currency: 'USD',
-        guestNationality: 'EG',
+        guestNationality:
+          params.nationality?.trim().toUpperCase() || 'EG',
         occupancies,
         // Keep responses lean: top rate per room type, capped hotel set.
         maxRatesPerHotel: 2,

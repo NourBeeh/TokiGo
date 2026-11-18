@@ -4,6 +4,13 @@ import { CacheService } from '../cache/cache.service';
 import { PricingService } from '../../common/market/pricing.service';
 import { DEFAULT_MARKET } from '../../common/market/market-context';
 import { countryFor } from '../nuitee/nuitee.cities';
+import {
+  HOTEL_SEARCH_CACHE_TTL_SECONDS,
+  HOTEL_SEARCH_LOCK_TTL_MS,
+  HOTEL_SEARCH_WAIT_MS,
+  hotelSearchCacheKey,
+} from './hotel-search-key';
+import { CacheLockService } from '../../common/cache/cache-lock.service';
 
 /** Per-provider search budget (spec points 12/15) — one slow provider never
  *  hangs the whole fan-out; the rest of the results still return. */
@@ -45,6 +52,13 @@ export class SearchService {
    */
   providerTimeoutMs: number = PROVIDER_TIMEOUT_MS;
 
+  /**
+   * Cache stampede protection. Instantiated directly (not constructor-injected)
+   * so existing `new SearchService(registry, cache, pricing)` call sites and
+   * tests keep working; tests can still replace it with a fake.
+   */
+  private readonly locks = new CacheLockService();
+
   constructor(
     private readonly registry: ProviderRegistryImpl,
     private readonly cache: CacheService,
@@ -70,8 +84,26 @@ export class SearchService {
     market?: string,
     currency?: string,
   ) {
-    const cacheKey = canonicalSearchCacheKey(vertical, params, market, currency);
-    const cached = await this.cache.get(cacheKey);
+    const isHotel = vertical === 'hotel';
+    // Hotel searches use the mandated `hotels:{city}:{checkin}` identity and
+    // the fixed 45s live-search TTL; other verticals keep their existing key
+    // format and configurable presentation TTL.
+    const cacheKey = isHotel
+      ? hotelSearchCacheKey(params ?? {}, market, currency)
+      : canonicalSearchCacheKey(vertical, params, market, currency);
+    const ttlSeconds = isHotel
+      ? HOTEL_SEARCH_CACHE_TTL_SECONDS
+      : searchCacheTtlSeconds();
+
+    let cached: any = null;
+    try {
+      cached = await this.cache.get(cacheKey);
+    } catch (error) {
+      // A cache outage must degrade to the provider, never fail the search.
+      this.logger.debug(
+        `Cache read failed for ${cacheKey}: ${(error as Error).message}`,
+      );
+    }
     if (cached) return cached;
 
     const providers =
@@ -85,33 +117,81 @@ export class SearchService {
     // Display currency is a pricing input, never a provider input.
     delete providerParams.currency;
 
-    // Fan-out with a per-provider timeout budget: a hung or slow provider
-    // resolves as a failure after the budget instead of blocking the whole
-    // search (partial-failure isolation, spec point 12).
-    const settled = await Promise.allSettled(
-      providers.map((p) =>
-        withTimeout(
-          p[method](providerParams),
-          this.providerTimeoutMs,
-          p.providerId as string,
-        ).catch((err) => {
-          // Attribute provider-side errors (incl. duffel SDK exceptions that
-          // carry no identity) so failures[] never loses attribution.
-          if (err instanceof Error && !('providerId' in err)) {
-            (err as any).providerId = p.providerId;
-          }
-          throw err;
-        }),
-      ),
-    );
+    const fetch = async () => {
+      // Fan-out with a per-provider timeout budget: a hung or slow provider
+      // resolves as a failure after the budget instead of blocking the whole
+      // search (partial-failure isolation, spec point 12).
+      const settled = await Promise.allSettled(
+        providers.map((p) =>
+          withTimeout(
+            p[method](providerParams),
+            this.providerTimeoutMs,
+            p.providerId as string,
+          ).catch((err) => {
+            // Attribute provider-side errors (incl. duffel SDK exceptions that
+            // carry no identity) so failures[] never loses attribution.
+            if (err instanceof Error && !('providerId' in err)) {
+              (err as any).providerId = p.providerId;
+            }
+            throw err;
+          }),
+        ),
+      );
 
-    const aggregated = await this.aggregateWithPricing(settled, market, currency);
-    // Only fully-successful aggregations are cached; a partial-failure
-    // response is re-fetched next time (the failing provider may recover).
-    if (aggregated.failures.length === 0) {
-      await this.cache.set(cacheKey, aggregated, searchCacheTtlSeconds());
+      const aggregated = await this.aggregateWithPricing(
+        settled,
+        market,
+        currency,
+      );
+      // Only fully-successful aggregations are cached; a partial-failure
+      // response is re-fetched next time (the failing provider may recover).
+      // An empty provider set is not a result either — it is an absent
+      // catalogue and must not be served as "no availability".
+      if (
+        aggregated.failures.length === 0 &&
+        aggregated.successes.length > 0
+      ) {
+        try {
+          await this.cache.set(cacheKey, aggregated, ttlSeconds);
+        } catch (error) {
+          this.logger.debug(
+            `Cache write failed for ${cacheKey}: ${(error as Error).message}`,
+          );
+        }
+      }
+      return aggregated;
+    };
+
+    // Single-flight + distributed lock: identical concurrent searches share
+    // one provider fan-out, across processes too. Lock losers wait briefly
+    // for the winner's cache entry before doing their own bounded fetch.
+    return this.locks.singleFlight(cacheKey, async () => {
+      const locked = await this.locks.withLock(
+        `lock:search:${cacheKey}`,
+        HOTEL_SEARCH_LOCK_TTL_MS,
+        fetch,
+      );
+      if (locked.acquired) return locked.value;
+
+      const waited = await this.waitForCache(cacheKey, HOTEL_SEARCH_WAIT_MS);
+      if (waited) return waited;
+      return fetch();
+    });
+  }
+
+  /** Polls the cache until [timeoutMs] for another process to publish [key]. */
+  private async waitForCache(key: string, timeoutMs: number): Promise<any | null> {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      try {
+        const value = await this.cache.get(key);
+        if (value) return value;
+      } catch {
+        // Keep waiting; the cache may recover.
+      }
     }
-    return aggregated;
+    return null;
   }
 
   /**
