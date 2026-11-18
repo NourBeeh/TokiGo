@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:tokigo/core/theme/app_elevation.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 
 /// The shared layout container for every card in the system.
 ///
@@ -123,7 +124,10 @@ class _BaseCardState extends State<BaseCard> {
                           ? Border.all(
                               color:
                                   widget.borderColor ??
-                                  scheme.outlineVariant.withValues(alpha: 0.4),
+                                  (Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? context.tokigoColors.hairlineStrong
+                                      : context.tokigoColors.hairline),
                             )
                           : null,
                       boxShadow: widget.showShadow && !_pressed

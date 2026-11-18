@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
+import 'package:tokigo/core/theme/tokigo_gradients.dart';
+import 'package:tokigo/core/theme/app_elevation.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -18,7 +19,6 @@ class AiEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final tc = context.tokigoColors;
     final typography = AppTypography.forLight();
-    final scheme = Theme.of(context).colorScheme;
 
     return Center(
       child: SingleChildScrollView(
@@ -31,21 +31,19 @@ class AiEmptyState extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _mark(scheme, const EdgeInsets.only(bottom: AppSpacing.xl)),
+              _mark(tc, const EdgeInsets.only(bottom: AppSpacing.xl)),
               Text(
                 AppLocalizations.of(context)?.aiTravelCopilot ??
                     'Your travel co-pilot',
                 textAlign: TextAlign.center,
-                style: typography.headline.copyWith(color: scheme.onSurface),
+                style: typography.headline.copyWith(color: tc.textPrimary),
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
                 'Ask anything about your trip — flights, stays, cars, '
                 'or day-to-day travel know-how.',
                 textAlign: TextAlign.center,
-                style: typography.body.copyWith(
-                  color: typography.textMutedColor,
-                ),
+                style: typography.body.copyWith(color: tc.textSecondary),
               ),
               const SizedBox(height: AppSpacing.xl),
               Container(
@@ -54,14 +52,12 @@ class AiEmptyState extends StatelessWidget {
                   vertical: AppSpacing.xs,
                 ),
                 decoration: BoxDecoration(
-                  color: scheme.surfaceContainerHighest,
+                  color: tc.surfaceTertiary,
                   borderRadius: AppRadius.pillBorder,
                 ),
                 child: Text(
                   'Ready · AI mode',
-                  style: typography.label.copyWith(
-                    color: typography.textMutedColor,
-                  ),
+                  style: typography.label.copyWith(color: tc.textSecondary),
                 ),
               ),
             ],
@@ -71,7 +67,7 @@ class AiEmptyState extends StatelessWidget {
     );
   }
 
-  Widget _mark(ColorScheme scheme, EdgeInsets padding) {
+  Widget _mark(TokiGoColors tc, EdgeInsets padding) {
     return Padding(
       padding: padding,
       child: Container(
@@ -79,20 +75,13 @@ class AiEmptyState extends StatelessWidget {
         height: 96,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: <Color>[scheme.primary, scheme.onSurfaceVariant],
+          gradient: TokiGoGradients.brandGradient(),
+          boxShadow: AppElevation.shadow(
+            background: tc.surface,
+            level: AppElevation.sm,
           ),
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: scheme.primary.withValues(alpha: 0.28),
-              blurRadius: 40,
-              offset: const Offset(0, 12),
-            ),
-          ],
         ),
-        child: Icon(Icons.auto_awesome, size: 40, color: scheme.onPrimary),
+        child: Icon(Icons.auto_awesome, size: 40, color: tc.onMedia),
       ),
     );
   }

@@ -70,70 +70,76 @@ class HomeSectionWidget extends StatelessWidget {
       return _buildDealVerticalList(context);
     }
 
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text(
-                    HomeSectionTitles.title(l10n, section.metadata, section.title),
-                    style: AppTypography.forLight().titleMedium.copyWith(
-                      color: context.tokigoColors.textPrimary,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+    final bool dark = Theme.of(context).brightness == Brightness.dark;
+    final AppTypography typography = dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
+    // ONE header rhythm: the same padding the shared `SectionHeader` paints,
+    // so Home's own headers and the shared one land on the same lines.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Padding(
+          padding: HomeCardDimensions.sectionHeaderPadding,
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  HomeSectionTitles.title(
+                    l10n,
+                    section.metadata,
+                    section.title,
                   ),
+                  style: typography.titleMedium.copyWith(
+                    color: context.tokigoColors.textPrimary,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                if (_isDestinationOnlySection)
-                  // Owner decision (2026-11): the Explore section's "view all"
-                  // affordance is a SMALL, obviously pressable chip — not a
-                  // bare text link that reads as a label.
-                  Pressable(
-                    onTap: () => context.push('/explore'),
-                    child: Container(
-                      padding: const EdgeInsetsDirectional.symmetric(
-                        horizontal: AppSpacing.md,
-                        vertical: AppSpacing.xs,
+              ),
+              if (_isDestinationOnlySection)
+                // Owner decision (2026-11): the Explore section's "view all"
+                // affordance is a SMALL, obviously pressable chip — not a
+                // bare text link that reads as a label.
+                Pressable(
+                  onTap: () => context.push('/explore'),
+                  child: Container(
+                    padding: const EdgeInsetsDirectional.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: HomeDesignTokens.surfaceOf(context),
+                      borderRadius: AppRadius.pillBorder,
+                      border: Border.all(
+                        color: HomeDesignTokens.borderOf(context),
                       ),
-                      decoration: BoxDecoration(
-                        color: HomeDesignTokens.surfaceOf(context),
-                        borderRadius: AppRadius.pillBorder,
-                        border: Border.all(
-                          color: HomeDesignTokens.borderOf(context),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Text(
-                            l10n?.viewAll ?? 'View all',
-                            style: AppTypography.forLight().captionSemibold
-                                .copyWith(
-                                  color: HomeDesignTokens.accentOf(context),
-                                ),
-                          ),
-                          const SizedBox(width: AppSpacing.xxs),
-                          Icon(
-                            Icons.arrow_forward_rounded,
-                            size: 14,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text(
+                          l10n?.viewAll ?? 'View all',
+                          style: typography.captionSemibold.copyWith(
                             color: HomeDesignTokens.accentOf(context),
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: AppSpacing.xxs),
+                        Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 14,
+                          color: HomeDesignTokens.accentOf(context),
+                        ),
+                      ],
                     ),
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
-          const SizedBox(height: AppSpacing.sm),
-          _buildItems(context),
-        ],
-      ),
+        ),
+        _buildItems(context),
+        const SizedBox(height: AppSpacing.md),
+      ],
     );
   }
 
@@ -299,7 +305,7 @@ class HomeSectionWidget extends StatelessWidget {
       // The hotel rail shares the Discover rail's 3D cover flow.
       return HomeStaysCarousel(
         items: items,
-        viewportFraction: 0.8,
+        viewportFraction: HomeCardDimensions.stayViewportFraction,
         sheetTextHeight: HomeStaysCarousel.staysSheetTextHeight,
         onItemTap: onItemTap,
       );
@@ -314,7 +320,7 @@ class HomeSectionWidget extends StatelessWidget {
         // example) keeps it; Home — which passes none — opens the city page,
         // exactly like the grid/vertical presentation of the same card.
         onItemTap: onItemTap ?? (HomeItem item) => _openCity(context, item),
-        viewportFraction: 0.9,
+        viewportFraction: HomeCardDimensions.destinationViewportFraction,
       );
     }
 
@@ -324,11 +330,9 @@ class HomeSectionWidget extends StatelessWidget {
     return CoverFlowCarousel(
       itemCount: items.length,
       viewportFraction: HomeCardDimensions.cardRailViewportFraction,
-      height: HomeCardDimensions.cardHeightForType(primaryType) + 8,
-      itemBuilder: (context, index) => _buildHorizontalItemCard(
-        context,
-        items[index],
-      ),
+      height: HomeCardDimensions.cardHeightForType(primaryType) + AppSpacing.sm,
+      itemBuilder: (context, index) =>
+          _buildHorizontalItemCard(context, items[index]),
     );
   }
 

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
+import 'package:tokigo/core/theme/tokigo_gradients.dart';
+import 'package:tokigo/core/theme/app_elevation.dart';
 
 /// Circular brand indicator identifying the active AI mode.
 ///
@@ -17,7 +18,6 @@ class AiModeIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tc = context.tokigoColors;
-    final scheme = Theme.of(context).colorScheme;
     return Semantics(
       label: AppLocalizations.of(context)?.aiModeActive ?? 'AI mode active',
       image: true,
@@ -26,23 +26,16 @@ class AiModeIndicator extends StatelessWidget {
         height: dimension,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: <Color>[context.tokigoColors.ai, context.tokigoColors.aiLight],
+          gradient: TokiGoGradients.brandGradient(),
+          boxShadow: AppElevation.shadow(
+            background: tc.surface,
+            level: AppElevation.sm,
           ),
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: context.tokigoColors.ai.withValues(alpha: 0.30),
-              blurRadius: 18,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
         child: Icon(
           Icons.auto_awesome,
           size: dimension * 0.45,
-          color: scheme.onPrimary,
+          color: tc.onMedia,
         ),
       ),
     );

@@ -184,7 +184,9 @@ class SearchFieldInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     final label = this.label;
     final value = this.value;
     return Pressable.wrap(
@@ -293,9 +295,11 @@ class SearchSegmentedControl<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(AppSpacing.xxs),
       decoration: BoxDecoration(
         color: context.tokigoColors.surfaceSecondary,
         borderRadius: AppRadius.pillBorder,
@@ -308,14 +312,14 @@ class SearchSegmentedControl<T> extends StatelessWidget {
               child: Pressable.wrap(
                 child: Material(
                   color: option == selected
-                      ? context.tokigoColors.brand
+                      ? context.tokigoColors.primary
                       : Colors.transparent,
                   borderRadius: AppRadius.pillBorder,
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
                     onTap: () => onSelected(option),
                     child: SizedBox(
-                      height: 36,
+                      height: 40,
                       child: Center(
                         child: Text(
                           labelOf(option),
@@ -323,7 +327,7 @@ class SearchSegmentedControl<T> extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: typography.captionSemibold.copyWith(
                             color: option == selected
-                                ? context.tokigoColors.onBrand
+                                ? context.tokigoColors.onPrimary
                                 : context.tokigoColors.textSecondary,
                           ),
                         ),
@@ -421,9 +425,9 @@ class _StepperButton extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: SizedBox(
-            width: 28,
-            height: 28,
-            child: Icon(icon, size: 18, color: context.tokigoColors.brand),
+            width: 40,
+            height: 40,
+            child: Icon(icon, size: 20, color: context.tokigoColors.brand),
           ),
         ),
       ),
@@ -452,21 +456,23 @@ class SearchChoiceChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     final foreground = selected
-        ? context.tokigoColors.onBrand
+        ? context.tokigoColors.onPrimary
         : context.tokigoColors.textSecondary;
     final icon = this.icon;
     return Pressable.wrap(
       child: Material(
         color: selected
-            ? context.tokigoColors.brand
+            ? context.tokigoColors.primary
             : context.tokigoColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: AppRadius.pillBorder,
           side: BorderSide(
             color: selected
-                ? context.tokigoColors.brand
+                ? context.tokigoColors.primary
                 : context.tokigoColors.outline,
           ),
         ),
@@ -476,7 +482,7 @@ class SearchChoiceChip extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.lg,
-              vertical: AppSpacing.sm + 2,
+              vertical: AppSpacing.md,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,

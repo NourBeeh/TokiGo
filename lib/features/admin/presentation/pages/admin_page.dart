@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/theme/app_breakpoints.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -37,7 +36,6 @@ class AdminPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final typography = AppTypography.forLight();
     final bool tooSmall = MediaQuery.sizeOf(context).width < minimumWidth;
 
     return DefaultTabController(
@@ -56,8 +54,10 @@ class AdminPage extends StatelessWidget {
                   const Expanded(child: _AdminTooSmall())
                 else ...<Widget>[
                   TabBar(
-                    labelStyle: typography.captionSemibold,
-                    unselectedLabelStyle: typography.caption.copyWith(
+                    labelStyle: Theme.of(context).textTheme.labelLarge,
+                    unselectedLabelStyle: Theme.of(
+                      context,
+                    ).textTheme.labelLarge?.copyWith(
                       color: context.tokigoColors.textSecondary,
                     ),
                     tabs: <Tab>[
@@ -66,7 +66,7 @@ class AdminPage extends StatelessWidget {
                     ],
                     labelColor: context.tokigoColors.textPrimary,
                     unselectedLabelColor: context.tokigoColors.textSecondary,
-                    indicatorColor: context.tokigoColors.brand,
+                    indicatorColor: context.tokigoColors.primary,
                     dividerColor: context.tokigoColors.outline,
                   ),
                   const Expanded(

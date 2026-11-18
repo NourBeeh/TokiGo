@@ -121,9 +121,9 @@ class HeroHeader extends StatelessWidget {
           Padding(
             padding: const EdgeInsetsDirectional.fromSTEB(
               AppSpacing.lg,
-              AppSpacing.xs,
+              AppSpacing.sm,
               AppSpacing.lg,
-              AppSpacing.xs,
+              AppSpacing.sm,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -190,7 +190,12 @@ class _PlaceholderGradient extends StatelessWidget {
       // mark can never drift from the splash asset.
       child: FittedBox(
         fit: BoxFit.scaleDown,
-        child: AppWordmark(base: AppTypography.forLight().priceHero),
+        child: AppWordmark(
+          base: (Theme.of(context).brightness == Brightness.dark
+                  ? AppTypography.forDark()
+                  : AppTypography.forLight())
+              .priceHero,
+        ),
       ),
     ),
   );
@@ -275,7 +280,12 @@ class _SearchContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsetsDirectional.fromSTEB(AppSpacing.lg, AppSpacing.xs, 0, AppSpacing.xs),
+    padding: const EdgeInsetsDirectional.fromSTEB(
+      AppSpacing.lg,
+      AppSpacing.xs,
+      AppSpacing.lg,
+      AppSpacing.xs,
+    ),
     child: child,
   );
 }
@@ -292,7 +302,7 @@ class _ActionRow extends StatelessWidget {
       children: <Widget>[_TopActionButton(
         icon: Icons.luggage_outlined,
         label: l10n.bag,
-        color: context.tokigoColors.brandRed,
+        color: context.tokigoColors.textPrimary,
         onTap: () => context.push('/bag'),
       ), const SizedBox(width: AppSpacing.md), _TopActionButton(
         icon: Icons.notifications_none_rounded,

@@ -63,7 +63,7 @@ void main() {
       'Flights',
       'Stays',
       'Cars Rental',
-      'Activities',
+      'Packages',
       'Groups',
     ];
     final List<IconData> icons = <IconData>[
@@ -83,7 +83,7 @@ void main() {
       expect(tester.getSize(tile).width, HomeActionBar.cardWidth);
       expect(decoration.color, HomeDesignTokens.surface);
       expect(decoration.boxShadow, isEmpty);
-      expect(decoration.borderRadius, BorderRadius.circular(16));
+      expect(decoration.borderRadius, BorderRadius.circular(18));
       final Border border = decoration.border! as Border;
       expect(border.top.color, HomeDesignTokens.border);
       expect(border.top.width, 1);
@@ -92,7 +92,7 @@ void main() {
         find.descendant(of: tile, matching: find.byType(Icon)).first,
       );
       expect(icon.icon, icons[i]);
-      expect(icon.size, 25);
+      expect(icon.size, 24);
       expect(icon.color, HomeDesignTokens.accent);
 
       final Text label = tester.widget<Text>(find.text(labels[i]));
@@ -104,7 +104,7 @@ void main() {
           .getRect(find.descendant(of: tile, matching: find.byType(Icon)).first)
           .bottom;
       final double labelTop = tester.getRect(find.text(labels[i])).top;
-      expect(labelTop - iconBottom, closeTo(6, 0.01));
+      expect(labelTop - iconBottom, closeTo(4, 0.01));
     }
     expect(tester.takeException(), isNull);
   });
@@ -251,8 +251,8 @@ void main() {
 
     expect(find.text('طيران'), findsOneWidget);
     expect(find.text('إقامات'), findsOneWidget);
-    expect(find.text('أنشطة'), findsOneWidget);
-    expect(find.text('المجموعات'), findsOneWidget);
+    expect(find.text('الباقات'), findsOneWidget);
+    expect(find.text('مجموعات'), findsOneWidget);
     expect(
       Directionality.of(tester.element(find.byType(HomeActionBar))),
       TextDirection.rtl,
@@ -276,7 +276,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(scrollable.position.pixels, greaterThan(0));
     // The lazy row builds the last tile only once the row travels.
-    expect(find.text('المجموعات'), findsOneWidget);
+    expect(find.text('مجموعات'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

@@ -21,7 +21,7 @@ import 'package:tokigo/core/widgets/cards/card_scrim_overlay.dart';
 /// hierarchy without duplicating presentation state.
 abstract final class TravelCardStyle {
   /// Radius for shared card decoration helpers.
-  static const double radius = AppRadius.xl;
+  static const double radius = AppRadius.lg;
 
   static BorderRadius get borderRadius => BorderRadius.circular(radius);
 
@@ -47,7 +47,7 @@ abstract final class TravelCardStyle {
   /// Shadow used by a resting feed card.
   static List<BoxShadow> shadows(BuildContext context) => AppElevation.shadow(
     background: context.tokigoColors.surface,
-    level: AppElevation.lg,
+    level: AppElevation.md,
   );
 
   /// Surface + hairline + halo in one decoration for cards that build their
@@ -110,7 +110,10 @@ class TravelMetaChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tc = context.tokigoColors;
-    final TextStyle style = AppTypography.forLight().captionSemibold.copyWith(
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
+    final TextStyle style = typography.captionSemibold.copyWith(
       color: onImage
           ? CardScrimColors.onScrim
           : (emphasized ? tc.textPrimary : tc.textSecondary),
@@ -187,9 +190,11 @@ class TravelActionHint extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTypography.forLight().captionSemibold.copyWith(
-              color: ink,
-            ),
+            style: (Theme.of(context).brightness == Brightness.dark
+                    ? AppTypography.forDark()
+                    : AppTypography.forLight())
+                .captionSemibold
+                .copyWith(color: ink),
           ),
         ),
         const SizedBox(width: AppSpacing.xs),

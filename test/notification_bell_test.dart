@@ -105,7 +105,7 @@ void main() {
       tester.getSize(
         find.byKey(const ValueKey<String>('home-notification-bell')),
       ),
-      const Size(42, 42),
+      const Size(48, 48),
     );
   });
 
@@ -223,7 +223,7 @@ void main() {
       tester.getSize(
         find.byKey(const ValueKey<String>('home-notification-bell')),
       ),
-      const Size(42, 42),
+      const Size(48, 48),
     );
 
     _setFeed(tester, <AppNotification>[

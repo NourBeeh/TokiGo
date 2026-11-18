@@ -34,13 +34,15 @@ class OfflineBanner extends StatelessWidget {
           Icon(
             Icons.wifi_off_rounded,
             size: 18,
-            color: context.tokigoColors.warning,
+            color: context.tokigoColors.onWarningContainer,
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               l10n.offlineShowingCached,
-              style: typography.caption.copyWith(color: context.tokigoColors.warning),
+              style: typography.caption.copyWith(
+                color: context.tokigoColors.onWarningContainer,
+              ),
             ),
           ),
         ],

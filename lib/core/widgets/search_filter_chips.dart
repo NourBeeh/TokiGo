@@ -53,14 +53,16 @@ class SearchFilterChips extends StatelessWidget {
   /// Gap between pills.
   final double spacing;
 
-  /// Pill height. 40 is the reference; it keeps a 48pt touch target with
-  /// vertical padding applied by the parent.
-  static const double height = 40;
+  /// Pill height. 48 is the app's minimum touch target, so the pill owns it
+  /// instead of relying on the parent's vertical padding.
+  static const double height = 48;
 
   @override
   Widget build(BuildContext context) {
     if (chips.isEmpty) return const SizedBox.shrink();
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -93,7 +95,7 @@ class _Chip extends StatelessWidget {
       child: ExcludeSemantics(
         child: Material(
           color: selected
-              ? context.tokigoColors.brandContainer
+              ? context.tokigoColors.primary
               : context.tokigoColors.surfaceSecondary,
           borderRadius: AppRadius.pillBorder,
           child: InkWell(
@@ -106,7 +108,9 @@ class _Chip extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: AppRadius.pillBorder,
                 border: Border.all(
-                  color: selected ? context.tokigoColors.brand : context.tokigoColors.outline,
+                  color: selected
+                      ? context.tokigoColors.primary
+                      : context.tokigoColors.outline,
                 ),
               ),
               child: Row(
@@ -116,7 +120,17 @@ class _Chip extends StatelessWidget {
                     Icon(
                       chip.icon,
                       size: 14,
-                      color: selected ? context.tokigoColors.brand : context.tokigoColors.textPrimary,
+                      color: selected
+                          ? context.tokigoColors.onPrimary
+                          : context.tokigoColors.textPrimary,
+                    ),
+                    const SizedBox(width: AppSpacing.xxs),
+                  ],
+                  if (selected && chip.icon == null) ...<Widget>[
+                    Icon(
+                      Icons.check_rounded,
+                      size: 14,
+                      color: context.tokigoColors.onPrimary,
                     ),
                     const SizedBox(width: AppSpacing.xxs),
                   ],
@@ -127,7 +141,9 @@ class _Chip extends StatelessWidget {
                     // Doc 14 §3.2: 13/600, `brand` on `brandContainer`
                     // (4.98:1 — AA at this size).
                     style: typography.captionSemibold.copyWith(
-                      color: selected ? context.tokigoColors.brand : context.tokigoColors.textPrimary,
+                      color: selected
+                          ? context.tokigoColors.onPrimary
+                          : context.tokigoColors.textPrimary,
                     ),
                   ),
                 ],

@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tokigo/core/domain/models/booking/booking.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
@@ -95,7 +94,7 @@ class _BookingConfirmationPageState
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = _type(context);
     final l10n = AppLocalizations.of(context)!;
     final record = widget.record ?? ref.watch(bookingControllerProvider).record;
     final confirmed =
@@ -124,7 +123,7 @@ class _BookingConfirmationPageState
                     AppSpacing.lg,
                     0,
                     AppSpacing.lg,
-                    AppSpacing.lg + MediaQuery.of(context).padding.bottom,
+                    AppSpacing.lg + MediaQuery.viewPaddingOf(context).bottom,
                   ),
                   child: AppButton(
                     label: l10n.bookingBackHome,
@@ -198,6 +197,7 @@ class _BookingConfirmationPageState
                                     child: CustomPaint(
                                       painter: _CheckPainter(
                                         _checkController.value,
+                                        color: context.tokigoColors.success,
                                       ),
                                     ),
                                   );
@@ -245,7 +245,7 @@ class _BookingConfirmationPageState
                   AppSpacing.lg,
                   0,
                   AppSpacing.lg,
-                  AppSpacing.lg + MediaQuery.of(context).padding.bottom,
+                  AppSpacing.lg + MediaQuery.viewPaddingOf(context).bottom,
                 ),
                 child: Column(
                   children: <Widget>[
@@ -272,14 +272,18 @@ class _BookingConfirmationPageState
 }
 
 class _CheckPainter extends CustomPainter {
-  _CheckPainter(this.progress);
+  _CheckPainter(this.progress, {required this.color});
 
   final double progress;
+
+  /// The stroke colour, resolved from the active palette by the caller — a
+  /// [CustomPainter] has no context of its own.
+  final Color color;
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.success
+      ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 6
       ..strokeCap = StrokeCap.round;
@@ -333,7 +337,7 @@ class _BookingRecapCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = _type(context);
     final l10n = AppLocalizations.of(context)!;
     final title = offer?.title?.trim();
     final subtitle = offer?.subtitle?.trim();
@@ -389,7 +393,7 @@ class _BookingRecapCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: typography.caption.copyWith(
-                            color: context.tokigoColors.textTertiary,
+                            color: context.tokigoColors.textSecondary,
                           ),
                         ),
                       ],
@@ -424,7 +428,9 @@ class _BookingRecapCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Passenger: Test Guest (ADT) — simplified sandbox data',
-            style: TextStyle(fontSize: 12, color: context.tokigoColors.textSecondary),
+            style: typography.caption.copyWith(
+              color: context.tokigoColors.textSecondary,
+            ),
           ),
           _Row(
             label: l10n.bookingTravellersLabel,
@@ -451,7 +457,7 @@ class _BookingRecapCard extends StatelessWidget {
                       Text(
                         l10n.bookingReferenceLabel,
                         style: typography.caption.copyWith(
-                          color: context.tokigoColors.textTertiary,
+                          color: context.tokigoColors.textSecondary,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xxs),
@@ -549,8 +555,9 @@ class _CopyReferenceButtonState extends State<_CopyReferenceButton> {
             onTap: _copy,
             borderRadius: BorderRadius.circular(AppRadius.sm),
             child: Container(
-            width: 40,
-            height: 40,
+            // A 48dp target: the copy control is a real action, not decoration.
+            width: AppSpacing.minimumTapTarget,
+            height: AppSpacing.minimumTapTarget,
             decoration: BoxDecoration(
               color: context.tokigoColors.surfaceSecondary,
               borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -558,8 +565,10 @@ class _CopyReferenceButtonState extends State<_CopyReferenceButton> {
             ),
             child: Icon(
               _copied ? Icons.check_rounded : Icons.copy_rounded,
-              size: 18,
-              color: _copied ? context.tokigoColors.success : context.tokigoColors.textSecondary,
+              size: 20,
+              color: _copied
+                  ? context.tokigoColors.success
+                  : context.tokigoColors.textSecondary,
             ),
           ),
         ),
@@ -601,3 +610,8 @@ class _Row extends StatelessWidget {
     );
   }
 }
+
+/// The type scale for the active brightness — the light and dark palettes
+/// carry different text colours, so the scale is resolved per surface.
+AppTypography _type(BuildContext context) =>
+    context.isDark ? AppTypography.forDark() : AppTypography.forLight();

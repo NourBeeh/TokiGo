@@ -18,7 +18,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get navSearch => 'بحث';
 
   @override
-  String get navGroups => 'المجموعات';
+  String get navGroups => 'مجموعات';
 
   @override
   String get navExplore => 'استكشف';
@@ -30,19 +30,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get bag => 'رحلاتي';
 
   @override
-  String get bagSubtitle => 'حجوزاتك المؤكدة وحالتها وأرقامها المرجعية.';
+  String get bagSubtitle => 'رحلاتي';
 
   @override
   String get notifications => 'الإشعارات';
 
   @override
-  String get notificationsSubtitle => 'تحديثات الحجز وتنبيهات الأسعار والتذكيرات.';
+  String get notificationsSubtitle => 'الإشعارات';
 
   @override
   String get profile => 'الملف الشخصي';
 
   @override
-  String get profileSubtitle => 'حسابك ورحلاتك وتفضيلاتك.';
+  String get profileSubtitle => 'الملف الشخصي';
 
   @override
   String get profileGuestTitle => 'أنت تتصفّح كضيف';
@@ -87,7 +87,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aiSearchSheetHint => 'عايز تسافر فين؟';
 
   @override
-  String get aiChatSubtitle => 'مساعد توكي جو الذكي';
+  String get aiChatSubtitle => 'المساعد الذكي';
 
   @override
   String get askAssistantTitle => 'اسأل مساعدك';
@@ -292,10 +292,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get searchPackages => 'إجازات';
 
   @override
-  String get homeNavActivities => 'أنشطة';
+  String get homeNavActivities => 'الباقات';
 
   @override
-  String get homeNavGroups => 'المجموعات';
+  String get homeNavGroups => 'مجموعات';
 
   @override
   String get homeNavTrips => 'رحلاتي';
@@ -304,10 +304,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get searchTransfers => ' transfére المطار';
 
   @override
-  String get groupsTitle => 'المجموعات';
+  String get groupsTitle => 'مجموعات';
 
   @override
-  String get groupsSubtitle => 'خططوا معًا وسافروا معًا';
+  String get groupsSubtitle => 'مجموعات';
 
   @override
   String get viewAll => 'عرض الكل';
@@ -355,7 +355,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settings => 'الإعدادات';
 
   @override
-  String get settingsSubtitle => 'اللغة والمظهر والعملة والحساب.';
+  String get settingsSubtitle => 'الإعدادات';
 
   @override
   String get language => 'اللغة';
@@ -367,7 +367,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get wishlist => 'المفضلة';
 
   @override
-  String get wishlistSubtitle => 'الإقامات اللي حفظتها بسعر المزوّد.';
+  String get wishlistSubtitle => 'المفضلة';
 
   @override
   String get myTrips => 'رحلاتي';
@@ -376,7 +376,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tripDetails => 'تفاصيل الرحلة';
 
   @override
-  String get tripDetailsSubtitle => 'كل اللي الحجز بيحمله فعلًا.';
+  String get tripDetailsSubtitle => 'تفاصيل الرحلة';
 
   @override
   String get upcoming => 'القادمة';
@@ -453,7 +453,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get reviewBooking => 'مراجعة الحجز';
 
   @override
-  String get reviewBookingSubtitle => 'راجع العرض والمسافرين والإجمالي قبل الدفع.';
+  String get reviewBookingSubtitle => 'مراجعة الحجز';
 
   @override
   String get passengerDetails => 'بيانات المسافرين';
@@ -465,7 +465,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addOns => 'إضافات';
 
   @override
-  String get addOnsSubtitle => 'شنط إضافية ومقاعد ووجبات بيعها المزوّد.';
+  String get addOnsSubtitle => 'إضافات';
 
   @override
   String bookingStepOf(String current, String total) {
@@ -494,7 +494,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get payment => 'الدفع';
 
   @override
-  String get paymentSubtitle => 'ادفع إجمالي المزوّد للرحلة دي.';
+  String get paymentSubtitle => 'الدفع';
 
   @override
   String get confirmation => 'التأكيد';
@@ -716,7 +716,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aiMemoryTitle => 'اللي أعرفه عنك';
 
   @override
-  String get aiMemorySubtitle => 'حقائق شاركتها في محادثات الذكاء الاصطناعي. تقدر تعدّلها أو تحذفها في أي وقت.';
+  String get aiMemorySubtitle => 'الذاكرة';
 
   @override
   String get aiMemorySignInPrompt => 'سجّل الدخول لتشاهد وتتحكم في اللي المساعد الذكي يتذكره عنك.';
@@ -839,13 +839,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get findHotels => 'ابحث عن إقامات';
 
   @override
-  String get packagesSubtitle => 'برامج مُنسّقة متعددة الأيام';
+  String get packagesSubtitle => 'الباقات';
 
   @override
-  String get carsSubtitle => 'تأجير سيارات بالقيادة الذاتية';
+  String get carsSubtitle => 'تأجير سيارات';
 
   @override
-  String get carsLiveSubtitle => 'سيارات للإيجار في وجهتك';
+  String get carsLiveSubtitle => 'تأجير سيارات';
 
   @override
   String get aiSomethingWentWrong => 'حدث خطأ ما. حاول مرة أخرى.';
@@ -1184,7 +1184,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get groupsEmptyBody => 'إنشاء رحلة ودعوة الأصدقاء وتقسيم الخطة هيتفتحوا هنا أول ما يتم ربط خدمات الرحلات الجماعية.';
 
   @override
-  String get exploreCitiesTitle => 'مدن تناسب مودك';
+  String get exploreCitiesTitle => 'المدن';
 
   @override
   String get createNewTrip => 'أنشئ رحلة جديدة';
@@ -1208,7 +1208,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tripBuilderEmpty => 'اختار فندقًا أو رحلة طيران أو سيارة لإضافتها هنا.';
 
   @override
-  String get tripBuilderSubtitle => 'اجمع فنادق ورحلات طيران وسيارات في مخطط واحد.';
+  String get tripBuilderSubtitle => 'خطط رحلتك';
 
   @override
   String get tripBuilderRemove => 'إزالة من الرحلة';
@@ -1309,7 +1309,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get bookingBackHome => 'الرجوع للرئيسية';
 
   @override
-  String get flightSearchSubtitle => 'ابحث عن رحلات من كل المزوّدين';
+  String get flightSearchSubtitle => 'طيران';
 
   @override
   String get tripTypeOneWay => 'ذهاب فقط';
@@ -2047,7 +2047,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get editProfile => 'تعديل البروفايل';
 
   @override
-  String get editProfileSubtitle => 'اسمك وبيانات اتصالك وجنسيتك.';
+  String get editProfileSubtitle => 'تعديل الملف الشخصي';
 
   @override
   String get firstName => 'الاسم الأول';
@@ -2297,7 +2297,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get staysSubtitle => 'إقامات تناسب رحلتك';
+  String get staysSubtitle => 'إقامات';
 
   @override
   String get offerAirline => 'شركة الطيران';

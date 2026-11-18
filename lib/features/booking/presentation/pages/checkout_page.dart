@@ -337,7 +337,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = _type(context);
     final l10n = AppLocalizations.of(context)!;
     final record = ref.watch(bookingControllerProvider).record;
 
@@ -384,26 +384,36 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       backgroundColor: context.tokigoColors.background,
       body: SafeArea(
         bottom: false,
-        child: AiEntranceAnimation(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              AppPageHeader(
-                subtitle: l10n.paymentSubtitle,
-                // Doc 21 §1 — the funnel is 4 steps; checkout is the last.
-                steps: const StepProgress(current: 3, total: 4),
-                backFallbackLocation: '/booking/review',
-                // Leaving mid-charge is blocked (the body is inert too); the
-                // control keeps its place and mutes instead of vanishing.
-                backEnabled: !_processing,
-              ),
-              Expanded(
-                child: AbsorbPointer(
-                  absorbing: _processing,
-                  child: Stack(
-                    children: <Widget>[
-                      ListView(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
+        // The scrim is a sibling of the whole column, not just the list: a
+        // charge in flight dims the header too, so no part of the surface
+        // reads as still live.
+        child: Stack(
+          children: <Widget>[
+            AiEntranceAnimation(
+              child: AbsorbPointer(
+                absorbing: _processing,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    AppPageHeader(
+                      subtitle: l10n.paymentSubtitle,
+                      // Doc 21 §1 — the funnel is 4 steps; checkout is the last.
+                      steps: const StepProgress(current: 3, total: 4),
+                      backFallbackLocation: '/booking/review',
+                      // Leaving mid-charge is blocked (the body is inert too);
+                      // the control keeps its place and mutes instead of
+                      // vanishing.
+                      backEnabled: !_processing,
+                    ),
+                    Expanded(
+                      child: ListView(
+                        padding: EdgeInsets.fromLTRB(
+                          AppSpacing.lg,
+                          AppSpacing.lg,
+                          AppSpacing.lg,
+                          _barClearance(context) +
+                              (_failure != null ? _failureStripReserve : 0),
+                        ),
                         children: <Widget>[
                           Text(
                             l10n.checkoutPaymentMethod,
@@ -463,42 +473,41 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                             currency: currency,
                             addOns: addOns,
                           ),
-                          const SizedBox(height: 160),
                         ],
                       ),
-                      if (_processing)
-                        Positioned.fill(
-                          child: ColoredBox(
-                            color: context.tokigoColors.background.withValues(alpha: 0.7),
-                            child: Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: <Widget>[
-                                  const SizedBox(
-                                    width: 44,
-                                    height: 44,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 3,
-                                    ),
-                                  ),
-                                  const SizedBox(height: AppSpacing.lg),
-                                  Text(
-                                    l10n.checkoutProcessing,
-                                    style: typography.bodyLargeMedium.copyWith(
-                                      color: context.tokigoColors.textPrimary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (_processing)
+              Positioned.fill(
+                child: ColoredBox(
+                  color: context.tokigoColors.background.withValues(alpha: 0.7),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        const SizedBox(
+                          width: 44,
+                          height: 44,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
                           ),
                         ),
-                    ],
+                        const SizedBox(height: AppSpacing.lg),
+                        Text(
+                          l10n.checkoutProcessing,
+                          style: typography.bodyLargeMedium.copyWith(
+                            color: context.tokigoColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ],
-          ),
+          ],
         ),
       ),
       bottomSheet: Column(
@@ -533,7 +542,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                   child: AppButton(
                     // The amount is always in the label (doc 21 §6).
                     label: l10n.payAmount(
-                      '$currency ${total.toStringAsFixed(0)}',
+                      '$currency ${total.toStringAsFixed(2)}',
                     ),
                     leadingIcon: Icons.lock_rounded,
                     onPressed: _processing ? null : _pay,
@@ -563,7 +572,7 @@ class _MethodTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = _type(context);
     return Pressable.wrap(
       child: Material(
         color: context.tokigoColors.surface,
@@ -572,53 +581,71 @@ class _MethodTile extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Container(
+            // A payment row is a 48dp control, whatever the glyph inside it.
+            constraints: const BoxConstraints(
+              minHeight: AppSpacing.minimumTapTarget,
+            ),
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.lg,
               vertical: AppSpacing.md,
             ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(
-              color: selected ? context.tokigoColors.brand : context.tokigoColors.outline,
-              width: selected ? 1.5 : 1,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(
+                color: selected
+                    ? context.tokigoColors.brand
+                    : context.tokigoColors.outline,
+                width: selected ? 1.5 : 1,
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Row(
+              children: <Widget>[
+                Icon(
+                  icon,
+                  size: 22,
+                  color: context.tokigoColors.textSecondary,
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: typography.bodyMedium.copyWith(
+                      color: context.tokigoColors.textPrimary,
+                    ),
+                  ),
+                ),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: selected
+                          ? context.tokigoColors.brand
+                          : context.tokigoColors.outline,
+                      width: 2,
+                    ),
+                    color: selected
+                        ? context.tokigoColors.brand
+                        : Colors.transparent,
+                  ),
+                  // The tick sits on the brand fill, so its ink is the
+                  // palette's on-brand — white-on-brand is 1.09:1 in the dark
+                  // canvas and unreadable.
+                  child: selected
+                      ? Icon(
+                          Icons.check_rounded,
+                          size: 14,
+                          color: context.tokigoColors.onBrand,
+                        )
+                      : null,
+                ),
+              ],
             ),
           ),
-          child: Row(
-            children: <Widget>[
-              Icon(icon, size: 22, color: context.tokigoColors.textSecondary),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Text(
-                  label,
-                  style: typography.bodyMedium.copyWith(
-                    color: context.tokigoColors.textPrimary,
-                  ),
-                ),
-              ),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: selected ? context.tokigoColors.brand : context.tokigoColors.outline,
-                    width: 2,
-                  ),
-                  color: selected ? context.tokigoColors.brand : Colors.transparent,
-                ),
-                child: selected
-                    ? const Icon(
-                        Icons.check_rounded,
-                        size: 14,
-                        color: Colors.white,
-                      )
-                    : null,
-              ),
-            ],
-          ),
         ),
-      ),
       ),
     );
   }
@@ -644,61 +671,92 @@ class _CardFields extends StatelessWidget {
     final digits = cardNumber.text.replaceAll(' ', '');
     return Column(
       children: <Widget>[
-        TextField(
+        _LabeledField(
+          label: 'Card number',
           controller: cardNumber,
           keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            labelText: 'Card number',
-            hintText: '4242 4242 4242 4242',
-            errorText: showErrors && digits.length < 15
-                ? 'Enter a valid card number'
-                : null,
-          ),
+          hintText: '4242 4242 4242 4242',
+          errorText: showErrors && digits.length < 15
+              ? 'Enter a valid card number'
+              : null,
         ),
-        const SizedBox(height: AppSpacing.md),
-        TextField(
+        _LabeledField(
+          label: 'Name on card',
           controller: cardName,
-          decoration: InputDecoration(
-            labelText: 'Name on card',
-            errorText: showErrors && cardName.text.trim().isEmpty
-                ? 'Required'
-                : null,
-          ),
+          errorText: showErrors && cardName.text.trim().isEmpty
+              ? 'Required'
+              : null,
         ),
-        const SizedBox(height: AppSpacing.md),
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Expanded(
-              child: TextField(
+              child: _LabeledField(
+                label: 'Expiry',
                 controller: expiry,
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Expiry',
-                  hintText: 'MM/YY',
-                  errorText: showErrors && expiry.text.trim().isEmpty
-                      ? 'Required'
-                      : null,
-                ),
+                hintText: 'MM/YY',
+                errorText: showErrors && expiry.text.trim().isEmpty
+                    ? 'Required'
+                    : null,
               ),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
-              child: TextField(
+              child: _LabeledField(
+                label: 'CVC',
                 controller: cvc,
                 keyboardType: TextInputType.number,
                 obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'CVC',
-                  hintText: '123',
-                  errorText: showErrors && cvc.text.trim().length < 3
-                      ? '3 digits'
-                      : null,
-                ),
+                hintText: '123',
+                errorText: showErrors && cvc.text.trim().length < 3
+                    ? '3 digits'
+                    : null,
               ),
             ),
           ],
         ),
       ],
+    );
+  }
+}
+
+/// The funnel's form recipe: a small external label above the field, on the
+/// card's 16dp gutter, with a 12dp rhythm between fields.
+class _LabeledField extends StatelessWidget {
+  const _LabeledField({
+    required this.label,
+    required this.controller,
+    this.errorText,
+    this.keyboardType,
+    this.hintText,
+    this.obscureText = false,
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final String? errorText;
+  final TextInputType? keyboardType;
+  final String? hintText;
+  final bool obscureText;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(label, style: _type(context).label),
+          const SizedBox(height: AppSpacing.xs),
+          TextField(
+            controller: controller,
+            keyboardType: keyboardType,
+            obscureText: obscureText,
+            decoration: InputDecoration(errorText: errorText, hintText: hintText),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -721,7 +779,7 @@ class _PriceBreakdownCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = _type(context);
     final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -743,7 +801,11 @@ class _PriceBreakdownCard extends StatelessWidget {
               value: addon.total,
               currency: currency,
             ),
-          const Divider(height: AppSpacing.xl),
+          Divider(
+            height: AppSpacing.xl,
+            thickness: 1,
+            color: context.tokigoColors.hairline,
+          ),
           Row(
             children: <Widget>[
               Expanded(
@@ -779,7 +841,7 @@ class _Row extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = _type(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
@@ -825,14 +887,14 @@ class _FailureStrip extends StatelessWidget {
             Icon(
               Icons.error_outline_rounded,
               size: 20,
-              color: context.tokigoColors.danger,
+              color: context.tokigoColors.onDangerContainer,
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
                 message,
-                style: AppTypography.forLight().caption.copyWith(
-                  color: context.tokigoColors.danger,
+                style: _type(context).caption.copyWith(
+                  color: context.tokigoColors.onDangerContainer,
                 ),
               ),
             ),
@@ -842,3 +904,18 @@ class _FailureStrip extends StatelessWidget {
     );
   }
 }
+
+/// Space the pinned bar occupies: its 12dp top/bottom padding, the 52dp CTA,
+/// and the system navigation inset.
+double _barClearance(BuildContext context) =>
+    AppSpacing.md * 2 + 52 + MediaQuery.viewPaddingOf(context).bottom;
+
+/// The failure strip's reserve when one is showing: 12dp padding around a
+/// three-line caption at the narrowest supported width. The list's clearance
+/// grows with it so the breakdown card is never covered by the strip.
+const double _failureStripReserve = AppSpacing.md * 2 + 51;
+
+/// The type scale for the active brightness — the light and dark palettes
+/// carry different text colours, so the scale is resolved per surface.
+AppTypography _type(BuildContext context) =>
+    context.isDark ? AppTypography.forDark() : AppTypography.forLight();

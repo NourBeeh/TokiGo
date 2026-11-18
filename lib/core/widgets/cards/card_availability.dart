@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 
 /// Semantic availability of an offer.
 enum CardAvailabilityStatus { available, limited, unavailable }
@@ -18,12 +19,22 @@ class CardAvailability extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final Color color = switch (status) {
-      CardAvailabilityStatus.available => scheme.primary,
-      CardAvailabilityStatus.limited => scheme.tertiary,
-      CardAvailabilityStatus.unavailable => scheme.error,
+    final tc = context.tokigoColors;
+    final (Color container, Color ink) = switch (status) {
+      CardAvailabilityStatus.available => (
+        tc.successContainer,
+        tc.onSuccessContainer,
+      ),
+      CardAvailabilityStatus.limited => (
+        tc.warningContainer,
+        tc.onWarningContainer,
+      ),
+      CardAvailabilityStatus.unavailable => (
+        tc.dangerContainer,
+        tc.onDangerContainer,
+      ),
     };
+    final Color color = ink;
     final String text =
         label ??
         switch (status) {
@@ -35,10 +46,10 @@ class CardAvailability extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xxs,
+        vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
+        color: container,
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(

@@ -31,7 +31,7 @@ class SearchHubPage extends StatelessWidget {
         child: AiEntranceAnimation(
           child: CustomScrollView(
             slivers: <Widget>[
-              SliverToBoxAdapter(child: AppPageHeader(subtitle: l10n.searchPromptSubtitle)),
+              SliverToBoxAdapter(child: AppPageHeader(subtitle: l10n.navSearch)),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(
@@ -159,7 +159,7 @@ class _HeroSearchField extends StatelessWidget {
               children: <Widget>[
                 Icon(
                   Icons.search_rounded,
-                  size: 22,
+                  size: AppSpacing.xl,
                   color: context.tokigoColors.textPrimary,
                 ),
                 const SizedBox(width: AppSpacing.md),
@@ -220,15 +220,15 @@ class _HeroQuickLink extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Container(
-              width: 44,
-              height: 44,
+              width: AppSpacing.minimumTapTarget,
+              height: AppSpacing.minimumTapTarget,
               decoration: BoxDecoration(
                 color: context.tokigoColors.surfaceSecondary,
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Icon(
                 icon,
-                size: 22,
+                size: AppSpacing.xl,
                 color: context.tokigoColors.textPrimary,
               ),
             ),
@@ -341,7 +341,7 @@ class _ServiceTile extends StatelessWidget {
                   ),
                   child: Icon(
                     icon,
-                    size: 22,
+                    size: AppSpacing.xl,
                     color: context.tokigoColors.textPrimary,
                   ),
                 ),

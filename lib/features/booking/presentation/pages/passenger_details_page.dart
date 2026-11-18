@@ -9,7 +9,6 @@ import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_button.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
-import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/core/widgets/step_progress.dart';
 import 'package:tokigo/core/widgets/sticky_cta_bar.dart';
 import 'package:tokigo/features/booking/application/providers/checkout_flow_providers.dart';
@@ -140,7 +139,7 @@ class _PassengerDetailsPageState extends ConsumerState<PassengerDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = _type(context);
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
@@ -187,20 +186,37 @@ class _PassengerDetailsPageState extends ConsumerState<PassengerDetailsPage> {
                       onPressed: _addTraveler,
                     ),
                     const SizedBox(height: AppSpacing.xl),
-                    Text(
-                      l10n.bookingContactInformation,
-                      style: typography.title.copyWith(
-                        color: context.tokigoColors.textPrimary,
+                    // The contact block is its own surface card, matching the
+                    // traveller cards above it.
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      decoration: BoxDecoration(
+                        color: context.tokigoColors.surface,
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        border: Border.all(
+                          color: context.tokigoColors.outline,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            l10n.bookingContactInformation,
+                            style: typography.bodyLargeMedium.copyWith(
+                              color: context.tokigoColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          _ContactFields(
+                            email: _email,
+                            phone: _phone,
+                            phoneCountryCode: _phoneCountryCode,
+                            showErrors: _showErrors,
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.md),
-                    _ContactFields(
-                      email: _email,
-                      phone: _phone,
-                      phoneCountryCode: _phoneCountryCode,
-                      showErrors: _showErrors,
-                    ),
-                    const SizedBox(height: 140),
+                    SizedBox(height: _barClearance(context)),
                   ],
                 ),
               ),
@@ -303,7 +319,7 @@ class _TravelerCardState extends State<_TravelerCard> {
   @override
   Widget build(BuildContext context) {
     final controller = widget.controller;
-    final typography = AppTypography.forLight();
+    final typography = _type(context);
     final l10n = AppLocalizations.of(context)!;
     final bool isInfant = controller.passengerType == 'infant';
     final String typeLabel = _passengerTypeLabel(
@@ -333,17 +349,21 @@ class _TravelerCardState extends State<_TravelerCard> {
               ),
               const Spacer(),
               if (widget.removable)
-                Pressable.wrap(
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.remove_circle_outline_rounded,
-                      size: 20,
-                      color: context.tokigoColors.danger,
-                    ),
-                    onPressed: widget.onRemove,
-                    tooltip: l10n.bookingRemoveTraveller,
-                    visualDensity: VisualDensity.compact,
+                IconButton(
+                  icon: Icon(
+                    Icons.remove_circle_outline_rounded,
+                    size: 22,
+                    color: context.tokigoColors.danger,
                   ),
+                  onPressed: widget.onRemove,
+                  tooltip: l10n.bookingRemoveTraveller,
+                  // The default density shrinks the target on mobile; the
+                  // remove action keeps the full 48dp minimum.
+                  constraints: const BoxConstraints(
+                    minWidth: AppSpacing.minimumTapTarget,
+                    minHeight: AppSpacing.minimumTapTarget,
+                  ),
+                  padding: EdgeInsets.zero,
                 ),
             ],
           ),
@@ -559,7 +579,7 @@ class _LabeledField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = _type(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -597,7 +617,7 @@ class _LabeledDropdown<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = _type(context);
     final l10n = AppLocalizations.of(context)!;
     final bool hasValue = value != null && options.containsKey(value);
     return Column(
@@ -813,3 +833,13 @@ final class _TravelerController {
     phone.dispose();
   }
 }
+
+/// Space the pinned bar occupies: its 12dp top/bottom padding, the 52dp CTA,
+/// and the system navigation inset.
+double _barClearance(BuildContext context) =>
+    AppSpacing.md * 2 + 52 + MediaQuery.viewPaddingOf(context).bottom;
+
+/// The type scale for the active brightness — the light and dark palettes
+/// carry different text colours, so the scale is resolved per surface.
+AppTypography _type(BuildContext context) =>
+    context.isDark ? AppTypography.forDark() : AppTypography.forLight();

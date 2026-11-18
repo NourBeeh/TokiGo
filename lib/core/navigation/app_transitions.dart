@@ -416,7 +416,9 @@ class _ContainerTransformBuilder extends StatelessWidget {
             if (scrimT < 1.0)
               IgnorePointer(
                 child: ColoredBox(
-                  color: Colors.white.withValues(alpha: scrimT),
+                  color: Theme.of(context).colorScheme.surface.withValues(
+                    alpha: scrimT,
+                  ),
                 ),
               ),
           ],

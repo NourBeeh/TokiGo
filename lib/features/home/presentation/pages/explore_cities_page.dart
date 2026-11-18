@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/theme/app_breakpoints.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/ui/app_message_state.dart';
@@ -335,7 +336,8 @@ class _ExploreCitiesPageState extends ConsumerState<ExploreCitiesPage> {
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final int columns = constraints.maxWidth >= 680 ? 3 : 2;
+        final int columns =
+            constraints.maxWidth >= AppBreakpoints.medium ? 3 : 2;
         return GridView.builder(
           padding: const EdgeInsetsDirectional.fromSTEB(
             AppSpacing.lg,

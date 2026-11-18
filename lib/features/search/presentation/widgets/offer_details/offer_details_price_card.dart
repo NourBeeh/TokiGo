@@ -94,9 +94,7 @@ class OfferDetailsPriceCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.sm),
               Text(
                 l10n.offerPriceNote,
-                style: typography.caption.copyWith(
-                  color: context.tokigoColors.textTertiary,
-                ),
+                style: typography.caption.copyWith(color: tc.textSecondary),
               ),
               const SizedBox(height: AppSpacing.xxs),
               // Honestly: this is a presentation snapshot, revalidated when the
@@ -104,7 +102,7 @@ class OfferDetailsPriceCard extends StatelessWidget {
               Text(
                 l10n.offerRevalidated,
                 style: typography.caption.copyWith(
-                  color: context.tokigoColors.textTertiary,
+                  color: tc.textSecondary,
                   fontSize: AppTypography.fontSizeLabel,
                 ),
               ),

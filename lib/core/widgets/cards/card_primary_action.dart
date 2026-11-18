@@ -5,7 +5,7 @@ import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 
-/// Unified primary action for cards: brand-gradient pill with
+/// Unified primary action for cards: a red primary pill with
 /// enabled / disabled / loading states.
 class CardPrimaryAction extends StatelessWidget {
   const CardPrimaryAction({
@@ -14,7 +14,7 @@ class CardPrimaryAction extends StatelessWidget {
     this.onPressed,
     this.loading = false,
     this.expanded = true,
-    this.height = 44,
+    this.height = 52,
     this.icon,
   });
 
@@ -31,8 +31,10 @@ class CardPrimaryAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final foreground = scheme.onPrimary;
+    final tc = context.tokigoColors;
+    final bool disabled = _disabled && !loading;
+    final Color fill = disabled ? tc.surfaceSecondary : tc.primary;
+    final Color foreground = disabled ? tc.textTertiary : tc.onPrimary;
     bool pressed = false;
 
     final child = Row(
@@ -65,29 +67,31 @@ class CardPrimaryAction extends StatelessWidget {
       ],
     );
 
-    return Opacity(
-      opacity: _disabled && !loading ? 0.55 : 1,
+    return Semantics(
+      button: true,
+      enabled: !disabled,
+      label: label,
       child: StatefulBuilder(
         builder: (BuildContext context, StateSetter setState) =>
             GestureDetector(
-              onTapDown: _disabled
+              onTapDown: disabled
                   ? null
                   : (_) => setState(() => pressed = true),
-              onTapUp: _disabled
+              onTapUp: disabled
                   ? null
                   : (_) => setState(() => pressed = false),
-              onTapCancel: _disabled
+              onTapCancel: disabled
                   ? null
                   : () => setState(() => pressed = false),
-              onTap: _disabled
+              onTap: disabled
                   ? null
                   : () {
                       HapticFeedback.lightImpact();
                       onPressed!();
                     },
               child: AnimatedScale(
-                scale: pressed ? 0.96 : 1,
-                duration: const Duration(milliseconds: 110),
+                scale: pressed ? 0.98 : 1,
+                duration: const Duration(milliseconds: 120),
                 curve: Curves.easeOut,
                 child: Container(
                   height: height,
@@ -95,15 +99,8 @@ class CardPrimaryAction extends StatelessWidget {
                     horizontal: AppSpacing.lg,
                   ),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: AlignmentDirectional.topStart,
-                      end: AlignmentDirectional.bottomEnd,
-                      colors: [
-                        context.tokigoColors.brand,
-                        context.tokigoColors.brand,
-                      ],
-                    ),
-                    borderRadius: AppRadius.pillBorder,
+                    color: fill,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: child,
                 ),

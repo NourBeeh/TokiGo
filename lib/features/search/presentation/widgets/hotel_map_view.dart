@@ -3,10 +3,12 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
+import 'package:tokigo/core/theme/app_elevation.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
+import 'package:tokigo/core/widgets/cards/card.dart';
 
 /// A hotel result that carries a usable provider position.
 class PlacedHotel {
@@ -188,13 +190,20 @@ class _HotelMapViewState extends State<HotelMapView> {
           child: Container(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.xs,
-              vertical: 2,
+              vertical: AppSpacing.xxs,
             ),
-            color: colors.surface.withValues(alpha: 0.85),
+            // Over map tiles the chip is an opaque surface pill with the
+            // outline hairline and primary text ink, so the attribution stays
+            // legible on both light and dark tiles in either theme.
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: AppRadius.xsBorder,
+              border: Border.all(color: colors.outline),
+            ),
             child: Text(
               '© OpenStreetMap contributors',
               style: AppTypography.forLight().caption.copyWith(
-                color: colors.textSecondary,
+                color: colors.textPrimary,
               ),
             ),
           ),
@@ -259,7 +268,9 @@ class _HotelPin extends StatelessWidget {
         child: Icon(
           selected ? Icons.location_on_rounded : Icons.location_on_outlined,
           size: selected ? 40 : 32,
-          color: selected ? colors.danger : colors.brand,
+          // The selected marker is the map's selected state, so it takes the
+          // primary fill; the unselected one stays the neutral canvas ink.
+          color: selected ? colors.primary : colors.brand,
         ),
       ),
     );
@@ -286,13 +297,10 @@ class _MapBanner extends StatelessWidget {
         color: colors.surface,
         borderRadius: AppRadius.mdBorder,
         border: Border.all(color: colors.outline),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: colors.textPrimary.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppElevation.shadow(
+          background: colors.surface,
+          level: AppElevation.md,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -328,19 +336,16 @@ class _SelectedHotelCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm + 2,
+        vertical: AppSpacing.sm + AppSpacing.xxs,
       ),
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: AppRadius.lgBorder,
         border: Border.all(color: colors.outline),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: colors.textPrimary.withValues(alpha: 0.10),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        boxShadow: AppElevation.shadow(
+          background: colors.surface,
+          level: AppElevation.md,
+        ),
       ),
       child: Row(
         children: <Widget>[
@@ -357,7 +362,7 @@ class _SelectedHotelCard extends StatelessWidget {
                     color: colors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.xxs),
                 Text(
                   '${offer.city}, ${offer.country}',
                   maxLines: 1,
@@ -370,15 +375,12 @@ class _SelectedHotelCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
-          FilledButton(
+          // The card's single action: the shared 48dp primary action.
+          CardPrimaryAction(
+            label: 'View details',
             onPressed: onOpen,
-            style: FilledButton.styleFrom(
-              backgroundColor: colors.brand,
-              foregroundColor: colors.onBrand,
-              minimumSize: const Size(0, 40),
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            ),
-            child: const Text('View details'),
+            height: 48,
+            expanded: false,
           ),
         ],
       ),

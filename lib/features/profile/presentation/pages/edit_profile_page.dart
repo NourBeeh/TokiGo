@@ -11,6 +11,7 @@ import 'package:tokigo/core/geo/country_options.dart';
 import 'package:tokigo/core/storage/offline_cache_providers.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/ui/app_button.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
@@ -179,41 +180,66 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                     Center(
                       child: Pressable(
                         onTap: _pickAvatar,
-                        child: Stack(
-                          children: <Widget>[
-                            CircleAvatar(
-                              radius: 48,
-                              backgroundImage: _avatarBytes != null
-                                  ? MemoryImage(_avatarBytes!)
-                                  : (_avatarCtrl.text.startsWith('data:')
-                                      ? MemoryImage(base64Decode(
-                                          _avatarCtrl.text.split(',').last))
-                                      : (_avatarCtrl.text.startsWith('http')
-                                          ? NetworkImage(_avatarCtrl.text)
-                                          : null)),
-                              child: _avatarBytes == null &&
-                                      !_avatarCtrl.text.startsWith('http') &&
-                                      !_avatarCtrl.text.startsWith('data:')
-                                  ? const Icon(Icons.person, size: 48)
-                                  : null,
-                            ),
-                            if (_avatarBytes != null ||
-                                _avatarCtrl.text.startsWith('data:'))
-                              PositionedDirectional(
-                                bottom: 0,
-                                start: 0,
+                        child: SizedBox(
+                          width: 88,
+                          height: 88,
+                          child: Stack(
+                            children: <Widget>[
+                              Positioned.fill(
                                 child: CircleAvatar(
-                                  radius: 12,
-                                  backgroundColor:
-                                      context.tokigoColors.successStrong,
-                                  child: const Icon(
-                                    Icons.check,
-                                    size: 14,
-                                    color: Colors.white,
+                                  radius: 44,
+                                  backgroundImage: _avatarBytes != null
+                                      ? MemoryImage(_avatarBytes!)
+                                      : (_avatarCtrl.text.startsWith('data:')
+                                          ? MemoryImage(base64Decode(
+                                              _avatarCtrl.text.split(',').last))
+                                          : (_avatarCtrl.text.startsWith('http')
+                                              ? NetworkImage(_avatarCtrl.text)
+                                              : null)),
+                                  child: _avatarBytes == null &&
+                                          !_avatarCtrl.text.startsWith('http') &&
+                                          !_avatarCtrl.text.startsWith('data:')
+                                      ? const Icon(Icons.person, size: 44)
+                                      : null,
+                                ),
+                              ),
+                              // The same camera affordance as the profile
+                              // avatar — one edit affordance, ⌀88.
+                              PositionedDirectional(
+                                end: 0,
+                                bottom: 0,
+                                child: Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    color: context.tokigoColors.brand,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.camera_alt_rounded,
+                                    size: 16,
+                                    color: context.tokigoColors.onBrand,
                                   ),
                                 ),
                               ),
-                          ],
+                              if (_avatarBytes != null ||
+                                  _avatarCtrl.text.startsWith('data:'))
+                                PositionedDirectional(
+                                  bottom: 0,
+                                  start: 0,
+                                  child: CircleAvatar(
+                                    radius: 12,
+                                    backgroundColor:
+                                        context.tokigoColors.successStrong,
+                                    child: const Icon(
+                                      Icons.check,
+                                      size: 14,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -254,18 +280,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                     _readOnlyField(l10n.email, ref.read(authControllerProvider).user?.email ?? ''),
                     _field(l10n.phoneNumber, _phoneCtrl, keyboard: TextInputType.phone),
                     const SizedBox(height: AppSpacing.lg),
-                    Pressable.wrap(
-                      enabled: !_saving,
-                      child: FilledButton(
-                        onPressed: _saving ? null : _save,
-                        child: _saving
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : Text(l10n.save),
-                      ),
+                    AppButton(
+                      label: l10n.save,
+                      onPressed: _saving ? null : _save,
                     ),
                   ],
                 ),

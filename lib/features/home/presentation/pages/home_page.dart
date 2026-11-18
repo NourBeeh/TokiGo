@@ -288,7 +288,10 @@ class _HomePageState extends ConsumerState<HomePage>
             AppSpacing.lg,
             0,
           ),
-          child: SizedBox(height: 42, child: HomeTopBar()),
+          child: SizedBox(
+            height: HomeCardDimensions.topBarHeight,
+            child: HomeTopBar(),
+          ),
         ),
         // The original AI composer — the same widget the pinned slot used.
         AppChrome(controller: _composerTextController),
@@ -370,6 +373,10 @@ class _HomePageState extends ConsumerState<HomePage>
   /// feed content that follows it.
   List<Widget> _feedSlivers(HomeState state, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final AppTypography typography =
+        Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     final List<HomeSection> visibleSections = _exploreSections(state);
     final HomeSection? pickedForYou = state.sections
         .where(
@@ -444,7 +451,7 @@ class _HomePageState extends ConsumerState<HomePage>
                 title: l10n.homeStaysTitle,
                 // Same step as every other Home section heading so Discover
                 // and Stays read as one rhythm (owner decision, 2026-10-26).
-                titleStyle: AppTypography.forLight().titleMedium.copyWith(
+                titleStyle: typography.titleMedium.copyWith(
                   color: context.tokigoColors.textPrimary,
                 ),
               ),
@@ -461,8 +468,7 @@ class _HomePageState extends ConsumerState<HomePage>
                 // fraction and its pageWidth / ratio height.
                 viewportFraction:
                     HomeCardDimensions.destinationViewportFraction,
-                cardHeightBuilder:
-                    HomeStaysCarousel.splitCardHeightFor,
+                cardHeightBuilder: HomeStaysCarousel.splitCardHeightFor,
               ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
@@ -542,23 +548,39 @@ class _SecondarySearchOverlay extends StatelessWidget {
 
   final AnimationController controller;
 
+  /// The compact field's resting line: the original composer band's top edge
+  /// (the top-bar inset plus the top-bar height). The overlay slides down to
+  /// exactly this line, so it lands on the composer's own position instead of
+  /// jumping up to the viewport top.
+  static const double _restingOffset =
+      AppSpacing.xs + HomeCardDimensions.topBarHeight;
+
   @override
   Widget build(BuildContext context) {
+    // The hidden shift must clear the resting offset as well as the pill,
+    // otherwise the parked overlay would still poke into the viewport.
+    final double hiddenShift =
+        -1.0 - _restingOffset / AppChrome.pinnedHeight;
     return IgnorePointer(
       ignoring: controller.value == 0,
       child: SlideTransition(
-        position: Tween<Offset>(begin: const Offset(0, -1), end: Offset.zero)
-            .animate(
+        position: Tween<Offset>(
+          begin: Offset(0, hiddenShift),
+          end: Offset.zero,
+        ).animate(
           CurvedAnimation(parent: controller, curve: Curves.easeOutCubic),
         ),
-        child: SizedBox(
-          height: AppChrome.pinnedHeight,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: Center(
-              child: HomeAiSearchField(
-                compact: true,
-                accentColor: HomeDesignTokens.accentOf(context),
+        child: Transform.translate(
+          offset: const Offset(0, _restingOffset),
+          child: SizedBox(
+            height: AppChrome.pinnedHeight,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: Center(
+                child: HomeAiSearchField(
+                  compact: true,
+                  accentColor: HomeDesignTokens.accentOf(context),
+                ),
               ),
             ),
           ),
@@ -624,7 +646,10 @@ class _DiscoverSkeletonList extends StatelessWidget {
           ),
           child: Align(
             alignment: AlignmentDirectional.centerStart,
-            child: ShimmerBox(height: 24, width: 150),
+            child: ShimmerBox(
+              height: AppSpacing.xl,
+              width: HomeCardDimensions.sectionTitleSkeletonWidth,
+            ),
           ),
         ),
         DestinationCoverFlowCarousel(
@@ -663,7 +688,10 @@ class _StaysSkeletonList extends StatelessWidget {
           ),
           child: Align(
             alignment: AlignmentDirectional.centerStart,
-            child: ShimmerBox(height: 24, width: 180),
+            child: ShimmerBox(
+              height: AppSpacing.xl,
+              width: HomeCardDimensions.sectionTitleSkeletonWidth,
+            ),
           ),
         ),
         // The SAME geometry the loaded "Stays Near You" rail uses: the split

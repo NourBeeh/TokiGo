@@ -32,7 +32,7 @@ class AddOnsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final typography = AppTypography.forLight();
+    final typography = _type(context);
     final l10n = AppLocalizations.of(context)!;
     final basePrice = ref.watch(checkoutBasePriceProvider);
     final currency = ref.watch(checkoutCurrencyProvider);
@@ -52,6 +52,8 @@ class AddOnsPage extends ConsumerWidget {
               ),
               Expanded(
                 child: SingleChildScrollView(
+                  // Keep the message clear of the pinned bar.
+                  padding: EdgeInsets.only(bottom: _barClearance(context)),
                   child: AppMessageState(
                     icon: Icons.luggage_outlined,
                     title: l10n.addOnsProviderTitle,
@@ -106,3 +108,13 @@ class AddOnsPage extends ConsumerWidget {
     );
   }
 }
+
+/// Space the pinned bar occupies: its 12dp top/bottom padding, the 52dp CTA,
+/// and the system navigation inset.
+double _barClearance(BuildContext context) =>
+    AppSpacing.md * 2 + 52 + MediaQuery.viewPaddingOf(context).bottom;
+
+/// The type scale for the active brightness — the light and dark palettes
+/// carry different text colours, so the scale is resolved per surface.
+AppTypography _type(BuildContext context) =>
+    context.isDark ? AppTypography.forDark() : AppTypography.forLight();

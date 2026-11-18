@@ -167,13 +167,14 @@ class _FactChip extends StatelessWidget {
     final tc = context.tokigoColors;
     final typography = AppTypography.forLight();
     return Container(
+      // The CardBadge chip recipe: pill radius, 8/4 padding.
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
         color: context.tokigoColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: AppRadius.pillBorder,
         border: Border.all(color: context.tokigoColors.outline),
       ),
       child: Row(

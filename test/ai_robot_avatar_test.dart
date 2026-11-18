@@ -14,7 +14,7 @@ import 'package:tokigo/features/ai/presentation/pages/ai_chat_page.dart';
 /// * a COMPLETED assistant reply carries the brand mark;
 /// * a USER reply never does;
 /// * the thinking indicator carries it too, with the breathing pulse running;
-/// * the welcome hero reuses the same widget.
+/// * the welcome state is text-only (owner decision: no brand mark there).
 void main() {
   Widget host(Widget child, {TextDirection direction = TextDirection.ltr}) {
     return ProviderScope(
@@ -154,21 +154,19 @@ void main() {
     expect(robot.left, greaterThan(bubble.left));
   });
 
-  testWidgets('the welcome hero reuses the same robot widget', (tester) async {
+  testWidgets('the welcome state is text-only (no brand mark)', (tester) async {
     tester.view.physicalSize = const Size(720, 1480);
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    // The hero is the page's own welcome state, which needs the AI providers and
-    // localizations; the page's welcome column is reproduced here so the test
-    // asserts the SHARED widget rather than the whole page's dependency graph.
+    // The page's welcome column is reproduced here (the real page needs the AI
+    // providers and localizations). Owner decision: it carries the welcome
+    // message only — the umbrella/brand mark is gone from the welcome state.
     await tester.pumpWidget(
       host(
         const Column(
           children: <Widget>[
-            AiRobotAvatar(size: 96),
-            SizedBox(height: 12),
             Text('Hi! Ask me about flights, hotels, and more…'),
           ],
         ),
@@ -176,12 +174,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(AiRobotAvatar), findsOneWidget);
-    expect(
-      tester.getSize(find.byType(AiRobotAvatar)).width,
-      96,
-      reason: 'the welcome hero draws the identity larger',
-    );
+    expect(find.byType(AiRobotAvatar), findsNothing);
     expect(find.text('Hi! Ask me about flights, hotels, and more…'), findsOneWidget);
   });
 

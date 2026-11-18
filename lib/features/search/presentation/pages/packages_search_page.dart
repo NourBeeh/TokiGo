@@ -55,7 +55,7 @@ class PackagesSearchPage extends StatelessWidget {
           // Two real destinations instead of a dead end. Inset + a clear gap:
           // two full-bleed tinted bars stacked edge-to-edge read as one blob.
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Column(
               children: <Widget>[
                 AppButton(

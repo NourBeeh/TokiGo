@@ -424,7 +424,9 @@ class FlightSearchCard extends StatelessWidget {
                       ),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: scheme.primary,
+                        // A price is content, not a call to action: it takes the
+                        // primary text ink, never the CTA red.
+                        color: tc.textPrimary,
                       ),
                     ),
                     if (displayTotal != null)
@@ -632,7 +634,9 @@ class _LoadingSkeleton extends StatelessWidget {
               flex: 2,
               child: Column(
                 children: [
-                  CardSkeleton.text(height: 2),
+                  // The rule mirrors the real route line: an explicit width, or
+                  // the skeleton box collapses to 0 wide.
+                  CardSkeleton.text(width: double.infinity, height: 2),
                   SizedBox(height: AppSpacing.xxs),
                   CardSkeleton.chip(width: 56, height: 16),
                 ],
@@ -738,8 +742,10 @@ class _FlightExpandedDetails extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: tc.surfaceTertiary,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        // Match the other detail cards: surface fill, 1px outline, 18 radius.
+        color: tc.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: tc.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -918,7 +924,9 @@ class _FactRow extends StatelessWidget {
             flex: 3,
             child: Text(
               value,
-              style: typography.captionSemibold.copyWith(
+              // Same fact-row recipe as OfferDetailsSummaryCard: the value is
+              // the louder body step, the label the quiet caption.
+              style: typography.bodyMedium.copyWith(
                 color: tc.textPrimary,
               ),
             ),

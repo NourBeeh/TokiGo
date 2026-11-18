@@ -120,10 +120,12 @@ Future<ProviderContainer> _pumpGuestPage(
 }
 
 List<String> _fieldLabels(WidgetTester tester) {
+  // The funnel's form recipe renders a small external label (AppTypography
+  // .label: 11/600) above each field instead of a floating InputDecoration
+  // label. Collect those labels in paint order.
   return <String>[
-    for (final TextField field
-        in tester.widgetList<TextField>(find.byType(TextField)))
-      field.decoration?.labelText ?? '',
+    for (final Text text in tester.widgetList<Text>(find.byType(Text)))
+      if (text.style?.fontSize == 11 && text.data != null) text.data!,
   ];
 }
 

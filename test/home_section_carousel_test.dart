@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
 import 'package:tokigo/features/home/presentation/widgets/destination_cover_flow_carousel.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_discovery_stay_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stay_card.dart';
@@ -65,7 +66,9 @@ void main() {
     final ScrollableState scrollable = tester.state<ScrollableState>(
       scrollableFinder,
     );
-    final double pageExtent = scrollable.position.viewportDimension * 0.8;
+    final double pageExtent =
+        scrollable.position.viewportDimension *
+        HomeCardDimensions.railViewportFraction;
 
     await tester.drag(find.byType(PageView), Offset(-pageExtent, 0));
     await tester.pumpAndSettle();
@@ -109,7 +112,10 @@ void main() {
     // centred cover flow, so the focal card is centred and the next card's
     // inner edge sits flush against it.
     expect(firstCard.center.dx, closeTo(viewport.center.dx, 1));
-    expect(firstCard.width, closeTo(viewport.width * 0.8, 1));
+    expect(
+      firstCard.width,
+      closeTo(viewport.width * HomeCardDimensions.railViewportFraction, 1),
+    );
     expect(nextCard.left, closeTo(firstCard.right, 1));
     expect(nextCard.intersect(viewport).width, greaterThan(0));
     expect(firstCard.width, greaterThan(300));

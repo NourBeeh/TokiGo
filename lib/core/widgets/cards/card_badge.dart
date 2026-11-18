@@ -52,7 +52,6 @@ class CardBadge extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final scheme = Theme.of(context).colorScheme;
     final onDark = variant == CardBadgeVariant.glass;
     final isPrimary = type != null && spec?.emphasis == BadgeEmphasis.primary;
 
@@ -69,8 +68,8 @@ class CardBadge extends StatelessWidget {
       foreground = spec.getColor(context);
       background = spec.getBackgroundColor(context);
     } else {
-      foreground = scheme.onPrimaryContainer;
-      background = scheme.primaryContainer;
+      foreground = context.tokigoColors.textPrimary;
+      background = context.tokigoColors.surfaceSecondary;
     }
 
     final content = Row(
@@ -114,7 +113,7 @@ class CardBadge extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         color: background,
-        borderRadius: AppRadius.smBorder,
+        borderRadius: AppRadius.pillBorder,
       ),
       child: content,
     );

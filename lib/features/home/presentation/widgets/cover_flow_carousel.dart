@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
+
 /// The shared 3D **cover-flow** pager behind Home's rails.
 ///
 /// Each page is wrapped in a [Transform] whose [Matrix4] is rebuilt on every
@@ -41,7 +43,7 @@ class CoverFlowCarousel extends StatefulWidget {
     required this.itemCount,
     required this.itemBuilder,
     required this.height,
-    this.viewportFraction = 0.9,
+    this.viewportFraction = HomeCardDimensions.railViewportFraction,
   });
 
   /// Number of pages. Hosts pass `1` for their loading skeleton.
@@ -96,8 +98,11 @@ class _CoverFlowCarouselState extends State<CoverFlowCarousel> {
   }
 
   /// Whether the platform-level "reduce motion" accessibility setting is on.
-  bool _reduceMotionEnabled() =>
-      WidgetsBinding.instance.platformDispatcher.accessibilityFeatures.reduceMotion;
+  bool _reduceMotionEnabled() => WidgetsBinding
+      .instance
+      .platformDispatcher
+      .accessibilityFeatures
+      .reduceMotion;
 
   void _checkReducedMotion() {
     if (_reduceMotionEnabled() && mounted) {
@@ -208,8 +213,7 @@ class _CoverFlowCarouselState extends State<CoverFlowCarousel> {
     // to the RIGHT in LTR and to the LEFT in RTL, so the edge's sign follows
     // the reading direction.
     final double directionSign = direction == TextDirection.rtl ? -1.0 : 1.0;
-    final double innerEdge =
-        -directionSign * distance.sign * pageWidth / 2.0;
+    final double innerEdge = -directionSign * distance.sign * pageWidth / 2.0;
     final double theta = rotationDegrees * math.pi / 180.0;
     final double scaledEdge = innerEdge * scale;
     final double rotatedEdge = scaledEdge * math.cos(theta);

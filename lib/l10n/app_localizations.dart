@@ -140,7 +140,7 @@ abstract class AppLocalizations {
   /// No description provided for @bagSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Your confirmed bookings, their status and references.'**
+  /// **'Trips'**
   String get bagSubtitle;
 
   /// No description provided for @notifications.
@@ -152,7 +152,7 @@ abstract class AppLocalizations {
   /// No description provided for @notificationsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Booking updates, price alerts and reminders.'**
+  /// **'Notifications'**
   String get notificationsSubtitle;
 
   /// No description provided for @profile.
@@ -164,7 +164,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Your account, trips and preferences.'**
+  /// **'Profile'**
   String get profileSubtitle;
 
   /// No description provided for @profileGuestTitle.
@@ -254,7 +254,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiChatSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'TokiGo AI assistant'**
+  /// **'AI Assistant'**
   String get aiChatSubtitle;
 
   /// No description provided for @askAssistantTitle.
@@ -644,7 +644,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeNavActivities.
   ///
   /// In en, this message translates to:
-  /// **'Activities'**
+  /// **'Packages'**
   String get homeNavActivities;
 
   /// No description provided for @homeNavGroups.
@@ -674,7 +674,7 @@ abstract class AppLocalizations {
   /// No description provided for @groupsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Plan together, travel together'**
+  /// **'Groups'**
   String get groupsSubtitle;
 
   /// No description provided for @viewAll.
@@ -770,7 +770,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Language, theme, currency and account.'**
+  /// **'Settings'**
   String get settingsSubtitle;
 
   /// No description provided for @language.
@@ -794,7 +794,7 @@ abstract class AppLocalizations {
   /// No description provided for @wishlistSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'The stays you kept, at the provider\'s own price.'**
+  /// **'Wishlist'**
   String get wishlistSubtitle;
 
   /// No description provided for @myTrips.
@@ -812,7 +812,7 @@ abstract class AppLocalizations {
   /// No description provided for @tripDetailsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Everything this booking really carries.'**
+  /// **'Trip details'**
   String get tripDetailsSubtitle;
 
   /// No description provided for @upcoming.
@@ -944,7 +944,7 @@ abstract class AppLocalizations {
   /// No description provided for @reviewBookingSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Check the offer, travellers and total before paying.'**
+  /// **'Review booking'**
   String get reviewBookingSubtitle;
 
   /// No description provided for @passengerDetails.
@@ -968,7 +968,7 @@ abstract class AppLocalizations {
   /// No description provided for @addOnsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Extra bags, seats and meals sold by the provider.'**
+  /// **'Add-ons'**
   String get addOnsSubtitle;
 
   /// No description provided for @bookingStepOf.
@@ -1022,7 +1022,7 @@ abstract class AppLocalizations {
   /// No description provided for @paymentSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Pay the provider\'s total for this trip.'**
+  /// **'Payment'**
   String get paymentSubtitle;
 
   /// No description provided for @confirmation.
@@ -1466,7 +1466,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiMemorySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Facts you shared in AI chats. You can edit or remove them anytime.'**
+  /// **'AI Memory'**
   String get aiMemorySubtitle;
 
   /// No description provided for @aiMemorySignInPrompt.
@@ -1712,19 +1712,19 @@ abstract class AppLocalizations {
   /// No description provided for @packagesSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Curated multi-day programs'**
+  /// **'Packages'**
   String get packagesSubtitle;
 
   /// No description provided for @carsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Self-drive rental cars'**
+  /// **'Cars Rental'**
   String get carsSubtitle;
 
   /// No description provided for @carsLiveSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Rental cars at your destination'**
+  /// **'Cars Rental'**
   String get carsLiveSubtitle;
 
   /// No description provided for @aiSomethingWentWrong.
@@ -2378,7 +2378,7 @@ abstract class AppLocalizations {
   /// No description provided for @exploreCitiesTitle.
   ///
   /// In en, this message translates to:
-  /// **'Cities for your mood'**
+  /// **'Cities'**
   String get exploreCitiesTitle;
 
   /// No description provided for @createNewTrip.
@@ -2426,7 +2426,7 @@ abstract class AppLocalizations {
   /// No description provided for @tripBuilderSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Collect hotels, flights and cars into one plan.'**
+  /// **'Plan your trip'**
   String get tripBuilderSubtitle;
 
   /// No description provided for @tripBuilderRemove.
@@ -2624,7 +2624,7 @@ abstract class AppLocalizations {
   /// No description provided for @flightSearchSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Search flights across providers'**
+  /// **'Flights'**
   String get flightSearchSubtitle;
 
   /// No description provided for @tripTypeOneWay.
@@ -3758,7 +3758,7 @@ abstract class AppLocalizations {
   /// No description provided for @editProfileSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Your name, contact details and nationality.'**
+  /// **'Edit profile'**
   String get editProfileSubtitle;
 
   /// No description provided for @firstName.
@@ -3920,7 +3920,7 @@ abstract class AppLocalizations {
   /// No description provided for @staysSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Stays that fit your trip'**
+  /// **'Stays'**
   String get staysSubtitle;
 
   /// No description provided for @offerAirline.

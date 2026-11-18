@@ -233,7 +233,7 @@ class _TripCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = _type(context);
     final l10n = AppLocalizations.of(context)!;
     final typeLabel = tripTypeLabel(l10n, trip.type);
     final place = trip.destination.trim();
@@ -301,9 +301,10 @@ class _TripCard extends StatelessWidget {
                               ),
                             ),
                             const Spacer(),
-                            StatusChip(
+                            StatusChip.forTone(
+                              context: context,
                               label: tripStatusLabel(l10n, trip.status),
-                              color: tripStatusColor(trip.status),
+                              tone: tripStatusTone(trip.status),
                             ),
                           ],
                         ),
@@ -422,3 +423,8 @@ class _TripCard extends StatelessWidget {
     return '$dates · $who';
   }
 }
+
+/// The type scale for the active brightness — the light and dark palettes
+/// carry different text colours, so the scale is resolved per surface.
+AppTypography _type(BuildContext context) =>
+    context.isDark ? AppTypography.forDark() : AppTypography.forLight();

@@ -58,7 +58,10 @@ class _AiPromptInputState extends ConsumerState<AiPromptInput> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final typography = AppTypography.forLight();
+    final typography =
+        Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -119,7 +122,7 @@ class _SendButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final tc = context.tokigoColors;
 
     return Semantics(
       button: true,
@@ -140,21 +143,12 @@ class _SendButton extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: enabled ? null : scheme.surfaceContainerHighest,
-              gradient: enabled
-                  ? LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: <Color>[context.tokigoColors.ai, context.tokigoColors.aiLight],
-                    )
-                  : null,
+              color: enabled ? tc.primary : tc.surfaceTertiary,
             ),
             child: Icon(
               Icons.arrow_upward,
               size: 22,
-              color: enabled
-                  ? scheme.onPrimary
-                  : scheme.onSurfaceVariant.withValues(alpha: 0.45),
+              color: enabled ? tc.onPrimary : tc.textTertiary,
             ),
           ),
         ),

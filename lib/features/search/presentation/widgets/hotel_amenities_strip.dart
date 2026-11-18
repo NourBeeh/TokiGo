@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -36,7 +35,7 @@ class HotelAmenitiesStrip extends StatelessWidget {
             (constraints.maxWidth - gap * (_perRow - 1)) / _perRow;
         return Wrap(
           spacing: gap,
-          runSpacing: AppSpacing.md,
+          runSpacing: gap,
           children: <Widget>[
             for (final amenity in visible)
               SizedBox(
@@ -61,8 +60,13 @@ class _AmenityTile extends StatelessWidget {
     final typography = AppTypography.forLight();
     return Column(
       children: <Widget>[
-        // The sheet's own surface, no plate: the icon is the mark.
-        Icon(hotelAmenityIcon(label), size: 22, color: context.tokigoColors.starFill),
+        // The sheet's own surface, no plate: the icon is the mark. A neutral
+        // ink, never the rating star fill.
+        Icon(
+          hotelAmenityIcon(label),
+          size: 22,
+          color: context.tokigoColors.textPrimary,
+        ),
         const SizedBox(height: AppSpacing.xs),
         Text(
           label,

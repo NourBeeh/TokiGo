@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:tokigo/core/admin/admin_home_content_service.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
@@ -139,10 +138,7 @@ class _AdminCardEditorSheetState extends State<_AdminCardEditorSheet> {
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     initialValue: _cardType,
-                    decoration: InputDecoration(
-                      labelText: l10n.adminType,
-                      border: const OutlineInputBorder(),
-                    ),
+                    decoration: InputDecoration(labelText: l10n.adminType),
                     items: kAdminCardTypes
                         .map(
                           (value) => DropdownMenuItem<String>(
@@ -159,10 +155,7 @@ class _AdminCardEditorSheetState extends State<_AdminCardEditorSheet> {
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     initialValue: _status,
-                    decoration: InputDecoration(
-                      labelText: l10n.adminStatus,
-                      border: const OutlineInputBorder(),
-                    ),
+                    decoration: InputDecoration(labelText: l10n.adminStatus),
                     items: <String>['published', 'draft']
                         .map(
                           (value) => DropdownMenuItem<String>(
@@ -250,6 +243,7 @@ class _AdminCardEditorSheetState extends State<_AdminCardEditorSheet> {
               decoration: BoxDecoration(
                 color: context.tokigoColors.surfaceSecondary,
                 borderRadius: AppRadius.mdBorder,
+                border: Border.all(color: context.tokigoColors.outline),
               ),
               padding: const EdgeInsets.all(AppSpacing.md),
               child: SizedBox(width: 300, child: HomeCard(item: _previewItem)),
@@ -265,7 +259,11 @@ class _AdminCardEditorSheetState extends State<_AdminCardEditorSheet> {
                   ),
                 ),
                 Expanded(
-                  child: AppButton(label: l10n.adminSave, onPressed: _save),
+                  child: AppButton(
+                    label: l10n.adminSave,
+                    type: AppButtonType.primary,
+                    onPressed: _save,
+                  ),
                 ),
               ],
             ),
@@ -287,10 +285,7 @@ class _AdminCardEditorSheetState extends State<_AdminCardEditorSheet> {
         controller: controller,
         keyboardType: keyboardType,
         onChanged: onChanged == null ? null : (_) => onChanged(),
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-        ),
+        decoration: InputDecoration(labelText: label),
       ),
     );
   }

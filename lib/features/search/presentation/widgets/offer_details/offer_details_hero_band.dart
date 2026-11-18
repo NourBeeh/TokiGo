@@ -32,7 +32,9 @@ class OfferDetailsHeroBand extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tc = context.tokigoColors;
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     final url = imageUrl;
     final flightOffer = flight;
     final double dpr = MediaQuery.maybeOf(context)?.devicePixelRatio ?? 2.0;

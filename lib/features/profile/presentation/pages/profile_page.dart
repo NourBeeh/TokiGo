@@ -11,6 +11,7 @@ import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
+import 'package:tokigo/core/ui/app_button.dart';
 import 'package:tokigo/core/ui/app_message_state.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/cards/card_image.dart';
@@ -91,14 +92,12 @@ class ProfilePage extends ConsumerWidget {
                         ),
                         const SizedBox(height: AppSpacing.lg),
                         if (GoogleAuthConfig.isConfigured)
-                          Pressable.wrap(
-                            child: OutlinedButton.icon(
-                              onPressed: () => ref
-                                  .read(authControllerProvider.notifier)
-                                  .signInWithGoogle(),
-                              icon: const Icon(Icons.g_mobiledata, size: 28),
-                              label: Text(l10n.continueWithGoogle),
-                            ),
+                          AppButton(
+                            label: l10n.continueWithGoogle,
+                            leadingIcon: Icons.g_mobiledata,
+                            onPressed: () => ref
+                                .read(authControllerProvider.notifier)
+                                .signInWithGoogle(),
                           ),
                       ],
                     ),
@@ -135,7 +134,7 @@ class _ProfileContent extends ConsumerWidget {
         AppSpacing.xxxl,
       ),
       children: <Widget>[
-        // Doc 22 §2.2 — the identity block is centred: avatar ⌀80, the name
+        // Doc 22 §2.2 — the identity block is centred: avatar ⌀88, the name
         // at 22/700, the email under it. No membership badge: the account
         // carries no tier, and a badge would be a claim about the customer.
         Padding(
@@ -147,8 +146,8 @@ class _ProfileContent extends ConsumerWidget {
                 children: <Widget>[
                   ClipOval(
                     child: SizedBox(
-                      width: 80,
-                      height: 80,
+                      width: 88,
+                      height: 88,
                       child: avatarUrl.isNotEmpty
                           ? CardImage(
                               url: avatarUrl,
@@ -159,22 +158,32 @@ class _ProfileContent extends ConsumerWidget {
                           : _InitialAvatar(name: name, email: email),
                     ),
                   ),
+                  // One edit affordance: the camera badge on the avatar. The
+                  // 28dp glyph keeps a 48dp hit area; the extra 20dp is
+                  // transparent and overlaps the (non-tappable) avatar.
                   PositionedDirectional(
                     end: 0,
                     bottom: 0,
                     child: Pressable(
                       onTap: () => context.push('/edit-profile'),
-                      child: Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: context.tokigoColors.brand,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt_rounded,
-                          size: 16,
-                          color: Colors.white,
+                      child: SizedBox(
+                        width: 48,
+                        height: 48,
+                        child: Align(
+                          alignment: AlignmentDirectional.bottomEnd,
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: context.tokigoColors.brand,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.camera_alt_rounded,
+                              size: 16,
+                              color: context.tokigoColors.onBrand,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -195,6 +204,8 @@ class _ProfileContent extends ConsumerWidget {
                       color: context.tokigoColors.textPrimary,
                     ),
                   ),
+                  // Kept per the no-deletion rule: the name pencil is the
+                  // established edit affordance, alongside the avatar badge.
                   Pressable.wrap(
                     child: IconButton(
                       icon: const Icon(Icons.edit_rounded, size: 18),
@@ -219,8 +230,7 @@ class _ProfileContent extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.md),
-        // Edit profile — at top of the page.
-        // (removed: edit action now lives as pencil icon next to the name)
+        // Edit profile — reached through the camera badge on the avatar.
         Container(
           decoration: BoxDecoration(
             color: context.tokigoColors.surface,

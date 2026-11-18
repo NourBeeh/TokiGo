@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_elevation.dart';
-import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
-import 'package:tokigo/core/widgets/pressable.dart';
+import 'package:tokigo/core/widgets/cards/card.dart';
 
 /// The compact "your search" summary shared by every search surface.
 ///
@@ -52,73 +50,53 @@ class CompactSearchSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
-    return Pressable.wrap(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: context.tokigoColors.surface,
-          borderRadius: AppRadius.lgBorder,
-          boxShadow: AppElevation.shadow(
-            background: context.tokigoColors.surface,
-            level: AppElevation.sm,
+    // BaseCard owns the shared surface language: the hairline border, the
+    // halo elevation and the single accessible button node.
+    return BaseCard(
+      onTap: onEdit,
+      semanticsLabel: '$editLabel: $title, $meta',
+      padding: const EdgeInsetsDirectional.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(
+            leadingIcon,
+            size: 20,
+            color: context.tokigoColors.textPrimary,
           ),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: AppRadius.lgBorder,
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onEdit,
-            child: Semantics(
-              button: true,
-              label: '$editLabel: $title, $meta',
-              child: Padding(
-                padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.md,
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: typography.bodyLargeMedium.copyWith(
+                    color: context.tokigoColors.textPrimary,
+                  ),
                 ),
-                child: Row(
-                  children: <Widget>[
-                    Icon(
-                      leadingIcon,
-                      size: 20,
-                      color: context.tokigoColors.textPrimary,
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Text(
-                            title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: typography.bodyLargeMedium.copyWith(
-                              color: context.tokigoColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            meta,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: typography.caption.copyWith(
-                              color: context.tokigoColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (trailing != null) ...<Widget>[
-                      const SizedBox(width: AppSpacing.sm),
-                      trailing!,
-                    ],
-                  ],
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  meta,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: typography.caption.copyWith(
+                    color: context.tokigoColors.textSecondary,
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
-        ),
+          if (trailing != null) ...<Widget>[
+            const SizedBox(width: AppSpacing.sm),
+            trailing!,
+          ],
+        ],
       ),
     );
   }

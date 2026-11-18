@@ -78,7 +78,7 @@ class BookingReviewPage extends ConsumerWidget {
                     child: Text(
                       l10n.bookingNoSelection,
                       style: typography.body.copyWith(
-                        color: context.tokigoColors.textTertiary,
+                        color: context.tokigoColors.textSecondary,
                       ),
                     ),
                   ),
@@ -239,7 +239,9 @@ class _OfferSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tc = context.tokigoColors;
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
@@ -250,8 +252,8 @@ class _OfferSummaryCard extends StatelessWidget {
       child: Row(
         children: <Widget>[
           Container(
-            width: 48,
-            height: 48,
+            width: AppSpacing.minimumTapTarget,
+            height: AppSpacing.minimumTapTarget,
             decoration: BoxDecoration(
               color: context.tokigoColors.brandContainer,
               borderRadius: BorderRadius.circular(AppRadius.md),
@@ -292,8 +294,9 @@ class _OfferSummaryCard extends StatelessWidget {
             children: <Widget>[
               Text(
                 '$currency ${price.toStringAsFixed(2)}',
-                style: typography.bodyLargeMedium.copyWith(
+                style: typography.titleMedium.copyWith(
                   color: context.tokigoColors.textPrimary,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ],
@@ -428,34 +431,34 @@ class _TimelineStep extends StatelessWidget {
     final tc = context.tokigoColors;
     final typography = AppTypography.forLight();
     final color = switch (state) {
-      _StepState.done => context.tokigoColors.success,
+      _StepState.done => context.tokigoColors.onSuccessContainer,
       _StepState.active => context.tokigoColors.brand,
-      _StepState.idle => context.tokigoColors.textTertiary,
+      _StepState.idle => context.tokigoColors.textSecondary,
     };
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: Row(
         children: <Widget>[
           SizedBox(
-            width: 22,
-            height: 22,
+            width: AppSpacing.xl,
+            height: AppSpacing.xl,
             child: switch (state) {
               _StepState.done => Icon(
                 Icons.check_circle_rounded,
-                size: 22,
+                size: AppSpacing.xl,
                 color: color,
               ),
               _StepState.active => const SizedBox(
-                width: 22,
-                height: 22,
+                width: AppSpacing.xl,
+                height: AppSpacing.xl,
                 child: Padding(
-                  padding: EdgeInsets.all(4.5),
+                  padding: EdgeInsets.all(AppSpacing.xs),
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
               ),
               _StepState.idle => Icon(
                 Icons.radio_button_unchecked_rounded,
-                size: 22,
+                size: AppSpacing.xl,
                 color: color,
               ),
             },
@@ -494,7 +497,9 @@ class _ErrorBanner extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: typography.caption.copyWith(color: context.tokigoColors.danger),
+              style: typography.caption.copyWith(
+                color: context.tokigoColors.onDangerContainer,
+              ),
             ),
           ),
         ],
@@ -535,13 +540,13 @@ class _PriceChangedBanner extends StatelessWidget {
               Icon(
                 Icons.trending_up_rounded,
                 size: 18,
-                color: context.tokigoColors.warning,
+                color: context.tokigoColors.onWarningContainer,
               ),
               const SizedBox(width: AppSpacing.sm),
               Text(
                 l10n.bookingPriceChanged,
                 style: typography.bodyMedium.copyWith(
-                  color: context.tokigoColors.warning,
+                  color: context.tokigoColors.onWarningContainer,
                   fontWeight: AppTypography.weightSemibold,
                 ),
               ),
@@ -735,13 +740,30 @@ class _ProcessingButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tc = context.tokigoColors;
-    return const SizedBox(
-      height: 52,
-      child: Center(
-        child: SizedBox(
-          width: 24,
-          height: 24,
-          child: CircularProgressIndicator(strokeWidth: 2.5),
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
+    return Semantics(
+      button: true,
+      label: label,
+      child: SizedBox(
+        height: 52,
+        child: Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2.5),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Text(
+                label,
+                style: typography.bodyMedium.copyWith(color: tc.textPrimary),
+              ),
+            ],
+          ),
         ),
       ),
     );

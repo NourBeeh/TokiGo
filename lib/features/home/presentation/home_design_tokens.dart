@@ -24,14 +24,15 @@ abstract final class HomeDesignTokens {
   /// Home ink — the leading search glyph, the quick-action glyphs and their
   /// labels, and the AI composer's actions.
   ///
-  /// Owner decision (2026-11): Home's accent is NEUTRAL, not the brand blue —
-  /// black on the light canvas, white on the dark one. The blue identity stays
-  /// with the brand mark and the results surfaces; Home reads as a calm,
-  /// content-first dashboard.
-  static const Color accent = Color(0xFF000000);
+  /// Owner decision (2026-11): Home's accent is the THEME's own brand ink —
+  /// #111111 on the light canvas, #F5F5F5 on the dark one — so Home carries no
+  /// second near-black. Resolve it with [accentOf]; this constant is only the
+  /// light fallback for hosts without a [TokiGoColors] extension.
+  static const Color accent = Color(0xFF111111);
 
-  /// Search placeholder ink.
-  static const Color hint = Color(0xFF8E8E8E);
+  /// Search placeholder ink — the theme's own [TokiGoColors.textTertiary]
+  /// (#6E6E6E light / #8E8E8E dark). Resolve it with [hintOf].
+  static const Color hint = Color(0xFF6E6E6E);
 
   /// 1dp border on the search field and the quick-action cards.
   static const Color border = Color(0xFFDBDBDB);
@@ -45,20 +46,21 @@ abstract final class HomeDesignTokens {
       isDark(context) ? context.tokigoColors.surfaceElevated : surface;
 
   /// Home accent, resolved for the active brightness.
-  static Color accentOf(BuildContext context) =>
-      isDark(context) ? const Color(0xFFFFFFFF) : accent;
+  static Color accentOf(BuildContext context) => context.tokigoColors.brand;
 
   /// Border on a Home surface.
   static Color borderOf(BuildContext context) =>
       isDark(context) ? context.tokigoColors.hairline : border;
 
-  /// The spec's placeholder ink in both modes.
-  static Color hintOf(BuildContext context) => hint;
+  /// The theme's placeholder ink for the active brightness.
+  static Color hintOf(BuildContext context) =>
+      context.tokigoColors.textTertiary;
 
   /// Pressed fill for a quick-action card — a neutral grey, so the pressed
   /// state never reintroduces a coloured tint.
-  static Color pressedSurfaceOf(BuildContext context) =>
-      isDark(context) ? context.tokigoColors.surfaceSecondary : const Color(0xFFF5F5F5);
+  static Color pressedSurfaceOf(BuildContext context) => isDark(context)
+      ? context.tokigoColors.surfaceSecondary
+      : const Color(0xFFF5F5F5);
 
   /// Soft halo under the AI composer pill.
   ///

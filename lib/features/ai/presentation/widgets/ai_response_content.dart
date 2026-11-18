@@ -3,6 +3,7 @@ import 'package:tokigo/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:tokigo/core/theme/tokigo_colors.dart';
+import 'package:tokigo/core/theme/tokigo_gradients.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -63,7 +64,10 @@ class _AiErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography =
+        Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
 
     return Center(
       child: Padding(
@@ -74,7 +78,9 @@ class _AiErrorState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: typography.body.copyWith(color: typography.textMutedColor),
+              style: typography.body.copyWith(
+                color: context.tokigoColors.textSecondary,
+              ),
             ),
             if (onRetry != null) ...<Widget>[
               const SizedBox(height: AppSpacing.lg),
@@ -120,7 +126,7 @@ class _AiResponseBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final tc = context.tokigoColors;
     final typography = AppTypography.forLight();
 
     return Padding(
@@ -138,13 +144,9 @@ class _AiResponseBubble extends StatelessWidget {
             height: 28,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: <Color>[context.tokigoColors.ai, context.tokigoColors.aiLight],
-              ),
+              gradient: TokiGoGradients.brandGradient(),
             ),
-            child: Icon(Icons.auto_awesome, size: 14, color: scheme.onPrimary),
+            child: Icon(Icons.auto_awesome, size: 14, color: tc.onMedia),
           ),
           const SizedBox(width: AppSpacing.sm),
           Flexible(
@@ -154,18 +156,18 @@ class _AiResponseBubble extends StatelessWidget {
                 vertical: AppSpacing.sm,
               ),
               decoration: BoxDecoration(
-                color: scheme.surface,
+                color: tc.surface,
                 borderRadius: const BorderRadiusDirectional.only(
                   topStart: Radius.circular(AppRadius.sm),
                   topEnd: Radius.circular(AppRadius.lg),
                   bottomStart: Radius.circular(AppRadius.lg),
                   bottomEnd: Radius.circular(AppRadius.lg),
                 ),
-                border: Border.all(color: scheme.outlineVariant),
+                border: Border.all(color: tc.outline),
               ),
               child: Text(
                 text,
-                style: typography.bodyMedium.copyWith(color: scheme.onSurface),
+                style: typography.bodyMedium.copyWith(color: tc.textPrimary),
               ),
             ),
           ),

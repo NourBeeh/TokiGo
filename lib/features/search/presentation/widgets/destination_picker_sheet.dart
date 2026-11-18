@@ -345,7 +345,10 @@ class _PickerSheetState extends State<_PickerSheet> {
         // sheet can be opened from a root-navigator page, where the inset is
         // live; subtracting it here keeps both hosts overflow-free.
         constraints: BoxConstraints(
-          maxHeight: (media.size.height - bottomInset) * 0.85,
+          // The same 90% cap the filter sheet uses; only the keyboard inset is
+          // subtracted here, because this sheet is hosted by the root
+          // navigator where the inset is live.
+          maxHeight: (media.size.height - bottomInset) * 0.9,
         ),
         child: Material(
           color: context.tokigoColors.surface,
@@ -356,6 +359,21 @@ class _PickerSheetState extends State<_PickerSheet> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
+              // The same grab handle as the filter sheet, so every bottom
+              // sheet shares one exit affordance.
+              ExcludeSemantics(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.sm),
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: context.tokigoColors.hairlineStrong,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                  ),
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.lg,

@@ -16,6 +16,7 @@ import 'package:tokigo/l10n/app_localizations.dart';
 ///
 /// Every block is provider-verbatim. When the provider sent nothing for a
 /// section, the section is absent rather than filled with a generic sentence.
+/// One consistent inter-section gap keeps the verticals rhythmically identical.
 class OfferDetailsContentSections extends StatelessWidget {
   const OfferDetailsContentSections({super.key, required this.offer});
 
@@ -26,7 +27,7 @@ class OfferDetailsContentSections extends StatelessWidget {
     final tc = context.tokigoColors;
     final typography = AppTypography.forLight();
     final l10n = AppLocalizations.of(context)!;
-    final widgets = <Widget>[];
+    final sections = <Widget>[];
 
     final description = switch (offer) {
       FlightOffer o => o.description,
@@ -36,16 +37,12 @@ class OfferDetailsContentSections extends StatelessWidget {
       _ => null,
     };
     if (description != null && description.isNotEmpty) {
-      widgets.addAll(<Widget>[
-        OfferDetailsSectionTitle(
-          typography: typography,
-          title: l10n.offerAbout,
-        ),
+      sections.add(_section(typography, l10n.offerAbout, <Widget>[
         Text(
           description,
-          style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
+          style: typography.body.copyWith(color: tc.textSecondary),
         ),
-      ]);
+      ]));
     }
 
     // 3D — Hotel taxes & cancellation policy (provider-verbatim).
@@ -53,60 +50,48 @@ class OfferDetailsContentSections extends StatelessWidget {
     if (hotel != null) {
       final taxes = hotel.metadata['taxesAndFees'];
       if (taxes is Map && taxes['amount'] != null) {
-        widgets.addAll(<Widget>[
-          OfferDetailsSectionTitle(
-            typography: typography,
-            title: l10n.offerTaxesFees,
-          ),
+        sections.add(_section(typography, l10n.offerTaxesFees, <Widget>[
           Text(
             '${taxes['description'] ?? l10n.offerTaxesFees}: '
             '${taxes['currency']} ${taxes['amount']}'
             '${taxes['included'] == true ? ' ${l10n.offerTaxesIncluded}' : ''}',
-            style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
+            style: typography.body.copyWith(color: tc.textSecondary),
           ),
-        ]);
+        ]));
       }
       final cancellation = hotel.metadata['cancellationPolicy'];
       if (cancellation is Map) {
         final until = cancellation['refundableUntil'];
         final fee = cancellation['feeAmount'];
         final feeCurrency = cancellation['feeCurrency'];
-        widgets.addAll(<Widget>[
-          OfferDetailsSectionTitle(
-            typography: typography,
-            title: l10n.offerCancellation,
-          ),
+        sections.add(_section(typography, l10n.offerCancellation, <Widget>[
           if (hotel.metadata['refundable'] == true)
             Text(
               until != null
                   ? l10n.offerFreeCancellationUntil('$until')
                   : l10n.offerRefundableRate,
-              style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
+              style: typography.body.copyWith(color: tc.textSecondary),
             )
           else
             Text(
               l10n.offerNonRefundableRate,
-              style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
+              style: typography.body.copyWith(color: tc.textSecondary),
             ),
           if (hotel.metadata['refundable'] == true && fee != null) ...[
             const SizedBox(height: AppSpacing.xxs),
             Text(
               l10n.offerCancellationFeeNote('$feeCurrency $fee'),
-              style: typography.caption.copyWith(color: context.tokigoColors.textTertiary),
+              style: typography.caption.copyWith(color: tc.textSecondary),
             ),
           ],
-        ]);
+        ]));
       } else if (hotel.metadata['refundable'] == false) {
-        widgets.addAll(<Widget>[
-          OfferDetailsSectionTitle(
-            typography: typography,
-            title: l10n.offerCancellation,
-          ),
+        sections.add(_section(typography, l10n.offerCancellation, <Widget>[
           Text(
             l10n.offerNonRefundableRate,
-            style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
+            style: typography.body.copyWith(color: tc.textSecondary),
           ),
-        ]);
+        ]));
       }
     }
 
@@ -115,29 +100,21 @@ class OfferDetailsContentSections extends StatelessWidget {
     if (car != null) {
       final cancellation = car.metadata['cancellationPolicy'];
       if (cancellation != null) {
-        widgets.addAll(<Widget>[
-          OfferDetailsSectionTitle(
-            typography: typography,
-            title: l10n.offerCancellation,
-          ),
+        sections.add(_section(typography, l10n.offerCancellation, <Widget>[
           Text(
             '$cancellation',
-            style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
+            style: typography.body.copyWith(color: tc.textSecondary),
           ),
-        ]);
+        ]));
       }
       final features = car.metadata['features'];
       if (features is List && features.isNotEmpty) {
-        widgets.addAll(<Widget>[
-          OfferDetailsSectionTitle(
-            typography: typography,
-            title: l10n.offerFeatures,
-          ),
+        sections.add(_section(typography, l10n.offerFeatures, <Widget>[
           Text(
             features.join(' · '),
-            style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
+            style: typography.body.copyWith(color: tc.textSecondary),
           ),
-        ]);
+        ]));
       }
     }
 
@@ -146,11 +123,7 @@ class OfferDetailsContentSections extends StatelessWidget {
         ? offer as TravelPackageOffer
         : null;
     if (pkg != null && pkg.inclusions.isNotEmpty) {
-      widgets.addAll(<Widget>[
-        OfferDetailsSectionTitle(
-          typography: typography,
-          title: l10n.offerInclusions,
-        ),
+      sections.add(_section(typography, l10n.offerInclusions, <Widget>[
         for (final line in pkg.inclusions)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -159,44 +132,62 @@ class OfferDetailsContentSections extends StatelessWidget {
                 Icon(
                   Icons.check_rounded,
                   size: 18,
-                  color: context.tokigoColors.brand,
+                  color: tc.brand,
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
                     line,
-                    style: typography.body.copyWith(
-                      color: context.tokigoColors.textSecondary,
-                    ),
+                    style: typography.body.copyWith(color: tc.textSecondary),
                   ),
                 ),
               ],
             ),
           ),
-      ]);
+      ]));
     }
 
     // Hotel amenities live up under the hotel's name (reference screen 6's
     // facility strip) — one place for them, never two.
 
     // Provider footnote for every offer.
-    widgets.addAll(<Widget>[
-      OfferDetailsSectionTitle(
-        typography: typography,
-        title: l10n.offerProvider,
+    sections.add(_section(typography, l10n.offerProvider, <Widget>[
+      Text(
+        switch (offer) {
+          FlightOffer o => o.providerName,
+          HotelOffer o => o.providerName,
+          CarOffer o => o.providerName,
+          TravelPackageOffer o => o.providerName,
+          _ => '',
+        },
+        style: typography.bodyMedium.copyWith(color: tc.textPrimary),
       ),
-      Text(switch (offer) {
-        FlightOffer o => o.providerName,
-        HotelOffer o => o.providerName,
-        CarOffer o => o.providerName,
-        TravelPackageOffer o => o.providerName,
-        _ => '',
-      }, style: typography.bodyMedium.copyWith(color: context.tokigoColors.textPrimary)),
-    ]);
+    ]));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: widgets,
+      children: <Widget>[
+        for (int i = 0; i < sections.length; i++) ...<Widget>[
+          if (i > 0) const SizedBox(height: AppSpacing.lg),
+          sections[i],
+        ],
+      ],
+    );
+  }
+
+  /// One titled block: the shared section heading followed by its body.
+  Widget _section(
+    AppTypography typography,
+    String title,
+    List<Widget> body,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        OfferDetailsSectionTitle(typography: typography, title: title),
+        ...body,
+      ],
     );
   }
 }

@@ -536,6 +536,12 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+      ),
       builder: (_) => FilterPanel(
         filters: ref.read(flightFiltersProvider),
         onChanged: (f) => ref.read(flightFiltersProvider.notifier).state = f,
@@ -724,6 +730,12 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: context.tokigoColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+      ),
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
@@ -906,6 +918,12 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
   Future<void> _pickCabin(AppLocalizations l10n) async {
     final _Cabin? picked = await showModalBottomSheet<_Cabin>(
       context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+      ),
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1026,7 +1044,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
           ..._buildSingleRoute(l10n),
         const SizedBox(height: AppSpacing.sm),
         _buildTravelersAndCabinRow(l10n),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.sm),
         SearchSubmitButton(label: l10n.findFlights, onPressed: _search),
       ],
     );
@@ -1061,7 +1079,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
           ),
         ],
       ),
-      const SizedBox(height: AppSpacing.md),
+      const SizedBox(height: AppSpacing.sm),
       Row(
         children: [
           Expanded(
@@ -1098,7 +1116,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
     return <Widget>[
       for (int i = 0; i < _legs.length; i++)
         Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
           child: _buildLegCard(l10n, i),
         ),
       Align(
@@ -1110,12 +1128,15 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
             label: Text(l10n.flightAddLeg),
             style: TextButton.styleFrom(
               foregroundColor: context.tokigoColors.brand,
-              minimumSize: const Size(48, 44),
+              minimumSize: const Size(
+                AppSpacing.minimumTapTarget,
+                AppSpacing.minimumTapTarget,
+              ),
             ),
           ),
         ),
       ),
-      const SizedBox(height: AppSpacing.md),
+      const SizedBox(height: AppSpacing.sm),
     ];
   }
 
@@ -1222,7 +1243,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
       case SearchStatus.loading:
         return const SearchStatesView.loading(
           skeleton: Padding(
-            padding: EdgeInsets.only(bottom: 12),
+            padding: EdgeInsets.only(bottom: AppSpacing.md),
             child: FlightSearchCard.loading(),
           ),
         );
@@ -1306,7 +1327,7 @@ class _CabinButton extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm + 4,
+              vertical: AppSpacing.md,
             ),
             child: Row(
               children: <Widget>[
@@ -1377,8 +1398,8 @@ class _SwapRouteButton extends StatelessWidget {
             child: InkWell(
               onTap: onTap,
               child: SizedBox(
-                width: 40,
-                height: 40,
+                width: AppSpacing.minimumTapTarget,
+                height: AppSpacing.minimumTapTarget,
                 child: Icon(
                   Icons.swap_horiz_rounded,
                   size: 20,

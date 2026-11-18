@@ -182,13 +182,17 @@ class _SignInPromptSheetState extends ConsumerState<_SignInPromptSheet> {
                   onPressed: loading ? null : _openAuthPage,
                 ),
               const SizedBox(height: AppSpacing.sm),
-              AppButton(
-                label: l10n.signInSheetNotNow,
-                type: AppButtonType.ghost,
-                size: AppButtonSize.sm,
-                onPressed: loading
-                    ? null
-                    : () => Navigator.of(context).pop(false),
+              // `sm` draws 40pt; the 48pt box keeps the minimum touch target.
+              SizedBox(
+                height: AppSpacing.minimumTapTarget,
+                child: AppButton(
+                  label: l10n.signInSheetNotNow,
+                  type: AppButtonType.ghost,
+                  size: AppButtonSize.sm,
+                  onPressed: loading
+                      ? null
+                      : () => Navigator.of(context).pop(false),
+                ),
               ),
             ],
           ),

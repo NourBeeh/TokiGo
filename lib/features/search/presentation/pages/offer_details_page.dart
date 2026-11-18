@@ -57,16 +57,23 @@ class OfferDetailsPage extends ConsumerWidget {
   const OfferDetailsPage({
     super.key,
     required this.offer,
-    this.hue = AppColors.brand,
+    this.hue,
   });
 
   final Object offer;
-  final Color hue;
+
+  /// Brand composition behind a flight's identity. Null resolves to the active
+  /// theme's brand ink, so the band and its on-brand label stay paired in dark
+  /// mode instead of painting near-black-on-black.
+  final Color? hue;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     final l10n = AppLocalizations.of(context)!;
+    final Color bandHue = hue ?? context.tokigoColors.brand;
     final summary = offerDetailsSummaryOf(offer);
     final title = summary.title;
     final subtitle = summary.subtitle;
@@ -77,6 +84,16 @@ class OfferDetailsPage extends ConsumerWidget {
     final hotel = offer is HotelOffer ? offer as HotelOffer : null;
     final List<HotelOffer> wishlist = ref.watch(wishlistProvider);
     final planningTrip = ref.watch(tripDraftProvider) != null;
+
+    // The pinned bar is a StickyCtaBar slab: md top padding, the 48pt CTA
+    // target, md bottom padding (the documented 72pt slab) plus the view
+    // inset — the same formula sticky_cta_bar uses, so the last section
+    // always clears the bar.
+    final double ctaBarClearance =
+        MediaQuery.viewPaddingOf(context).bottom +
+        AppSpacing.md +
+        AppSpacing.minimumTapTarget +
+        AppSpacing.md;
 
     // Phase 1C — behavioral signal: opening a HOTEL offer details page is a
     // `hotel_view` (fire-and-forget; guests/silence handled in the tracker).
@@ -99,7 +116,7 @@ class OfferDetailsPage extends ConsumerWidget {
                     // sheet biting 24px up into it.
                     media: OfferDetailsHeroBand(
                       imageUrl: imageUrl,
-                      hue: hue,
+                      hue: bandHue,
                       flight: flight,
                       glyph: _verticalGlyph(offer),
                     ),
@@ -166,9 +183,9 @@ class OfferDetailsPage extends ConsumerWidget {
                             currency: currency,
                             stay: hotel != null ? StayPrice.of(hotel) : null,
                           ),
-                          const SizedBox(height: AppSpacing.xl),
+                          const SizedBox(height: AppSpacing.lg),
                           OfferDetailsContentSections(offer: offer),
-                          const SizedBox(height: 140),
+                          SizedBox(height: ctaBarClearance),
                         ],
                       ),
                     ),

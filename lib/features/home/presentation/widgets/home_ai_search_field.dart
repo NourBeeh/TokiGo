@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
-/// Hit target for the trailing mic/send actions. It sits one step below
-/// [AppSpacing.minimumTapTarget] (48) so the pill can stay slim while the
-/// actions remain a comfortable tap surface.
-const double _trailingActionSize = 40;
+/// Hit target for the trailing mic/send actions: the full
+/// [AppSpacing.minimumTapTarget] (48). The visual disc inside stays smaller
+/// (34); only the tap surface grew to the accessibility minimum.
+const double _trailingActionSize = AppSpacing.minimumTapTarget;
 
 /// The Home search field — the owner's spec: a white pill (56dp tall, a fully
 /// rounded 32 radius, one 1dp `#E0DCD6` border, no shadow) with an accent
@@ -123,8 +124,8 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
   /// base size. The text is never wrapped, never elided and never painted
   /// outside the field, so the hint reads complete on every screen width.
   Widget _fittedHint(String text, AppTypography typography) {
-    // The spec's placeholder ink (#757575) at full opacity — never faded.
-    // Doc 17 §3.2 — the placeholder is `body` 15/400.
+    // The theme's placeholder ink (textTertiary) at full opacity — never
+    // faded. Doc 17 §3.2 — the placeholder is `body` 15/400.
     final baseStyle = typography.body.copyWith(
       color: HomeDesignTokens.hintOf(context),
     );
@@ -148,10 +149,11 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     final l10n = AppLocalizations.of(context)!;
-    final Color ink =
-        widget.accentColor ?? HomeDesignTokens.accentOf(context);
+    final Color ink = widget.accentColor ?? HomeDesignTokens.accentOf(context);
 
     return TapRegion(
       onTapOutside: (_) => _focusNode.unfocus(),
@@ -164,8 +166,9 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
         constraints: BoxConstraints(minHeight: _fieldHeight),
         decoration: BoxDecoration(
           color: HomeDesignTokens.surfaceOf(context),
-          // Fully rounded: a stadium pill at both heights.
-          borderRadius: BorderRadius.circular(_fieldHeight / 2),
+          // Fully rounded: the pill step on the radius scale. At both pill
+          // heights the render box clamps it to a stadium.
+          borderRadius: AppRadius.xlBorder,
           // Owner decision (2026-11): the composer is a FLOATING pill — its
           // edge comes from the soft halo below, not from a 1dp border, so it
           // reads as hovering over the feed instead of being boxed into it.
@@ -178,11 +181,7 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
           child: Row(
             children: <Widget>[
               // The spec's leading search glyph, in the Home accent.
-              Icon(
-                Icons.search_rounded,
-                size: 22,
-                color: ink,
-              ),
+              Icon(Icons.search_rounded, size: 22, color: ink),
               const SizedBox(width: AppSpacing.sm),
               // The editable field with a static, localized hint. The trailing
               // send action submits the current query.
@@ -239,7 +238,7 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                   child: InkResponse(
                     onTap: () => _openChat(),
                     customBorder: const CircleBorder(),
-                    radius: 22,
+                    radius: AppSpacing.minimumTapTarget / 2,
                     child: SizedBox(
                       width: _trailingActionSize,
                       height: _trailingActionSize,
@@ -268,8 +267,8 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                 // Send is the composer's primary action. It uses the send glyph
                 // (not a second magnifier) because the job here is to submit the
                 // typed message to the AI, not to open a picker. The fill is the
-                // Home ink — black on the light canvas, white on the dark one —
-                // with the glyph inverted so it always clears AA on the disc.
+                // Home ink — near-black on the light canvas, near-white on the
+                // dark one — with the glyph inverted so it always clears AA.
                 Semantics(
                   button: true,
                   label: l10n.aiSend,
@@ -281,7 +280,7 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                     ),
                     onTap: _submit,
                     customBorder: const CircleBorder(),
-                    radius: 22,
+                    radius: AppSpacing.minimumTapTarget / 2,
                     child: SizedBox(
                       width: _trailingActionSize,
                       height: _trailingActionSize,

@@ -7,6 +7,7 @@ import 'package:tokigo/core/domain/models/search/hotel_search_params.dart';
 import 'package:tokigo/core/domain/models/search/hotel_room_occupancy.dart';
 import 'package:tokigo/core/memory/explicit_preference_signal.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
+import 'package:tokigo/core/theme/app_breakpoints.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -52,6 +53,16 @@ enum _HotelSort { recommended, cheapest, topRated }
 /// These filter the hotel's own star class (provider classification, 1-5), not
 /// the guest review score — `null` is "All" (no class constraint).
 const List<int?> _classChips = <int?>[null, 5, 4, 3];
+
+/// The map slab's share of the viewport: tall enough to read the pins, short
+/// enough that the first result peeks underneath. A compact phone keeps a
+/// smaller share so the page still reads as a list.
+const double _mapViewportShare = 0.7;
+const double _mapViewportShareCompact = 0.64;
+
+/// Cap for the results-bar sort label: a quarter of the compact width, so a
+/// long localized label never starves the filter action beside it.
+const double _sortLabelMaxWidth = AppBreakpoints.compact / 4;
 
 /// DS-3 — the hotel results page on reference A's anatomy.
 ///
@@ -280,7 +291,6 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
                 if (_occupancies.length > 1)
                   IconButton(
                     icon: const Icon(Icons.close_rounded, size: 18),
-                    visualDensity: VisualDensity.compact,
                     onPressed: () => setState(() {
                       final list = List<HotelRoomOccupancy>.from(_occupancies);
                       list.removeAt(i);
@@ -362,7 +372,6 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
               ),
               IconButton(
                 icon: const Icon(Icons.add_rounded, size: 18),
-                visualDensity: VisualDensity.compact,
                 tooltip: l10n.addRoom,
                 onPressed: () => setState(() {
                   _occupancies = List<HotelRoomOccupancy>.from(_occupancies)
@@ -439,6 +448,12 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+      ),
       builder: (_) => FilterPanel(
         filters: ref.read(hotelFiltersProvider),
         onChanged: (f) => ref.read(hotelFiltersProvider.notifier).state = f,
@@ -468,9 +483,12 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
       useSafeArea: true,
       backgroundColor: context.tokigoColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadiusDirectional.vertical(
+        borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppRadius.xl),
         ),
+      ),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.9,
       ),
       builder: (sheetContext) => SafeArea(
         top: false,
@@ -557,6 +575,11 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
         state.status == HotelSearchStatus.success &&
         !isMapView &&
         _visibleResults(state, filters).length > kSearchLazyResultsThreshold;
+    final double mapHeight =
+        MediaQuery.sizeOf(context).height *
+        (MediaQuery.sizeOf(context).width < AppBreakpoints.compact
+            ? _mapViewportShareCompact
+            : _mapViewportShare);
 
     return SearchScaffold(
       // Before a search the header states what the page is for (the same
@@ -587,7 +610,7 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
                     // An explicit height: FlutterMap's own LayoutBuilder does
                     // not support the intrinsic dimensions a
                     // SliverFillRemaining would ask for.
-                    height: MediaQuery.sizeOf(context).height * 0.7,
+                    height: mapHeight,
                     child: _buildMapView(state, filters),
                   ),
                 ),
@@ -852,7 +875,7 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
         ),
         const SizedBox(height: AppSpacing.sm),
         _buildOccupancyEditor(l10n),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.sm),
         SearchSubmitButton(label: l10n.findHotels, onPressed: _search),
       ],
     );
@@ -904,7 +927,7 @@ class _HotelSearchPageState extends ConsumerState<HotelSearchPage> {
       case HotelSearchStatus.loading:
         return const SearchStatesView.loading(
           skeleton: Padding(
-            padding: EdgeInsets.only(bottom: 12),
+            padding: EdgeInsets.only(bottom: AppSpacing.md),
             child: HotelOverlapCard.loading(),
           ),
         );
@@ -1038,40 +1061,54 @@ class _ResultsBarAction extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm,
-                vertical: AppSpacing.sm,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Icon(icon, size: 18, color: context.tokigoColors.textPrimary),
-                  if (label != null) ...<Widget>[
-                    const SizedBox(width: AppSpacing.xxs),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 120),
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: typography.captionSemibold.copyWith(
-                          color: context.tokigoColors.textPrimary,
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minWidth: AppSpacing.minimumTapTarget,
+                  minHeight: AppSpacing.minimumTapTarget,
+                ),
+                child: SizedBox(
+                  height: AppSpacing.minimumTapTarget,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Icon(
+                        icon,
+                        size: 18,
+                        color: context.tokigoColors.textPrimary,
+                      ),
+                      if (label != null) ...<Widget>[
+                        const SizedBox(width: AppSpacing.xxs),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxWidth: _sortLabelMaxWidth,
+                          ),
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: typography.captionSemibold.copyWith(
+                              color: context.tokigoColors.textPrimary,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  ],
-                  if (active) ...<Widget>[
-                    const SizedBox(width: AppSpacing.xxs),
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: context.tokigoColors.brand,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ],
-                ],
+                      ],
+                      if (active) ...<Widget>[
+                        const SizedBox(width: AppSpacing.xxs),
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: context.tokigoColors.brand,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -1100,7 +1137,10 @@ class _DiscoverMoreButton extends StatelessWidget {
           label: Text(l10n.discoverMore),
           style: TextButton.styleFrom(
             foregroundColor: context.tokigoColors.brand,
-            minimumSize: const Size(48, 48),
+            minimumSize: const Size(
+              AppSpacing.minimumTapTarget,
+              AppSpacing.minimumTapTarget,
+            ),
             textStyle: typography.bodyMedium.copyWith(
               fontWeight: FontWeight.w600,
             ),

@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
 import 'package:tokigo/core/widgets/cards/overlap_stay_card.dart';
+import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stay_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stays_carousel.dart';
 
@@ -106,7 +107,10 @@ void main() {
     // focal card sits in the middle of the viewport with the next stay
     // peeking at the trailing edge, exactly like the Discover rail.
     expect(firstCard.center.dx, closeTo(viewport.center.dx, 1));
-    expect(firstCard.width, closeTo(viewport.width * 0.8, 1));
+    expect(
+      firstCard.width,
+      closeTo(viewport.width * HomeCardDimensions.railViewportFraction, 1),
+    );
     expect(nextCard.left, closeTo(firstCard.right, 1));
     expect(
       tester

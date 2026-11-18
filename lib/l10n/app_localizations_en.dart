@@ -30,19 +30,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bag => 'My Trips';
 
   @override
-  String get bagSubtitle => 'Your confirmed bookings, their status and references.';
+  String get bagSubtitle => 'Trips';
 
   @override
   String get notifications => 'Notifications';
 
   @override
-  String get notificationsSubtitle => 'Booking updates, price alerts and reminders.';
+  String get notificationsSubtitle => 'Notifications';
 
   @override
   String get profile => 'Profile';
 
   @override
-  String get profileSubtitle => 'Your account, trips and preferences.';
+  String get profileSubtitle => 'Profile';
 
   @override
   String get profileGuestTitle => 'You\'re browsing as a guest';
@@ -87,7 +87,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiSearchSheetHint => 'Where do you want to go?';
 
   @override
-  String get aiChatSubtitle => 'TokiGo AI assistant';
+  String get aiChatSubtitle => 'AI Assistant';
 
   @override
   String get askAssistantTitle => 'Ask your assistant';
@@ -292,7 +292,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchPackages => 'Holidays';
 
   @override
-  String get homeNavActivities => 'Activities';
+  String get homeNavActivities => 'Packages';
 
   @override
   String get homeNavGroups => 'Groups';
@@ -307,7 +307,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupsTitle => 'Groups';
 
   @override
-  String get groupsSubtitle => 'Plan together, travel together';
+  String get groupsSubtitle => 'Groups';
 
   @override
   String get viewAll => 'View all';
@@ -355,7 +355,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings => 'Settings';
 
   @override
-  String get settingsSubtitle => 'Language, theme, currency and account.';
+  String get settingsSubtitle => 'Settings';
 
   @override
   String get language => 'Language';
@@ -367,7 +367,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wishlist => 'Wishlist';
 
   @override
-  String get wishlistSubtitle => 'The stays you kept, at the provider\'s own price.';
+  String get wishlistSubtitle => 'Wishlist';
 
   @override
   String get myTrips => 'My trips';
@@ -376,7 +376,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tripDetails => 'Trip details';
 
   @override
-  String get tripDetailsSubtitle => 'Everything this booking really carries.';
+  String get tripDetailsSubtitle => 'Trip details';
 
   @override
   String get upcoming => 'Upcoming';
@@ -450,7 +450,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reviewBooking => 'Review booking';
 
   @override
-  String get reviewBookingSubtitle => 'Check the offer, travellers and total before paying.';
+  String get reviewBookingSubtitle => 'Review booking';
 
   @override
   String get passengerDetails => 'Passenger details';
@@ -462,7 +462,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addOns => 'Add-ons';
 
   @override
-  String get addOnsSubtitle => 'Extra bags, seats and meals sold by the provider.';
+  String get addOnsSubtitle => 'Add-ons';
 
   @override
   String bookingStepOf(String current, String total) {
@@ -491,7 +491,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get payment => 'Payment';
 
   @override
-  String get paymentSubtitle => 'Pay the provider\'s total for this trip.';
+  String get paymentSubtitle => 'Payment';
 
   @override
   String get confirmation => 'Confirmation';
@@ -713,7 +713,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiMemoryTitle => 'What I Know About You';
 
   @override
-  String get aiMemorySubtitle => 'Facts you shared in AI chats. You can edit or remove them anytime.';
+  String get aiMemorySubtitle => 'AI Memory';
 
   @override
   String get aiMemorySignInPrompt => 'Sign in to see and manage what the AI remembers about you.';
@@ -836,13 +836,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get findHotels => 'Find stays';
 
   @override
-  String get packagesSubtitle => 'Curated multi-day programs';
+  String get packagesSubtitle => 'Packages';
 
   @override
-  String get carsSubtitle => 'Self-drive rental cars';
+  String get carsSubtitle => 'Cars Rental';
 
   @override
-  String get carsLiveSubtitle => 'Rental cars at your destination';
+  String get carsLiveSubtitle => 'Cars Rental';
 
   @override
   String get aiSomethingWentWrong => 'Something went wrong. Please try again.';
@@ -1181,7 +1181,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupsEmptyBody => 'Creating a trip, inviting friends and splitting the plan will open here once the group trips backend is connected.';
 
   @override
-  String get exploreCitiesTitle => 'Cities for your mood';
+  String get exploreCitiesTitle => 'Cities';
 
   @override
   String get createNewTrip => 'Create a new trip';
@@ -1205,7 +1205,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tripBuilderEmpty => 'Choose a hotel, flight, or car to add it here.';
 
   @override
-  String get tripBuilderSubtitle => 'Collect hotels, flights and cars into one plan.';
+  String get tripBuilderSubtitle => 'Plan your trip';
 
   @override
   String get tripBuilderRemove => 'Remove from trip';
@@ -1306,7 +1306,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingBackHome => 'Back to home';
 
   @override
-  String get flightSearchSubtitle => 'Search flights across providers';
+  String get flightSearchSubtitle => 'Flights';
 
   @override
   String get tripTypeOneWay => 'One-way';
@@ -2012,7 +2012,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editProfile => 'Edit profile';
 
   @override
-  String get editProfileSubtitle => 'Your name, contact details and nationality.';
+  String get editProfileSubtitle => 'Edit profile';
 
   @override
   String get firstName => 'First name';
@@ -2103,7 +2103,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get staysSubtitle => 'Stays that fit your trip';
+  String get staysSubtitle => 'Stays';
 
   @override
   String get offerAirline => 'Airline';

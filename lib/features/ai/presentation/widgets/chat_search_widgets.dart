@@ -7,10 +7,10 @@ import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/features/universal_search/application/voice_search_state.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
-/// The chat surface's microphone affordance — a bare red mic at rest,
-/// recording red with a gentle pulse while listening, a quiet wait while
-/// starting. Fully semantic (microphone / listening state / stop-cancel
-/// labels).
+/// The chat surface's microphone affordance — a bare mic at rest, recording
+/// with a gentle pulse while listening, a quiet wait while starting. The icon
+/// uses the app's near-black text colour in every state. Fully semantic
+/// (microphone / listening state / stop-cancel labels).
 class VoiceMicButton extends StatelessWidget {
   const VoiceMicButton({super.key, required this.state, required this.onTap});
 
@@ -19,7 +19,6 @@ class VoiceMicButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
     final isListening = state.status == VoiceSearchStatus.listening;
     final isStarting = state.status == VoiceSearchStatus.starting;
@@ -29,9 +28,9 @@ class VoiceMicButton extends StatelessWidget {
         : isStarting
         ? Icons.mic_none_rounded
         : Icons.mic_rounded;
-    // The brand mic is red in every restful state; listening keeps the same
-    // warm red so only the icon + pulse communicate the state change.
-    final color = isListening ? scheme.error : context.tokigoColors.brandRed;
+    // Owner decision: the mic is the app's near-black text colour in every
+    // state (it used to be red); only the icon + pulse communicate the change.
+    final color = context.tokigoColors.textPrimary;
 
     return Semantics(
       button: true,

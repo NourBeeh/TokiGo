@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
-import 'package:tokigo/core/theme/app_spacing.dart';
-import 'package:tokigo/core/widgets/pressable.dart';
+import 'package:tokigo/core/theme/app_typography.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
+import 'package:tokigo/core/widgets/section_header.dart';
 import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
 import 'package:tokigo/features/home/presentation/widgets/cover_flow_carousel.dart';
 import 'package:tokigo/features/home/presentation/widgets/flight_recommendation_card.dart';
@@ -47,7 +48,6 @@ class FlightRecommendationList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final cardHeight = HomeCardDimensions.cardHeightForType(
       HomeCardType.flight,
     );
@@ -55,47 +55,28 @@ class FlightRecommendationList extends StatelessWidget {
     final isLoading =
         loading || displayItems.isEmpty || _isSkeletonItem(displayItems.first);
     final tileCount = isLoading ? maxRows.clamp(1, 3) : displayItems.length;
+    final bool dark = Theme.of(context).brightness == Brightness.dark;
+    final AppTypography typography = dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Header with title and View All
-        Padding(
-          padding: const EdgeInsetsDirectional.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.sm,
+        // Header: the SAME shared `SectionHeader` step and rhythm as every
+        // other Home section, so the flight rail's heading lands on the same
+        // lines. Its action is the theme's brand ink — never the red primary,
+        // which is reserved for primary CTAs and selected states.
+        SectionHeader(
+          title: title,
+          titleStyle: typography.titleMedium.copyWith(
+            color: context.tokigoColors.textPrimary,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-                ),
-              ),
-              if (onViewAll != null && !isLoading)
-                Pressable.wrap(
-                  child: TextButton(
-                    onPressed: onViewAll,
-                    child: Text(
-                      // Null-safe: a bare test host has no localizations, and the English
-                      // form is the documented fallback.
-                      AppLocalizations.of(context)?.viewAll ?? 'View all',
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: scheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
+          actionLabel: onViewAll != null && !isLoading
+              ? (AppLocalizations.of(context)?.viewAll ?? 'View all')
+              : null,
+          onAction: onViewAll,
         ),
         // Horizontal carousel of FlightRecommendationCards.
         //
@@ -110,11 +91,7 @@ class FlightRecommendationList extends StatelessWidget {
             final HomeItem? item = isLoading ? null : displayItems[index];
             if (item == null) {
               return const FlightRecommendationCard(
-                item: HomeItem(
-                  id: '',
-                  type: HomeCardType.flight,
-                  title: '',
-                ),
+                item: HomeItem(id: '', type: HomeCardType.flight, title: ''),
                 loading: true,
               );
             }

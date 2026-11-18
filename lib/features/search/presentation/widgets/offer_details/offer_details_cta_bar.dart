@@ -92,16 +92,18 @@ class _CtaButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     return Material(
-      color: context.tokigoColors.ctaBarButton,
-      borderRadius: AppRadius.smBorder,
+      color: context.tokigoColors.primary,
+      borderRadius: AppRadius.mdBorder,
       child: Pressable(
         onTap: onPressed,
         child: Container(
-          constraints: const BoxConstraints(minHeight: 48),
+          constraints: const BoxConstraints(minHeight: 52),
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
+            horizontal: AppSpacing.lg,
             vertical: AppSpacing.sm,
           ),
           child: Center(
@@ -112,7 +114,7 @@ class _CtaButton extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: typography.bodyLargeMedium.copyWith(
-                color: context.tokigoColors.onCtaBarButton,
+                color: context.tokigoColors.onPrimary,
               ),
             ),
           ),

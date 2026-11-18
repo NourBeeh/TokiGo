@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:tokigo/core/admin/admin_provider_models.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -280,7 +279,7 @@ class _ProviderRow extends StatelessWidget {
             width: 8,
             height: 8,
             decoration: BoxDecoration(
-              color: _statusColor(),
+              color: _statusColor(context),
               shape: BoxShape.circle,
             ),
           ),
@@ -372,10 +371,11 @@ class _ProviderRow extends StatelessWidget {
     );
   }
 
-  Color _statusColor() {
-    if (provider.healthStatus == 'healthy') return AppColors.success;
-    if (provider.healthStatus == 'unhealthy') return AppColors.danger;
-    return AppColors.textTertiary;
+  Color _statusColor(BuildContext context) {
+    final tc = context.tokigoColors;
+    if (provider.healthStatus == 'healthy') return tc.success;
+    if (provider.healthStatus == 'unhealthy') return tc.danger;
+    return tc.textTertiary;
   }
 }
 
@@ -397,7 +397,7 @@ class _HealthPill extends StatelessWidget {
       'unhealthy' => (
         l10n.adminUnhealthy,
         context.tokigoColors.dangerContainer,
-        context.tokigoColors.danger,
+        context.tokigoColors.onDangerContainer,
       ),
       _ => (
         l10n.adminUnknown,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:tokigo/core/admin/admin_home_content_service.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
+import 'package:tokigo/core/theme/app_elevation.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -91,7 +92,11 @@ class _AdminContentTabState extends ConsumerState<AdminContentTab> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final typography = AppTypography.forLight();
+    final tc = context.tokigoColors;
+    final typography =
+        Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     if (_error != null && _sections == null) {
       return Center(
         child: SingleChildScrollView(
@@ -111,7 +116,12 @@ class _AdminContentTabState extends ConsumerState<AdminContentTab> {
       return const Center(child: CircularProgressIndicator());
     }
     if (sections.isEmpty) {
-      return Center(child: Text(l10n.adminEmpty, style: typography.body));
+      return Center(
+        child: Text(
+          l10n.adminEmpty,
+          style: typography.body.copyWith(color: tc.textPrimary),
+        ),
+      );
     }
     return Stack(
       children: <Widget>[
@@ -190,8 +200,9 @@ class _AdminContentTabState extends ConsumerState<AdminContentTab> {
           bottom: AppSpacing.lg,
           child: FloatingActionButton.extended(
             heroTag: 'admin-add-section',
-            backgroundColor: context.tokigoColors.brand,
-            foregroundColor: Colors.white,
+            backgroundColor: context.tokigoColors.primary,
+            foregroundColor: context.tokigoColors.onPrimary,
+            elevation: AppElevation.md,
             onPressed: _busy ? null : () => _createSection(context),
             icon: const Icon(Icons.add_rounded),
             label: Text(l10n.adminAddSection),
@@ -246,7 +257,14 @@ class _AdminContentTabState extends ConsumerState<AdminContentTab> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(l10n.adminAddSection, style: AppTypography.forLight().title),
+              Text(
+                l10n.adminAddSection,
+                style: (Theme.of(context).brightness == Brightness.dark
+                    ? AppTypography.forDark().title
+                    : AppTypography.forLight().title).copyWith(
+                  color: context.tokigoColors.textPrimary,
+                ),
+              ),
               const SizedBox(height: AppSpacing.md),
               TextField(
                 controller: titleController,
@@ -444,6 +462,7 @@ class _SectionRow extends StatelessWidget {
                     const Spacer(),
                     Switch(
                       value: section.isVisible,
+                      activeColor: context.tokigoColors.primary,
                       onChanged: busy ? null : onToggleVisibility,
                     ),
                   ],
@@ -535,7 +554,7 @@ class _SectionDetail extends StatelessWidget {
                   child: AppButton(
                     label: l10n.adminAddCard,
                     type: AppButtonType.secondary,
-                    size: AppButtonSize.sm,
+                    size: AppButtonSize.md,
                     leadingIcon: Icons.add_rounded,
                     onPressed: busy ? null : onCreateCard,
                   ),
@@ -589,6 +608,7 @@ class _CardRow extends StatelessWidget {
           Flexible(child: _StatusPill(status: card.status)),
           Switch(
             value: card.isVisible,
+            activeColor: context.tokigoColors.primary,
             onChanged: busy ? null : onToggleVisibility,
           ),
           PopupMenuButton<String>(
@@ -620,7 +640,10 @@ class _CardRow extends StatelessWidget {
               ),
               PopupMenuItem<String>(
                 value: 'delete',
-                child: Text(l10n.adminDelete),
+                child: Text(
+                  l10n.adminDelete,
+                  style: TextStyle(color: context.tokigoColors.danger),
+                ),
               ),
             ],
           ),

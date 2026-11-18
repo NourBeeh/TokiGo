@@ -551,7 +551,7 @@ class _LanguageOptions extends StatelessWidget {
             Icon(
               Icons.check_circle_rounded,
               size: 14,
-              color: context.tokigoColors.brand,
+              color: context.tokigoColors.primary,
             ),
           ],
           const SizedBox(width: AppSpacing.sm),
@@ -657,7 +657,7 @@ class _OptionSheet<T> extends StatelessWidget {
                           Icon(
                             Icons.check_circle_rounded,
                             size: 20,
-                            color: context.tokigoColors.brand,
+                            color: context.tokigoColors.primary,
                           ),
                       ],
                     ),

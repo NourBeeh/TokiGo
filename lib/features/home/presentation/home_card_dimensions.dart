@@ -42,21 +42,51 @@ class HomeCardDimensions {
 
   // ── Rail geometry ───────────────────────────────────────────────────────
 
-  /// Width of one stay page as a fraction of the rail's width. A little under
-  /// the full width so the next stay peeks — the only affordance that says
-  /// "swipe me" without a tutorial.
-  static const double stayViewportFraction = 0.8;
-
-  /// Width of one Discover page as a fraction of the rail's width.
-  static const double destinationViewportFraction = 0.9;
-
-  /// Width of one page in a mixed card rail (car / package / deal), as a
-  /// fraction of the rail's width.
+  /// The ONE page-width fraction shared by every Home cover-flow rail.
   ///
   /// Owner decision (2026-11): EVERY Home card rail runs the same
   /// [CoverFlowCarousel], so the page fraction is one shared value — the rails
-  /// differ in their card content, never in their swipe feel.
-  static const double cardRailViewportFraction = 0.8;
+  /// differ in their card content, never in their swipe feel. 0.9 leaves a
+  /// 10% peek of the next card, the only affordance that says "swipe me"
+  /// without a tutorial. This is the single source; the per-rail names below
+  /// are kept as aliases so existing callers keep compiling.
+  static const double railViewportFraction = 0.9;
+
+  /// Width of one stay page as a fraction of the rail's width.
+  static const double stayViewportFraction = railViewportFraction;
+
+  /// Width of one Discover page as a fraction of the rail's width.
+  static const double destinationViewportFraction = railViewportFraction;
+
+  /// Width of one page in a mixed card rail (car / package / deal), as a
+  /// fraction of the rail's width.
+  static const double cardRailViewportFraction = railViewportFraction;
+
+  // ── Header & skeleton geometry ──────────────────────────────────────────
+
+  /// Height of the Home top bar (the wordmark row).
+  static const double topBarHeight = AppSpacing.xxxl;
+
+  /// Width of a section-title shimmer placeholder in the Home skeletons.
+  ///
+  /// One value for every section: the placeholder mirrors the unified header
+  /// step, not the length of one particular title.
+  static const double sectionTitleSkeletonWidth = AppSpacing.xxxl * 3;
+
+  /// Bottom breathing room so scrolled content clears a pinned CTA bar.
+  static const double pageBottomInset = AppSpacing.xxxl * 3;
+
+  /// The one section-header padding rhythm shared by Home's section headers.
+  ///
+  /// 16 inset, 24 above, 12 below — the same values the shared
+  /// `SectionHeader` paints, so a custom Home header and a `SectionHeader`
+  /// land on the same lines.
+  static const EdgeInsets sectionHeaderPadding = EdgeInsets.fromLTRB(
+    AppSpacing.lg,
+    AppSpacing.xl,
+    AppSpacing.lg,
+    AppSpacing.md,
+  );
 
   // ── Sheet budgets ───────────────────────────────────────────────────────
 

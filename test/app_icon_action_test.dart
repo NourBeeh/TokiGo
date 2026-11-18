@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/app_theme.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/widgets/app_icon_action.dart';
 
 void main() {
@@ -21,9 +21,11 @@ void main() {
       ),
     );
 
+    // The disc glyph resolves against the active brightness: near-white ink
+    // on the dark canvas, near-black on the light one.
     expect(
       tester.widget<Icon>(find.byIcon(Icons.arrow_back_rounded)).color,
-      AppColors.textPrimary,
+      TokiGoColors.dark().textPrimary,
     );
   });
 

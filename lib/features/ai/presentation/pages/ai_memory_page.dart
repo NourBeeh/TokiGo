@@ -91,6 +91,10 @@ class _SignInPrompt extends StatelessWidget {
             const SizedBox(height: AppSpacing.lg),
             Pressable.wrap(
               child: FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: context.tokigoColors.primary,
+                  foregroundColor: context.tokigoColors.onPrimary,
+                ),
                 onPressed: () => context.go('/auth'),
                 child: Text(l10n.signIn),
               ),
@@ -211,9 +215,9 @@ class _ErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final tc = context.tokigoColors;
     return Material(
-      color: scheme.errorContainer,
+      color: tc.dangerContainer,
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
@@ -224,12 +228,17 @@ class _ErrorBanner extends StatelessWidget {
             Expanded(
               child: Text(
                 message,
-                style: TextStyle(color: scheme.onErrorContainer),
+                style: TextStyle(color: tc.onDangerContainer),
               ),
             ),
             Pressable.wrap(
               child: IconButton(
-                icon: const Icon(Icons.close, size: 18),
+                icon: Icon(
+                  Icons.close,
+                  size: 18,
+                  color: tc.onDangerContainer,
+                ),
+                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
                 onPressed: onDismiss,
               ),
             ),
@@ -248,15 +257,15 @@ class _MemoryCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final typography = AppTypography.forLight();
-    final scheme = Theme.of(context).colorScheme;
+    final tc = context.tokigoColors;
     final controller = ref.read(explicitMemoryControllerProvider.notifier);
     final l10n = AppLocalizations.of(context)!;
 
     return Container(
       decoration: BoxDecoration(
-        color: context.tokigoColors.surface,
+        color: tc.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.4)),
+        border: Border.all(color: tc.outline),
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -282,6 +291,9 @@ class _MemoryCard extends ConsumerWidget {
               children: <Widget>[
                 Pressable.wrap(
                   child: TextButton.icon(
+                    style: TextButton.styleFrom(
+                      foregroundColor: tc.textPrimary,
+                    ),
                     onPressed: () => _openEditor(context, controller),
                     icon: const Icon(Icons.edit_outlined, size: 16),
                     label: Text(l10n.aiMemoryEdit),
@@ -289,6 +301,7 @@ class _MemoryCard extends ConsumerWidget {
                 ),
                 Pressable.wrap(
                   child: TextButton.icon(
+                    style: TextButton.styleFrom(foregroundColor: tc.danger),
                     onPressed: () async {
                       final ok = await controller.delete(memory);
                       if (ok && context.mounted) {
@@ -337,7 +350,7 @@ class _ClearAllBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
+    final tc = context.tokigoColors;
     return SafeArea(
       top: false,
       child: Padding(
@@ -347,8 +360,8 @@ class _ClearAllBar extends StatelessWidget {
           child: Pressable.wrap(
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                foregroundColor: scheme.error,
-                side: BorderSide(color: scheme.error.withValues(alpha: 0.5)),
+                foregroundColor: tc.danger,
+                side: BorderSide(color: tc.danger.withValues(alpha: 0.5)),
               ),
               onPressed: () => _confirmClearAll(context),
               icon: const Icon(Icons.delete_sweep_outlined, size: 18),
@@ -377,7 +390,8 @@ class _ClearAllBar extends StatelessWidget {
           Pressable.wrap(
             child: FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(dialogContext).colorScheme.error,
+                backgroundColor: context.tokigoColors.danger,
+                foregroundColor: Theme.of(dialogContext).colorScheme.onError,
               ),
               onPressed: () => Navigator.of(dialogContext).pop(true),
               child: Text(l10n.aiMemoryClearAll),
@@ -498,7 +512,6 @@ class _MemoryEditorSheetState extends State<_MemoryEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
     final l10n = AppLocalizations.of(context)!;
     final kind = widget.memory.kind;
 
@@ -514,9 +527,14 @@ class _MemoryEditorSheetState extends State<_MemoryEditorSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            l10n.aiMemoryEdit,
-            style: typography.title.copyWith(color: context.tokigoColors.textPrimary),
+          Semantics(
+            header: true,
+            child: Text(
+              l10n.aiMemoryEdit,
+              style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                color: context.tokigoColors.textPrimary,
+              ),
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           if (kind == 'preferred_destination')
@@ -594,7 +612,7 @@ class _MemoryEditorSheetState extends State<_MemoryEditorSheet> {
             const SizedBox(height: AppSpacing.sm),
             Text(
               _error!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+              style: TextStyle(color: context.tokigoColors.danger),
             ),
           ],
           const SizedBox(height: AppSpacing.lg),
@@ -602,6 +620,10 @@ class _MemoryEditorSheetState extends State<_MemoryEditorSheet> {
             width: double.infinity,
             child: Pressable.wrap(
               child: FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: context.tokigoColors.primary,
+                  foregroundColor: context.tokigoColors.onPrimary,
+                ),
                 onPressed: _save,
                 child: Text(l10n.adminSave),
               ),

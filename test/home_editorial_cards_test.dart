@@ -82,7 +82,7 @@ Widget _app({
       GoRoute(
         path: '/packages',
         builder: (context, state) =>
-            const Scaffold(body: Text('Activities opened')),
+            const Scaffold(body: Text('Packages opened')),
       ),
       GoRoute(
         path: '/bag',
@@ -317,7 +317,7 @@ void main() {
     expect(find.text('Flights'), findsOneWidget);
     expect(find.text('Stays'), findsOneWidget);
     expect(find.text('Cars Rental'), findsOneWidget);
-    expect(find.text('Activities'), findsOneWidget);
+    expect(find.text('Packages'), findsOneWidget);
     expect(find.text('Groups'), findsOneWidget);
     // Trips left the quick-action bar (owner decision, 2026-11); My Trips is
     // reached from Profile. Explore was never a Home tile.
@@ -327,7 +327,7 @@ void main() {
     final Offset flights = tester.getCenter(find.text('Flights'));
     final Offset stays = tester.getCenter(find.text('Stays'));
     final Offset cars = tester.getCenter(find.text('Cars Rental'));
-    final Offset activities = tester.getCenter(find.text('Activities'));
+    final Offset activities = tester.getCenter(find.text('Packages'));
     final Offset groups = tester.getCenter(find.text('Groups'));
     // One row: the five labels share a baseline. Compared with a tolerance
     // because a label long enough to be scaled by the FittedBox lands on a

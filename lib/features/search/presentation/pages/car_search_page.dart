@@ -6,6 +6,7 @@ import 'package:tokigo/core/domain/models/search/car_search_params.dart';
 import 'package:tokigo/core/domain/models/offers/car_offer.dart';
 import 'package:tokigo/features/search/application/providers/hotel_car_providers.dart';
 import 'package:tokigo/features/search/application/controllers/car_search_controller.dart';
+import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/ui/app_button.dart';
 import 'package:tokigo/features/search/presentation/widgets/search_scaffold.dart';
@@ -202,6 +203,12 @@ class _CarSearchPageState extends ConsumerState<CarSearchPage> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+      ),
       builder: (_) => FilterPanel(
         filters: ref.read(carFiltersProvider),
         onChanged: (f) => ref.read(carFiltersProvider.notifier).state = f,
@@ -339,26 +346,29 @@ class _CarSearchPageState extends ConsumerState<CarSearchPage> {
       children: [
         SearchFieldInput(
           icon: Icons.location_on_outlined,
-          hint: l10n.carPickupHint,
+          label: l10n.carPickupLocation,
+          hint: l10n.selectAction,
           controller: _pickupCtrl,
           readOnly: true,
           onTap: _pickPickupLocation,
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.sm),
         SearchFieldInput(
           icon: Icons.flag_outlined,
-          hint: l10n.carDropoffHint,
+          label: l10n.carDropoffLocation,
+          hint: l10n.selectAction,
           controller: _dropoffCtrl,
           readOnly: true,
           onTap: _pickDropoffLocation,
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.sm),
         Row(
           children: [
             Expanded(
               child: SearchFieldInput(
                 icon: Icons.calendar_today_outlined,
-                hint: l10n.carPickUpShort,
+                label: l10n.carPickUpShort,
+                hint: l10n.pickDateHint,
                 controller: _pickupDateCtrl,
                 readOnly: true,
                 onTap: _pickPickupDate,
@@ -368,7 +378,8 @@ class _CarSearchPageState extends ConsumerState<CarSearchPage> {
             Expanded(
               child: SearchFieldInput(
                 icon: Icons.calendar_today_outlined,
-                hint: l10n.carDropOffShort,
+                label: l10n.carDropOffShort,
+                hint: l10n.pickDateHint,
                 controller: _dropoffDateCtrl,
                 readOnly: true,
                 onTap: _pickDropoffDate,
@@ -376,9 +387,9 @@ class _CarSearchPageState extends ConsumerState<CarSearchPage> {
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.sm),
         _buildTransmissionChips(),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.sm),
         SearchSubmitButton(label: l10n.carSearchCta, onPressed: _search),
       ],
     );
@@ -418,7 +429,7 @@ class _CarSearchPageState extends ConsumerState<CarSearchPage> {
       case CarSearchStatus.loading:
         return const SearchStatesView.loading(
           skeleton: Padding(
-            padding: EdgeInsets.only(bottom: 12),
+            padding: EdgeInsets.only(bottom: AppSpacing.md),
             child: CarSearchCard.loading(),
           ),
         );

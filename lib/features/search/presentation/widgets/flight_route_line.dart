@@ -111,8 +111,14 @@ class FlightRouteLine extends StatelessWidget {
                       alignment: Alignment.center,
                       clipBehavior: Clip.none,
                       children: [
-                        // Main line
-                        Container(height: 2, color: lineColor),
+                        // Main line. The width is explicit: a bare
+                        // `Container(height: 2)` in a Stack sizes to 0 wide and
+                        // paints nothing.
+                        Container(
+                          width: double.infinity,
+                          height: 2,
+                          color: lineColor,
+                        ),
                         // Plane icon travelling the route — turned to fly toward
                         // the arrival end (RTL routes read right → left).
                         PositionedDirectional(
@@ -122,7 +128,11 @@ class FlightRouteLine extends StatelessWidget {
                                 Directionality.of(context) == TextDirection.rtl
                                 ? 3
                                 : 1,
-                            child: const Icon(Icons.flight, size: 14),
+                            child: Icon(
+                              Icons.flight,
+                              size: 14,
+                              color: tc.textSecondary,
+                            ),
                           ),
                         ),
                         // Stop indicators
@@ -184,7 +194,7 @@ class FlightRouteLine extends StatelessWidget {
                               '+$arrivalDayOffset',
                               style: Theme.of(context).textTheme.labelSmall
                                   ?.copyWith(
-                                    color: scheme.primary,
+                                    color: tc.textSecondary,
                                     fontWeight: FontWeight.w700,
                                   ),
                             ),

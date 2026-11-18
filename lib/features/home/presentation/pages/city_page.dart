@@ -15,6 +15,7 @@ import 'package:tokigo/core/widgets/cards/card.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/core/widgets/sticky_cta_bar.dart';
 import 'package:tokigo/features/home/presentation/destination_localization.dart';
+import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
 /// The information page a Discover city tile opens.
@@ -56,8 +57,7 @@ class CityPage extends StatelessWidget {
                 l10n?.homeCityNotFoundBody ??
                 'Go back to Discover and choose a city.',
             actionLabel: l10n?.back ?? 'Back',
-            onAction: () =>
-                context.canPop() ? context.pop() : context.go('/'),
+            onAction: () => context.canPop() ? context.pop() : context.go('/'),
           ),
         ),
       );
@@ -193,7 +193,9 @@ class CityPage extends StatelessWidget {
                               source: photoSource,
                             ),
                           ],
-                          const SizedBox(height: 140),
+                          const SizedBox(
+                            height: HomeCardDimensions.pageBottomInset,
+                          ),
                         ],
                       ),
                     ),
@@ -398,25 +400,25 @@ class _CityCtaButton extends StatelessWidget {
           onTap: onPressed,
           borderRadius: AppRadius.smBorder,
           child: Container(
-          constraints: const BoxConstraints(minHeight: 48),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm,
-          ),
-          child: Center(
-            widthFactor: 1,
-            heightFactor: 1,
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.forLight().bodyLargeMedium.copyWith(
-                color: context.tokigoColors.onCtaBarButton,
+            constraints: const BoxConstraints(minHeight: 48),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            child: Center(
+              widthFactor: 1,
+              heightFactor: 1,
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.forLight().bodyLargeMedium.copyWith(
+                  color: context.tokigoColors.onCtaBarButton,
+                ),
               ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -457,33 +459,33 @@ class _PhotoCredit extends StatelessWidget {
           onTap: source == null ? null : () => _openSource(source!),
           borderRadius: AppRadius.smBorder,
           child: Padding(
-          padding: const EdgeInsetsDirectional.symmetric(
-            horizontal: AppSpacing.xs,
-            vertical: AppSpacing.xxs,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Flexible(
-                child: Text(
-                  label,
-                  style: style,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpacing.xs,
+              vertical: AppSpacing.xxs,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Flexible(
+                  child: Text(
+                    label,
+                    style: style,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-              if (source != null) ...<Widget>[
-                const SizedBox(width: AppSpacing.xxs),
-                Icon(
-                  Icons.open_in_new,
-                  size: 12,
-                  color: context.tokigoColors.textTertiary,
-                ),
+                if (source != null) ...<Widget>[
+                  const SizedBox(width: AppSpacing.xxs),
+                  Icon(
+                    Icons.open_in_new,
+                    size: 12,
+                    color: context.tokigoColors.textTertiary,
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/features/home/domain/home_action.dart';
@@ -39,7 +40,7 @@ class HomeActionDefinition {
 /// The single source of truth for Home's service shortcuts.
 ///
 /// Order is intentional: Flights, Hotels (labelled "Stays"), Cars,
-/// Activities, Groups.
+/// Packages, Groups.
 ///
 /// **OWNER DECISION (2026-11):** the Trips tile is gone from the quick-action
 /// bar — My Trips stays reachable from Profile (and the Bag route), so the row
@@ -82,9 +83,10 @@ List<HomeActionDefinition> homeActionDefinitions(AppLocalizations l10n) {
 }
 
 /// Home shortcuts for travel services — the owner's spec: a horizontal row of
-/// equal white tiles (Flights, Stays, Cars, Activities, Groups, Trips), each a
-/// 68dp white tile with 16dp corners, a 1dp `#E0DCD6` border, a 25px accent
-/// glyph and a 12/600 accent label 6dp below it. No shadows.
+/// equal white tiles (Flights, Stays, Cars, Packages, Groups), each a 68dp
+/// white tile with 18dp corners ([AppRadius.lg]), a hairline border, a 24px
+/// accent glyph and a 12/600 accent label 4dp below it ([AppSpacing.xs]). No
+/// shadows.
 ///
 /// On Home these tiles are a CONTENT SWITCHER, not navigation: when
 /// [onActionSelected] is supplied the tile reports the tapped [HomeAction] and
@@ -226,11 +228,11 @@ class HomeActionTile extends StatefulWidget {
   /// card) while staying far above the 44dp minimum tap target.
   static const double height = 68;
 
-  /// Glyph size from the spec.
-  static const double iconSize = 25;
+  /// Glyph size — the 24px step on the icon scale.
+  static const double iconSize = 24;
 
   /// Gap between the glyph and its label.
-  static const double iconLabelGap = 6;
+  static const double iconLabelGap = AppSpacing.xs;
 
   /// Label size from the spec (weight w600 comes from `captionSemibold`).
   static const double labelSize = 12;
@@ -258,7 +260,9 @@ class _HomeActionTileState extends State<HomeActionTile> {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     final accent = HomeDesignTokens.accentOf(context);
     final selected = widget.selected;
     final definition = widget.definition;
@@ -288,7 +292,7 @@ class _HomeActionTileState extends State<HomeActionTile> {
                   : selected
                   ? accent.withValues(alpha: 0.08)
                   : HomeDesignTokens.surfaceOf(context),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: AppRadius.lgBorder,
               border: Border.all(
                 color: selected ? accent : HomeDesignTokens.borderOf(context),
                 width: selected ? 2 : 1,

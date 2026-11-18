@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:tokigo/core/theme/app_radius.dart';
+import 'package:tokigo/core/theme/app_spacing.dart';
+import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/features/notifications/domain/app_notification.dart';
@@ -27,14 +30,14 @@ class AnimatedNotificationBell extends ConsumerStatefulWidget {
     super.key,
     required this.onTap,
     required this.normalColor,
-    this.buttonSize = 42,
+    this.buttonSize = 48,
     this.iconSize = 25,
   });
 
-  /// The accent used by the flash — the palette's `danger` role, so the bell
-  /// never carries a colour the rest of the app does not own.
+  /// The accent used by the flash and the unread badge — the palette's red
+  /// `primary`, so "new" reads as the app's selected/new state.
   static Color flashColorOf(BuildContext context) =>
-      context.tokigoColors.danger;
+      context.tokigoColors.primary;
 
   /// Opens the notifications surface.
   final VoidCallback onTap;
@@ -222,8 +225,8 @@ class _AnimatedNotificationBellState
                 ),
                 if (unread > 0)
                   PositionedDirectional(
-                    top: 5,
-                    end: 5,
+                    top: AppSpacing.xxs,
+                    end: AppSpacing.xxs,
                     // The count is already announced as the button's value.
                     child: ExcludeSemantics(child: _UnreadBadge(count: unread)),
                   ),
@@ -244,22 +247,23 @@ class _UnreadBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     return Container(
       key: const ValueKey<String>('home-notification-badge'),
-      constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-      padding: const EdgeInsets.symmetric(horizontal: 3),
+      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: AnimatedNotificationBell.flashColorOf(context),
-        borderRadius: BorderRadius.circular(7),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
         count > 99 ? '99+' : '$count',
         maxLines: 1,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 9,
-          fontWeight: FontWeight.w700,
+        style: typography.label.copyWith(
+          color: context.tokigoColors.onPrimary,
           height: 1,
         ),
       ),

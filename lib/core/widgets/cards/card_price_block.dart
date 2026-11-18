@@ -406,7 +406,7 @@ class _PriceSkeletonState extends State<_PriceSkeleton>
             color: context.tokigoColors.surfaceTertiary.withValues(
               alpha: 0.3 * _animation.value,
             ),
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
           ),
         );
       },

@@ -44,16 +44,16 @@ class _AiAmbientVisualState extends State<AiAmbientVisual>
   @override
   Widget build(BuildContext context) {
     final tc = context.tokigoColors;
-    final primary = Theme.of(context).colorScheme.primary;
+    final Color ink = tc.brand;
 
     return IgnorePointer(
       child: SizedBox.expand(
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Static radial tint — kept outside the animated layer so the
-            // per-frame work stays small and the effect stays cheap.
-            _baseTint(primary),
+            // Static tint — kept outside the animated layer so the per-frame
+            // work stays small and the effect stays cheap.
+            _baseTint(ink),
             AnimatedBuilder(
               animation: _t,
               builder: (context, _) {
@@ -67,17 +67,17 @@ class _AiAmbientVisualState extends State<AiAmbientVisual>
                     return Stack(
                       fit: StackFit.expand,
                       children: [
-                        _haloRing(primary, size, t),
-                        _coreGlow(primary, size, t),
+                        _haloRing(ink, size, t),
+                        _coreGlow(ink, size, t),
                         _satellite(
-                          primary,
+                          ink,
                           size,
                           t,
                           const Alignment(0.85, -0.42),
                           phase: 0.0,
                         ),
                         _satellite(
-                          primary,
+                          ink,
                           size,
                           t,
                           const Alignment(-0.92, 0.28),
@@ -95,24 +95,14 @@ class _AiAmbientVisualState extends State<AiAmbientVisual>
     );
   }
 
-  Widget _baseTint(Color primary) {
+  Widget _baseTint(Color ink) {
     return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: RadialGradient(
-          center: const Alignment(0, -0.35),
-          radius: 1.2,
-          colors: <Color>[
-            primary.withValues(alpha: 0.10),
-            primary.withValues(alpha: 0.03),
-            Colors.transparent,
-          ],
-        ),
-      ),
+      decoration: BoxDecoration(color: ink.withValues(alpha: 0.03)),
     );
   }
 
   /// A thin expanding ring that breathes around the core — the "pulse".
-  Widget _haloRing(Color primary, double size, double t) {
+  Widget _haloRing(Color ink, double size, double t) {
     final halo = math.max(size * 0.62, 240.0);
     return Align(
       alignment: const Alignment(0, -0.45),
@@ -124,7 +114,7 @@ class _AiAmbientVisualState extends State<AiAmbientVisual>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: primary.withValues(alpha: 0.07 + 0.05 * t),
+              color: ink.withValues(alpha: 0.05 + 0.03 * t),
               width: 1,
             ),
           ),
@@ -133,8 +123,8 @@ class _AiAmbientVisualState extends State<AiAmbientVisual>
     );
   }
 
-  /// Central breathing orb with a soft multiplicative glow.
-  Widget _coreGlow(Color primary, double size, double t) {
+  /// Central breathing orb — a flat ink wash, no blur glow.
+  Widget _coreGlow(Color ink, double size, double t) {
     final core = size * 0.34 * (1.0 + 0.05 * t);
     return Align(
       alignment: const Alignment(0, -0.45),
@@ -143,21 +133,7 @@ class _AiAmbientVisualState extends State<AiAmbientVisual>
         height: core,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: RadialGradient(
-            center: Alignment.center,
-            colors: <Color>[
-              primary.withValues(alpha: 0.15 + 0.07 * t),
-              primary.withValues(alpha: 0.04),
-              Colors.transparent,
-            ],
-          ),
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: primary.withValues(alpha: 0.09 + 0.07 * t),
-              blurRadius: 110,
-              spreadRadius: 6,
-            ),
-          ],
+          color: ink.withValues(alpha: 0.05 + 0.03 * t),
         ),
       ),
     );
@@ -165,7 +141,7 @@ class _AiAmbientVisualState extends State<AiAmbientVisual>
 
   /// Small, slow orbs drifting in [phase]-offset counterpoint to the breath.
   Widget _satellite(
-    Color primary,
+    Color ink,
     double size,
     double t,
     Alignment alignment, {
@@ -183,13 +159,7 @@ class _AiAmbientVisualState extends State<AiAmbientVisual>
           height: d,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: primary.withValues(alpha: 0.06 + 0.10 * fade),
-            boxShadow: <BoxShadow>[
-              BoxShadow(
-                color: primary.withValues(alpha: 0.12 * fade),
-                blurRadius: d,
-              ),
-            ],
+            color: ink.withValues(alpha: 0.05 + 0.08 * fade),
           ),
         ),
       ),

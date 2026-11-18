@@ -13,7 +13,6 @@ import 'package:tokigo/core/ui/localized_date.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/cards/card_image.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
-import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/core/widgets/step_progress.dart' show StatusChip;
 import 'package:tokigo/features/bag/application/bag_controller.dart';
 import 'package:tokigo/features/booking/application/booking_providers.dart';
@@ -81,7 +80,7 @@ class _TripBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final typography = AppTypography.forLight();
+    final typography = _type(context);
     final typeLabel = tripTypeLabel(l10n, trip.type);
     final place = trip.destination.trim();
     final title = trip.title?.trim();
@@ -147,9 +146,10 @@ class _TripBody extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
-                        StatusChip(
+                        StatusChip.forTone(
+                          context: context,
                           label: tripStatusLabel(l10n, trip.status),
-                          color: tripStatusColor(trip.status),
+                          tone: tripStatusTone(trip.status),
                         ),
                       ],
                     ),
@@ -179,10 +179,9 @@ class _TripBody extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.md),
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.xs,
-          ),
+          // The facts sit in the same card recipe as the header above: one
+          // surface, one corner radius, one gutter.
+          padding: const EdgeInsets.all(AppSpacing.lg),
           decoration: BoxDecoration(
             color: context.tokigoColors.surface,
             borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -266,20 +265,22 @@ class _CancelBookingActionState extends ConsumerState<_CancelBookingAction> {
         title: Text(l10n.tripCancelTitle),
         content: Text(l10n.tripCancelBody),
         actions: <Widget>[
-          Pressable.wrap(
-            child: TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(l10n.tripCancelKeep),
-            ),
+          // Both actions come from the one button kit, so the dialog's
+          // confirm action carries the same danger fill as the entry point.
+          AppButton(
+            label: l10n.tripCancelKeep,
+            type: AppButtonType.secondary,
+            size: AppButtonSize.sm,
+            expanded: false,
+            onPressed: () => Navigator.of(dialogContext).pop(false),
           ),
-          Pressable.wrap(
-            child: TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text(
-                l10n.tripCancelConfirm,
-                style: TextStyle(color: context.tokigoColors.danger),
-              ),
-            ),
+          const SizedBox(width: AppSpacing.sm),
+          AppButton(
+            label: l10n.tripCancelConfirm,
+            type: AppButtonType.destructive,
+            size: AppButtonSize.sm,
+            expanded: false,
+            onPressed: () => Navigator.of(dialogContext).pop(true),
           ),
         ],
       ),
@@ -321,7 +322,7 @@ class _CancelBookingActionState extends ConsumerState<_CancelBookingAction> {
     final l10n = AppLocalizations.of(context)!;
     return AppButton(
       label: l10n.tripCancelBooking,
-      type: AppButtonType.ghost,
+      type: AppButtonType.destructive,
       leadingIcon: Icons.close_rounded,
       onPressed: _working ? null : _cancel,
       expanded: false,
@@ -344,7 +345,7 @@ class _FactRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = _type(context);
     final text = Text(
       value,
       textAlign: TextAlign.end,
@@ -372,3 +373,8 @@ class _FactRow extends StatelessWidget {
     );
   }
 }
+
+/// The type scale for the active brightness — the light and dark palettes
+/// carry different text colours, so the scale is resolved per surface.
+AppTypography _type(BuildContext context) =>
+    context.isDark ? AppTypography.forDark() : AppTypography.forLight();

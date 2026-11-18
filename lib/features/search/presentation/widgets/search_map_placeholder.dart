@@ -16,26 +16,22 @@ class SearchMapPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     final tc = context.tokigoColors;
     final cs = Theme.of(context).colorScheme;
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     return Center(
       child: Padding(
         padding: EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.map_outlined,
-              size: 64,
-              color: cs.primary.withValues(alpha: 0.3),
-            ),
+            // A decorative glyph, not a status: the neutral on-surface variant.
+            Icon(Icons.map_outlined, size: 64, color: cs.onSurfaceVariant),
             const SizedBox(height: AppSpacing.lg),
             Text(
               AppLocalizations.of(context)?.mapViewComingSoon ??
                   'Map view coming soon',
-              style: TextStyle(
-                fontSize: AppTypography.fontSizeTitle,
-                fontWeight: FontWeight.w700,
-                color: cs.onSurface,
-              ),
+              style: typography.title.copyWith(color: tc.textPrimary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -43,10 +39,7 @@ class SearchMapPlaceholder extends StatelessWidget {
               message ??
                   AppLocalizations.of(context)?.mapIntegrationUnavailable ??
                   'Map integration is not yet available. Results are shown in list view.',
-              style: TextStyle(
-                color: cs.onSurfaceVariant,
-                fontSize: AppTypography.fontSizeBody,
-              ),
+              style: typography.body.copyWith(color: tc.textSecondary),
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[

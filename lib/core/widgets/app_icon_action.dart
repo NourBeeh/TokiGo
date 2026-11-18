@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_elevation.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
@@ -99,10 +98,14 @@ class AppIconAction extends StatelessWidget {
     final Color ink = enabled
         ? (color ??
               (floating
-                  ? (disc ? AppColors.textPrimary : AppColors.onMedia)
+                  ? (disc
+                      ? context.tokigoColors.textPrimary
+                      : context.tokigoColors.onMedia)
                   : context.tokigoColors.textPrimary))
         : (floating
-              ? (disc ? AppColors.textSecondary : AppColors.onMediaVariant)
+              ? (disc
+                  ? context.tokigoColors.textSecondary
+                  : context.tokigoColors.onMediaVariant)
               : context.tokigoColors.textTertiary);
 
     bool pressed = false;

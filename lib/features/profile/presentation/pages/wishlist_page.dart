@@ -185,7 +185,6 @@ class _WishlistEmptyState extends StatelessWidget {
             const SizedBox(height: AppSpacing.xl),
             AppButton(
               label: l10n.wishlistExploreStays,
-              type: AppButtonType.secondary,
               expanded: false,
               onPressed: () => _explore(context),
             ),

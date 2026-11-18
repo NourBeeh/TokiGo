@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
+import 'package:tokigo/core/widgets/step_progress.dart'
+    show BookingStatusTone;
 import 'package:tokigo/l10n/app_localizations.dart';
 
 /// The Bag's one vocabulary for a trip: which vertical it is, what its status
@@ -45,12 +46,32 @@ String tripStatusLabel(AppLocalizations l10n, String status) {
   };
 }
 
-Color tripStatusColor(String status) {
+/// The [BookingStatusTone] a booking status maps onto.
+///
+/// The chip's fill and ink both come from `StatusChip.forTone`, so the label
+/// and the palette can never drift apart: `confirmed` is the success pair,
+/// `pending`/`draft` the warning pair, and the terminal states (`cancelled`,
+/// `failed`) share the neutral pair. Unknown statuses follow
+/// [tripStatusLabel] and read as pending.
+BookingStatusTone tripStatusTone(String status) {
   return switch (status) {
-    'confirmed' => AppColors.success,
-    'cancelled' || 'failed' => AppColors.danger,
-    'pending' || 'draft' => AppColors.warning,
-    _ => AppColors.textSecondary,
+    'confirmed' => BookingStatusTone.confirmed,
+    'cancelled' || 'failed' => BookingStatusTone.cancelled,
+    _ => BookingStatusTone.pending,
+  };
+}
+
+/// The semantic hue for a booking status, resolved from the ACTIVE palette.
+///
+/// Kept for surfaces that need the bare colour (a trailing dot or icon); the
+/// status chips themselves go through `StatusChip.forTone`, which pairs the hue
+/// with its container and an AA-passing ink.
+Color tripStatusColor(TokiGoColors palette, String status) {
+  return switch (status) {
+    'confirmed' => palette.success,
+    'cancelled' || 'failed' => palette.danger,
+    'pending' || 'draft' => palette.warning,
+    _ => palette.textSecondary,
   };
 }
 

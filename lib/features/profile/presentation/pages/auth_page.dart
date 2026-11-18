@@ -8,9 +8,9 @@ import '../../../../core/auth/auth_provider.dart';
 import '../../../../core/auth/auth_state.dart';
 import '../../../../core/auth/google_auth_config.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/ui/app_button.dart';
 import '../../../../core/widgets/ai_entrance_animation.dart';
 import '../../../../core/widgets/page_header.dart';
-import '../../../../core/widgets/pressable.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// Sign-in / registration page (Phase 17).
@@ -73,7 +73,6 @@ class _AuthPageState extends ConsumerState<AuthPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final authState = ref.watch(authControllerProvider);
     final isLoading = authState is AuthLoading;
     final l10n = AppLocalizations.of(context)!;
@@ -95,7 +94,10 @@ class _AuthPageState extends ConsumerState<AuthPage> {
             children: <Widget>[
               // Entered with `go('/auth')` from Profile: with no history to pop,
               // the control lands back on that surface.
-              const AppPageHeader(backFallbackLocation: '/profile'),
+              AppPageHeader(
+                subtitle: l10n.authSubtitle,
+                backFallbackLocation: '/profile',
+              ),
               Expanded(
                 child: Center(
                   child: SingleChildScrollView(
@@ -110,22 +112,10 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             if (GoogleAuthConfig.isConfigured) ...[
-                              Pressable.wrap(
-                                enabled: !isLoading,
-                                child: OutlinedButton.icon(
-                                  onPressed: isLoading
-                                      ? null
-                                      : _signInWithGoogle,
-                                  icon: const Icon(
-                                    Icons.g_mobiledata,
-                                    size: 28,
-                                  ),
-                                  label: Text(l10n.continueWithGoogle),
-                                  style: OutlinedButton.styleFrom(
-                                    minimumSize: const Size.fromHeight(48),
-                                    maximumSize: const Size.fromHeight(48),
-                                  ),
-                                ),
+                              AppButton(
+                                label: l10n.continueWithGoogle,
+                                leadingIcon: Icons.g_mobiledata,
+                                onPressed: isLoading ? null : _signInWithGoogle,
                               ),
                             ] else ...[
                               Text(
@@ -138,7 +128,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                               Text(
                                 errorMessage,
                                 style: TextStyle(
-                                  color: theme.colorScheme.error,
+                                  color: context.tokigoColors.danger,
                                 ),
                                 textAlign: TextAlign.center,
                               ),

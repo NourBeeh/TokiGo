@@ -144,6 +144,12 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                   child: Pressable.wrap(
                     child: TextButton(
                       onPressed: _finish,
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size(
+                          64,
+                          AppSpacing.minimumTapTarget,
+                        ),
+                      ),
                       child: Text(
                         l10n.onboardingSkip,
                         style: typography.body.copyWith(
@@ -186,12 +192,13 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                             height: 6,
                             width: i == _page ? 16 : 6,
                             decoration: BoxDecoration(
-                              // A visible inactive dot: the old
-                              // `surfaceTertiary` pill vanished on the white
-                              // canvas, so the indicator read as a lone pill.
+                              // A visible inactive dot: `textTertiary` clears
+                              // 3:1 on both canvases (the old `outline` did
+                              // not), so the indicator never reads as a lone
+                              // pill.
                               color: i == _page
-                                  ? context.tokigoColors.brand
-                                  : context.tokigoColors.outline,
+                                  ? context.tokigoColors.primary
+                                  : context.tokigoColors.textTertiary,
                               borderRadius: BorderRadius.circular(
                                 AppRadius.pill,
                               ),
@@ -215,10 +222,13 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                       maintainState: true,
                       child: Padding(
                         padding: const EdgeInsets.only(top: AppSpacing.sm),
-                        // Doc 22 §3.2 — the account entry is a ghost action of
-                        // 44pt, not a second primary button.
+                        // Doc 22 §3.2 — the account entry is a ghost action,
+                        // not a second primary button, and clears the 48pt
+                        // minimum tap target.
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(minHeight: 44),
+                          constraints: const BoxConstraints(
+                            minHeight: AppSpacing.minimumTapTarget,
+                          ),
                           child: Pressable.wrap(
                             child: TextButton(
                               onPressed: _logIn,

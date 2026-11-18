@@ -351,6 +351,23 @@ void main() {
       expect(tester.getRect(_compact()), pinned);
     });
 
+    testWidgets('lands on the original composer line, not at the viewport top', (
+      tester,
+    ) async {
+      await _pump(tester);
+      // The composer's own resting centre, measured before any scrolling.
+      final double composerCentre = tester.getRect(_composer()).center.dy;
+
+      final ScrollableState scrollable = tester.state(_scrollable());
+      await _jump(tester, scrollable, _navThreshold(tester) + 40);
+
+      // The pinned compact field must sit on the same line as the composer it
+      // replaces — not ~52dp higher at the viewport top.
+      final Rect compact = tester.getRect(_compact());
+      expect(compact.center.dy, closeTo(composerCentre, 0.5));
+      expect(compact.top, greaterThan(0));
+    });
+
     testWidgets('exits upward and the header returns on reverse scrolling', (
       tester,
     ) async {

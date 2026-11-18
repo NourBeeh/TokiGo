@@ -14,10 +14,11 @@ import 'package:tokigo/l10n/app_localizations.dart';
 void main() {
   const Color background = Color(0xFFFAFAFA);
   const Color surface = Color(0xFFFFFFFF);
-  // Owner decision (2026-11): Home's ink is neutral — black on the light
-  // canvas (white on the dark one) — replacing the brand blue accent.
-  const Color accent = Color(0xFF000000);
-  const Color hint = Color(0xFF8E8E8E);
+  // Home's ink is the theme's neutral brand ink (near-black on the light
+  // canvas, near-white on the dark one); the placeholder is the AA-safe
+  // tertiary step.
+  const Color accent = Color(0xFF111111);
+  const Color hint = Color(0xFF6E6E6E);
   const Color border = Color(0xFFDBDBDB);
 
   Widget app(
@@ -171,7 +172,7 @@ void main() {
         'Flights',
         'Stays',
         'Cars Rental',
-        'Activities',
+        'Packages',
         'Groups',
       ];
       final List<IconData> icons = <IconData>[
@@ -195,7 +196,7 @@ void main() {
         expect(decoration.boxShadow, isEmpty);
         expect(
           decoration.borderRadius,
-          equals(BorderRadius.circular(16)),
+          equals(BorderRadius.circular(18)),
         );
         final Border boxBorder = decoration.border! as Border;
         expect(boxBorder.top.color, border);
@@ -205,7 +206,7 @@ void main() {
           find.descendant(of: tileFinder, matching: find.byType(Icon)).first,
         );
         expect(icon.icon, icons[i]);
-        expect(icon.size, 25);
+        expect(icon.size, 24);
         expect(icon.color, accent);
 
         final Text label = tester.widget<Text>(find.text(labels[i]));
@@ -223,7 +224,7 @@ void main() {
             )
             .bottom;
         final double labelTop = tester.getRect(find.text(labels[i])).top;
-        expect(labelTop - iconBottom, closeTo(6, 0.01));
+        expect(labelTop - iconBottom, closeTo(4, 0.01));
 
         // Balanced row: each tile starts after the previous one ends.
         final Rect rect = tester.getRect(tileFinder);
@@ -254,8 +255,8 @@ void main() {
       expect(find.text('طيران'), findsOneWidget);
       expect(find.text('إقامات'), findsOneWidget);
       expect(find.text('تأجير سيارات'), findsOneWidget);
-      expect(find.text('أنشطة'), findsOneWidget);
-      expect(find.text('المجموعات'), findsOneWidget);
+      expect(find.text('الباقات'), findsOneWidget);
+      expect(find.text('مجموعات'), findsOneWidget);
       // Trips left the bar (owner decision, 2026-11).
       expect(find.text('رحلاتي'), findsNothing);
       expect(
@@ -301,10 +302,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Owner decision (2026-11): white on the dark canvas.
+      // The dark canvas's own ink is the near-white brand step.
       expect(HomeDesignTokens.accentOf(
         tester.element(find.byType(HomeNavButtons)),
-      ), const Color(0xFFFFFFFF));
+      ), const Color(0xFFF5F5F5));
 
       final Finder tiles = find.descendant(
         of: find.byType(HomeNavButtons),
@@ -313,9 +314,9 @@ void main() {
       final Icon icon = tester.widget<Icon>(
         find.descendant(of: tiles.at(0), matching: find.byType(Icon)).first,
       );
-      expect(icon.color, const Color(0xFFFFFFFF));
+      expect(icon.color, const Color(0xFFF5F5F5));
       final Text label = tester.widget<Text>(find.text('Flights'));
-      expect(label.style?.color, const Color(0xFFFFFFFF));
+      expect(label.style?.color, const Color(0xFFF5F5F5));
       expect(tester.takeException(), isNull);
     });
 
@@ -336,7 +337,7 @@ void main() {
       final BuildContext context = tester.element(
         find.byType(HomeAiSearchField),
       );
-      expect(HomeDesignTokens.accentOf(context), const Color(0xFFFFFFFF));
+      expect(HomeDesignTokens.accentOf(context), const Color(0xFFF5F5F5));
 
       // The send disc is a DecoratedBox with the Home ink as its fill.
       final Finder send = find.byKey(
@@ -345,7 +346,7 @@ void main() {
       final DecoratedBox disc = tester.widget<DecoratedBox>(
         find.descendant(of: send, matching: find.byType(DecoratedBox)).first,
       );
-      expect((disc.decoration as BoxDecoration).color, const Color(0xFFFFFFFF));
+      expect((disc.decoration as BoxDecoration).color, const Color(0xFFF5F5F5));
       final Icon glyph = tester.widget<Icon>(
         find.descendant(of: send, matching: find.byType(Icon)).first,
       );

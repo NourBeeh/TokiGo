@@ -316,7 +316,7 @@ class _FilterPanelState extends State<FilterPanel> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: context.tokigoColors.outline,
+                      color: context.tokigoColors.hairlineStrong,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                   ),
@@ -339,17 +339,18 @@ class _FilterPanelState extends State<FilterPanel> {
                         ),
                       ),
                     ),
+                    // 48dp tap target: the pill-outline kit is the shared
+                    // button style that clears the minimum target on its own.
                     AppButton(
                       label: l10n.filtersReset,
-                      type: AppButtonType.ghost,
-                      size: AppButtonSize.sm,
+                      type: AppButtonType.pillOutline,
                       expanded: false,
                       onPressed: _hasSelection ? _reset : null,
                     ),
                   ],
                 ),
               ),
-              Divider(height: 1, color: context.tokigoColors.divider),
+              Divider(height: 1, color: context.tokigoColors.hairlineStrong),
               Flexible(
                 child: SingleChildScrollView(
                   padding: const EdgeInsetsDirectional.fromSTEB(
@@ -362,7 +363,7 @@ class _FilterPanelState extends State<FilterPanel> {
                     children: <Widget>[
                       for (var i = 0; i < sections.length; i++) ...<Widget>[
                         if (i > 0)
-                          Divider(height: 1, color: context.tokigoColors.divider),
+                          Divider(height: 1, color: context.tokigoColors.hairlineStrong),
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             vertical: AppSpacing.lg,
@@ -374,7 +375,7 @@ class _FilterPanelState extends State<FilterPanel> {
                   ),
                 ),
               ),
-              Divider(height: 1, color: context.tokigoColors.divider),
+              Divider(height: 1, color: context.tokigoColors.hairlineStrong),
               Padding(
                 padding: const EdgeInsetsDirectional.fromSTEB(
                   AppSpacing.lg,

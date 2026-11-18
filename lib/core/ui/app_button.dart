@@ -78,19 +78,22 @@ class AppButton extends StatelessWidget {
         : AppTypography.forLight();
     final Color foreground;
     final Color baseBackground;
+    final bool dark = Theme.of(context).brightness == Brightness.dark;
 
     switch (type) {
       case AppButtonType.primary:
-        foreground = context.tokigoColors.onBrand;
+        foreground = disabled
+            ? context.tokigoColors.textTertiary
+            : context.tokigoColors.onPrimary;
         baseBackground = disabled
-            ? context.tokigoColors.surfaceTertiary
-            : context.tokigoColors.brand;
+            ? context.tokigoColors.surfaceSecondary
+            : context.tokigoColors.primary;
       case AppButtonType.secondary:
         foreground = disabled
             ? context.tokigoColors.textTertiary
             : context.tokigoColors.brand;
         baseBackground = disabled
-            ? context.tokigoColors.surfaceTertiary
+            ? context.tokigoColors.surfaceSecondary
             : context.tokigoColors.surface;
       case AppButtonType.ghost:
         foreground = disabled
@@ -98,9 +101,10 @@ class AppButton extends StatelessWidget {
             : context.tokigoColors.brand;
         baseBackground = Colors.transparent;
       case AppButtonType.destructive:
-        foreground = Colors.white;
+        // White on the light rose passes AA; black on the dark rose does.
+        foreground = dark ? Colors.black : Colors.white;
         baseBackground = disabled
-            ? context.tokigoColors.surfaceTertiary
+            ? context.tokigoColors.surfaceSecondary
             : context.tokigoColors.danger;
       case AppButtonType.pillOutline:
         foreground = disabled
@@ -109,16 +113,11 @@ class AppButton extends StatelessWidget {
         baseBackground = context.tokigoColors.surface;
     }
 
-    final disabledForeground =
-        type == AppButtonType.primary || type == AppButtonType.destructive
-        ? context.tokigoColors.textTertiary
-        : foreground;
-
     final textStyle =
         (size == AppButtonSize.sm && type != AppButtonType.pillOutline
                 ? typography.bodyMedium
                 : typography.bodyLargeMedium)
-            .copyWith(color: disabled ? disabledForeground : foreground);
+            .copyWith(color: foreground);
 
     bool pressed = false;
     return StatefulBuilder(

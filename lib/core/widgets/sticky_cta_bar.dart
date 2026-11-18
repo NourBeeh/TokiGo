@@ -1,5 +1,3 @@
-import 'dart:ui' show ImageFilter;
-
 import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/theme/tokigo_colors.dart';
@@ -63,20 +61,18 @@ class StickyCtaBar extends StatelessWidget {
       );
     }
 
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          decoration: BoxDecoration(
-            color: context.tokigoColors.surface.withValues(alpha: 0.9),
-            border: Border(
-              top: BorderSide(color: context.tokigoColors.hairlineStrong),
-            ),
-          ),
-          padding: padding,
-          child: child,
+    // A solid slab, not a blurred one: the blur smeared the page behind the
+    // bar and cost a full-screen offscreen pass. The hairline + the surface
+    // step carry the separation, matching the dark variant.
+    return Container(
+      decoration: BoxDecoration(
+        color: context.tokigoColors.surface,
+        border: Border(
+          top: BorderSide(color: context.tokigoColors.hairlineStrong),
         ),
       ),
+      padding: padding,
+      child: child,
     );
   }
 }

@@ -67,15 +67,15 @@ class BadgeSpec {
     final scheme = Theme.of(context).colorScheme;
     switch (emphasis) {
       case BadgeEmphasis.primary:
-        return scheme.primary;
+        return context.tokigoColors.onPrimaryContainer;
       case BadgeEmphasis.secondary:
         return scheme.onSurfaceVariant;
       case BadgeEmphasis.warning:
-        return context.tokigoColors.warning;
+        return context.tokigoColors.onWarningContainer;
       case BadgeEmphasis.error:
-        return scheme.error;
+        return context.tokigoColors.onDangerContainer;
       case BadgeEmphasis.info:
-        return scheme.primary;
+        return context.tokigoColors.info;
     }
   }
 
@@ -84,15 +84,15 @@ class BadgeSpec {
     final scheme = Theme.of(context).colorScheme;
     switch (emphasis) {
       case BadgeEmphasis.primary:
-        return scheme.primaryContainer;
+        return context.tokigoColors.primaryContainer;
       case BadgeEmphasis.secondary:
         return scheme.surfaceContainerHighest;
       case BadgeEmphasis.warning:
-        return context.tokigoColors.warning.withValues(alpha: 0.15);
+        return context.tokigoColors.warningContainer;
       case BadgeEmphasis.error:
-        return scheme.errorContainer;
+        return context.tokigoColors.dangerContainer;
       case BadgeEmphasis.info:
-        return scheme.primaryContainer;
+        return context.tokigoColors.infoContainer;
     }
   }
 }

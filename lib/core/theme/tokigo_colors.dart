@@ -73,6 +73,11 @@ class TokiGoColors extends ThemeExtension<TokiGoColors> {
     required this.onCtaBarVariant,
     required this.ctaBarButton,
     required this.onCtaBarButton,
+    required this.primary,
+    required this.onPrimary,
+    required this.primaryContainer,
+    required this.onPrimaryContainer,
+    required this.onDangerContainer,
   });
 
   // ---- Light palette (neutral) ----
@@ -84,7 +89,7 @@ class TokiGoColors extends ThemeExtension<TokiGoColors> {
     surfaceElevated: Color(0xFFFFFFFF),
     textPrimary: Color(0xFF262626),
     textSecondary: Color(0xFF737373),
-    textTertiary: Color(0xFF8E8E8E),
+    textTertiary: Color(0xFF6E6E6E),
     textOnSurface: Color(0xFFFFFFFF),
     outline: Color(0xFFDBDBDB),
     divider: Color(0xFFEFEFEF),
@@ -137,6 +142,11 @@ class TokiGoColors extends ThemeExtension<TokiGoColors> {
     onCtaBarVariant: Color(0xFFA8A8A8),
     ctaBarButton: Color(0xFFFFFFFF),
     onCtaBarButton: Color(0xFF262626),
+    primary: Color(0xFFE53935),
+    onPrimary: Color(0xFF000000),
+    primaryContainer: Color(0xFFFDE7E6),
+    onPrimaryContainer: Color(0xFF6B110D),
+    onDangerContainer: Color(0xFF9F1239),
   );
 
   // ---- Dark palette (neutral) ----
@@ -205,6 +215,11 @@ class TokiGoColors extends ThemeExtension<TokiGoColors> {
     // bar's own action is neutral rather than a hue.
     ctaBarButton: Color(0xFFF5F5F5),
     onCtaBarButton: Color(0xFF262626),
+    primary: Color(0xFFE53935),
+    onPrimary: Color(0xFF000000),
+    primaryContainer: Color(0xFF3A1412),
+    onPrimaryContainer: Color(0xFFFFC9C6),
+    onDangerContainer: Color(0xFFF43F5E),
   );
 
   final Color background;
@@ -267,6 +282,11 @@ class TokiGoColors extends ThemeExtension<TokiGoColors> {
   final Color onCtaBarVariant;
   final Color ctaBarButton;
   final Color onCtaBarButton;
+  final Color primary;
+  final Color onPrimary;
+  final Color primaryContainer;
+  final Color onPrimaryContainer;
+  final Color onDangerContainer;
 
   @override
   TokiGoColors copyWith({
@@ -330,6 +350,11 @@ class TokiGoColors extends ThemeExtension<TokiGoColors> {
     Color? onCtaBarVariant,
     Color? ctaBarButton,
     Color? onCtaBarButton,
+    Color? primary,
+    Color? onPrimary,
+    Color? primaryContainer,
+    Color? onPrimaryContainer,
+    Color? onDangerContainer,
   }) {
     return TokiGoColors(
       background: background ?? this.background,
@@ -392,6 +417,11 @@ class TokiGoColors extends ThemeExtension<TokiGoColors> {
       onCtaBarVariant: onCtaBarVariant ?? this.onCtaBarVariant,
       ctaBarButton: ctaBarButton ?? this.ctaBarButton,
       onCtaBarButton: onCtaBarButton ?? this.onCtaBarButton,
+      primary: primary ?? this.primary,
+      onPrimary: onPrimary ?? this.onPrimary,
+      primaryContainer: primaryContainer ?? this.primaryContainer,
+      onPrimaryContainer: onPrimaryContainer ?? this.onPrimaryContainer,
+      onDangerContainer: onDangerContainer ?? this.onDangerContainer,
     );
   }
 
@@ -487,6 +517,11 @@ class TokiGoColors extends ThemeExtension<TokiGoColors> {
       onCtaBarVariant: Color.lerp(onCtaBarVariant, other.onCtaBarVariant, t)!,
       ctaBarButton: Color.lerp(ctaBarButton, other.ctaBarButton, t)!,
       onCtaBarButton: Color.lerp(onCtaBarButton, other.onCtaBarButton, t)!,
+      primary: Color.lerp(primary, other.primary, t)!,
+      onPrimary: Color.lerp(onPrimary, other.onPrimary, t)!,
+      primaryContainer: Color.lerp(primaryContainer, other.primaryContainer, t)!,
+      onPrimaryContainer: Color.lerp(onPrimaryContainer, other.onPrimaryContainer, t)!,
+      onDangerContainer: Color.lerp(onDangerContainer, other.onDangerContainer, t)!,
     );
   }
 }

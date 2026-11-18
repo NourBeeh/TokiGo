@@ -56,10 +56,10 @@ abstract final class AppTheme {
 
     final colorScheme = ColorScheme(
       brightness: Brightness.light,
-      primary: ink.brand,
-      onPrimary: ink.onBrand,
-      primaryContainer: ink.brandContainer,
-      onPrimaryContainer: ink.onBrandContainer,
+      primary: ink.primary,
+      onPrimary: ink.onPrimary,
+      primaryContainer: ink.primaryContainer,
+      onPrimaryContainer: ink.onPrimaryContainer,
       secondary: AppColors.ink,
       onSecondary: Colors.white,
       secondaryContainer: AppColors.surfaceTertiary,
@@ -70,9 +70,16 @@ abstract final class AppTheme {
       onTertiaryContainer: AppColors.ink,
       error: AppColors.danger,
       onError: Colors.white,
+      errorContainer: ink.dangerContainer,
+      onErrorContainer: ink.onDangerContainer,
       surface: palette.surface,
       onSurface: palette.textPrimary,
-      surfaceContainerHighest: palette.surfaceSecondary,
+      surfaceTint: ink.brand,
+      surfaceContainer: ink.surface,
+      surfaceContainerHigh: ink.surfaceSecondary,
+      surfaceContainerHighest: ink.surfaceTertiary,
+      surfaceContainerLow: ink.surface,
+      surfaceContainerLowest: ink.surface,
       onSurfaceVariant: palette.textSecondary,
       outline: palette.outline,
       outlineVariant: palette.divider,
@@ -80,7 +87,7 @@ abstract final class AppTheme {
       scrim: Colors.black,
       inverseSurface: palette.textPrimary,
       onInverseSurface: palette.surface,
-      inversePrimary: const Color(0xFF3A3A3A),
+      inversePrimary: ink.primary,
     );
 
     final base = ThemeData(
@@ -127,8 +134,8 @@ abstract final class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style:
             FilledButton.styleFrom(
-              backgroundColor: ink.brand,
-              foregroundColor: ink.onBrand,
+              backgroundColor: ink.primary,
+              foregroundColor: ink.onPrimary,
               disabledBackgroundColor: AppColors.surfaceTertiary,
               disabledForegroundColor: AppColors.textTertiary,
               minimumSize: const Size(64, 52),
@@ -230,10 +237,10 @@ abstract final class AppTheme {
 
     final colorScheme = ColorScheme(
       brightness: Brightness.dark,
-      primary: palette.brand,
-      onPrimary: palette.onBrand,
-      primaryContainer: palette.brandContainer,
-      onPrimaryContainer: palette.onBrandContainer,
+      primary: palette.primary,
+      onPrimary: palette.onPrimary,
+      primaryContainer: palette.primaryContainer,
+      onPrimaryContainer: palette.onPrimaryContainer,
       secondary: palette.ink,
       onSecondary: palette.background,
       secondaryContainer: palette.surfaceTertiary,
@@ -244,9 +251,16 @@ abstract final class AppTheme {
       onTertiaryContainer: palette.ink,
       error: palette.danger,
       onError: palette.background,
+      errorContainer: palette.dangerContainer,
+      onErrorContainer: palette.onDangerContainer,
       surface: palette.surface,
       onSurface: palette.textPrimary,
-      surfaceContainerHighest: palette.surfaceSecondary,
+      surfaceTint: palette.brand,
+      surfaceContainer: palette.surface,
+      surfaceContainerHigh: palette.surfaceSecondary,
+      surfaceContainerHighest: palette.surfaceTertiary,
+      surfaceContainerLow: palette.surface,
+      surfaceContainerLowest: palette.background,
       onSurfaceVariant: palette.textSecondary,
       outline: palette.outline,
       outlineVariant: palette.divider,
@@ -254,7 +268,7 @@ abstract final class AppTheme {
       scrim: Colors.black,
       inverseSurface: palette.textPrimary,
       onInverseSurface: palette.surface,
-      inversePrimary: palette.brand,
+      inversePrimary: palette.primary,
     );
 
     final base = ThemeData(
@@ -301,8 +315,8 @@ abstract final class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style:
             FilledButton.styleFrom(
-              backgroundColor: palette.brand,
-              foregroundColor: palette.onBrand,
+              backgroundColor: palette.primary,
+              foregroundColor: palette.onPrimary,
               disabledBackgroundColor: palette.surfaceTertiary,
               disabledForegroundColor: palette.textTertiary,
               minimumSize: const Size(64, 52),

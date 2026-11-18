@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -23,15 +22,17 @@ class AppMessageState extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.body,
-    this.hue = AppColors.brand,
+    this.hue,
     this.actionLabel,
     this.onAction,
   });
 
   final IconData icon;
 
-  /// Tint for the icon disc — brand by default, danger for an error.
-  final Color hue;
+  /// Tint for the icon disc — the theme's brand by default, danger for an
+  /// error. Resolved against the active brightness so the disc never goes
+  /// invisible on the dark canvas.
+  final Color? hue;
 
   final String title;
   final String body;
@@ -40,7 +41,10 @@ class AppMessageState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
+    final Color hue = this.hue ?? context.tokigoColors.brand;
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.xl,
@@ -73,7 +77,7 @@ class AppMessageState extends StatelessWidget {
             const SizedBox(height: AppSpacing.xl),
             AppButton(
               label: actionLabel!,
-              type: AppButtonType.secondary,
+              type: AppButtonType.primary,
               expanded: false,
               onPressed: onAction,
             ),

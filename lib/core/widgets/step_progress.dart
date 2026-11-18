@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
@@ -51,7 +50,7 @@ class StepProgress extends StatelessWidget {
                   height: segmentHeight,
                   decoration: BoxDecoration(
                     color: i <= safeCurrent
-                        ? context.tokigoColors.brand
+                        ? context.tokigoColors.primary
                         : context.tokigoColors.surfaceTertiary,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
@@ -92,22 +91,24 @@ class StatusChip extends StatelessWidget {
   /// 4.7:1; the words carry the distinction, not the tint.
   factory StatusChip.forTone({
     Key? key,
+    required BuildContext context,
     required String label,
     required BookingStatusTone tone,
     bool showDot = true,
   }) {
+    final tc = context.tokigoColors;
     final (Color fill, Color ink) = switch (tone) {
       BookingStatusTone.confirmed => (
-        AppColors.successContainer,
-        AppColors.onSuccessContainer,
+        tc.successContainer,
+        tc.onSuccessContainer,
       ),
       BookingStatusTone.pending => (
-        AppColors.warningContainer,
-        AppColors.onWarningContainer,
+        tc.warningContainer,
+        tc.onWarningContainer,
       ),
       BookingStatusTone.cancelled || BookingStatusTone.completed => (
-        AppColors.surfaceSecondary,
-        AppColors.textSecondary,
+        tc.surfaceSecondary,
+        tc.textSecondary,
       ),
     };
     return StatusChip(
@@ -128,7 +129,9 @@ class StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,

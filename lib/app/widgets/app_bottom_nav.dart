@@ -97,8 +97,9 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final color = selected ? scheme.primary : context.tokigoColors.textTertiary;
+    final color = selected
+        ? context.tokigoColors.textPrimary
+        : context.tokigoColors.textTertiary;
 
     return Semantics(
       button: true,

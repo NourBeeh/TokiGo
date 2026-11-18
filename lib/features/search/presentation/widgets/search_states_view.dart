@@ -219,15 +219,19 @@ class _SortChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
-    final foreground = selected ? Colors.white : context.tokigoColors.textSecondary;
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
+    final foreground = selected
+        ? context.tokigoColors.onPrimary
+        : context.tokigoColors.textSecondary;
     final icon = this.icon;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: Pressable.wrap(
         child: Material(
           color: selected
-              ? context.tokigoColors.brand
+              ? context.tokigoColors.primary
               : context.tokigoColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.pill),
           clipBehavior: Clip.antiAlias,
@@ -239,7 +243,7 @@ class _SortChip extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.pill),
                 border: Border.all(
                   color: selected
-                      ? context.tokigoColors.brand
+                      ? context.tokigoColors.primary
                       : context.tokigoColors.outline,
                 ),
               ),
@@ -281,13 +285,15 @@ class _FilterButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final typography = Theme.of(context).brightness == Brightness.dark
+        ? AppTypography.forDark()
+        : AppTypography.forLight();
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: Pressable.wrap(
         child: Material(
           color: active
-              ? context.tokigoColors.brandContainer
+              ? context.tokigoColors.primary
               : context.tokigoColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.pill),
           clipBehavior: Clip.antiAlias,
@@ -299,7 +305,7 @@ class _FilterButton extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.pill),
                 border: Border.all(
                   color: active
-                      ? context.tokigoColors.brand
+                      ? context.tokigoColors.primary
                       : context.tokigoColors.outline,
                 ),
               ),
@@ -309,7 +315,7 @@ class _FilterButton extends StatelessWidget {
                     Icons.tune_rounded,
                     size: 16,
                     color: active
-                        ? context.tokigoColors.brand
+                        ? context.tokigoColors.onPrimary
                         : context.tokigoColors.textSecondary,
                   ),
                   const SizedBox(width: AppSpacing.xs),
@@ -317,7 +323,7 @@ class _FilterButton extends StatelessWidget {
                     label,
                     style: typography.captionSemibold.copyWith(
                       color: active
-                          ? context.tokigoColors.brand
+                          ? context.tokigoColors.onPrimary
                           : context.tokigoColors.textSecondary,
                     ),
                   ),

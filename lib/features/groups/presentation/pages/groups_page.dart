@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
@@ -122,10 +121,10 @@ class _CreateGroupCard extends StatelessWidget {
                     color: context.tokigoColors.brand,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.add_rounded,
                     size: 24,
-                    color: Colors.white,
+                    color: context.tokigoColors.onBrand,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.lg),
@@ -274,15 +273,18 @@ class _MemberAvatarStack extends StatelessWidget {
 
   final int count;
 
-  static const List<Color> _avatarColors = <Color>[
-    AppColors.ink,
-    AppColors.classStar,
-    AppColors.textSecondary,
-    AppColors.textPrimary,
+  /// Resolved per brightness so the stack follows the active palette.
+  List<Color> _avatarColors(TokiGoColors tc) => <Color>[
+    tc.ink,
+    tc.classStar,
+    tc.textSecondary,
+    tc.textPrimary,
   ];
 
   @override
   Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
+    final palette = _avatarColors(tc);
     final shown = count.clamp(1, 4);
     return SizedBox(
       width: 22.0 * shown + 6,
@@ -296,17 +298,17 @@ class _MemberAvatarStack extends StatelessWidget {
                 width: 20,
                 height: 20,
                 decoration: BoxDecoration(
-                  color: _avatarColors[i % _avatarColors.length],
+                  color: palette[i % palette.length],
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 1.5),
+                  border: Border.all(color: tc.surface, width: 1.5),
                 ),
                 child: Center(
                   child: Text(
                     '${i + 1}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: AppTypography.fontSizeLabel,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      color: tc.onBrand,
                     ),
                   ),
                 ),

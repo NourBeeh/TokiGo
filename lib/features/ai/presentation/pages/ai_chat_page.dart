@@ -8,6 +8,7 @@ import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
+import 'package:tokigo/core/theme/app_elevation.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -19,7 +20,6 @@ import 'package:tokigo/features/ai/application/ai_chat_page_providers.dart';
 import 'package:tokigo/features/ai/application/ai_state.dart';
 import 'package:tokigo/features/ai/domain/ai_chat_message.dart';
 import 'package:tokigo/features/ai/domain/ai_query_context.dart';
-import 'package:tokigo/features/ai/presentation/widgets/ai_chat_watermark.dart';
 import 'package:tokigo/features/ai/presentation/widgets/chat_search_widgets.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_section.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart'
@@ -230,41 +230,29 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     final aiState = ref.watch(aiChatControllerProvider);
     ref.listen(aiChatControllerProvider, (_, _) => _scheduleScrollToEnd());
     final voiceState = ref.watch(voiceSearchControllerProvider);
-    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: scheme.surface,
+      backgroundColor: context.tokigoColors.background,
       body: SafeArea(
-        child: Stack(
-          fit: StackFit.expand,
-          children: <Widget>[
-            // The brand watermark sits behind the whole surface — quiet, inert
-            // and never between the traveller and a message.
-            const Positioned.fill(child: AiChatWatermark()),
-            Column(
-              children: [
-                _buildHeader(context),
-                if (voiceState.failure != null)
-                  VoiceFailureBanner(
-                    message: voiceState.failure!.message,
-                    onDismiss: () => ref
-                        .read(voiceSearchControllerProvider.notifier)
-                        .dismissFailure(),
-                  ),
-                Expanded(
-                  child:
-                      aiState.messages.isEmpty &&
-                          aiState.status != AiStatus.loading
-                      ? _buildWelcome(context)
-                      : _buildThread(aiState),
-                ),
-                Divider(
-                  height: 1,
-                  color: scheme.outlineVariant.withValues(alpha: 0.4),
-                ),
-                _buildInputBar(context, voiceState),
-              ],
+        child: Column(
+          children: [
+            _buildHeader(context),
+            if (voiceState.failure != null)
+              VoiceFailureBanner(
+                message: voiceState.failure!.message,
+                onDismiss: () => ref
+                    .read(voiceSearchControllerProvider.notifier)
+                    .dismissFailure(),
+              ),
+            Expanded(
+              child:
+                  aiState.messages.isEmpty &&
+                      aiState.status != AiStatus.loading
+                  ? _buildWelcome(context)
+                  : _buildThread(aiState),
             ),
+            Divider(height: 1, color: context.tokigoColors.hairline),
+            _buildInputBar(context, voiceState),
           ],
         ),
       ),
@@ -293,7 +281,6 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
   }
 
   Widget _buildWelcome(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return _buildEntrance(
       child: SingleChildScrollView(
         child: SizedBox(
@@ -307,15 +294,12 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
             ),
             child: Column(
               children: [
-                // The assistant's identity — the same robot that sits beside
-                // every reply, drawn larger here as the welcome hero.
-                const AiRobotAvatar(size: 96),
-                const SizedBox(height: AppSpacing.lg),
+                // The welcome state is deliberately text-only — no brand mark.
                 Text(
                   'Hi! Ask me about flights, hotels, and more…',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: scheme.onSurfaceVariant,
+                    color: context.tokigoColors.textSecondary,
                   ),
                 ),
               ],
@@ -410,29 +394,26 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
         AppSpacing.md,
+        AppSpacing.lg,
         AppSpacing.sm,
-        AppSpacing.md,
-        AppSpacing.md,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              decoration: BoxDecoration(
-                color: context.tokigoColors.surface,
-                borderRadius: AppRadius.xlBorder,
-                border: Border.all(color: context.tokigoColors.outline),
-                boxShadow: [
-                  BoxShadow(
-                    color: context.tokigoColors.textPrimary.withValues(alpha: 0.05),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.xs),
+        decoration: BoxDecoration(
+          color: scheme.surface.withValues(alpha: 0.86),
+          borderRadius: AppRadius.lgBorder,
+          border: Border.all(color: scheme.outlineVariant),
+          boxShadow: AppElevation.shadow(
+            background: scheme.surface,
+            level: AppElevation.lg,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
               child: TextField(
                 controller: _textCtrl,
                 focusNode: _inputFocus,
@@ -441,12 +422,12 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
                 textInputAction: TextInputAction.newline,
                 style: TextStyle(
                   fontSize: AppTypography.fontSizeBody,
-                  color: scheme.onSurface,
+                  color: context.tokigoColors.textPrimary,
                 ),
                 decoration: InputDecoration(
                   hintText: AppLocalizations.of(context)!.aiSearchSheetHint,
                   hintStyle: TextStyle(
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    color: context.tokigoColors.textTertiary,
                     fontSize: AppTypography.fontSizeBody,
                   ),
                   // Same opt-out as the Home pill: the global
@@ -460,37 +441,70 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
                   focusedErrorBorder: InputBorder.none,
                   filled: false,
                   isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.xs),
-          VoiceMicButton(state: voiceState, onTap: _onMicTap),
-          const SizedBox(width: AppSpacing.xs),
-          // Send affordance — a bare blue arrow, styled like the Home
-          // magnifier and the red mic beside it.
-          Semantics(
-            button: true,
-            label: AppLocalizations.of(context)!.aiSend,
-            child: InkResponse(
-              onTap: _submit,
-              customBorder: const CircleBorder(),
-              radius: 24,
-              child: SizedBox(
-                width: AppSpacing.minimumTapTarget,
-                height: AppSpacing.minimumTapTarget,
-                child: Center(
-                  child: Icon(
-                    Icons.send_rounded,
-                    size: 24,
-                    color: context.tokigoColors.brand,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
                   ),
                 ),
               ),
             ),
+            const SizedBox(width: AppSpacing.xs),
+            VoiceMicButton(state: voiceState, onTap: _onMicTap),
+            const SizedBox(width: AppSpacing.xs),
+            // The send control derives its enabled state from the field's own
+            // value — no extra page state, submission behaviour unchanged.
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _textCtrl,
+              builder: (context, value, _) => _SendButton(
+                enabled: value.text.trim().isNotEmpty,
+                onTap: _submit,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The send affordance — a filled circular primary control with a real
+/// disabled state, matching the prompt input's recipe.
+class _SendButton extends StatelessWidget {
+  const _SendButton({required this.enabled, required this.onTap});
+
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: AppLocalizations.of(context)!.aiSend,
+      child: Pressable.wrap(
+        enabled: enabled,
+        child: Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: enabled ? onTap : null,
+            child: Container(
+              width: AppSpacing.minimumTapTarget,
+              height: AppSpacing.minimumTapTarget,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: enabled ? tc.primary : tc.surfaceTertiary,
+              ),
+              child: Icon(
+                Icons.send_rounded,
+                size: 24,
+                color: enabled ? tc.onPrimary : tc.textTertiary,
+              ),
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -528,7 +542,7 @@ class _FollowUpRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = AppTypography.forLight();
+    final tc = context.tokigoColors;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
@@ -543,11 +557,12 @@ class _FollowUpRow extends StatelessWidget {
             .map(
               (chip) => ActionChip(
                 label: Text(chip.$1),
-                backgroundColor: context.tokigoColors.surfaceSecondary,
-                side: BorderSide(color: context.tokigoColors.outline),
-                labelStyle: typography.caption.copyWith(
-                  color: context.tokigoColors.textPrimary,
-                ),
+                backgroundColor: tc.surfaceSecondary,
+                side: BorderSide(color: tc.outline),
+                labelStyle: Theme.of(
+                  context,
+                ).textTheme.labelLarge!.copyWith(color: tc.textPrimary),
+                materialTapTargetSize: MaterialTapTargetSize.padded,
                 onPressed: () => onTap(chip.$2),
               ),
             )
@@ -627,7 +642,7 @@ class ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final tc = context.tokigoColors;
     final isUser = message.isUser;
 
     final content = Column(
@@ -644,7 +659,7 @@ class ChatBubble extends StatelessWidget {
                 style: TextStyle(
                   fontSize: AppTypography.fontSizeBody,
                   height: 1.35,
-                  color: isUser ? Colors.white : scheme.onSurface,
+                  color: isUser ? tc.onBrand : tc.textPrimary,
                 ),
               ),
             ),
@@ -658,12 +673,19 @@ class ChatBubble extends StatelessWidget {
         ),
         if (showRetry)
           Padding(
-            padding: const EdgeInsets.only(top: 2),
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
             child: Pressable.wrap(
               child: TextButton(
                 style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  foregroundColor: tc.textPrimary,
+                  minimumSize: const Size(
+                    AppSpacing.minimumTapTarget,
+                    AppSpacing.minimumTapTarget,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                  ),
+                  textStyle: Theme.of(context).textTheme.labelLarge,
                 ),
                 onPressed: onRetry,
                 child: Text(AppLocalizations.of(context)!.adminRetry),
@@ -685,20 +707,8 @@ class ChatBubble extends StatelessWidget {
         maxWidth: MediaQuery.sizeOf(context).width * 0.72,
       ),
       decoration: BoxDecoration(
-        gradient: isUser
-            ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  context.tokigoColors.brand,
-                  context.tokigoColors.textSecondary,
-                ],
-              )
-            : null,
-        color: isUser ? null : context.tokigoColors.surfaceSecondary,
-        border: isUser
-            ? null
-            : Border.all(color: context.tokigoColors.outline),
+        color: isUser ? tc.brand : tc.surfaceSecondary,
+        border: isUser ? null : Border.all(color: tc.outline),
         borderRadius: BorderRadiusDirectional.only(
           topStart: Radius.circular(isUser ? AppRadius.lg : AppRadius.xs),
           topEnd: Radius.circular(isUser ? AppRadius.xs : AppRadius.lg),
@@ -780,8 +790,9 @@ class _TypingDotsState extends State<TypingDots>
               margin: const EdgeInsets.symmetric(horizontal: 2.5),
               transform: Matrix4.translationValues(0, -4.0 * wave, 0),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.onSurfaceVariant
-                    .withValues(alpha: 0.35 + 0.55 * wave),
+                color: context.tokigoColors.textTertiary.withValues(
+                  alpha: 0.35 + 0.55 * wave,
+                ),
                 shape: BoxShape.circle,
               ),
             );

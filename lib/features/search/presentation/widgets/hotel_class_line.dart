@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 
@@ -24,7 +23,7 @@ class HotelClassLocationLine extends StatelessWidget {
     this.style,
     this.iconSize = 14,
     this.maxLines = 1,
-    this.starColor = AppColors.textSecondary,
+    this.starColor,
   });
 
   /// The provider's star classification (1–5), or null when it sent none.
@@ -36,8 +35,9 @@ class HotelClassLocationLine extends StatelessWidget {
   final int maxLines;
 
   /// The class star's ink. The details sheet asks for bronze (`accent`);
-  /// result cards keep the neutral default.
-  final Color starColor;
+  /// result cards keep the neutral default, resolved from the active palette
+  /// so the dark theme gets its own ink rather than the light constant.
+  final Color? starColor;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +48,7 @@ class HotelClassLocationLine extends StatelessWidget {
     ].join(', ');
     if (stars == null && place.isEmpty) return const SizedBox.shrink();
 
+    final starInk = starColor ?? context.tokigoColors.textSecondary;
     final typography =
         style ??
         Theme.of(
@@ -57,7 +58,11 @@ class HotelClassLocationLine extends StatelessWidget {
     return Row(
       children: <Widget>[
         if (stars != null) ...<Widget>[
-          Icon(Icons.star_outline_rounded, size: iconSize, color: starColor),
+          Icon(
+            Icons.star_outline_rounded,
+            size: iconSize,
+            color: starInk,
+          ),
           const SizedBox(width: AppSpacing.xxs),
           Text('$stars', style: typography),
         ],

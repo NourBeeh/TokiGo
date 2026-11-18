@@ -86,7 +86,7 @@ class BookingStatusCard extends StatelessWidget {
                   const SizedBox(height: AppSpacing.sm),
                   Align(
                     alignment: AlignmentDirectional.centerStart,
-                    child: StatusChip.forTone(label: statusLabel!, tone: tone),
+                    child: StatusChip.forTone(context: context, label: statusLabel!, tone: tone),
                   ),
                 ],
                 if (reference != null) ...<Widget>[

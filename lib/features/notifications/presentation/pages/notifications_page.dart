@@ -25,7 +25,7 @@ import 'package:tokigo/l10n/app_localizations.dart';
 ///
 /// Geometry (doc 23 §4):
 /// * row — min height **72**, padding `lg` 16;
-/// * unread marker — ⌀8 `brand` at the start, `md` 12 before the text;
+/// * unread marker — ⌀8 `primary` at the start, `md` 12 before the text;
 /// * row title — `bodyLargeMedium` 17/600;
 /// * row body — `caption` 13/400 `textSecondary`, at most two lines;
 /// * time — `caption` 13/400 `textTertiary`, at the end;
@@ -203,7 +203,7 @@ class _NotificationRow extends StatelessWidget {
                   height: 8,
                   margin: const EdgeInsets.only(top: 6),
                   decoration: BoxDecoration(
-                    color: context.tokigoColors.brand,
+                    color: context.tokigoColors.primary,
                     shape: BoxShape.circle,
                   ),
                 ),
