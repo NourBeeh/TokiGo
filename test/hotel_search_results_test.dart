@@ -65,7 +65,7 @@ class _FakeHotelRepository implements HotelRepository {
 /// be asserted without racing a real async search.
 class _SeedableHotelSearchController extends HotelSearchController {
   _SeedableHotelSearchController(HotelRepository repository, OfflineCache cache)
-      : super(repository, cache);
+    : super(repository, cache);
 
   void seed(HotelSearchState value) => state = value;
 }
@@ -78,21 +78,21 @@ HotelOffer _hotel(
   int? reviewCount = 120,
   int? stars,
 }) => HotelOffer(
-      id: id,
-      providerId: 'nuitee',
-      providerName: 'Nuitee',
-      title: title,
-      price: price,
-      currency: 'USD',
-      city: 'Cairo',
-      country: 'EG',
-      checkIn: DateTime(2026, 12, 1),
-      checkOut: DateTime(2026, 12, 3),
-      roomType: 'Deluxe',
-      rating: rating,
-      reviewCount: reviewCount,
-      metadata: <String, dynamic>{if (stars != null) 'stars': stars},
-    );
+  id: id,
+  providerId: 'nuitee',
+  providerName: 'Nuitee',
+  title: title,
+  price: price,
+  currency: 'USD',
+  city: 'Cairo',
+  country: 'EG',
+  checkIn: DateTime(2026, 12, 1),
+  checkOut: DateTime(2026, 12, 3),
+  roomType: 'Deluxe',
+  rating: rating,
+  reviewCount: reviewCount,
+  metadata: <String, dynamic>{if (stars != null) 'stars': stars},
+);
 
 /// Hosts the real page with the real controller over a fake repository, and a
 /// two-route router so the details hand-off is observable.
@@ -110,37 +110,41 @@ class _Host {
   );
 
   Widget get widget => UncontrolledProviderScope(
-        container: container,
-        child: MaterialApp.router(
-          routerConfig: GoRouter(
-            initialLocation: '/hotels',
-            routes: <RouteBase>[
-              GoRoute(
-                path: '/hotels',
-                builder: (BuildContext context, GoRouterState state) =>
-                    const HotelSearchPage(),
-              ),
-              GoRoute(
-                path: '/offer-details',
-                builder: (BuildContext context, GoRouterState state) =>
-                    const Scaffold(body: Text('DETAILS')),
-              ),
-            ],
+    container: container,
+    child: MaterialApp.router(
+      routerConfig: GoRouter(
+        initialLocation: '/hotels',
+        routes: <RouteBase>[
+          GoRoute(
+            path: '/hotels',
+            builder: (BuildContext context, GoRouterState state) =>
+                const HotelSearchPage(),
           ),
-          theme: AppTheme.light(),
-          locale: const Locale('en'),
-          supportedLocales: const <Locale>[Locale('en')],
-          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-        ),
-      );
+          GoRoute(
+            path: '/offer-details',
+            builder: (BuildContext context, GoRouterState state) =>
+                const Scaffold(body: Text('DETAILS')),
+          ),
+        ],
+      ),
+      theme: AppTheme.light(),
+      locale: const Locale('en'),
+      supportedLocales: const <Locale>[Locale('en')],
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+    ),
+  );
 }
 
-Future<void> _pumpPage(WidgetTester tester, _Host host, {bool settle = true}) async {
+Future<void> _pumpPage(
+  WidgetTester tester,
+  _Host host, {
+  bool settle = true,
+}) async {
   tester.view.physicalSize = const Size(720, 3000);
   tester.view.devicePixelRatio = 2;
   addTearDown(tester.view.resetPhysicalSize);
@@ -168,30 +172,40 @@ Future<void> _runSearch(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('a result row shows the title, the per-night price and the score',
-      (WidgetTester tester) async {
-    final _Host host = _Host(
-      _SeedableHotelSearchController(
-        _FakeHotelRepository(<HotelOffer>[_hotel('a')]),
-        MemoryOfflineCache(),
-      ),
-    );
-    await _pumpPage(tester, host);
-    await _runSearch(tester);
+  testWidgets(
+    'a result row shows the title, the per-night price and the score',
+    (WidgetTester tester) async {
+      final _Host host = _Host(
+        _SeedableHotelSearchController(
+          _FakeHotelRepository(<HotelOffer>[_hotel('a')]),
+          MemoryOfflineCache(),
+        ),
+      );
+      await _pumpPage(tester, host);
+      await _runSearch(tester);
 
-    expect(find.byType(HotelOverlapCard), findsOneWidget);
-    expect(find.text('Riverside Grand'), findsOneWidget);
-    // 186 over the offer's own two nights is a derived 93 / night.
-    expect(find.text('93'), findsOneWidget);
-    expect(find.text('/ night'), findsOneWidget);
-    // The guest score is real (120 reviews back it), so it is drawn.
-    expect(find.text('4.8'), findsOneWidget);
-    expect(find.text('1 stay'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+      expect(find.byType(HotelOverlapCard), findsOneWidget);
+      expect(find.text('Riverside Grand'), findsOneWidget);
+      // 186 over the offer's own two nights is a derived 93 / night.
+      expect(find.text('93'), findsOneWidget);
+      expect(find.text('/ night'), findsOneWidget);
+      // The guest score is real (120 reviews back it), so the star row is drawn.
+      expect(
+        find.descendant(
+          of: find.byType(HotelOverlapCard),
+          matching: find.byIcon(Icons.star_rounded),
+        ),
+        findsNWidgets(5),
+      );
+      expect(find.text('120 reviews'), findsOneWidget);
+      expect(find.text('1 stay'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
-  testWidgets('the heart saves the stay and the card reflects it',
-      (WidgetTester tester) async {
+  testWidgets('the heart saves the stay and the card reflects it', (
+    WidgetTester tester,
+  ) async {
     final _Host host = _Host(
       _SeedableHotelSearchController(
         _FakeHotelRepository(<HotelOffer>[_hotel('a')]),
@@ -208,12 +222,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
-    expect(host.container.read(wishlistProvider).map((o) => o.id), <String>['a']);
+    expect(host.container.read(wishlistProvider).map((o) => o.id), <String>[
+      'a',
+    ]);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('tapping a result opens the offer details page',
-      (WidgetTester tester) async {
+  testWidgets('tapping a result opens the offer details page', (
+    WidgetTester tester,
+  ) async {
     final _Host host = _Host(
       _SeedableHotelSearchController(
         _FakeHotelRepository(<HotelOffer>[_hotel('a')]),
@@ -229,8 +246,9 @@ void main() {
     expect(find.text('DETAILS'), findsOneWidget);
   });
 
-  testWidgets('a search that returns nothing shows the empty state',
-      (WidgetTester tester) async {
+  testWidgets('a search that returns nothing shows the empty state', (
+    WidgetTester tester,
+  ) async {
     final _Host host = _Host(
       _SeedableHotelSearchController(
         _FakeHotelRepository(<HotelOffer>[]),
@@ -245,12 +263,12 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('a failed search shows the error state and retry recovers',
-      (WidgetTester tester) async {
-    final _FakeHotelRepository repository = _FakeHotelRepository(
-      <HotelOffer>[_hotel('a')],
-      failures: 1,
-    );
+  testWidgets('a failed search shows the error state and retry recovers', (
+    WidgetTester tester,
+  ) async {
+    final _FakeHotelRepository repository = _FakeHotelRepository(<HotelOffer>[
+      _hotel('a'),
+    ], failures: 1);
     final _Host host = _Host(
       _SeedableHotelSearchController(repository, MemoryOfflineCache()),
     );
@@ -269,8 +287,9 @@ void main() {
     expect(repository.calls, 2);
   });
 
-  testWidgets('the loading state draws skeletons, not an empty feed',
-      (WidgetTester tester) async {
+  testWidgets('the loading state draws skeletons, not an empty feed', (
+    WidgetTester tester,
+  ) async {
     final _SeedableHotelSearchController controller =
         _SeedableHotelSearchController(
           _FakeHotelRepository(<HotelOffer>[]),
@@ -290,7 +309,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('sorting by price reorders the results', (WidgetTester tester) async {
+  testWidgets('sorting by price reorders the results', (
+    WidgetTester tester,
+  ) async {
     final _Host host = _Host(
       _SeedableHotelSearchController(
         _FakeHotelRepository(<HotelOffer>[
@@ -316,7 +337,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('the star-class chips filter the results', (WidgetTester tester) async {
+  testWidgets('the star-class chips filter the results', (
+    WidgetTester tester,
+  ) async {
     final _Host host = _Host(
       _SeedableHotelSearchController(
         _FakeHotelRepository(<HotelOffer>[

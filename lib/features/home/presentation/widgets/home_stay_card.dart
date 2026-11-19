@@ -190,7 +190,6 @@ class HomeStayCard extends ConsumerWidget {
     return OverlapStayCard(
       media: StayPhoto(item: item),
       title: item.title,
-      starClass: starClass,
       rating: hasRealReviews ? item.rating : null,
       reviewCount: hasRealReviews ? item.reviewCount : null,
       location: location.isEmpty ? null : location,

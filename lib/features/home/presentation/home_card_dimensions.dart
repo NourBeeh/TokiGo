@@ -90,10 +90,10 @@ class HomeCardDimensions {
 
   // ── Sheet budgets ───────────────────────────────────────────────────────
 
-  /// A stay sheet's content budget at the default text scale: name, class or
-  /// score, location, distance, price and their gaps — including a two-line
-  /// stay name — grown with the traveller's text scale.
-  static const double staySheetTextHeight = 188;
+  /// A stay sheet's content budget at the default text scale: the inset photo
+  /// padding, the name/price row, the location + distance line, the star review
+  /// row and the sheet's own padding — grown with the traveller's text scale.
+  static const double staySheetTextHeight = 128;
 
   /// A city sheet's content budget at the default text scale: name, place,
   /// one description line and the pinned action row.

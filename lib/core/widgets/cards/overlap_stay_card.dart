@@ -10,6 +10,7 @@ import 'package:tokigo/core/widgets/cards/card_glass.dart';
 import 'package:tokigo/core/widgets/cards/card_scrim_overlay.dart';
 import 'package:tokigo/core/widgets/cards/card_skeleton.dart';
 import 'package:tokigo/core/widgets/cards/travel_card_style.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
 
 /// A structured hotel card: a cropped hotel photo above a distinct information
 /// surface with the name, rating, location and price.
@@ -35,7 +36,6 @@ class OverlapStayCard extends StatelessWidget {
     required this.amountText,
     this.currency = '',
     this.unit,
-    this.starClass,
     this.rating,
     this.reviewCount,
     this.location,
@@ -65,7 +65,6 @@ class OverlapStayCard extends StatelessWidget {
        amountText = '',
        currency = '',
        unit = null,
-       starClass = null,
        rating = null,
        reviewCount = null,
        location = null,
@@ -79,9 +78,8 @@ class OverlapStayCard extends StatelessWidget {
        showHeartPlatter = true,
        loading = true;
 
-  /// The photo alone — the heart and the class pill are drawn by this card on
-  /// top of it. In the loading state this is ignored and a shimmer box is
-  /// painted in its place.
+  /// The photo alone — the heart is drawn by this card on top of it. In the
+  /// loading state this is ignored and a shimmer box is painted in its place.
   final Widget media;
 
   final String title;
@@ -93,10 +91,6 @@ class OverlapStayCard extends StatelessWidget {
 
   /// "/ night" when the amount really is a nightly rate. Null hides it.
   final String? unit;
-
-  /// The hotel's own class (1–5), drawn as a glass pill on the photo. Distinct
-  /// from [rating], which is the guest review score.
-  final int? starClass;
 
   final double? rating;
   final int? reviewCount;
@@ -160,13 +154,13 @@ class OverlapStayCard extends StatelessWidget {
                 loading: loading,
                 aspectRatio: aspectRatio,
                 media: media,
-                starClass: starClass,
                 onFavorite: onFavorite,
                 isFavorite: isFavorite,
                 heartSize: heartSize,
                 showHeartPlatter: showHeartPlatter,
                 title: title,
                 rating: rating,
+                reviewCount: reviewCount,
                 location: location,
                 onLocationTap: onLocationTap,
                 distanceText: distanceText,
@@ -180,13 +174,13 @@ class OverlapStayCard extends StatelessWidget {
               loading: loading,
               aspectRatio: aspectRatio,
               media: media,
-              starClass: starClass,
               onFavorite: onFavorite,
               isFavorite: isFavorite,
               heartSize: heartSize,
               showHeartPlatter: showHeartPlatter,
               title: title,
               rating: rating,
+              reviewCount: reviewCount,
               location: location,
               onLocationTap: onLocationTap,
               distanceText: distanceText,
@@ -199,7 +193,6 @@ class OverlapStayCard extends StatelessWidget {
 
   String get _autoSemantics {
     final List<String> parts = <String>[title];
-    if (starClass != null) parts.add('$starClass-star hotel');
     if (rating != null) parts.add(rating!.toStringAsFixed(1));
     if (reviewCount != null) parts.add('($reviewCount)');
     if (location case final String place) parts.add(place);
@@ -211,20 +204,21 @@ class OverlapStayCard extends StatelessWidget {
 
 /// The photo-above-information body shared by the loaded and loading card.
 ///
-/// Row order, the [AspectRatio] photo box, the sheet padding and the divider
-/// are identical in both states; only the sheet's slot content switches.
+/// The photo is inset inside the card with its own rounded corners; the sheet
+/// below carries the name, price, location and review row. Both states build
+/// this same body, so the skeleton cannot drift from the real card.
 class _StayBody extends StatelessWidget {
   const _StayBody({
     required this.loading,
     required this.aspectRatio,
     required this.media,
-    required this.starClass,
     required this.onFavorite,
     required this.isFavorite,
     required this.heartSize,
     required this.showHeartPlatter,
     required this.title,
     required this.rating,
+    required this.reviewCount,
     required this.location,
     required this.onLocationTap,
     required this.distanceText,
@@ -236,13 +230,13 @@ class _StayBody extends StatelessWidget {
   final bool loading;
   final double aspectRatio;
   final Widget media;
-  final int? starClass;
   final ValueChanged<bool>? onFavorite;
   final bool isFavorite;
   final double heartSize;
   final bool showHeartPlatter;
   final String title;
   final double? rating;
+  final int? reviewCount;
   final String? location;
   final VoidCallback? onLocationTap;
   final String? distanceText;
@@ -252,60 +246,46 @@ class _StayBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Local copies so the skeleton guards below read as plain booleans and
-    // Dart can promote the class fields.
-    final int? starClass = loading ? null : this.starClass;
     final ValueChanged<bool>? onFavorite = loading ? null : this.onFavorite;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        AspectRatio(
-          aspectRatio: aspectRatio,
-          child: Stack(
-            fit: StackFit.expand,
-            children: <Widget>[
-              if (loading) CardSkeleton.image() else media,
-              const Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: <Color>[Color(0x33000000), Color(0x00000000)],
-                        stops: <double>[0, 0.36],
+        // The reference card keeps a white margin around the photo and rounds
+        // the image itself, so the photo sits inside the card's own surface.
+        Padding(
+          padding: const EdgeInsets.all(AppSpacing.sm),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            child: AspectRatio(
+              aspectRatio: aspectRatio,
+              child: Stack(
+                fit: StackFit.expand,
+                children: <Widget>[
+                  if (loading) CardSkeleton.image() else media,
+                  // Overlays are data-driven: they never appear in the skeleton.
+                  if (onFavorite != null)
+                    PositionedDirectional(
+                      top: AppSpacing.sm,
+                      end: AppSpacing.sm,
+                      child: CardFavorite(
+                        value: isFavorite,
+                        onChanged: onFavorite,
+                        size: heartSize,
+                        onImage: true,
+                        showPlatter: showHeartPlatter,
                       ),
                     ),
-                  ),
-                ),
+                ],
               ),
-              // Overlays are data-driven: they never appear in the skeleton.
-              if (starClass != null)
-                PositionedDirectional(
-                  top: AppSpacing.md,
-                  start: AppSpacing.md,
-                  child: StayClassPill(stars: starClass),
-                ),
-              if (onFavorite != null)
-                PositionedDirectional(
-                  top: AppSpacing.md,
-                  end: AppSpacing.md,
-                  child: CardFavorite(
-                    value: isFavorite,
-                    onChanged: onFavorite,
-                    size: heartSize,
-                    onImage: true,
-                    showPlatter: showHeartPlatter,
-                  ),
-                ),
-            ],
+            ),
           ),
         ),
         _StaySheet(
           loading: loading,
           title: title,
           rating: rating,
+          reviewCount: reviewCount,
           location: location,
           onLocationTap: onLocationTap,
           distanceText: distanceText,
@@ -320,6 +300,10 @@ class _StayBody extends StatelessWidget {
 
 /// The information sheet shared by the loaded and loading card.
 ///
+/// Layout (owner reference, 2026-11): the name and the price share the first
+/// row — the price right-aligned with its per-night unit beneath it — then the
+/// location + distance line, then the star review line.
+///
 /// Every slot is guarded by `loading || <data present>`, so the placeholder
 /// reserves exactly the room a fully-populated card uses while a sparse real
 /// card keeps its own (smaller) footprint. Placeholder heights mirror the text
@@ -329,6 +313,7 @@ class _StaySheet extends StatelessWidget {
     required this.loading,
     required this.title,
     required this.rating,
+    required this.reviewCount,
     required this.location,
     required this.onLocationTap,
     required this.distanceText,
@@ -340,6 +325,7 @@ class _StaySheet extends StatelessWidget {
   final bool loading;
   final String title;
   final double? rating;
+  final int? reviewCount;
   final String? location;
   final VoidCallback? onLocationTap;
   final String? distanceText;
@@ -348,16 +334,14 @@ class _StaySheet extends StatelessWidget {
   final String? unit;
 
   // Placeholder geometry mirrors the loaded slot it stands in for:
-  // two-line title (2 × 22), rating/location/distance captions (17 each),
-  // price (24). See AppTypography for the styles these derive from.
+  // two-line title (2 × 22), rating/location captions (17 each), price (24).
+  // See AppTypography for the styles these derive from.
   static const double _titleWidth = 170;
   static const double _titleHeight = 44;
-  static const double _ratingWidth = 96;
+  static const double _ratingWidth = 116;
   static const double _ratingHeight = 17;
-  static const double _locationWidth = 120;
+  static const double _locationWidth = 220;
   static const double _locationHeight = 17;
-  static const double _distanceWidth = 100;
-  static const double _distanceHeight = 17;
   static const double _priceWidth = 88;
   static const double _priceHeight = 24;
 
@@ -374,60 +358,191 @@ class _StaySheet extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          if (loading)
-            CardSkeleton.title(width: _titleWidth, height: _titleHeight)
-          else
-            Text(
-              title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.forLight().bodyLargeMedium.copyWith(
-                color: context.tokigoColors.textPrimary,
-                fontWeight: FontWeight.w700,
-                height: 1.3,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Expanded(
+                child: loading
+                    ? CardSkeleton.title(
+                        width: _titleWidth,
+                        height: _titleHeight,
+                      )
+                    : Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.forLight().bodyLargeMedium
+                            .copyWith(
+                              color: context.tokigoColors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                              height: 1.3,
+                            ),
+                      ),
               ),
-            ),
-          if (showRating) ...<Widget>[
-            const SizedBox(height: AppSpacing.xs),
-            if (loading)
-              CardSkeleton.text(width: _ratingWidth, height: _ratingHeight)
-            else
-              StayRatingLine(rating: rating!),
-          ],
-          if (showLocation) ...<Widget>[
+              if (showPrice) ...<Widget>[
+                const SizedBox(width: AppSpacing.md),
+                loading
+                    ? CardSkeleton.price(
+                        width: _priceWidth,
+                        height: _priceHeight,
+                      )
+                    : _StayPriceBlock(
+                        amountText: amountText,
+                        currency: currency,
+                        unit: unit,
+                      ),
+              ],
+            ],
+          ),
+          if (showLocation || showDistance) ...<Widget>[
             const SizedBox(height: AppSpacing.xs),
             if (loading)
               CardSkeleton.text(width: _locationWidth, height: _locationHeight)
             else
-              StayLocationLine(text: location!, onTap: onLocationTap),
+              _StayMetaRow(
+                location: location,
+                onLocationTap: onLocationTap,
+                distanceText: distanceText,
+              ),
           ],
-          if (showDistance) ...<Widget>[
+          if (showRating) ...<Widget>[
             const SizedBox(height: AppSpacing.xxs),
             if (loading)
-              CardSkeleton.text(width: _distanceWidth, height: _distanceHeight)
+              CardSkeleton.text(width: _ratingWidth, height: _ratingHeight)
             else
-              StayDistanceLine(text: distanceText!),
-          ],
-          if (showPrice) ...<Widget>[
-            const SizedBox(height: AppSpacing.md),
-            Divider(height: 1, thickness: 1, color: context.tokigoColors.hairline),
-            const SizedBox(height: AppSpacing.md),
-            // Start-aligned: the nightly price sits on the LEFT in English
-            // (LTR) and on the right in Arabic (RTL), the side the eye reaches
-            // first in each language.
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: loading
-                  ? CardSkeleton.price(width: _priceWidth, height: _priceHeight)
-                  : StayPriceLine(
-                      amountText: amountText,
-                      currency: currency,
-                      unit: unit,
-                    ),
-            ),
+              StayRatingLine(rating: rating!, reviewCount: reviewCount),
           ],
         ],
       ),
+    );
+  }
+}
+
+/// The location + distance line: a pin, the place, then the distance — one row,
+/// as in the reference card.
+class _StayMetaRow extends StatelessWidget {
+  const _StayMetaRow({
+    required this.location,
+    required this.onLocationTap,
+    required this.distanceText,
+  });
+
+  final String? location;
+  final VoidCallback? onLocationTap;
+  final String? distanceText;
+
+  @override
+  Widget build(BuildContext context) {
+    final String? place = location;
+    final String? distance = distanceText;
+    if (place == null) {
+      return Row(
+        children: <Widget>[
+          Icon(
+            Icons.near_me_outlined,
+            size: 13,
+            color: context.tokigoColors.textTertiary,
+          ),
+          const SizedBox(width: AppSpacing.xxs),
+          Text(
+            distance ?? '',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.forLight().caption.copyWith(
+              color: context.tokigoColors.textTertiary,
+            ),
+          ),
+        ],
+      );
+    }
+    return Row(
+      children: <Widget>[
+        Expanded(
+          flex: 2,
+          child: StayLocationLine(text: place, onTap: onLocationTap),
+        ),
+        if (distance != null) ...<Widget>[
+          const SizedBox(width: AppSpacing.sm),
+          Icon(
+            Icons.near_me_outlined,
+            size: 13,
+            color: context.tokigoColors.textTertiary,
+          ),
+          const SizedBox(width: AppSpacing.xxs),
+          Flexible(
+            child: Text(
+              distance,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.forLight().caption.copyWith(
+                color: context.tokigoColors.textTertiary,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// The right-aligned price block: the amount (with its currency) on top and the
+/// per-night unit beneath it.
+class _StayPriceBlock extends StatelessWidget {
+  const _StayPriceBlock({
+    required this.amountText,
+    required this.currency,
+    required this.unit,
+  });
+
+  final String amountText;
+  final String currency;
+  final String? unit;
+
+  @override
+  Widget build(BuildContext context) {
+    final typography = AppTypography.forLight();
+    final bool isRtl = Directionality.of(context) == TextDirection.rtl;
+    final String? unit = this.unit;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: <Widget>[
+            Text(
+              amountText,
+              maxLines: 1,
+              style: typography.titleMedium.copyWith(
+                color: context.tokigoColors.textPrimary,
+                fontWeight: FontWeight.w800,
+                height: 1.05,
+                letterSpacing: -0.3,
+              ),
+            ),
+            if (currency.isNotEmpty) ...<Widget>[
+              const SizedBox(width: AppSpacing.xs),
+              Text(
+                currency,
+                style: typography.caption.copyWith(
+                  color: context.tokigoColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ],
+        ),
+        if (unit != null)
+          Text(
+            isRtl ? unit : '/ $unit',
+            maxLines: 1,
+            style: typography.caption.copyWith(
+              color: context.tokigoColors.textTertiary,
+            ),
+          ),
+      ],
     );
   }
 }
@@ -471,28 +586,60 @@ class StayClassPill extends StatelessWidget {
 }
 
 class StayRatingLine extends StatelessWidget {
-  const StayRatingLine({super.key, required this.rating});
+  const StayRatingLine({super.key, required this.rating, this.reviewCount});
 
   final double rating;
+
+  /// When set, the line renders the five-star score plus the review count
+  /// (owner reference card, 2026-11). Null keeps the compact score-only line
+  /// used by the split card.
+  final int? reviewCount;
 
   @override
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
     final Color ink = context.tokigoColors.textPrimary;
+    final int? reviews = reviewCount;
+    if (reviews == null) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(
+            Icons.thumb_up_rounded,
+            size: 15,
+            color: context.tokigoColors.textSecondary,
+          ),
+          const SizedBox(width: AppSpacing.xxs),
+          Text(
+            rating.toStringAsFixed(1),
+            style: typography.captionSemibold.copyWith(
+              color: ink,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      );
+    }
+    final int filled = rating.round().clamp(0, 5);
+    final String reviewsText =
+        AppLocalizations.of(context)?.offerReviewsCount(reviews) ??
+        '$reviews reviews';
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Icon(
-          Icons.thumb_up_rounded,
-          size: 15,
-          color: context.tokigoColors.textSecondary,
-        ),
+        for (int i = 0; i < 5; i++)
+          Icon(
+            i < filled ? Icons.star_rounded : Icons.star_outline_rounded,
+            size: 14,
+            color: i < filled ? ink : context.tokigoColors.textTertiary,
+          ),
         const SizedBox(width: AppSpacing.xxs),
         Text(
-          rating.toStringAsFixed(1),
-          style: typography.captionSemibold.copyWith(
-            color: ink,
-            fontWeight: FontWeight.w800,
+          reviewsText,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: typography.caption.copyWith(
+            color: context.tokigoColors.textSecondary,
           ),
         ),
       ],

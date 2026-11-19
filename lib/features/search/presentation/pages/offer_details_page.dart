@@ -202,7 +202,7 @@ class OfferDetailsPage extends ConsumerWidget {
                     start: AppSpacing.md,
                     top: AppSpacing.xs,
                   ),
-                  child: AppBackButton(variant: AppIconActionVariant.disc),
+                  child: AppBackButton(variant: AppIconActionVariant.plain),
                 ),
               ),
             ),

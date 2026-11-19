@@ -84,7 +84,7 @@ class CardFavorite extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final heart = heartColor ?? context.tokigoColors.danger;
+    final heart = heartColor ?? context.tokigoColors.brandRed;
     // The disc is always white, so the idle heart is always a dark neutral —
     // never a theme-tinted grey that would vanish on it.
     const Color idleColor = AppColors.textPrimary;

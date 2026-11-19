@@ -390,14 +390,16 @@ void main() {
 
       final Rect card = tester.getRect(find.byType(OverlapStayCard));
       final Rect price = tester.getRect(find.text('186'));
+      final Rect title = tester.getRect(find.text('Riverside Grand Hotel'));
 
+      // Owner reference (2026-11): the price sits on the END side, on the
+      // name's own row, with the per-night unit beneath it.
       if (direction == TextDirection.ltr) {
-        // English reads left-to-right: the nightly price sits on the LEFT.
-        expect(price.center.dx, lessThan(card.center.dx));
-      } else {
-        // Arabic mirrors: the price keeps the right (start) side.
         expect(price.center.dx, greaterThan(card.center.dx));
+      } else {
+        expect(price.center.dx, lessThan(card.center.dx));
       }
+      expect(price.center.dy, closeTo(title.center.dy, 12));
     }
   });
 

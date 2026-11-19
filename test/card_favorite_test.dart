@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/app_theme.dart';
+import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/widgets/cards/card_favorite.dart';
 import 'package:tokigo/core/widgets/cards/card_glass.dart';
 
@@ -46,7 +47,10 @@ void main() {
     // The old frosted-glass square is gone; one circular platter replaces it.
     expect(find.byType(CardGlass), findsNothing);
     expect(find.byType(HeartPlatter), findsOneWidget);
-    expect(tester.widget<HeartPlatter>(find.byType(HeartPlatter)).diameter, size);
+    expect(
+      tester.widget<HeartPlatter>(find.byType(HeartPlatter)).diameter,
+      size,
+    );
 
     final Container disc = tester.widget<Container>(
       find
@@ -83,5 +87,15 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
+
+    // Owner request (2026-11): the ACTIVE heart is the brand red, so a saved
+    // stay reads instantly.
+    final BuildContext heartContext = tester.element(
+      find.byIcon(Icons.favorite_rounded),
+    );
+    expect(
+      tester.widget<Icon>(find.byIcon(Icons.favorite_rounded)).color,
+      heartContext.tokigoColors.brandRed,
+    );
   });
 }
