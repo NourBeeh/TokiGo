@@ -30,6 +30,7 @@ class HomeStaysCarousel extends StatelessWidget {
     this.itemBuilder,
     this.sheetTextHeight = staysSheetTextHeight,
     this.splitLayout = false,
+    this.photoAspectRatio = HomeStaysCarousel.mediaAspectRatio,
     this.showHeartPlatter = true,
     this.loading = false,
     this.cardHeightBuilder,
@@ -60,6 +61,11 @@ class HomeStaysCarousel extends StatelessWidget {
   /// Home "Stays Near You" rail opts in; the AI answer rails keep the
   /// photo-above-sheet card.
   final bool splitLayout;
+
+  /// Photo width ÷ height for this rail. The default is the wide Home stay
+  /// ratio; a surface that wants a taller photo (image on top, description
+  /// below) passes a smaller ratio.
+  final double photoAspectRatio;
 
   /// Whether the favourite heart draws its white disc platter.
   final bool showHeartPlatter;
@@ -113,6 +119,7 @@ class HomeStaysCarousel extends StatelessWidget {
     double pageWidth,
     double textScale, {
     double sheetTextHeight = staysSheetTextHeight,
+    double mediaAspectRatio = HomeStaysCarousel.mediaAspectRatio,
   }) {
     final double media = pageWidth / mediaAspectRatio;
     return media - _sheetPadding + sheetTextHeight * textScale + _sheetSlack;
@@ -132,6 +139,16 @@ class HomeStaysCarousel extends StatelessWidget {
     final double contentHeight =
         HomeCardDimensions.staySheetTextHeight * textScale;
     return math.max(cityHeight, contentHeight);
+  }
+
+  /// The taller photo-above-sheet variant: the hotel photo on top, its
+  /// description below, at the Discover card's (taller) photo ratio.
+  static double tallCardHeightFor(double pageWidth, double textScale) {
+    return cardHeightFor(
+      pageWidth,
+      textScale,
+      mediaAspectRatio: HomeCardDimensions.destinationMediaAspectRatio,
+    );
   }
 
   /// The rail height for the current viewport — shared with the loading
@@ -166,6 +183,7 @@ class HomeStaysCarousel extends StatelessWidget {
               pageWidth,
               textScale,
               sheetTextHeight: sheetTextHeight,
+              mediaAspectRatio: photoAspectRatio,
             );
 
         return CoverFlowCarousel(
@@ -179,21 +197,21 @@ class HomeStaysCarousel extends StatelessWidget {
             final Widget card = loading
                 ? HomeStayCard.loading(
                     margin: EdgeInsets.zero,
-                    aspectRatio: HomeStaysCarousel.mediaAspectRatio,
+                    aspectRatio: photoAspectRatio,
                     splitLayout: splitLayout,
                     showHeartPlatter: showHeartPlatter,
                   )
                 : itemBuilder?.call(context, items[index]) ??
-                    HomeStayCard(
-                      item: items[index],
-                      margin: EdgeInsets.zero,
-                      aspectRatio: HomeStaysCarousel.mediaAspectRatio,
-                      splitLayout: splitLayout,
-                      showHeartPlatter: showHeartPlatter,
-                      onTap: onItemTap == null
-                          ? null
-                          : () => onItemTap!(items[index]),
-                    );
+                      HomeStayCard(
+                        item: items[index],
+                        margin: EdgeInsets.zero,
+                        aspectRatio: photoAspectRatio,
+                        splitLayout: splitLayout,
+                        showHeartPlatter: showHeartPlatter,
+                        onTap: onItemTap == null
+                            ? null
+                            : () => onItemTap!(items[index]),
+                      );
             return KeyedSubtree(
               key: ValueKey<String>(
                 loading ? 'home-stays-skeleton' : items[index].id,

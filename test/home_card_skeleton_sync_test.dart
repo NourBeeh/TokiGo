@@ -718,12 +718,12 @@ void main() {
 
       // Explore is bundled on-device, so it renders immediately while the feed
       // is still pending — no full-page skeleton on a slow/unreachable backend.
-      // The Stays skeleton is the approved split card, so the feed does not
-      // jump when the real stays land.
+      // The Stays skeleton is the approved photo-above-description card, so
+      // the feed does not jump when the real stays land.
       expect(find.byType(HomeDiscoveryStayCard), findsWidgets);
       expect(find.text('Paris'), findsWidgets);
       expect(find.byType(HomeStayCard), findsOneWidget);
-      expect(find.byType(HomeSplitStayCard), findsOneWidget);
+      expect(find.byType(HomeSplitStayCard), findsNothing);
       expect(tester.takeException(), isNull);
 
       // The feed lands: the same widgets switch to their loaded state.

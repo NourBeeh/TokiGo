@@ -56,7 +56,11 @@ const bool _authRedirectEnabled = false;
 /// The app's route tree: Today at '/', with every other destination pushed on
 /// top of it.
 final goRouterProvider = Provider<GoRouter>((ref) {
-  final authUser = ref.watch(authUserProvider);
+  // NOTE: auth state is deliberately NOT watched here. Subscribing would
+  // rebuild the whole GoRouter on every login/logout, which resets the route
+  // stack to `initialLocation` (Home) and yanks the traveller off the page
+  // they were on (e.g. Profile) right after signing in. Auth is only read
+  // inside the redirect below, which does not need a subscription.
   final onboarding = ref.watch(onboardingProvider);
   // The app always launches on Today. Tests may override this provider to
   // start on a specific route.
@@ -78,7 +82,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       if (!_authRedirectEnabled) {
         return null;
       }
-      final isLoggedIn = authUser != null;
+      final isLoggedIn = ref.read(authUserProvider) != null;
       final isLoginRoute = state.matchedLocation == AppRoute.auth.path;
 
       if (!isLoggedIn && !isLoginRoute) {

@@ -170,7 +170,7 @@ void main() {
     }
   });
 
-  testWidgets('the compact search is an overlay outside the scroll view', (
+  testWidgets('the secondary compact search overlay is removed', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1120, 1400);
@@ -181,19 +181,17 @@ void main() {
     await tester.pumpWidget(_app());
     await tester.pumpAndSettle();
 
-    // The secondary control is NOT inside the scroll view: it is a sibling
-    // overlay, so it can never change the scroll extent.
+    // Owner request (2026-11): the extra compact search that appeared while
+    // scrolling is gone. Only the original AI composer remains, inside the
+    // scroll view.
+    expect(_compact(), findsNothing);
+    expect(find.byType(HomeAiSearchField), findsOneWidget);
     expect(
       find.descendant(
         of: find.byType(CustomScrollView),
-        matching: _compact(),
+        matching: _composer(),
       ),
-      findsNothing,
+      findsOneWidget,
     );
-    expect(_compact(), findsOneWidget);
-
-    // It is a distinct control from the original composer.
-    expect(_composer(), findsOneWidget);
-    expect(find.byType(HomeAiSearchField), findsNWidgets(2));
   });
 }

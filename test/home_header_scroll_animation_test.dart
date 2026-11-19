@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tokigo/app/widgets/home_nav_buttons.dart';
-import 'package:tokigo/app/widgets/app_chrome.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
@@ -22,10 +21,9 @@ import 'package:tokigo/l10n/app_localizations.dart';
 /// Home header scroll architecture (owner decision, 2026-11).
 ///
 /// The ORIGINAL header — wordmark, AI composer and navigation rail — is part
-/// of the scrollable page content and leaves the viewport naturally. A
-/// SEPARATE compact search overlay enters from above only after the final
-/// navigation item has completely disappeared, and exits upward when the rail
-/// returns. The overlay never changes the scroll extent.
+/// of the scrollable page content and leaves the viewport naturally. The
+/// secondary compact search overlay was removed (owner request, 2026-11), so
+/// nothing is pinned above the feed while scrolling.
 ///
 /// Every test measures real widget rectangles and visibility across scroll
 /// states — no opacity flags or internal state are asserted.
@@ -162,8 +160,6 @@ Widget _app({Locale locale = const Locale('en')}) => ProviderScope(
 
 Finder _topBar() => find.byType(HomeTopBar);
 Finder _composer() => find.byKey(const ValueKey<String>('home-ai-composer'));
-Finder _compact() =>
-    find.byKey(const ValueKey<String>('home-ai-compact-search'));
 Finder _nav() => find.byType(HomeActionBar);
 Finder _scrollable() => find
     .descendant(
@@ -214,10 +210,6 @@ void main() {
       expect(_visible(tester.getRect(_topBar()), viewport), isTrue);
       expect(_visible(tester.getRect(_composer()), viewport), isTrue);
       expect(_visible(tester.getRect(_nav()), viewport), isTrue);
-
-      // The compact search is parked above the viewport, fully hidden.
-      final Rect compact = tester.getRect(_compact());
-      expect(compact.bottom, lessThanOrEqualTo(viewport.top + 0.5));
     });
 
     testWidgets('the header scrolls with the page and is not pinned', (
@@ -239,12 +231,6 @@ void main() {
         closeTo(composerBefore.top - 50, 0.5),
       );
       expect(tester.getRect(_nav()).top, closeTo(navBefore.top - 50, 0.5));
-
-      // The compact search is still hidden while the rail is visible.
-      expect(
-        tester.getRect(_compact()).bottom,
-        lessThanOrEqualTo(_viewport(tester).top + 0.5),
-      );
     });
 
     testWidgets('the wordmark disappears naturally', (tester) async {
@@ -281,162 +267,6 @@ void main() {
       } else {
         expect(_composer(), findsNothing);
       }
-    });
-  });
-
-  group('the secondary compact search', () {
-    testWidgets('does not appear while any navigation item remains visible', (
-      tester,
-    ) async {
-      await _pump(tester);
-      final ScrollableState scrollable = tester.state(_scrollable());
-      final double threshold = _navThreshold(tester);
-
-      // Five pixels before the rail's bottom leaves: it is still visible.
-      await _jump(tester, scrollable, threshold - 5);
-      expect(_visible(tester.getRect(_nav()), _viewport(tester)), isTrue);
-      expect(
-        tester.getRect(_compact()).bottom,
-        lessThanOrEqualTo(_viewport(tester).top + 0.5),
-      );
-    });
-
-    testWidgets('enters from above only after the final nav item disappears', (
-      tester,
-    ) async {
-      await _pump(tester);
-      final ScrollableState scrollable = tester.state(_scrollable());
-      final double threshold = _navThreshold(tester);
-
-      await _jump(tester, scrollable, threshold + 5);
-
-      final Rect compact = tester.getRect(_compact());
-      final Rect viewport = _viewport(tester);
-      expect(compact.top, greaterThanOrEqualTo(viewport.top - 0.5));
-      expect(compact.bottom, lessThanOrEqualTo(viewport.bottom + 0.5));
-    });
-
-    testWidgets('animates downward from above the viewport', (tester) async {
-      await _pump(tester);
-      final ScrollableState scrollable = tester.state(_scrollable());
-      final double threshold = _navThreshold(tester);
-
-      scrollable.position.jumpTo(threshold + 5);
-      // One frame lays out and runs the post-frame visibility measurement,
-      // which starts the entrance.
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 40));
-
-      final Rect mid = tester.getRect(_compact());
-      // Part-way through the entrance it is still descending from above.
-      expect(mid.top, lessThan(0));
-      expect(mid.bottom, greaterThan(-AppChrome.pinnedHeight - 0.5));
-
-      await tester.pumpAndSettle();
-      final Rect pinned = tester.getRect(_compact());
-      expect(pinned.top, greaterThanOrEqualTo(_viewport(tester).top - 0.5));
-    });
-
-    testWidgets('remains pinned during further downward scrolling', (
-      tester,
-    ) async {
-      await _pump(tester);
-      final ScrollableState scrollable = tester.state(_scrollable());
-      final double threshold = _navThreshold(tester);
-
-      await _jump(tester, scrollable, threshold + 5);
-      final Rect pinned = tester.getRect(_compact());
-
-      await _jump(tester, scrollable, threshold + 250);
-      expect(tester.getRect(_compact()), pinned);
-    });
-
-    testWidgets('lands on the original composer line, not at the viewport top', (
-      tester,
-    ) async {
-      await _pump(tester);
-      // The composer's own resting centre, measured before any scrolling.
-      final double composerCentre = tester.getRect(_composer()).center.dy;
-
-      final ScrollableState scrollable = tester.state(_scrollable());
-      await _jump(tester, scrollable, _navThreshold(tester) + 40);
-
-      // The pinned compact field must sit on the same line as the composer it
-      // replaces — not ~52dp higher at the viewport top.
-      final Rect compact = tester.getRect(_compact());
-      expect(compact.center.dy, closeTo(composerCentre, 0.5));
-      expect(compact.top, greaterThan(0));
-    });
-
-    testWidgets('exits upward and the header returns on reverse scrolling', (
-      tester,
-    ) async {
-      await _pump(tester);
-      final ScrollableState scrollable = tester.state(_scrollable());
-      final double threshold = _navThreshold(tester);
-
-      await _jump(tester, scrollable, threshold + 50);
-      expect(
-        tester.getRect(_compact()).top,
-        greaterThanOrEqualTo(_viewport(tester).top - 0.5),
-      );
-
-      await _jump(tester, scrollable, 0);
-      expect(
-        tester.getRect(_compact()).bottom,
-        lessThanOrEqualTo(_viewport(tester).top + 0.5),
-      );
-      expect(_topBar(), findsOneWidget);
-      expect(tester.getRect(_topBar()).bottom, greaterThan(0));
-      expect(_composer(), findsOneWidget);
-      expect(_nav(), findsOneWidget);
-    });
-
-    testWidgets('no frame shows both search boxes in the viewport', (
-      tester,
-    ) async {
-      await _pump(tester);
-      final ScrollableState scrollable = tester.state(_scrollable());
-      final double threshold = _navThreshold(tester);
-
-      for (final double offset in <double>[
-        0,
-        threshold - 20,
-        threshold - 5,
-        threshold,
-        threshold + 5,
-        threshold + 40,
-        threshold + 120,
-      ]) {
-        await _jump(tester, scrollable, offset);
-        final Rect viewport = _viewport(tester);
-        final bool composerVisible = _composer().evaluate().isNotEmpty &&
-            _visible(tester.getRect(_composer()), viewport);
-        final bool compactVisible = _visible(tester.getRect(_compact()), viewport);
-        expect(
-          composerVisible && compactVisible,
-          isFalse,
-          reason: 'both search boxes visible at offset $offset',
-        );
-      }
-    });
-
-    testWidgets('the overlay does not change the scroll extent', (tester) async {
-      await _pump(tester);
-      final ScrollableState scrollable = tester.state(_scrollable());
-      final double extentBefore = scrollable.position.maxScrollExtent;
-      final Rect topBefore = tester.getRect(_topBar());
-
-      final double threshold = _navThreshold(tester);
-      await _jump(tester, scrollable, threshold + 5);
-
-      expect(scrollable.position.maxScrollExtent, extentBefore);
-
-      // Back at the top the header occupies exactly its original rectangle:
-      // the overlay never shifted the content.
-      await _jump(tester, scrollable, 0);
-      expect(tester.getRect(_topBar()).top, closeTo(topBefore.top, 0.5));
-      expect(tester.getRect(_topBar()).bottom, closeTo(topBefore.bottom, 0.5));
     });
   });
 
@@ -480,29 +310,18 @@ void main() {
       expect(_visible(tester.getRect(_topBar()), viewport), isTrue);
       expect(_visible(tester.getRect(_composer()), viewport), isTrue);
       expect(_visible(tester.getRect(_nav()), viewport), isTrue);
-      expect(
-        tester.getRect(_compact()).bottom,
-        lessThanOrEqualTo(viewport.top + 0.5),
-      );
 
       final double threshold = _navThreshold(tester);
       await _jump(tester, scrollable, threshold - 5);
-      expect(
-        tester.getRect(_compact()).bottom,
-        lessThanOrEqualTo(viewport.top + 0.5),
-      );
+      expect(_visible(tester.getRect(_nav()), viewport), isTrue);
 
       await _jump(tester, scrollable, threshold + 5);
-      final Rect pinned = tester.getRect(_compact());
-      expect(pinned.top, greaterThanOrEqualTo(viewport.top - 0.5));
-      expect(pinned.bottom, lessThanOrEqualTo(viewport.bottom + 0.5));
+      expect(_visible(tester.getRect(_nav()), viewport), isFalse);
+      expect(_visible(tester.getRect(_composer()), viewport), isFalse);
 
       await _jump(tester, scrollable, 0);
-      expect(
-        tester.getRect(_compact()).bottom,
-        lessThanOrEqualTo(viewport.top + 0.5),
-      );
       expect(_visible(tester.getRect(_topBar()), viewport), isTrue);
+      expect(_visible(tester.getRect(_nav()), viewport), isTrue);
     });
 
     testWidgets('fast scrolling and reversal settle in the correct state', (
@@ -510,23 +329,28 @@ void main() {
     ) async {
       await _pump(tester);
 
-      // A fast fling down past the whole header: the compact search pins.
+      // A fast fling down past the whole header: the header leaves the
+      // viewport with the content (nothing is pinned in its place). Offscreen
+      // slivers are not built at all, so an empty finder means "not visible".
       await tester.fling(find.byType(CustomScrollView), const Offset(0, -1200), 2400);
       await tester.pumpAndSettle();
       final Rect viewport = _viewport(tester);
-      final Rect pinned = tester.getRect(_compact());
-      expect(pinned.top, greaterThanOrEqualTo(viewport.top - 0.5));
-      expect(pinned.bottom, lessThanOrEqualTo(viewport.bottom + 0.5));
+      expect(
+        _topBar().evaluate().isNotEmpty &&
+            _visible(tester.getRect(_topBar()), viewport),
+        isFalse,
+      );
+      expect(
+        _nav().evaluate().isNotEmpty &&
+            _visible(tester.getRect(_nav()), viewport),
+        isFalse,
+      );
 
-      // A fast fling back up: the compact search exits and the header returns.
+      // A fast fling back up: the header returns with the content.
       await tester.fling(find.byType(CustomScrollView), const Offset(0, 1200), 2400);
       await tester.pumpAndSettle();
-      expect(
-        tester.getRect(_compact()).bottom,
-        lessThanOrEqualTo(viewport.top + 0.5),
-      );
-      expect(_topBar(), findsOneWidget);
-      expect(tester.getRect(_topBar()).bottom, greaterThan(0));
+      expect(_visible(tester.getRect(_topBar()), viewport), isTrue);
+      expect(_visible(tester.getRect(_nav()), viewport), isTrue);
     });
 
     testWidgets('Home cards, carousels and navigation remain functional', (

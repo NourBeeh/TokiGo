@@ -54,11 +54,7 @@ import 'package:tokigo/l10n/app_localizations.dart';
 /// under `widgets/offer_details/`, so a change to one block can no longer move
 /// the other seven. Behaviour, copy, spacing and semantics are unchanged.
 class OfferDetailsPage extends ConsumerWidget {
-  const OfferDetailsPage({
-    super.key,
-    required this.offer,
-    this.hue,
-  });
+  const OfferDetailsPage({super.key, required this.offer, this.hue});
 
   final Object offer;
 
@@ -194,14 +190,18 @@ class OfferDetailsPage extends ConsumerWidget {
               ],
             ),
             // The page's own back control stays visible at every scroll offset
-            // (a pushed page always offers a visible back button).
-            Positioned(
-              top: 0,
-              left: AppSpacing.md,
+            // (a pushed page always offers a visible back button). It sits on
+            // the START edge so Arabic mirrors it to the right — opposite the
+            // hero heart, never on top of it.
+            Align(
+              alignment: AlignmentDirectional.topStart,
               child: SafeArea(
                 bottom: false,
                 child: Padding(
-                  padding: const EdgeInsetsDirectional.only(top: AppSpacing.xs),
+                  padding: const EdgeInsetsDirectional.only(
+                    start: AppSpacing.md,
+                    top: AppSpacing.xs,
+                  ),
                   child: AppBackButton(variant: AppIconActionVariant.disc),
                 ),
               ),

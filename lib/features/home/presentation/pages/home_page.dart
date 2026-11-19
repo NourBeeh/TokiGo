@@ -19,7 +19,6 @@ import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
 import 'package:tokigo/features/home/presentation/home_controller.dart';
 import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_top_bar.dart';
-import 'package:tokigo/features/home/presentation/widgets/home_ai_search_field.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_section.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stays_carousel.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart';
@@ -42,52 +41,25 @@ class _HomePageState extends ConsumerState<HomePage>
   bool _routerHooked = false;
   GoRouter? _hookedRouter;
 
-  /// The feed's scroll position (only needed to honour a [HomeScrollTarget]
-  /// and to drive the secondary search reveal).
+  /// The feed's scroll position, used to honour a [HomeScrollTarget].
   final ScrollController _feedController = ScrollController();
-
-  /// The navigation rail whose ACTUAL disappearance drives the secondary
-  /// search. Its render box is measured against the viewport on every scroll
-  /// frame — never a guessed scroll offset.
-  final GlobalKey _navKey = GlobalKey();
-
-  /// The Home scroll view, used as the coordinate space for the rail's
-  /// visibility measurement.
-  final GlobalKey _scrollKey = GlobalKey();
 
   /// Anchors the Discover section so another page can land on it.
   final GlobalKey _discoverKey = GlobalKey();
   bool _scrollScheduled = false;
 
-  /// Drives the secondary compact search's entrance from above the viewport.
-  late final AnimationController _searchReveal = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 220),
-  );
-
-  /// Whether the navigation rail has fully left the viewport.
-  bool _navGone = false;
-
   /// The original composer's draft, lifted so it survives the header being
   /// scrolled out of the viewport and back.
   final TextEditingController _composerTextController = TextEditingController();
-
-  /// Guards the post-frame visibility measurement, so a scroll frame schedules
-  /// at most one re-measurement.
-  bool _revealScheduled = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _feedController.addListener(_onFeedScroll);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _updateSearchReveal());
   }
 
   @override
   void dispose() {
-    _feedController.removeListener(_onFeedScroll);
-    _searchReveal.dispose();
     _composerTextController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     // Cannot look up ancestors in dispose — the router reference was saved at
@@ -97,46 +69,6 @@ class _HomePageState extends ConsumerState<HomePage>
     _routerHooked = false;
     _feedController.dispose();
     super.dispose();
-  }
-
-  /// Drives the secondary search from the navigation rail's ACTUAL position.
-  ///
-  /// The rail's render box is measured against the scroll view's viewport on
-  /// every scroll frame, so the reveal begins at the exact frame the final
-  /// navigation item leaves the screen — not at a guessed scroll offset — and
-  /// reverses naturally when the rail returns.
-  void _onFeedScroll() {
-    // The scroll notification arrives BEFORE the frame's layout, so the rail's
-    // render box still holds its previous position. Measure after the frame,
-    // when the layout reflects the new scroll offset.
-    if (_revealScheduled) return;
-    _revealScheduled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _revealScheduled = false;
-      if (mounted) _updateSearchReveal();
-    });
-  }
-
-  void _updateSearchReveal() {
-    if (!_feedController.hasClients) return;
-    final BuildContext? navContext = _navKey.currentContext;
-    final BuildContext? scrollContext = _scrollKey.currentContext;
-    if (navContext == null || scrollContext == null) return;
-    final RenderBox? navBox = navContext.findRenderObject() as RenderBox?;
-    final RenderBox? scrollBox = scrollContext.findRenderObject() as RenderBox?;
-    if (navBox == null || scrollBox == null) return;
-    if (!navBox.hasSize || !scrollBox.hasSize) return;
-    final double navBottom = navBox
-        .localToGlobal(Offset(0, navBox.size.height), ancestor: scrollBox)
-        .dy;
-    final bool gone = navBottom <= 0;
-    if (gone == _navGone) return;
-    _navGone = gone;
-    if (gone) {
-      _searchReveal.forward();
-    } else {
-      _searchReveal.reverse();
-    }
   }
 
   /// Hooks the router listener lazily (H2): the widget tree may host
@@ -244,7 +176,6 @@ class _HomePageState extends ConsumerState<HomePage>
         child: Stack(
           children: <Widget>[
             CustomScrollView(
-              key: _scrollKey,
               controller: _feedController,
               slivers: <Widget>[
                 // The original Home header — wordmark, AI composer and
@@ -253,16 +184,6 @@ class _HomePageState extends ConsumerState<HomePage>
                 SliverToBoxAdapter(child: _buildOriginalHeader()),
                 ..._feedSlivers(state, ref),
               ],
-            ),
-            // The secondary compact search. It is an OVERLAY: it never changes
-            // the scroll extent of the original content, and it is only
-            // revealed once the navigation rail has completely left the
-            // viewport.
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: _SecondarySearchOverlay(controller: _searchReveal),
             ),
           ],
         ),
@@ -299,8 +220,7 @@ class _HomePageState extends ConsumerState<HomePage>
     );
   }
 
-  /// The service navigation rail. It scrolls away with the feed; its real
-  /// position drives the secondary search reveal.
+  /// The service navigation rail. It scrolls away with the feed.
   Widget _buildActionBar() {
     final l10n = AppLocalizations.of(context)!;
     final List<HomeActionDefinition> definitions = homeActionDefinitions(l10n);
@@ -313,18 +233,15 @@ class _HomePageState extends ConsumerState<HomePage>
         top: AppSpacing.md,
         bottom: AppSpacing.md,
       ),
-      child: KeyedSubtree(
-        key: _navKey,
-        child: HomeActionBar(
-          definitions: definitions,
-          // Pushing (not `go`) keeps Home beneath the section page, so the
-          // section's back control returns to the dashboard.
-          onActionSelected: (HomeAction action) {
-            final String? path = paths[action];
-            if (path == null) return;
-            context.push(path);
-          },
-        ),
+      child: HomeActionBar(
+        definitions: definitions,
+        // Pushing (not `go`) keeps Home beneath the section page, so the
+        // section's back control returns to the dashboard.
+        onActionSelected: (HomeAction action) {
+          final String? path = paths[action];
+          if (path == null) return;
+          context.push(path);
+        },
       ),
     );
   }
@@ -473,16 +390,15 @@ class _HomePageState extends ConsumerState<HomePage>
             SliverToBoxAdapter(
               child: HomeStaysCarousel(
                 items: visibleHotels,
-                // Home's "Stays Near You" rail uses the approved horizontal
-                // 60/40 split and draws the heart directly on the photo.
-                splitLayout: true,
+                // Owner request (2026-11): same page width, taller card — the
+                // hotel photo on top with its description below.
+                splitLayout: false,
+                photoAspectRatio:
+                    HomeCardDimensions.destinationMediaAspectRatio,
                 showHeartPlatter: false,
-                // The card is the SAME measured width and height as a
-                // Trending Destinations city card: the city rail's page
-                // fraction and its pageWidth / ratio height.
                 viewportFraction:
                     HomeCardDimensions.destinationViewportFraction,
-                cardHeightBuilder: HomeStaysCarousel.splitCardHeightFor,
+                cardHeightBuilder: HomeStaysCarousel.tallCardHeightFor,
               ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
@@ -544,63 +460,6 @@ class _HomePageState extends ConsumerState<HomePage>
       imageUrl: flight.imageUrl,
     );
     context.push('/booking/review');
-  }
-}
-
-/// The secondary compact search, pinned as an overlay at the top of Home.
-///
-/// It is a SEPARATE control from the original AI composer — which scrolls away
-/// with the header — and owns its own state. It enters from above the viewport
-/// when the navigation rail has completely left the screen, and exits upward
-/// when the rail returns.
-///
-/// It is an OVERLAY, not a sliver: it never changes the scroll extent of the
-/// original content, and it never overlaps the original header (which has
-/// already left the viewport before the overlay is revealed).
-class _SecondarySearchOverlay extends StatelessWidget {
-  const _SecondarySearchOverlay({required this.controller});
-
-  final AnimationController controller;
-
-  /// The compact field's resting line: the original composer band's top edge
-  /// (the top-bar inset plus the top-bar height). The overlay slides down to
-  /// exactly this line, so it lands on the composer's own position instead of
-  /// jumping up to the viewport top.
-  static const double _restingOffset =
-      AppSpacing.xs + HomeCardDimensions.topBarHeight;
-
-  @override
-  Widget build(BuildContext context) {
-    // The hidden shift must clear the resting offset as well as the pill,
-    // otherwise the parked overlay would still poke into the viewport.
-    final double hiddenShift =
-        -1.0 - _restingOffset / AppChrome.pinnedHeight;
-    return IgnorePointer(
-      ignoring: controller.value == 0,
-      child: SlideTransition(
-        position: Tween<Offset>(
-          begin: Offset(0, hiddenShift),
-          end: Offset.zero,
-        ).animate(
-          CurvedAnimation(parent: controller, curve: Curves.easeOutCubic),
-        ),
-        child: Transform.translate(
-          offset: const Offset(0, _restingOffset),
-          child: SizedBox(
-            height: AppChrome.pinnedHeight,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Center(
-                child: HomeAiSearchField(
-                  compact: true,
-                  accentColor: HomeDesignTokens.accentOf(context),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
 
@@ -668,17 +527,18 @@ class _StaysSkeletonList extends StatelessWidget {
             ),
           ),
         ),
-        // The SAME geometry the loaded "Stays Near You" rail uses: the split
-        // layout, the 60/40 card, the Discover page fraction and the city
-        // card's height. A skeleton at any other size makes the feed jump
-        // when the real stays land.
+        // The SAME geometry the loaded "Stays Near You" rail uses: photo
+        // above the description, the Discover page fraction and the taller
+        // photo-above-sheet height. A skeleton at any other size makes the
+        // feed jump when the real stays land.
         HomeStaysCarousel(
           items: const <HomeItem>[],
           loading: true,
-          splitLayout: true,
+          splitLayout: false,
+          photoAspectRatio: HomeCardDimensions.destinationMediaAspectRatio,
           showHeartPlatter: false,
           viewportFraction: HomeCardDimensions.destinationViewportFraction,
-          cardHeightBuilder: HomeStaysCarousel.splitCardHeightFor,
+          cardHeightBuilder: HomeStaysCarousel.tallCardHeightFor,
         ),
       ],
     );

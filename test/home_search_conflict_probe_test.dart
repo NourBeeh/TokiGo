@@ -17,14 +17,13 @@ import 'package:tokigo/features/home/presentation/pages/home_page.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
-/// Home's scroll conflict contract (owner decision, 2026-11).
+/// Home's search contract (owner decision, 2026-11).
 ///
-/// The original AI composer scrolls away with the header; the compact search
-/// is a separate overlay that appears only after the navigation rail has left.
-/// Measured-geometry regression:
-/// * the two search controls never share the viewport — there is never a
-///   moment with two stacked/overlapping search pills;
-/// * the overlay never shifts the original header's layout or the scroll
+/// The secondary compact search overlay was removed: the ORIGINAL AI composer
+/// is the only search control and it scrolls away with the header. Measured-
+/// geometry regression:
+/// * exactly one search control exists, inside the scroll view;
+/// * nothing is pinned above the feed, so scrolling never changes the scroll
 ///   extent.
 class _Repo implements HomeRepository {
   _Repo(this.sections, this.hotels);
@@ -157,7 +156,29 @@ Future<void> _jump(
 }
 
 void main() {
-  testWidgets('the two search controls never share the viewport', (
+  testWidgets('there is exactly one search control, inside the scroll view', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1120, 1400);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(_app());
+    await tester.pumpAndSettle();
+
+    expect(_compact(), findsNothing);
+    expect(_composer(), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(CustomScrollView),
+        matching: _composer(),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('the composer scrolls away with the header and back', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1120, 1400);
@@ -170,37 +191,32 @@ void main() {
 
     final ScrollableState scrollable = tester.state(_scrollable());
     final Rect viewport = tester.getRect(find.byType(CustomScrollView));
+    final Rect composerBefore = tester.getRect(_composer());
 
-    // The navigation rail's own bottom edge is the reveal threshold.
+    // The navigation rail's own bottom edge is the threshold.
     final double threshold = tester.getRect(find.byType(HomeActionBar)).bottom;
 
-    for (final double offset in <double>[
-      0,
-      threshold * 0.5,
-      threshold - 20,
-      threshold - 5,
-      threshold,
-      threshold + 5,
-      threshold + 40,
-      threshold + 120,
-    ]) {
-      await _jump(tester, scrollable, offset);
+    expect(_visible(composerBefore, viewport), isTrue);
 
-      final bool composerVisible = _composer().evaluate().isNotEmpty &&
-          _visible(tester.getRect(_composer()), viewport);
-      final bool compactVisible = _visible(tester.getRect(_compact()), viewport);
+    await _jump(tester, scrollable, threshold - 5);
+    // The composer sits above the rail, so it is already off-screen by then.
+    expect(_visible(tester.getRect(_composer()), viewport), isFalse);
 
-      expect(
-        composerVisible && compactVisible,
-        isFalse,
-        reason: 'both search controls are visible at offset $offset',
-      );
-    }
+    await _jump(tester, scrollable, threshold + 5);
+    expect(_visible(tester.getRect(_composer()), viewport), isFalse);
+
+    await _jump(tester, scrollable, 0);
+    expect(
+      tester.getRect(_composer()).top,
+      closeTo(composerBefore.top, 0.5),
+    );
+    expect(
+      tester.getRect(_composer()).bottom,
+      closeTo(composerBefore.bottom, 0.5),
+    );
   });
 
-  testWidgets('the overlay never shifts the original header or the extent', (
-    tester,
-  ) async {
+  testWidgets('scrolling never changes the scroll extent', (tester) async {
     tester.view.physicalSize = const Size(1120, 1400);
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.resetPhysicalSize);
@@ -211,24 +227,12 @@ void main() {
 
     final ScrollableState scrollable = tester.state(_scrollable());
     final double extentBefore = scrollable.position.maxScrollExtent;
-    final Rect composerBefore = tester.getRect(_composer());
 
     final double threshold = tester.getRect(find.byType(HomeActionBar)).bottom;
     await _jump(tester, scrollable, threshold + 5);
-
-    // The compact search is pinned, and the scroll extent is unchanged.
-    expect(
-      _visible(
-        tester.getRect(_compact()),
-        tester.getRect(find.byType(CustomScrollView)),
-      ),
-      isTrue,
-    );
     expect(scrollable.position.maxScrollExtent, extentBefore);
 
-    // Back at the top the composer occupies exactly its original rectangle.
     await _jump(tester, scrollable, 0);
-    expect(tester.getRect(_composer()).top, closeTo(composerBefore.top, 0.5));
-    expect(tester.getRect(_composer()).bottom, closeTo(composerBefore.bottom, 0.5));
+    expect(scrollable.position.maxScrollExtent, extentBefore);
   });
 }

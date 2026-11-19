@@ -28,11 +28,13 @@ import 'package:tokigo/l10n/app_localizations.dart';
 /// Section 5 — Home "Stays Near You" card geometry.
 ///
 /// The approved contract, measured on the RENDERED widgets:
-/// * the split stay card's OUTER rectangle equals a Trending Destinations
-///   city card's outer rectangle (same page fraction, same height formula);
-/// * the photo / information regions keep the approved 60 / 40 split;
-/// * the photo sits on the STARTING side, so it mirrors in Arabic;
+/// * the stay rail shares the Trending Destinations page width, and its card
+///   is deliberately TALLER: the hotel photo on top, its description below
+///   (owner request, 2026-11);
+/// * the photo region sits above the description region;
 /// * the loading skeleton occupies exactly the loaded card's box;
+/// * the split card itself keeps the approved 60 / 40 regions for the
+///   surfaces that opt into `splitLayout`;
 /// * the shared 3D cover flow and the card's own interactions are intact.
 ///
 /// Every assertion here measures a rendered rect; none of them inspects a
@@ -265,7 +267,7 @@ HomeController _homeController({
 
 void main() {
   group('Section 5 — split stay card geometry', () {
-    testWidgets('the split stay card matches the city card outer rectangle', (
+    testWidgets('the tall stay card keeps the city width, photo above description', (
       tester,
     ) async {
       _setView(tester, _tallPhone);
@@ -288,14 +290,33 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       final Rect city = tester.getRect(find.byType(HomeDiscoveryStayCard).at(0));
-      final Rect stay = tester.getRect(find.byType(HomeStayCard).first);
+      final Finder stayCard = find.byType(HomeStayCard).first;
+      final Rect stay = tester.getRect(stayCard);
 
       // Both rails are full-width slivers of the SAME scroll view, so their
-      // page boxes share one width; the heights come from the same formula.
+      // page boxes share one width. The stay card is deliberately TALLER
+      // (owner request, 2026-11): the hotel photo on top, the description
+      // below it.
       expect(stay.width, closeTo(city.width, _tolerance));
-      expect(stay.height, closeTo(city.height, _tolerance));
+      expect(stay.height, greaterThan(city.height + 100));
       expect(stay.width, greaterThan(0));
       expect(stay.height, greaterThan(0));
+
+      // Photo above the description: the media box starts at the card's top
+      // edge and ends before the title.
+      final Rect media = tester.getRect(
+        find
+            .descendant(of: stayCard, matching: find.byType(AspectRatio))
+            .first,
+      );
+      final Rect title = tester.getRect(
+        find.descendant(
+          of: stayCard,
+          matching: find.text('Riverside Grand Hotel a'),
+        ),
+      );
+      expect(media.top, closeTo(stay.top, _tolerance));
+      expect(media.bottom, lessThanOrEqualTo(title.top + _tolerance));
       expect(tester.takeException(), isNull);
     });
 
@@ -321,10 +342,10 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       // The Home feed's OWN skeleton (not a hand-configured rail) must occupy
-      // the same box the loaded split card will, or the feed jumps when the
-      // real stays land.
+      // the same box the loaded card will, or the feed jumps when the real
+      // stays land. The skeleton is the same photo-above-description card.
       expect(find.byType(HomeStayCard), findsOneWidget);
-      expect(find.byType(HomeSplitStayCard), findsOneWidget);
+      expect(find.byType(HomeSplitStayCard), findsNothing);
       final Rect skeleton = tester.getRect(find.byType(HomeStayCard));
 
       completer.complete(
