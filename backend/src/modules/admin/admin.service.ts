@@ -15,6 +15,7 @@ import {
   UpdateCardDto,
   UpdateSectionDto,
 } from '../../common/dto/admin.dto';
+import { sanitizeCardContent } from '../../common/dto/home.dto';
 
 /**
  * Admin content management for the Home marketplace feed.
@@ -117,7 +118,8 @@ export class AdminService {
       this.cards.create({
         sectionId: dto.sectionId,
         cardType: dto.cardType,
-        content: dto.content ?? {},
+        // P0-S4 / L2: a Home card never persists a live price.
+        content: sanitizeCardContent(dto.content),
         order: nextOrder,
         isVisible: dto.isVisible ?? true,
         status: dto.status ?? 'published',
@@ -138,7 +140,12 @@ export class AdminService {
     if (dto.cardType !== undefined) card.cardType = dto.cardType;
     if (dto.content !== undefined) {
       // Partial patch: admin sends only the edited fields, the rest survive.
-      card.content = { ...(card.content ?? {}), ...dto.content };
+      // P0-S4 / L2: price keys are stripped from the merged result too, so a
+      // price already on the row can never survive an unrelated edit.
+      card.content = sanitizeCardContent({
+        ...(card.content ?? {}),
+        ...dto.content,
+      });
     }
     if (dto.order !== undefined) card.order = dto.order;
     if (dto.isVisible !== undefined) card.isVisible = dto.isVisible;

@@ -22,6 +22,7 @@ import 'package:tokigo/features/home/presentation/widgets/home_stays_carousel.da
 import 'package:tokigo/features/home/presentation/widgets/destination_cover_flow_carousel.dart';
 import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
 import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
+import 'package:tokigo/core/ui/directional_icons.dart';
 
 typedef FlightTapCallback = void Function(HomeItem flight);
 typedef ViewAllCallback = void Function();
@@ -126,7 +127,7 @@ class HomeSectionWidget extends StatelessWidget {
                         ),
                         const SizedBox(width: AppSpacing.xxs),
                         Icon(
-                          Icons.arrow_forward_rounded,
+                          DirectionalIcons.forward(context),
                           size: 14,
                           color: HomeDesignTokens.accentOf(context),
                         ),

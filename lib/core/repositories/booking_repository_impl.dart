@@ -4,6 +4,7 @@ import 'package:tokigo/core/network/api_result.dart';
 import 'package:tokigo/core/repositories/contracts/booking_repository.dart';
 import 'package:tokigo/core/storage/secure_token_storage.dart';
 import 'package:tokigo/features/booking/domain/booking_record.dart';
+import 'package:tokigo/features/booking/domain/price_change.dart';
 
 /// Flutter side of the Phase 4A booking contract.
 ///
@@ -20,7 +21,7 @@ import 'package:tokigo/features/booking/domain/booking_record.dart';
 /// booking. The header is now attached per call from [tokenStorage]; when
 /// nobody is signed in it is omitted and the backend's 401 is surfaced as-is
 /// (the funnel asks the traveller to sign in rather than inventing identity).
-class BookingRepositoryImpl implements BookingRepository {
+class BookingRepositoryImpl implements BookingRepository, PriceChangeDecisionRepository {
   final ApiClient client;
   final SecureTokenStorage? tokenStorage;
 
@@ -60,6 +61,30 @@ class BookingRepositoryImpl implements BookingRepository {
       '/bookings/revalidate',
       headers: await _authHeaders(),
       body: {'bookingId': bookingId},
+    );
+    return res.when(
+      success: (data) => ApiResult.success(_mapToBookingRecord(data)),
+      failure: (error) => ApiResult.failure(error),
+    );
+  }
+
+  @override
+  Future<ApiResult<BookingRecord>> decidePriceChange(
+    String bookingId, {
+    required String decision,
+    double? expectedPrice,
+    String? expectedCurrency,
+    String? expectedTermsVersion,
+  }) async {
+    final res = await client.post<Map<String, dynamic>>(
+      '/bookings/$bookingId/price-change',
+      headers: await _authHeaders(),
+      body: {
+        'decision': decision,
+        'expectedPrice': ?expectedPrice,
+        'expectedCurrency': ?expectedCurrency,
+        'expectedTermsVersion': ?expectedTermsVersion,
+      },
     );
     return res.when(
       success: (data) => ApiResult.success(_mapToBookingRecord(data)),
@@ -144,6 +169,7 @@ class BookingRepositoryImpl implements BookingRepository {
       createdAt: createdAt,
       updatedAt: _parseDate(data['updatedAt']) ?? createdAt,
       expiration: _parseDate(data['expiresAt']),
+      priceChange: PriceChangeConfirmation.tryParse(data['priceChange']),
     );
   }
 

@@ -141,7 +141,9 @@ describe('AdminService — home content management', () => {
     const updated = await service.updateCard(card.id, { content: { price: 250 } });
     expect(updated.content.title).toBe('Old');
     expect(updated.content.currency).toBe('EGP');
-    expect(updated.content.price).toBe(250);
+    // P0-S4: price keys are stripped on write, so the patch cannot persist one.
+    expect(updated.content).not.toHaveProperty('price');
+    expect(updated.content).not.toHaveProperty('rawPrice');
   });
 
   it('deletes a section together with its cards', async () => {

@@ -10,7 +10,11 @@ import {
   Max,
   Min,
   MinLength,
+  Validate,
   ValidateNested,
+  ValidationArguments,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { TRAVEL_MOODS } from '../travel_mood';
@@ -18,13 +22,74 @@ import { TRAVEL_MOODS } from '../travel_mood';
 export class HotelOccupancyDto {
   @IsInt()
   @Min(1)
+  @Max(20)
   adults!: number;
 
   @IsOptional()
   @IsArray()
   @IsInt({ each: true })
   @Min(0, { each: true })
+  @Max(17, { each: true })
   children?: number[];
+}
+
+/**
+ * Cross-field contract for a hotel search.
+ *
+ * The provider needs ONE occupancy per room with exact child ages. A request
+ * whose rooms/occupancies/guests disagree can only be fulfilled by guessing
+ * (duplicating guests, collapsing rooms or inventing ages), so it is rejected
+ * before any provider call.
+ */
+@ValidatorConstraint({ name: 'hotelSearchConsistent', async: false })
+class HotelSearchConsistentConstraint implements ValidatorConstraintInterface {
+  validate(_value: unknown, args: ValidationArguments): boolean {
+    const dto = args.object as HotelSearchDto;
+    const checkIn = new Date(dto.checkIn as unknown as string);
+    const checkOut = new Date(dto.checkOut as unknown as string);
+    if (Number.isNaN(checkIn.getTime()) || Number.isNaN(checkOut.getTime())) {
+      return false;
+    }
+    if (checkOut.getTime() <= checkIn.getTime()) return false;
+
+    const occupancies =
+      Array.isArray(dto.occupancies) && dto.occupancies.length > 0
+        ? dto.occupancies
+        : null;
+
+    if (!occupancies) {
+      // Without per-room occupancies the provider can only express one room;
+      // a multi-room request has no honest mapping.
+      return dto.rooms == null || dto.rooms === 1;
+    }
+
+    if (dto.rooms != null && dto.rooms !== occupancies.length) return false;
+
+    let guests = 0;
+    for (const occupancy of occupancies) {
+      if (!occupancy) return false;
+      if (
+        !Number.isInteger(occupancy.adults) ||
+        occupancy.adults < 1 ||
+        occupancy.adults > 20
+      ) {
+        return false;
+      }
+      const children = Array.isArray(occupancy.children)
+        ? occupancy.children
+        : [];
+      for (const age of children) {
+        if (!Number.isInteger(age) || age < 0 || age > 17) return false;
+      }
+      guests += occupancy.adults + children.length;
+    }
+    if (dto.guests != null && dto.guests !== guests) return false;
+    return guests > 0 && guests <= 100;
+  }
+
+  defaultMessage(): string {
+    return 'Hotel search dates, rooms and occupancies must be consistent: check-out after check-in, one occupancy per room, exact child ages 0-17, and guests equal to the occupancy total.';
+  }
 }
 
 export class HotelSearchDto {
@@ -124,4 +189,12 @@ export class HotelSearchDto {
   @IsOptional()
   @IsIn(['en', 'ar'])
   language?: string;
+
+  /**
+   * Internal cross-field validation anchor. It carries no request data; it
+   * exists so the whole-object constraint runs under the global
+   * `whitelist + forbidNonWhitelisted` ValidationPipe.
+   */
+  @Validate(HotelSearchConsistentConstraint)
+  readonly _consistency?: unknown;
 }

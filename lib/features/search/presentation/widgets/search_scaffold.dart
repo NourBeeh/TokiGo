@@ -12,7 +12,7 @@ import 'package:tokigo/core/widgets/pressable.dart';
 
 /// The unified search-page scaffold (identity unification).
 ///
-/// Every vertical now shares ONE identity with the Groups discovery
+/// Every vertical now shares ONE identity with the discovery surfaces.
 /// surfaces: the plain canvas, the shared [AppPageHeader], and the search form
 /// rendered beneath it with the same surface/outline card language. There is
 /// no per-vertical coloured header any more — the vertical hue lives inside

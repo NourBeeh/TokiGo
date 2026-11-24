@@ -123,6 +123,7 @@ class OverlapStayCard extends StatelessWidget {
   /// Skeleton state — same geometry, no data. See the class comment.
   final bool loading;
 
+
   @override
   Widget build(BuildContext context) {
     final EdgeInsetsGeometry margin =
@@ -135,7 +136,7 @@ class OverlapStayCard extends StatelessWidget {
         );
 
     final String semanticsLabel =
-        this.semanticsLabel ?? (loading ? 'Loading' : _autoSemantics);
+        this.semanticsLabel ?? (loading ? 'Loading' : _autoSemantics(context));
 
     return BaseCard(
       onTap: loading ? null : onTap,
@@ -191,7 +192,7 @@ class OverlapStayCard extends StatelessWidget {
     );
   }
 
-  String get _autoSemantics {
+  String _autoSemantics(BuildContext context) {
     final List<String> parts = <String>[title];
     if (rating != null) parts.add(rating!.toStringAsFixed(1));
     if (reviewCount != null) parts.add('($reviewCount)');

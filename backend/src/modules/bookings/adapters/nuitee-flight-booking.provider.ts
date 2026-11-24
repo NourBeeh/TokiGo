@@ -8,6 +8,11 @@ import {
   RevalidationContext,
 } from '../../../common/providers/booking-provider.interface';
 import { ProviderResult } from '../../../common/providers/provider.result';
+import { classifyBookingTransportFailure } from '../../../common/providers/booking-failure';
+import {
+  bookingProviderTags,
+  confirmationStateOfStatus,
+} from '../../../common/providers/booking-confirmation';
 import { NuiteeFlightService } from '../../nuitee/nuitee.flight.service';
 
 /** LiteAPI's integer passenger types (`0=adult, 1=child, 2=infant`). */
@@ -284,6 +289,14 @@ export class NuiteeFlightBookingProvider implements BookingProvider {
           priceChanged: verified.priceChanged,
           oldPrice: verified.oldPrice,
           expiresAt: existing?.expiresAt ?? verified.expiresAt,
+          ...(verified.terms ? { terms: verified.terms } : {}),
+          ...(verified.termsVersion
+            ? { termsVersion: verified.termsVersion }
+            : {}),
+          ...(Array.isArray(verified.changedTerms) &&
+          verified.changedTerms.length > 0
+            ? { changedTerms: verified.changedTerms }
+            : {}),
           handoff: {
             ...(prebookId
               ? {
@@ -379,6 +392,14 @@ export class NuiteeFlightBookingProvider implements BookingProvider {
         priceChanged: verified.priceChanged,
         oldPrice: verified.oldPrice,
         expiresAt: verified.expiresAt,
+        ...(verified.terms ? { terms: verified.terms } : {}),
+        ...(verified.termsVersion
+          ? { termsVersion: verified.termsVersion }
+          : {}),
+        ...(Array.isArray(verified.changedTerms) &&
+        verified.changedTerms.length > 0
+          ? { changedTerms: verified.changedTerms }
+          : {}),
         handoff: { offerId },
       },
       timestamp: new Date(),
@@ -485,6 +506,7 @@ export class NuiteeFlightBookingProvider implements BookingProvider {
           'passengerType, and the lead contact needs a first name, last name, ' +
           'email, phone country code and phone number. Collect them in the ' +
           'passenger form — no values are invented.',
+        failureKind: 'definitive',
         timestamp: new Date(),
       };
     }
@@ -501,13 +523,16 @@ export class NuiteeFlightBookingProvider implements BookingProvider {
         providerId: this.providerId,
         providerName: this.providerName,
         error: 'Missing Nuitee flight prebookId in snapshot',
+        failureKind: 'definitive',
         timestamp: new Date(),
       };
     }
 
+    const tags = bookingProviderTags(input);
     const bookResult = await this.flightService.bookFlight({
       prebookId: String(prebookId),
       payment: { method: 'ACC_CREDIT_CARD' },
+      ...(Object.keys(tags).length > 0 ? { customTags: tags } : {}),
     });
 
     if (!bookResult.success) {
@@ -516,6 +541,9 @@ export class NuiteeFlightBookingProvider implements BookingProvider {
         providerId: this.providerId,
         providerName: this.providerName,
         error: bookResult.error ?? 'Nuitee flight booking failed',
+        failureKind: classifyBookingTransportFailure({
+          error: bookResult.error,
+        }),
         timestamp: new Date(),
       };
     }
@@ -525,14 +553,18 @@ export class NuiteeFlightBookingProvider implements BookingProvider {
       providerId: this.providerId,
       providerName: this.providerName,
       data: {
-        reference:
-          bookResult.bookingRef ??
-          bookResult.bookingId ??
-          String(prebookId),
+        // Never fall back to the prebook id: it is an inventory hold, not a
+        // provider booking reference. An absent reference stays absent and
+        // the service keeps the booking reconciliation-pending.
+        reference: bookResult.bookingRef ?? bookResult.bookingId ?? '',
         providerBookingId: bookResult.bookingId,
-        status: bookResult.status ?? 'CREATED',
-        amount: 0,
-        currency: 'USD',
+        status: bookResult.status,
+        // CREATED / PENDING_CONFIRMATION are NOT tickets. Only an explicit
+        // CONFIRMED status may establish the booking.
+        confirmationState: confirmationStateOfStatus(bookResult.status),
+        // Provider-reported amounts only; never a fabricated 0 USD.
+        amount: bookResult.amount,
+        currency: bookResult.currency,
         raw: bookResult,
       },
       timestamp: new Date(),

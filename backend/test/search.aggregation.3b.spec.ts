@@ -113,6 +113,7 @@ describe('SearchService — 3B aggregation contracts', () => {
             airline: 'MS',
             flightNumber: '985',
             departureTime: '2026-10-01T08:00:00',
+            arrivalTime: '2026-10-01T12:30:00',
             origin: 'CAI',
             destination: 'DXB',
             metadata: { providerOfferId: 'off-a1' },
@@ -136,6 +137,7 @@ describe('SearchService — 3B aggregation contracts', () => {
             airline: 'MS',
             flightNumber: '986',
             departureTime: '2026-10-01T09:00:00',
+            arrivalTime: '2026-10-01T13:30:00',
             origin: 'CAI',
             destination: 'PAR',
             metadata: { providerOfferId: 'off-b1' },
@@ -157,9 +159,9 @@ describe('SearchService — 3B aggregation contracts', () => {
     spy.mockRestore();
   });
 
-  it('deterministic dedup: same flight from two providers collapses by canonical key, FIRST provider wins', async () => {
+  it('Phase 2D grouping: identical itinerary from two providers keeps BOTH fare offers in one row, cheapest first', async () => {
     const { service, registry } = makeService(nullCache(), makePricing());
-    const mk = (id: string, price: number) => (type: 'flight', providerId: string) => ({
+    const mk = (id: string, price: number, providerId: string) => ({
       success: true,
       providerId,
       data: [
@@ -167,31 +169,70 @@ describe('SearchService — 3B aggregation contracts', () => {
           id,
           type: 'flight',
           providerId,
+          providerName: providerId,
           title: 'CAI → DXB',
           price,
           currency: 'USD',
-          airline: 'MS',
-          flightNumber: '985',
+          airline: 'EgyptAir',
+          flightNumber: 'MS985',
           departureTime: '2026-10-01T08:00:00',
+          arrivalTime: '2026-10-01T12:30:00',
           origin: 'CAI',
           destination: 'DXB',
+          segments: [
+            {
+              origin: 'CAI',
+              destination: 'DXB',
+              departureAt: '2026-10-01T08:00:00',
+              arrivalAt: '2026-10-01T12:30:00',
+              marketingCarrier: { code: 'MS', name: 'EgyptAir' },
+              operatingCarrier: { code: 'MS', name: 'EgyptAir' },
+              marketingFlightNumber: '985',
+              operatingFlightNumber: '985',
+              stopCount: 0,
+            },
+          ],
+          metadata: { providerOfferId: id },
         },
       ],
     });
-    registry.registerFlight(provider('primary', () => mk('f1', 100)('flight', 'primary')));
-    registry.registerFlight(provider('secondary', () => mk('f2', 90)('flight', 'secondary')));
+    registry.registerFlight(
+      provider('primary', () => mk('f1', 100, 'primary')),
+    );
+    registry.registerFlight(
+      provider('secondary', () => mk('f2', 90, 'secondary')),
+    );
 
     const res: any = await service.searchFlights({});
-    expect(res.duplicatesDropped).toBe(1);
-    const kept = res.successes[0].data;
-    expect(kept).toHaveLength(1);
-    expect(kept[0].providerId).toBe('primary');
-    // The duplicate survived as a provider-distinct offer identity-wise: the
-    // SECOND provider's group is now empty, not merged into the first.
-    expect(res.successes[1].data).toHaveLength(0);
-    // Determinism: same call again → same result.
+    // Raw provider buckets are untouched: neither provider's offer vanished.
+    expect(res.successes).toHaveLength(2);
+    expect(res.successes[0].data).toHaveLength(1);
+    expect(res.successes[1].data).toHaveLength(1);
+    expect(res.duplicatesDropped).toBe(0);
+
+    // One row for the one physical itinerary, carrying both exact offers.
+    expect(res.results).toHaveLength(1);
+    const row = res.results[0];
+    expect(row.offers).toHaveLength(2);
+    expect(row.offers.map((o: any) => o.id)).toEqual(['f2', 'f1']);
+    expect(row.offers.map((o: any) => o.providerId)).toEqual([
+      'secondary',
+      'primary',
+    ]);
+    // The row summary is the cheapest valid offer; provider identity is the
+    // summary offer's own, never merged.
+    expect(row.price).toBe(90);
+    expect(row.providerId).toBe('secondary');
+    expect(row.providerOfferIds).toEqual(['f2', 'f1']);
+    expect(row.providerIds).toEqual(['secondary', 'primary']);
+
+    // Determinism: same call again → same row and offer order.
     const again: any = await service.searchFlights({});
-    expect(again.successes[0].data[0].id).toBe('f1');
+    expect(again.results).toHaveLength(1);
+    expect(again.results[0].offers.map((o: any) => o.id)).toEqual([
+      'f2',
+      'f1',
+    ]);
   });
 
   it('partial failure: resolved success:false is classified as a FAILURE, not a success', async () => {
@@ -366,6 +407,108 @@ describe('SearchService — 3B aggregation contracts', () => {
     const res: any = await service.searchFlights({ q: 3 });
     expect(res.successes[0].providerId).toBe('cached');
     expect(seen).toEqual([]); // providers never ran — cache short-circuits.
+  });
+
+  it('enriches EVERY nested room-type offer, not just the hotel row', async () => {
+    const { pricing, spy } = fixedFxPricing();
+    const { service, registry } = makeService(nullCache(), pricing);
+    const hotelOffer = (id: string, price: number) => ({
+      id,
+      type: 'hotel',
+      providerId: 'nuitee',
+      providerName: 'Nuitee Connect',
+      title: 'Cairo Grand',
+      price,
+      currency: 'USD',
+      city: 'Cairo',
+      checkIn: '2026-10-14',
+      checkOut: '2026-10-17',
+      roomType: 'Room',
+      amenities: [],
+      metadata: { providerHotelId: 'H1', providerOfferId: id },
+    });
+    registry.registerHotel(
+      provider(
+        'nuitee',
+        () => ({
+          success: true,
+          providerId: 'nuitee',
+          data: [
+            {
+              ...hotelOffer('offer-std', 100),
+              offers: [hotelOffer('offer-std', 100), hotelOffer('offer-dlx', 150)],
+            },
+          ],
+        }),
+        'searchHotels',
+      ),
+    );
+
+    const res: any = await service.searchHotels({ city: 'Cairo' });
+    const row = res.successes[0].data[0];
+    expect(row.customerPrice.customerAmount).toBe(4850);
+    expect(row.offers).toHaveLength(2);
+    // Both sub-offers carry their own display quote so the client's price
+    // filter and details selector compare customer totals.
+    expect(row.offers[0].customerPrice.customerAmount).toBe(4850);
+    expect(row.offers[1].customerPrice.customerAmount).toBe(7275);
+    // Provider truth is untouched.
+    expect(row.offers[1].price).toBe(150);
+    expect(row.offers[1].currency).toBe('USD');
+    spy.mockRestore();
+  });
+
+  it('does NOT cache a provider result marked incomplete', async () => {
+    const { cache, sets } = recordingCache();
+    const { service, registry } = makeService(cache, makePricing());
+    registry.registerHotel(
+      provider(
+        'nuitee',
+        () => ({
+          success: true,
+          providerId: 'nuitee',
+          data: [
+            {
+              id: 'offer-1',
+              type: 'hotel',
+              providerId: 'nuitee',
+              title: 'Cairo Grand',
+              price: 100,
+              currency: 'USD',
+              city: 'Cairo',
+              metadata: { providerHotelId: 'H1' },
+            },
+          ],
+          // The page walk stopped early: this is not the whole market.
+          metadata: { complete: false, capReached: true },
+        }),
+        'searchHotels',
+      ),
+    );
+
+    await service.searchHotels({ city: 'Cairo' });
+    expect(sets).toHaveLength(0);
+  });
+
+  it('caches a complete hotel result with the live-search TTL', async () => {
+    const { cache, sets } = recordingCache();
+    const { service, registry } = makeService(cache, makePricing());
+    registry.registerHotel(
+      provider(
+        'nuitee',
+        () => ({
+          success: true,
+          providerId: 'nuitee',
+          data: [],
+          metadata: { complete: true },
+        }),
+        'searchHotels',
+      ),
+    );
+
+    await service.searchHotels({ city: 'Cairo' });
+    expect(sets).toHaveLength(1);
+    expect(sets[0].ttl).toBe(45);
   });
 });
 

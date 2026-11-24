@@ -18,11 +18,10 @@ enum LocationAccess {
 
 /// One place that talks to the OS location permission.
 ///
-/// Owner decision (2026-10-22): the app asks for location only from an
-/// explicit, dismissible in-app prompt — never automatically on launch and
-/// never from a background path. The permission is used ONCE to resolve the
-/// traveller's country (for the departure-airport suggestion); precise
-/// coordinates are not stored by the app.
+/// Owner decision (2026-10-22): location is only requested from an explicit
+/// in-app step (the intro, or the contextual Home card) — never from a
+/// background path. The permission is used to resolve the traveller's city;
+/// precise coordinates are not stored by the app.
 ///
 /// The platform calls are injectable so the mapping is unit-testable without
 /// a device.

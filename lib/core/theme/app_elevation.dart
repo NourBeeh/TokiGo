@@ -19,6 +19,20 @@ abstract final class AppElevation {
   static const double lg = 8;
   static const double xl = 16;
 
+  /// A halo that exists ONLY on the dark canvas.
+  ///
+  /// Light theme is flat by spec: search boxes and buttons carry an edge (a
+  /// hairline or a surface step), never a drop shadow. Passing the SAME call
+  /// site through this helper keeps the dark appearance untouched while the
+  /// light one loses its shadow, so a component cannot drift back.
+  static List<BoxShadow> darkOnly(
+    BuildContext context, {
+    required Color background,
+    double level = AppElevation.md,
+  }) => Theme.of(context).brightness == Brightness.dark
+      ? shadow(background: background, level: level)
+      : const <BoxShadow>[];
+
   /// Builds the two-stop halo for [level]. `level` maps 0..3 to the
   /// (sm/md/lg/xl) presets; the ladder is monotonic by design.
   ///

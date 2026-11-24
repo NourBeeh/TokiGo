@@ -102,10 +102,7 @@ class DiscoveryProductCard extends StatelessWidget {
               );
               return bounded
                   ? skeleton
-                  : SizedBox(
-                      height: kHeight,
-                      child: skeleton,
-                    );
+                  : SizedBox(height: kHeight, child: skeleton);
             },
           ),
         ),
@@ -126,8 +123,7 @@ class DiscoveryProductCard extends StatelessWidget {
         builder: (context, constraints) {
           final bounded =
               constraints.hasBoundedHeight && constraints.maxHeight.isFinite;
-          final String supportingText =
-              item.subtitle?.trim().isNotEmpty == true
+          final String supportingText = item.subtitle?.trim().isNotEmpty == true
               ? item.subtitle!.trim()
               : item.highlights.take(2).join(' · ');
           final Widget product = Column(
@@ -222,9 +218,7 @@ class DiscoveryProductCard extends StatelessWidget {
               ),
             ],
           );
-          return bounded
-              ? product
-              : SizedBox(height: kHeight, child: product);
+          return bounded ? product : SizedBox(height: kHeight, child: product);
         },
       ),
     );

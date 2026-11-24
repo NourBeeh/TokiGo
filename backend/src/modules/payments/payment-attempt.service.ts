@@ -24,6 +24,12 @@ export interface ClaimAttemptInput {
   idempotencyKey: string;
   amount: number;
   currency: string;
+  /**
+   * The accepted booking price version. Required by the payment orchestrator;
+   * optional at this layer so pre-3C.1 migration/recovery tests can still
+   * exercise the durable row without fabricating payment evidence.
+   */
+  priceVersion?: string | null;
   gatewayId: string;
   method?: string | null;
 }
@@ -79,6 +85,12 @@ export class PaymentAttemptService {
           idempotencyKey: input.idempotencyKey,
           amount: input.amount,
           currency: input.currency,
+          // Omit the property entirely when the caller has no version, so a
+          // database that predates migration 13 can still be exercised by the
+          // migration tests without referencing a missing column.
+          ...(input.priceVersion !== undefined
+            ? { priceVersion: input.priceVersion }
+            : {}),
           status: 'created',
           gatewayId: input.gatewayId,
           method: input.method ?? null,

@@ -1,0 +1,76 @@
+; XAUUSD Adaptive Trend EA - Conservative / Prop-Firm preset
+; Load in MT5: Expert properties -> Inputs tab -> Load
+; Server-time sessions must be verified for your broker before use.
+; Research/education only. Not financial advice.
+
+; === 01. General ===
+InpEnableTrading=true
+InpMagic=20261124
+InpTradeComment=XAU-Adaptive
+InpSlippagePoints=50
+InpShowPanel=true
+InpVerboseLog=true
+
+; === 02. Strategy and timeframes ===
+InpEntryMode=0
+InpBiasTF=16388
+InpFilterTF=16385
+InpSignalTF=15
+InpEmaFastBias=50
+InpEmaSlowBias=200
+InpEmaPullback=20
+InpEmaTrend=50
+InpAdxPeriod=14
+InpAdxMin=20.0
+InpAdxStrong=28.0
+InpRsiPeriod=14
+InpAtrPeriod=14
+InpBreakoutLookback=20
+InpPullbackTolAtr=0.25
+InpBreakoutBufferAtr=0.10
+InpMinBodyAtr=0.25
+InpMinAtrPercent=0.03
+InpMaxAtrPercent=0.80
+
+; === 03. Risk, stops and exits ===
+InpRiskMode=0
+InpRiskPercent=0.25
+InpFixedLot=0.01
+InpCommissionPerLot=0.0
+InpSlAtrMult=2.0
+InpTpAtrMult=4.0
+InpUseBreakeven=true
+InpBreakevenAtR=1.0
+InpBreakevenOffsetPts=10
+InpUseTrailing=true
+InpTrailStartR=1.5
+InpTrailAtrMult=1.5
+InpUsePartialClose=true
+InpPartialAtR=1.0
+InpPartialPercent=50.0
+InpExitOnBiasFlip=false
+InpMaxPositions=1
+InpMaxTradesPerDay=2
+InpCooldownHoursAfterLoss=2.0
+
+; === 04. Hard account guards ===
+InpMaxDailyLossPct=1.5
+InpDailyProfitTargetPct=0.0
+InpCloseOnDailyBreach=true
+InpUseTotalDDGuard=true
+InpMaxTotalDDPct=8.0
+InpResetPeakOnInit=false
+
+; === 05. Sessions and execution filters ===
+InpUseSessionFilter=true
+InpSession1StartHour=10
+InpSession1EndHour=13
+InpSession2StartHour=15
+InpSession2EndHour=20
+InpFridayCloseHour=21
+InpMaxSpreadUsd=0.45
+InpUseCalendarFilter=false
+InpCalendarCurrency=USD
+InpNewsMinutesBefore=30
+InpNewsMinutesAfter=30
+InpNewsBlackoutWindows=

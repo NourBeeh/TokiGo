@@ -81,8 +81,9 @@ abstract final class OfferToHomeItemAdapters {
       productMetadata: <String, dynamic>{
         'city': offer.city,
         'country': offer.country,
-        'checkIn': offer.checkIn.toIso8601String(),
-        'checkOut': offer.checkOut.toIso8601String(),
+        if (offer.checkIn != null) 'checkIn': offer.checkIn!.toIso8601String(),
+        if (offer.checkOut != null)
+          'checkOut': offer.checkOut!.toIso8601String(),
         'roomType': offer.roomType,
       },
     );
@@ -134,7 +135,7 @@ abstract final class OfferToHomeItemAdapters {
   }
 }
 
-/// Groups adapted items into a single renderable section — flights get the
+/// Grouped adapted items into a single renderable section — flights get the
 /// `flightRecommendationList` layout the card system already knows;
 /// everything else renders vertical (US-1 STEP 17).
 HomeSection offersResultSection(List<dynamic> offers) {

@@ -27,6 +27,7 @@ const HOTEL_RESPONSE = {
       hotelId: 'H1',
       roomTypes: [
         {
+          offerId: 'offer-1',
           roomTypeName: 'Twin Room',
           rates: [
             {
@@ -79,7 +80,20 @@ const FLIGHT_RESPONSE = {
               pricing: { display: { total: 320.5, currency: 'USD' } },
               fare: { family: 'Basic' },
               terms: { refundable: true },
-              baggage: { quantity: 1, type: 'checked' },
+              // Documented Nuitee shape: `baggage.included[]` with bagType /
+              // pieces, not a flat {type, quantity} object.
+              baggage: {
+                hasCheckedBag: true,
+                included: [
+                  {
+                    bagType: 'checked',
+                    description: '1 checked bag up to 23 kg',
+                    pieces: 1,
+                    passengerType: 'ADT',
+                    weightKg: 23,
+                  },
+                ],
+              },
               expiration: '2026-09-10T00:00:00Z',
             },
           ],
@@ -132,6 +146,7 @@ describe('3D — Nuitee adapter carries verbatim detail fields', () => {
           hotelId: 'H1',
           roomTypes: [
             {
+              offerId: 'offer-bare',
               roomTypeName: 'Twin',
               rates: [
                 {

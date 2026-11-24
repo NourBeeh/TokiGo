@@ -12,11 +12,15 @@ import {
 import { Request } from 'express';
 
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { BookingExceptionFilter } from './booking-exception.filter';
 import { BookingsService } from './bookings.service';
 import {
   CreateBookingDto,
   PrepareBookingDto,
+  PriceChangeDecisionDto,
+  ReconcileBookingDto,
   RevalidateBookingDto,
 } from '../../common/dto/booking.dto';
 
@@ -53,6 +57,19 @@ export class BookingsController {
     return this.bookings.create(userId(req), dto);
   }
 
+  /**
+   * Explicit customer decision on a price/terms change. Acceptance is bound
+   * server-side to provider + offer + price + currency + terms version.
+   */
+  @Post(':id/price-change')
+  async priceChange(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: PriceChangeDecisionDto,
+  ) {
+    return this.bookings.decidePriceChange(userId(req), id, dto);
+  }
+
   @Get(':id')
   async get(
     @Req() req: Request,
@@ -67,6 +84,25 @@ export class BookingsController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.bookings.getStatus(userId(req), id);
+  }
+
+  /**
+   * Admin-only explicit resolution of an unknown provider outcome.
+   *
+   * There is no automatic provider lookup: an operator records the evidence
+   * (`confirmed` with a provider reference, or `not_found`). The customer
+   * routes can never reach it, and it never creates a second provider booking
+   * itself.
+   */
+  @Post(':id/reconcile')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  async reconcile(
+    @Req() req: Request,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ReconcileBookingDto,
+  ) {
+    return this.bookings.reconcile(userId(req), id, dto);
   }
 
   /** Capability-gated cancellation (unsupported providers → structured error). */

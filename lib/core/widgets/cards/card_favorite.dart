@@ -34,13 +34,22 @@ class HeartPlatter extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: context.tokigoColors.onMediaFill,
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Colors.black.withValues(alpha: strongShadow ? 0.20 : 0.12),
-            blurRadius: strongShadow ? 12 : 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        // Task C — the platter is a button-like control (a 48dp favourite
+        // toggle), so Light Theme keeps it FLAT: the disc's edge is the
+        // surface step against its background, never a drop shadow. The Dark
+        // canvas keeps the halo so the white disc still separates from a
+        // near-black photo.
+        boxShadow: Theme.of(context).brightness == Brightness.dark
+            ? <BoxShadow>[
+                BoxShadow(
+                  color: Colors.black.withValues(
+                    alpha: strongShadow ? 0.20 : 0.12,
+                  ),
+                  blurRadius: strongShadow ? 12 : 8,
+                  offset: const Offset(0, 3),
+                ),
+              ]
+            : const <BoxShadow>[],
       ),
       child: Center(child: child),
     );

@@ -261,6 +261,45 @@ describe('Nuitee flight prebook — fixed sandbox passenger (audit)', () => {
     expect(fake.bookFlightCalls).toHaveLength(1);
   });
 
+  it('binds the provider booking to the TokiGo booking and keeps CREATED non-confirming', async () => {
+    const fake = new FakeNuiteeFlightService();
+    const provider = new NuiteeFlightBookingProvider(
+      fake as unknown as NuiteeFlightService,
+    );
+
+    const result = await provider.createBooking({
+      offerId: 'off_1',
+      offerSnapshot: { prebookId: 'pb_real', transactionId: 'tx_1' },
+      travelers: REAL_TRAVELERS,
+      bookingId: 'booking-1',
+      amount: 800,
+      currency: 'USD',
+      amountText: '800.00',
+      priceVersion: 'pv-1',
+      paymentAttemptId: 'pay-1',
+    });
+
+    expect(fake.bookFlightCalls[0]).toMatchObject({
+      prebookId: 'pb_real',
+      payment: { method: 'ACC_CREDIT_CARD' },
+      customTags: {
+        BOOKING_ID: 'booking-1',
+        PRICE_VERSION: 'pv-1',
+        PAYMENT_ATTEMPT: 'pay-1',
+        AMOUNT: '800',
+        CURRENCY: 'USD',
+      },
+    });
+    expect(result.success).toBe(true);
+    // CREATED means the airline has not confirmed the booking yet.
+    expect(result.data?.confirmationState).toBe('pending');
+    // The fake publishes no amount/currency; none is fabricated (the old
+    // adapter returned a hardcoded 0 USD).
+    expect(result.data?.amount).toBeUndefined();
+    expect(result.data?.currency).toBeUndefined();
+    expect(result.data?.reference).toBe('FH-1');
+  });
+
   // ------------------------------------------------------------------
   // P3-D7 — review revalidation reuses the existing prebook
   // ------------------------------------------------------------------

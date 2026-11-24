@@ -109,6 +109,63 @@ describe('HotelDiscoveryService source selection', () => {
   });
 });
 
+describe('HotelDiscoveryService.syncCity — diagnostics', () => {
+  function make(hotelContentResult: any) {
+    const metadata = {
+      upsert: jest.fn(async (value: any) => ({ id: 'row-1', ...value })),
+    };
+    const index = { enabled: false, indexHotels: jest.fn() };
+    const nuitee = { hotelContent: jest.fn(async () => hotelContentResult) };
+    const service = new HotelDiscoveryService(
+      metadata as any,
+      index as any,
+      nuitee as any,
+    );
+    return { service, metadata, index };
+  }
+
+  it('surfaces partial-page diagnostics instead of only a boolean', async () => {
+    const { service } = make({
+      success: true,
+      data: [{ id: 'H1', name: 'Grand', city: 'Cairo', country_code: 'EG' }],
+      metadata: {
+        complete: false,
+        pagesFetched: 3,
+        failedPages: [400],
+        totalReported: 900,
+      },
+    });
+
+    const result = await service.syncCity({ city: 'Cairo', country: 'EG' });
+
+    expect(result).toMatchObject({
+      synced: 1,
+      fetched: 1,
+      complete: false,
+      pagesFetched: 3,
+      failedPages: [400],
+      totalReported: 900,
+    });
+  });
+
+  it('reports a clean walk as complete with no failed pages', async () => {
+    const { service } = make({
+      success: true,
+      data: [{ id: 'H2', name: 'Nile', city: 'Cairo', country_code: 'EG' }],
+      metadata: { complete: true, pagesFetched: 2, failedPages: [], totalReported: 250 },
+    });
+
+    const result = await service.syncCity({ city: 'Cairo', country: 'EG' });
+
+    expect(result).toMatchObject({
+      complete: true,
+      pagesFetched: 2,
+      failedPages: [],
+      totalReported: 250,
+    });
+  });
+});
+
 describe('pagination defaults', () => {
   it('defaults to 20 and enforces the maximum page size', () => {
     expect(DEFAULT_PAGE_LIMIT).toBe(20);

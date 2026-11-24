@@ -84,6 +84,7 @@ class FakeNuiteeFlightClient {
   prebookLookupFails = false;
   verifyFails = false;
   bookFails = false;
+  bookError = 'Nuitee flight book failed (502): provider error';
 
   async prebookFlight(payload: Record<string, unknown>) {
     this.prebookCalls.push(payload);
@@ -103,7 +104,7 @@ class FakeNuiteeFlightClient {
     if (this.bookFails) {
       return {
         success: false,
-        error: 'Nuitee flight book failed (502): provider error',
+        error: this.bookError,
         timestamp: new Date(),
       };
     }
@@ -111,7 +112,12 @@ class FakeNuiteeFlightClient {
       success: true,
       bookingId: 'bk_1',
       bookingRef: 'FH-1',
-      status: 'CREATED',
+      // LiteAPI only establishes the booking on CONFIRMED (tickets issued).
+      // CREATED/PENDING_CONFIRMATION are deliberately not used by this fake:
+      // the prebook-lifecycle tests exercise the confirmed path.
+      status: 'CONFIRMED',
+      amount: this.prebookPrice,
+      currency: 'USD',
       timestamp: new Date(),
     };
   }
@@ -296,9 +302,16 @@ describe('P3-D8 Nuitee flight prebook lifecycle', () => {
     // ONE prebook total — the confirm-time real-party hold. Prepare and the
     // review added nothing.
     expect(client.prebookCalls).toHaveLength(1);
-    expect(client.bookCalls).toEqual([
-      { prebookId: 'pb_1', payment: { method: 'ACC_CREDIT_CARD' } },
-    ]);
+    expect(client.bookCalls).toHaveLength(1);
+    expect(client.bookCalls[0]).toMatchObject({
+      prebookId: 'pb_1',
+      payment: { method: 'ACC_CREDIT_CARD' },
+      customTags: {
+        BOOKING_ID: prepared.id,
+        AMOUNT: '800',
+        CURRENCY: 'USD',
+      },
+    });
     // The confirm-time prebook carried the real party.
     expect(client.prebookCalls[0]).toMatchObject({
       offerId: 'off_1',
@@ -376,7 +389,20 @@ describe('P3-D8 Nuitee flight prebook lifecycle', () => {
     ).rejects.toMatchObject({ code: 'price_changed' });
     expect(client.prebookCalls).toHaveLength(1); // the confirm-time hold only
 
-    // The client accepts the new price and retries with the SAME party.
+    // The new price/terms must be accepted explicitly before the retry. The
+    // acceptance is bound to the exact amount the customer was shown.
+    const accepted = await service.decidePriceChange('u1', prepared.id, {
+      decision: 'accept',
+      expectedPrice: 1200,
+      expectedCurrency: 'USD',
+    });
+    expect(accepted.priceChange).toMatchObject({
+      currentPrice: 1200,
+      accepted: true,
+      decision: 'accepted',
+    });
+
+    // The client retries with the SAME party.
     const confirmed = await service.create('u1', {
       bookingId: prepared.id,
       idempotencyKey: 'k2',
@@ -391,7 +417,7 @@ describe('P3-D8 Nuitee flight prebook lifecycle', () => {
     expect(repo.rows[0].offerSnapshot).toMatchObject({ prebookId: 'pb_1' });
   });
 
-  it('a failed booking keeps exactly ONE prebook and the retry reuses it', async () => {
+  it('an ambiguous provider failure keeps the key and never re-books', async () => {
     const { client, repo, service } = setup();
     const prepared = await service.prepare('u1', {
       offerId: 'off_1',
@@ -400,7 +426,49 @@ describe('P3-D8 Nuitee flight prebook lifecycle', () => {
       offerType: 'flight',
     });
 
+    // 502 = the provider may have created the booking; this is NOT a rejection.
     client.bookFails = true;
+    await expect(
+      service.create('u1', {
+        bookingId: prepared.id,
+        idempotencyKey: 'k1',
+        travelers: REAL_TRAVELERS,
+      }),
+    ).rejects.toMatchObject({ code: 'booking_outcome_unknown' });
+
+    // The confirm-time hold exists exactly once; the unknown outcome retains
+    // the logical identity and blocks every retry.
+    expect(client.prebookCalls).toHaveLength(1);
+    expect(client.bookCalls).toHaveLength(1);
+    expect(repo.rows[0].status).toBe('reconciliation_pending');
+    expect(repo.rows[0].idempotencyKey).toBe('k1');
+
+    await expect(
+      service.create('u1', {
+        bookingId: prepared.id,
+        idempotencyKey: 'k1',
+        travelers: REAL_TRAVELERS,
+      }),
+    ).rejects.toMatchObject({
+      code: 'booking_outcome_unknown',
+    });
+    // No second provider create, ever, for the same logical booking.
+    expect(client.bookCalls).toHaveLength(1);
+    expect(client.prebookCalls).toHaveLength(1);
+  });
+
+  it('a definitive provider rejection frees the key and the retry reuses one prebook', async () => {
+    const { client, repo, service } = setup();
+    const prepared = await service.prepare('u1', {
+      offerId: 'off_1',
+      providerId: 'nuitee-flight',
+      searchId: 's1',
+      offerType: 'flight',
+    });
+
+    // A well-formed 4xx is an explicit rejection: no booking was created.
+    client.bookFails = true;
+    client.bookError = 'Nuitee flight book failed (400): invalid passenger';
     await expect(
       service.create('u1', {
         bookingId: prepared.id,
@@ -409,7 +477,8 @@ describe('P3-D8 Nuitee flight prebook lifecycle', () => {
       }),
     ).rejects.toMatchObject({ code: 'provider_error' });
 
-    // The confirm-time hold exists exactly once; the failure freed the key.
+    // The confirm-time hold exists exactly once; the definitive rejection
+    // freed the key.
     expect(client.prebookCalls).toHaveLength(1);
     expect(client.bookCalls).toHaveLength(1);
     expect(repo.rows[0].status).toBe('failed');

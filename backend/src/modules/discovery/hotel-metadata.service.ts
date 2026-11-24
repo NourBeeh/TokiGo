@@ -17,8 +17,14 @@ export interface ProviderHotelMetadata {
   category?: string;
   latitude?: number;
   longitude?: number;
+  /** Guest review average on the 5-point display scale; null when absent. */
+  rating?: number;
+  /** Provider-reported review count; null when absent. */
+  reviewCount?: number;
   /** Deterministic object key of an already-optimized image, when known. */
   imageObjectKey?: string;
+  /** Provider's own photo URL, when it sent one. */
+  imageUrl?: string;
 }
 
 const COUNTRY_NAMES: Record<string, string> = {
@@ -55,6 +61,7 @@ function stringList(value: unknown): string[] {
   return value
     .map((item) => {
       if (typeof item === 'string') return item.trim();
+      if (typeof item === 'number') return String(item);
       if (item && typeof item === 'object') {
         const label = (item as any).name ?? (item as any).label ?? (item as any).title;
         return typeof label === 'string' ? label.trim() : '';
@@ -62,6 +69,16 @@ function stringList(value: unknown): string[] {
       return '';
     })
     .filter(Boolean);
+}
+
+/** Accepts a real number or a numeric string; anything else is absent. */
+function finiteNumber(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
 }
 
 /**
@@ -79,20 +96,44 @@ export function mapProviderHotel(
   const providerHotelId = String(raw.id ?? raw.hotelId ?? '').trim();
   if (!providerHotelId) return null;
 
+  // Only a name the provider actually sent. The honest `Hotel <id>` fallback
+  // belongs to INSERT time (see `upsert`); fabricating it here made a sparse
+  // payload look complete and overwrote a real stored name on re-sync.
   const name =
     (typeof raw.name === 'string' && raw.name.trim()) ||
     (typeof raw.nameEn === 'string' && raw.nameEn.trim()) ||
-    `Hotel ${providerHotelId}`;
-  const rawName = typeof raw.name === 'string' ? raw.name : name;
+    undefined;
+  const rawName = name ?? '';
   const nameLocal =
     (typeof raw.nameAr === 'string' && raw.nameAr.trim()) ||
-    (containsArabicScript(rawName) ? rawName : undefined);
+    (rawName.length > 0 && containsArabicScript(rawName) ? rawName : undefined);
 
   const address =
     raw?.address?.addressLine1 ??
     raw?.address?.address ??
     raw?.address_line_1 ??
-    undefined;
+    (typeof raw?.address === 'string' ? raw.address : undefined);
+
+  // The provider quotes a 10-point guest score; the app displays a 5-point
+  // scale. Convert here, once, so the catalog and the live offer mapper can
+  // never disagree. A score outside 0–10 is treated as absent rather than
+  // clamped into a plausible-looking number.
+  const rawRating = finiteNumber(raw.rating);
+  const rating =
+    rawRating !== undefined && rawRating >= 0 && rawRating <= 10
+      ? Math.round(Math.min(5, Math.max(0, rawRating / 2)) * 100) / 100
+      : undefined;
+
+  // `/data/hotels` uses `reviewCount`; the rates metadata uses
+  // `review_count`. Both are accepted, nothing is invented.
+  const rawReviewCount = finiteNumber(raw.reviewCount ?? raw.review_count);
+  const reviewCount =
+    rawReviewCount !== undefined && rawReviewCount >= 0
+      ? Math.round(rawReviewCount)
+      : undefined;
+
+  const latitude = finiteNumber(raw.latitude ?? raw.address?.latitude);
+  const longitude = finiteNumber(raw.longitude ?? raw.address?.longitude);
 
   return {
     providerId,
@@ -112,18 +153,37 @@ export function mapProviderHotel(
         raw?.country,
     ) || (fallbackCountry ?? ''),
     address: typeof address === 'string' ? address : undefined,
-    description: typeof raw.description === 'string' ? raw.description : undefined,
+    description:
+      typeof raw.hotelDescription === 'string'
+        ? raw.hotelDescription
+        : typeof raw.description === 'string'
+          ? raw.description
+          : undefined,
     descriptionLocal:
       typeof raw.descriptionAr === 'string' ? raw.descriptionAr : undefined,
-    facilities: stringList(raw.facilities ?? raw.amenities),
+    facilities: stringList(
+      raw.facilities ??
+        raw.amenities ??
+        raw.facilityIds ??
+        raw.hotelFacilities,
+    ),
     category:
       raw.stars !== undefined && raw.stars !== null
         ? String(raw.stars)
         : typeof raw.type === 'string'
           ? raw.type
           : undefined,
-    latitude: typeof raw.latitude === 'number' ? raw.latitude : undefined,
-    longitude: typeof raw.longitude === 'number' ? raw.longitude : undefined,
+    latitude: latitude !== undefined && latitude >= -90 && latitude <= 90 ? latitude : undefined,
+    longitude:
+      longitude !== undefined && longitude >= -180 && longitude <= 180
+        ? longitude
+        : undefined,
+    rating,
+    reviewCount,
+    imageUrl:
+      (typeof raw.main_photo === 'string' && raw.main_photo.trim()) ||
+      (typeof raw.thumbnail === 'string' && raw.thumbnail.trim()) ||
+      undefined,
   };
 }
 
@@ -160,6 +220,10 @@ export class HotelMetadataService {
   /**
    * Idempotent upsert by (providerId, providerHotelId). Re-running the same
    * provider payload updates in place and refreshes `lastSyncedAt`.
+   *
+   * A sparse provider payload NEVER erases previously valid data: every
+   * optional field falls back to the existing row. This is what keeps a
+   * partial sync from wiping coordinates, ratings or descriptions.
    */
   async upsert(metadata: ProviderHotelMetadata & { providerId: string }): Promise<Hotel> {
     const existing = await this.hotels.findOne({
@@ -171,17 +235,23 @@ export class HotelMetadataService {
 
     const values: Partial<Hotel> = {
       name: metadata.name ?? existing?.name ?? `Hotel ${metadata.providerHotelId}`,
-      nameLocal: metadata.nameLocal ?? null,
-      city: metadata.city ?? existing?.city ?? '',
-      countryCode: metadata.countryCode ?? existing?.countryCode ?? '',
-      address: metadata.address ?? null,
-      description: metadata.description ?? null,
-      descriptionLocal: metadata.descriptionLocal ?? null,
-      facilities: metadata.facilities ?? [],
-      category: metadata.category ?? null,
-      latitude: metadata.latitude ?? null,
-      longitude: metadata.longitude ?? null,
+      nameLocal: metadata.nameLocal ?? existing?.nameLocal ?? null,
+      city: metadata.city || existing?.city || '',
+      countryCode: metadata.countryCode || existing?.countryCode || '',
+      address: metadata.address ?? existing?.address ?? null,
+      description: metadata.description ?? existing?.description ?? null,
+      descriptionLocal: metadata.descriptionLocal ?? existing?.descriptionLocal ?? null,
+      facilities:
+        metadata.facilities && metadata.facilities.length > 0
+          ? metadata.facilities
+          : (existing?.facilities ?? []),
+      category: metadata.category ?? existing?.category ?? null,
+      latitude: metadata.latitude ?? existing?.latitude ?? null,
+      longitude: metadata.longitude ?? existing?.longitude ?? null,
+      rating: metadata.rating ?? existing?.rating ?? null,
+      reviewCount: metadata.reviewCount ?? existing?.reviewCount ?? null,
       imageObjectKey: metadata.imageObjectKey ?? existing?.imageObjectKey ?? null,
+      imageUrl: metadata.imageUrl ?? existing?.imageUrl ?? null,
       isActive: true,
       isDeleted: false,
       lastSyncedAt: new Date(),

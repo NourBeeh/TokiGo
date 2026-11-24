@@ -206,6 +206,7 @@ class StubProvider implements BookingProvider {
         providerId: this.providerId,
         providerName: this.providerName,
         error: 'provider rejected the booking',
+        failureKind: 'definitive',
         timestamp: new Date(),
       };
     }
@@ -554,14 +555,14 @@ describe('NuiteeBookingProvider — prebook handoff safety', () => {
     expect(bookHotel).not.toHaveBeenCalled();
   });
 
-  it('C11b books with the persisted prebookId and transactionId', async () => {
+  it('C11b books with the persisted prebookId and no transactionId', async () => {
     const bookHotel = jest.fn().mockResolvedValue({
       success: true,
       providerId: 'nuitee',
       providerName: 'Nuitee Connect',
       data: {
         bookingId: 'bk-9',
-        reference: 'HTL-9',
+        hotelConfirmationCode: 'HTL-9',
         status: 'CONFIRMED',
         total: 120,
         currency: 'USD',
@@ -572,24 +573,104 @@ describe('NuiteeBookingProvider — prebook handoff safety', () => {
     const provider = new NuiteeBookingProvider(nuitee as any);
 
     const result = await provider.createBooking({
-      offerId: 'rate-1',
+      offerId: 'offer-9',
       offerSnapshot: {
-        rateId: 'rate-1',
+        offerId: 'offer-9',
         prebookId: 'pb-9',
-        transactionId: 'tx-9',
+        roomCount: 1,
       },
-      travelers: [{ firstName: 'A', lastName: 'B', adult: true }],
+      travelers: [
+        {
+          firstName: 'A',
+          lastName: 'B',
+          email: 'a@example.com',
+          phone: '+201000000000',
+          occupancyNumber: 1,
+        },
+      ],
     });
 
     expect(result.success).toBe(true);
     expect(result.data.reference).toBe('HTL-9');
+    expect(bookHotel).toHaveBeenCalledWith({
+      prebookId: 'pb-9',
+      holder: {
+        firstName: 'A',
+        lastName: 'B',
+        email: 'a@example.com',
+        phone: '+201000000000',
+      },
+      guests: [
+        {
+          occupancyNumber: 1,
+          firstName: 'A',
+          lastName: 'B',
+          email: 'a@example.com',
+          phone: '+201000000000',
+          remarks: undefined,
+        },
+      ],
+    });
+  });
+
+  it('binds the provider booking to the TokiGo booking and keeps PENDING non-confirming', async () => {
+    const bookHotel = jest.fn().mockResolvedValue({
+      success: true,
+      providerId: 'nuitee',
+      providerName: 'Nuitee Connect',
+      data: {
+        bookingId: 'bk-10',
+        hotelConfirmationCode: 'HTL-10',
+        status: 'PENDING',
+        total: 120,
+        currency: 'USD',
+      },
+      timestamp: new Date(),
+    });
+    const nuitee = { bookHotel, providerName: 'Nuitee Connect' };
+    const provider = new NuiteeBookingProvider(nuitee as any);
+
+    const result = await provider.createBooking({
+      offerId: 'offer-10',
+      offerSnapshot: {
+        offerId: 'offer-10',
+        prebookId: 'pb-10',
+        roomCount: 1,
+      },
+      travelers: [
+        {
+          firstName: 'A',
+          lastName: 'B',
+          email: 'a@example.com',
+          phone: '+201000000000',
+          occupancyNumber: 1,
+        },
+      ],
+      bookingId: 'booking-10',
+      amount: 120,
+      currency: 'USD',
+      amountText: '120.00',
+      priceVersion: 'pv-10',
+      paymentAttemptId: 'pay-10',
+    });
+
     expect(bookHotel).toHaveBeenCalledWith(
       expect.objectContaining({
-        prebookId: 'pb-9',
-        transactionId: 'tx-9',
-        guestNames: ['A B'],
-        adults: [true],
+        prebookId: 'pb-10',
+        clientReference: 'booking-10',
+        customTags: {
+          BOOKING_ID: 'booking-10',
+          PRICE_VERSION: 'pv-10',
+          PAYMENT_ATTEMPT: 'pay-10',
+          AMOUNT: '120',
+          CURRENCY: 'USD',
+        },
       }),
     );
+    expect(result.success).toBe(true);
+    // PENDING is not a confirmation; the service will keep it blocked.
+    expect(result.data?.confirmationState).toBe('pending');
+    expect(result.data?.amount).toBe(120);
+    expect(result.data?.currency).toBe('USD');
   });
 });

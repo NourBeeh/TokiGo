@@ -8,6 +8,9 @@ import { BookingProviderRegistry } from './booking-provider.registry';
 import { DuffelBookingProvider } from './adapters/duffel-booking.provider';
 import { NuiteeBookingProvider } from './adapters/nuitee-booking.provider';
 import { NuiteeFlightBookingProvider } from './adapters/nuitee-flight-booking.provider';
+import { AuditLog } from '../../database/entities/audit_log.entity';
+import { PaymentAttempt } from '../../database/entities/payment-attempt.entity';
+import { ProviderOperation } from '../../database/entities/provider-operation.entity';
 import { ProvidersModule } from '../providers/providers.module';
 
 /**
@@ -18,7 +21,10 @@ import { ProvidersModule } from '../providers/providers.module';
  * services from ProvidersModule — no provider call is re-implemented here.
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([Booking]), ProvidersModule],
+  imports: [
+    TypeOrmModule.forFeature([Booking, AuditLog, ProviderOperation, PaymentAttempt]),
+    ProvidersModule,
+  ],
   controllers: [BookingsController],
   providers: [
     BookingsService,

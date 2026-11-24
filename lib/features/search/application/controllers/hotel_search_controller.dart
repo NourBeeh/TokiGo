@@ -103,10 +103,11 @@ class HotelSearchController extends StateNotifier<HotelSearchState> {
       languageCode: params.languageCode,
     );
 
-    // Try to load from cache first
+    // Try to load from cache first — only while the entry is fresh. A stale
+    // entry is presentation debt, not an answer: drop it and query live.
     final cached = await _cache.read(cacheKey);
     if (version != _requestVersion) return; // Superseded mid-flight.
-    if (cached != null) {
+    if (cached != null && isHotelSearchCacheFresh(cached)) {
       final offers = <HotelOffer>[];
       for (final item in (cached['offers'] as List? ?? [])) {
         if (item is Map<String, dynamic>) {
@@ -120,6 +121,13 @@ class HotelSearchController extends StateNotifier<HotelSearchState> {
           results: offers,
           fromCache: true,
         );
+      }
+    } else if (cached != null) {
+      // Best-effort eviction; a read-only/offline store may refuse.
+      try {
+        await _cache.delete(cacheKey);
+      } catch (_) {
+        // Ignore: the live search below is unaffected.
       }
     }
 

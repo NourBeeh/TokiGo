@@ -143,6 +143,7 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
 
   async function insertBooking(
     overrides: Record<string, unknown> = {},
+    options: { includePriceVersion?: boolean } = {},
   ): Promise<string> {
     const row = {
       userId: 'user-1',
@@ -153,23 +154,37 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
       status: 'prepared',
       currency: 'EGP',
       authoritativePrice: 1000,
+      priceVersion: 'price-version-test',
       ...overrides,
     };
+    const includePriceVersion = options.includePriceVersion !== false;
+    const columns = [
+      '"userId"',
+      '"offerId"',
+      '"providerId"',
+      '"providerName"',
+      'type',
+      'status',
+      'currency',
+      '"authoritativePrice"',
+      ...(includePriceVersion ? ['"priceVersion"'] : []),
+    ];
+    const values = [
+      row.userId,
+      row.offerId,
+      row.providerId,
+      row.providerName,
+      row.type,
+      row.status,
+      row.currency,
+      row.authoritativePrice,
+      ...(includePriceVersion ? [row.priceVersion] : []),
+    ];
+    const placeholders = values.map((_, index) => `$${index + 1}`);
     const result = await ds.query(
-      `INSERT INTO bookings (
-         "userId", "offerId", "providerId", "providerName", type, status,
-         currency, "authoritativePrice"
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
-      [
-        row.userId,
-        row.offerId,
-        row.providerId,
-        row.providerName,
-        row.type,
-        row.status,
-        row.currency,
-        row.authoritativePrice,
-      ],
+      `INSERT INTO bookings (${columns.join(', ')})
+       VALUES (${placeholders.join(',')}) RETURNING id`,
+      values,
     );
     return result[0].id as string;
   }
@@ -799,6 +814,7 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
           bookingId,
         },
         'user-1',
+        'admin',
       );
       expect(refund.status).toBe('OK');
 
@@ -859,6 +875,7 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
           bookingId,
         },
         'user-1',
+        'admin',
       );
       expect(refund.status).toBe('UNKNOWN');
 
@@ -1587,6 +1604,7 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
           bookingId,
         },
         'user-1',
+        'admin',
       );
 
       const balance = await app.service.bookingBalance(bookingId, 'user-1');
@@ -1879,8 +1897,9 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
             bookingId,
           },
           'user-1',
+          'admin',
         ),
-      ).rejects.toThrow(/exceeds the captured amount/i);
+      ).rejects.toThrow(/remaining refundable amount/i);
 
       // Only the original capture is on the ledger.
       expect(await app.txnRepo.count()).toBe(1);
@@ -1891,17 +1910,26 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
   // Migration
   // =========================================================================
 
-  describe('Migration 7/8/9/10', () => {
-    /** Revert to the P4-1 schema state (migrations 7..10 not applied). */
+  describe('Migration 7/8/9/10/13', () => {
+    /** Revert every migration added after P4-1 (migrations 0..6). */
     async function revertToP4_1(): Promise<void> {
-      for (let i = 0; i < 4; i++) {
+      let applied = await ds.query(`SELECT name FROM migrations ORDER BY id`);
+      while (applied.length > 7) {
         await ds.undoLastMigration();
+        applied = await ds.query(`SELECT name FROM migrations ORDER BY id`);
       }
     }
 
-    /** Re-apply the P4-2R chain (7, 8, 9). */
+    /** Re-apply the whole P4-2/P4-2R/3C.1 chain. */
     async function applyP4_2(): Promise<void> {
       await ds.runMigrations();
+    }
+
+    /** Undo the most recent `count` migrations (13, 12, 11, 10, …). */
+    async function undoMigrations(count: number): Promise<void> {
+      for (let i = 0; i < count; i++) {
+        await ds.undoLastMigration();
+      }
     }
 
     async function tableExists(name: string): Promise<boolean> {
@@ -1918,20 +1946,22 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
       await revertToP4_1();
 
       try {
-        const bookingId = await insertBooking();
-        const attemptId = await app.attempts.claim({
-          userId: 'user-1',
-          bookingId,
-          idempotencyKey: 'legacy-status',
-          amount: 500,
-          currency: 'EGP',
-          gatewayId: 'mock-egypt-gateway',
-        });
-        // P4-1 spelling of the same state.
-        await ds.query(
-          `UPDATE payment_attempts SET status = 'requires_confirmation' WHERE id = $1`,
-          [attemptId.attempt.id],
+        const bookingId = await insertBooking(
+          {},
+          { includePriceVersion: false },
         );
+        // Insert with raw SQL: the TypeORM entity now maps columns added by
+        // migration 13, which does not exist in the P4-1 schema.
+        const attemptRows = await ds.query(
+          `INSERT INTO payment_attempts
+             ("bookingId", "userId", "attemptNo", "idempotencyKey", amount,
+              currency, status, "gatewayId")
+           VALUES ($1, 'user-1', 1, 'legacy-status', 500, 'EGP',
+                   'requires_confirmation', 'mock-egypt-gateway')
+           RETURNING id`,
+          [bookingId],
+        );
+        const attemptId = attemptRows[0].id as string;
         await app.ledger.append({
           bookingId,
           leg: 'CUSTOMER',
@@ -1939,13 +1969,13 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
           status: 'succeeded',
           amount: 500,
           currency: 'EGP',
-          attemptId: attemptId.attempt.id,
+          attemptId,
           idempotencyKey: 'legacy-txn',
         });
 
         await applyP4_2();
 
-        const attempt = await app.attempts.findById(attemptId.attempt.id);
+        const attempt = await app.attempts.findById(attemptId);
         expect(attempt!.status).toBe('requires_action');
 
         const txns = await app.txnRepo.find({ where: { bookingId } });
@@ -1954,6 +1984,8 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
 
         const booking = await app.bookingRepo.findOne({ where: { id: bookingId } });
         expect(booking).not.toBeNull();
+        // No payment evidence is fabricated for a pre-3C.1 attempt.
+        expect(attempt!.verifiedAt ?? null).toBeNull();
       } finally {
         await applyP4_2();
       }
@@ -2033,8 +2065,9 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
     it('M4. migration 8/9 up and down never drop the archive', async () => {
       expect(await tableExists('processed_webhooks')).toBe(true);
 
-      // Reverting the whole P4-2R chain (10, 9 then 8) leaves the archive in
-      // place — migration 10 only widens the webhook status CHECK.
+      // Reverting the whole P4-2R chain (13, 12, 11, 10, 9 then 8) leaves the
+      // archive in place — migration 10 only widens the webhook status CHECK.
+      await undoMigrations(3); // 13, 12, 11
       await ds.undoLastMigration(); // 10
       await ds.undoLastMigration(); // 9
       await ds.undoLastMigration(); // 8
@@ -2066,8 +2099,13 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
 
       await revertToP4_1();
 
-      // The P4-1 CHECK is back and the value is translated.
-      expect((await app.attempts.findById(attemptId))!.status).toBe('requires_confirmation');
+      // The P4-1 CHECK is back and the value is translated. Raw SQL because
+      // the entity maps columns added by migration 13.
+      const reverted = await ds.query(
+        `SELECT status FROM payment_attempts WHERE id = $1`,
+        [attemptId],
+      );
+      expect(reverted[0].status).toBe('requires_confirmation');
       await expect(
         ds.query(`UPDATE payment_attempts SET status = 'processing' WHERE id = $1`, [
           attemptId,
@@ -2103,8 +2141,9 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
     it('M7. migration 9 recreates the archive for a database that ran the original drop', async () => {
       // Simulate a database where the ORIGINAL migration 8 already dropped the
       // table: its rows are gone and no DDL can bring them back. Revert
-      // migrations 10 and 9 first so migration 9 is pending again and can
-      // actually execute.
+      // migrations 13, 12, 11, 10 and 9 first so migration 9 is pending again
+      // and can actually execute.
+      await undoMigrations(3); // 13, 12, 11
       await ds.undoLastMigration(); // 10
       await ds.undoLastMigration(); // 9
       await ds.query(`DROP TABLE processed_webhooks`);
@@ -2148,6 +2187,8 @@ describeDb('P4-2 durable payment persistence (PostgreSQL)', () => {
       expect(check[0].def).toContain('retryable');
 
       // down() translates retryable -> received so the narrowed CHECK holds.
+      // Migration 10 is no longer the newest, so peel 13, 12 and 11 first.
+      await undoMigrations(3);
       await ds.undoLastMigration(); // 10
       const reverted = await app.webhookRepo.findOne({
         where: { provider: 'mock-egypt-gateway', eventId: 'evt-r2' },

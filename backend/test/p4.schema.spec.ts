@@ -277,9 +277,9 @@ describeDb('P4-1 durable payment schema (PostgreSQL)', () => {
     const executed = await ds.query(
       `SELECT COUNT(*)::int AS n FROM migrations`,
     );
-    // P4-1: 7 migrations. P4-2 adds 1731000000007 (attempt status states) and
-    // 1731000000008 (retire the legacy webhook table).
-    expect(executed[0].n).toBe(11);
+    // P4-1: 7 migrations. P4-2/P4-2R add 7..10, the high-load refactor adds
+    // 11 and 12, and 3C.1 adds 13 (payment security containment).
+    expect(executed[0].n).toBe(14);
   });
 
   it('1b. the migration (not the entity) creates the flight-provider exclusion index', async () => {
@@ -838,8 +838,8 @@ describeDb('P4-1 durable payment schema (PostgreSQL)', () => {
   });
 
   it('12. migration rollback removes the P4 tables (and re-apply restores them)', async () => {
-    // Revert the whole chain, one migration at a time (9 as of P4-2).
-    for (let i = 0; i < 11; i++) {
+    // Revert the whole chain, one migration at a time (14 as of 3C.1).
+    for (let i = 0; i < 14; i++) {
       await ds.undoLastMigration();
     }
     for (const table of [
@@ -975,21 +975,21 @@ describeDb('P4-1R migration 6 rollback safety (PostgreSQL)', () => {
     // schema is the only state-independent way to get back to a known point.
     await ds.query('DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;');
     await ds.runMigrations();
-    // P4-2/P4-2R/P4-2R2 added migrations 7, 8, 9 and 10 after 6, so five
-    // reverts are needed to reach the pre-migration-6 state.
-    for (let i = 0; i < 5; i++) {
+    // P4-2/P4-2R/P4-2R2/high-load/3C.1 added migrations 7..13 after 6, so
+    // eight reverts are needed to reach the pre-migration-6 state.
+    for (let i = 0; i < 8; i++) {
       await ds.undoLastMigration();
     }
     await ds.query(`TRUNCATE providers CASCADE`);
   }
 
   /**
-   * Revert migration 6 specifically. P4-2/P4-2R/P4-2R2 appended
-   * migrations 7, 8, 9 and 10 after it, so `undoLastMigration()` alone would
-   * revert migration 10 instead.
+   * Revert migration 6 specifically. P4-2/P4-2R/P4-2R2/high-load/3C.1
+   * appended migrations 7..13 after it, so `undoLastMigration()` alone would
+   * revert migration 13 instead.
    */
   async function revertMigration6(): Promise<void> {
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 8; i++) {
       await ds.undoLastMigration();
     }
   }

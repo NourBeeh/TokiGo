@@ -22,7 +22,8 @@ import '../../features/booking/presentation/pages/booking_confirmation_page.dart
 import '../../features/booking/presentation/pages/checkout_page.dart';
 import '../../features/booking/presentation/pages/hotel_guest_details_page.dart';
 import '../../features/booking/presentation/pages/passenger_details_page.dart';
-import '../../features/groups/presentation/pages/groups_page.dart';
+import '../../features/home/domain/promotional_stay.dart';
+import '../../features/home/presentation/pages/nearby_hotel_details_page.dart';
 import '../../features/home/presentation/pages/city_page.dart';
 import '../../features/home/presentation/pages/explore_cities_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
@@ -43,7 +44,6 @@ import '../../features/search/presentation/pages/packages_search_page.dart';
 import '../../features/search/presentation/pages/search_hub_page.dart';
 import '../../shared/widgets/placeholder_page.dart';
 import '../../shared/providers/onboarding_provider.dart';
-import '../config/app_config.dart';
 import '../../shared/providers/last_route_provider.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -142,6 +142,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               restorationId: state.pageKey.value,
               name: 'packages',
               child: const SwipeFromRightToPop(child: PackagesSearchPage()),
+            ),
+          ),
+          GoRoute(
+            path: 'nearby-hotel',
+            name: 'nearby-hotel',
+            redirect: (context, state) =>
+                state.extra is PromotionalStay ? null : '/',
+            pageBuilder: (context, state) => slideFromRightPage(
+              key: state.pageKey,
+              restorationId: state.pageKey.value,
+              name: 'nearby-hotel',
+              child: SwipeFromRightToPop(
+                child: NearbyHotelDetailsPage(stay: state.extra! as PromotionalStay),
+              ),
             ),
           ),
           GoRoute(
@@ -341,20 +355,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 ),
               ),
             ],
-          ),
-          GoRoute(
-            path: 'groups',
-            name: 'groups',
-            // Groups is parked (owner request). The nav tile is
-            // hidden, and the route itself redirects to Home so a deep
-            // link or a stale in-app link cannot open it.
-            redirect: (context, state) => AppConfig.groupsEnabled ? null : '/',
-            pageBuilder: (context, state) => slideFromRightPage(
-              key: state.pageKey,
-              restorationId: state.pageKey.value,
-              name: 'groups',
-              child: const SwipeFromRightToPop(child: GroupsPage()),
-            ),
           ),
           GoRoute(
             path: 'trip-builder',

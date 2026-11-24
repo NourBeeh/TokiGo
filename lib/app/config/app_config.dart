@@ -24,8 +24,4 @@ class AppConfig {
 
   /// Semver string reflected in the About screen and diagnostics.
   static String get appVersionLabel => 'v$version';
-
-  /// The Groups page is currently an honest empty state until group data is
-  /// available; keep its route accessible from the Home shortcut.
-  static const bool groupsEnabled = true;
 }

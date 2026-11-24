@@ -1,6 +1,5 @@
 import 'package:tokigo/core/domain/models/search/flight_search_params.dart';
 import 'package:tokigo/core/domain/models/search/hotel_room_occupancy.dart';
-import 'package:tokigo/core/domain/models/search/hotel_search_params.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 
@@ -50,6 +49,10 @@ Map<String, dynamic> offerToMap(BaseOffer offer) {
     'metadata': offer.metadata,
     'rating': offer.rating,
     'reviewCount': offer.reviewCount,
+    // The display quote is part of the cached snapshot: without it a cached
+    // result would lose the customer total the list sorted/filtered on.
+    if (offer.customerPrice != null)
+      'customerPrice': offer.customerPrice!.toJson(),
   };
   if (offer is FlightOffer) {
     return map..addAll(<String, dynamic>{
@@ -61,6 +64,19 @@ Map<String, dynamic> offerToMap(BaseOffer offer) {
       'flightNumber': offer.flightNumber,
       'stops': offer.stops,
       'cabinClass': offer.cabinClass,
+      // Every grouped fare, ordered segment, condition and baggage allowance
+      // round-trips too, so the details fare selector still works offline.
+      if (offer.segments.isNotEmpty)
+        'segments': offer.segments
+            .map((segment) => segment.toJson())
+            .toList(growable: false),
+      if (offer.conditions != null) 'conditions': offer.conditions!.toJson(),
+      if (offer.baggageAllowances.isNotEmpty)
+        'baggageAllowances': offer.baggageAllowances
+            .map((allowance) => allowance.toJson())
+            .toList(growable: false),
+      if (offer.offers.isNotEmpty)
+        'offers': offer.offers.map(offerToMap).toList(growable: false),
     });
   }
   if (offer is HotelOffer) {
@@ -71,6 +87,10 @@ Map<String, dynamic> offerToMap(BaseOffer offer) {
       'checkOut': _iso(offer.checkOut),
       'roomType': offer.roomType,
       'amenities': offer.amenities,
+      // Every grouped room-type offer round-trips too, so the details
+      // selector still works after an offline/cached read.
+      if (offer.offers.isNotEmpty)
+        'offers': offer.offers.map(offerToMap).toList(growable: false),
     });
   }
   if (offer is CarOffer) {
@@ -97,6 +117,28 @@ Map<String, dynamic> offerToMap(BaseOffer offer) {
 /// Rehydrates a stored offer map via the same mapper used by the live APIs.
 /// Returns `null` for unknown/malformed entries instead of throwing.
 BaseOffer? offerFromMap(Map<String, dynamic> map) => mapOffer(map);
+
+/// How long a cached live hotel search may be shown.
+///
+/// Provider prices are presentation snapshots, never booking truth. A short
+/// window keeps Home → Search → Back instant without serving yesterday's
+/// prices; every booking flow revalidates the selected offer.
+const Duration hotelSearchCacheTtl = Duration(minutes: 15);
+
+/// Whether a stored hotel-search entry is still inside [hotelSearchCacheTtl].
+///
+/// A missing or unparseable `timestamp` is STALE: an entry with no provenance
+/// cannot be proven fresh. A future timestamp (clock moved backwards) is
+/// treated as fresh so the cache does not flap on skew.
+bool isHotelSearchCacheFresh(Map<String, dynamic> entry, {DateTime? now}) {
+  final raw = entry['timestamp'];
+  if (raw is! String) return false;
+  final stored = DateTime.tryParse(raw);
+  if (stored == null) return false;
+  final age = (now ?? DateTime.now()).difference(stored);
+  if (age.isNegative) return true;
+  return age <= hotelSearchCacheTtl;
+}
 
 /// Builds a deterministic cache key for a flight search.
 String flightSearchCacheKey({

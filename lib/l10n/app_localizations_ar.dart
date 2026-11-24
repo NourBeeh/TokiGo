@@ -18,9 +18,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get navSearch => 'بحث';
 
   @override
-  String get navGroups => 'مجموعات';
-
-  @override
   String get navExplore => 'استكشف';
 
   @override
@@ -295,19 +292,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeNavActivities => 'الباقات';
 
   @override
-  String get homeNavGroups => 'مجموعات';
-
-  @override
   String get homeNavTrips => 'رحلاتي';
 
   @override
   String get searchTransfers => ' transfére المطار';
-
-  @override
-  String get groupsTitle => 'مجموعات';
-
-  @override
-  String get groupsSubtitle => 'مجموعات';
 
   @override
   String get viewAll => 'عرض الكل';
@@ -896,6 +884,54 @@ class AppLocalizationsAr extends AppLocalizations {
   String get bookingAcceptNewPrice => 'قبول السعر الجديد';
 
   @override
+  String get bookingUpdatePrice => 'تحديث السعر';
+
+  @override
+  String get bookingDeclinePriceChange => 'رفض';
+
+  @override
+  String get bookingChooseAnotherOffer => 'اختر عرضًا آخر';
+
+  @override
+  String get bookingPriceChangeDeclined => 'لقد رفضت السعر المحدث. اختر عرضًا آخر للمتابعة.';
+
+  @override
+  String get bookingPreviousPrice => 'السعر السابق';
+
+  @override
+  String get bookingUpdatedPrice => 'السعر المحدث';
+
+  @override
+  String get bookingPriceDifference => 'الفرق';
+
+  @override
+  String get bookingConditionsChanged => 'تغيّرت الشروط';
+
+  @override
+  String get bookingNoChargeYet => 'لم يتم إجراء أي حجز بالسعر المحدث.';
+
+  @override
+  String get bookingTermFareConditions => 'شروط التذكرة';
+
+  @override
+  String get bookingTermBaggage => 'وزن الأمتعة المسموح';
+
+  @override
+  String get bookingTermFareBrand => 'نوع التعرفة';
+
+  @override
+  String get bookingTermCabin => 'درجة السفر';
+
+  @override
+  String get bookingTermItinerary => 'مسار الرحلة';
+
+  @override
+  String get bookingTermCancellation => 'سياسة الإلغاء';
+
+  @override
+  String get bookingTermBoard => 'نظام الوجبات';
+
+  @override
   String get bookingPrepare => 'تجهيز الحجز';
 
   @override
@@ -1034,12 +1070,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get bookingDocumentExpiryLabel => 'تاريخ الانتهاء (YYYY-MM-DD)';
 
   @override
-  String get groupsCreateTrip => 'أنشئ رحلة جماعية';
-
-  @override
-  String get groupsPlanTogether => 'خططوا معًا، وقرروا معًا';
-
-  @override
   String get carIdleBody => 'قارن عروض تأجير السيارات في نقاط الاستلام حول العالم';
 
   @override
@@ -1050,6 +1080,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get offlineShowingCached => 'أنت غير متصل بالإنترنت — نعرض آخر بيانات تم حفظها';
+
+  @override
+  String get homePriceUnverified => 'السعر غير مؤكد';
+
+  @override
+  String get homePriceUpdateFailed => 'تعذّر تحديث السعر. تحقّق من اتصال الإنترنت وحاول مرة أخرى.';
 
   @override
   String get homeCompleteYourTrip => 'أكمل رحلتك';
@@ -1178,12 +1214,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get wishlistExploreStays => 'استكشف الفنادق';
 
   @override
-  String get groupsEmptyTitle => 'الرحلات الجماعية قادمة قريبًا';
-
-  @override
-  String get groupsEmptyBody => 'إنشاء رحلة ودعوة الأصدقاء وتقسيم الخطة هيتفتحوا هنا أول ما يتم ربط خدمات الرحلات الجماعية.';
-
-  @override
   String get exploreCitiesTitle => 'المدن';
 
   @override
@@ -1260,6 +1290,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get bookingConfirmFailedBody => 'الدفع مكتملش، فالحجز متأكّدش. مفيش حجز اتعمل.';
+
+  @override
+  String get bookingOutcomePendingTitle => 'الحجز قيد التحقق';
+
+  @override
+  String get bookingOutcomePendingBody => 'المزوّد لسه ما أكّدش الحجز ده. متحاولش تحجز تاني ولا تدفع تاني. إحنا بنراجع الحالة النهائية، وهتظهر في رحلاتي بس بعد ما تتأكد.';
 
   @override
   String get bookingConfirmLabel => 'تأكيد الحجز';
@@ -1829,6 +1865,121 @@ class AppLocalizationsAr extends AppLocalizations {
   String get offerRoom => 'الغرفة';
 
   @override
+  String get offerChooseRoom => 'اختر غرفة';
+
+  @override
+  String get offerChooseFare => 'اختر نوع التذكرة';
+
+  @override
+  String offerFareOption(int number) {
+    return 'التذكرة $number';
+  }
+
+  @override
+  String offerFareCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count سعر',
+      many: '$count سعرًا',
+      few: '$count أسعار',
+      two: 'سعران',
+      one: 'سعر واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get offerBaggageCabin => 'حقيبة يد';
+
+  @override
+  String get offerBaggageChecked => 'حقيبة مسجّلة';
+
+  @override
+  String get offerBaggageEquipment => 'معدات رياضية';
+
+  @override
+  String offerBaggageCabinCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count حقيبة يد',
+      many: '$count حقيبة يد',
+      few: '$count حقائب يد',
+      two: 'حقيبتا يد',
+      one: 'حقيبة يد واحدة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String offerBaggageCheckedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count حقيبة مسجّلة',
+      many: '$count حقيبة مسجّلة',
+      few: '$count حقائب مسجّلة',
+      two: 'حقيبتان مسجّلتان',
+      one: 'حقيبة مسجّلة واحدة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String offerBaggageWeight(String allowance, String weight) {
+    return '$allowance ($weight كجم)';
+  }
+
+  @override
+  String get offerConditionsUnknown => 'شروط التذكرة عند الحجز';
+
+  @override
+  String get offerNotChangeable => 'غير قابلة للتغيير';
+
+  @override
+  String get offerChanges => 'التغييرات';
+
+  @override
+  String get offerChangeable => 'قابلة للتغيير';
+
+  @override
+  String offerChangeableWithFee(String fee) {
+    return 'قابلة للتغيير · رسوم $fee';
+  }
+
+  @override
+  String get offerChangeableFeeOnRequest => 'قابلة للتغيير · الرسوم عند الطلب';
+
+  @override
+  String offerRefundableWithFee(String fee) {
+    return 'قابلة للاسترداد · رسوم $fee';
+  }
+
+  @override
+  String get offerRefundableFeeOnRequest => 'قابلة للاسترداد · الرسوم عند الطلب';
+
+  @override
+  String get offerRestrictions => 'القيود';
+
+  @override
+  String offerOperatedBy(String carrier) {
+    return 'تشغلها $carrier';
+  }
+
+  @override
+  String get offerFreeCancellation => 'إلغاء مجاني';
+
+  @override
+  String get offerNonRefundable => 'غير قابل للاسترداد';
+
+  @override
+  String get offerCancellationUnknown => 'شروط الإلغاء عند الحجز';
+
+  @override
+  String get offerPerStay => 'لكل إقامة';
+
+  @override
   String get offerSeats => 'المقاعد';
 
   @override
@@ -2020,7 +2171,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get locationPromptBlockedTitle => 'صلاحية الموقع مقفولة';
 
   @override
-  String get locationPromptBlockedBody => 'اسمح بالموقع لتوكي جو من إعدادات النظام عشان نقترح مطار الإقلاع.';
+  String get locationPromptBlockedBody => 'اسمح بالموقع لتوكي جو من إعدادات النظام عشان نحدد مدينتك ونعرض الإقامات القريبة منك.';
 
   @override
   String get locationPromptOpenSettings => 'فتح الإعدادات';
@@ -2029,7 +2180,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get locationPromptServiceOffTitle => 'خدمة الموقع مقفولة';
 
   @override
-  String get locationPromptServiceOffBody => 'فعّل خدمة الموقع عشان نقترح مطار الإقلاع.';
+  String get locationPromptServiceOffBody => 'فعّل خدمة الموقع عشان نحدد مدينتك ونعرض الإقامات القريبة منك.';
 
   @override
   String get locationPromptLocationSettings => 'إعدادات الموقع';
@@ -2325,4 +2476,121 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get flightCardViewOffer => 'عرض العرض والحجز';
+
+  @override
+  String get homeNearbyLocationTitle => 'فعّل الموقع لرؤية الإقامات القريبة';
+
+  @override
+  String get homeNearbyLocationBody => 'بنستخدم منطقتك ندور على فنادق قريبة منك فعلًا. موقعك الدقيق لا يتم تخزينه أبدًا.';
+
+  @override
+  String get homeNearbyEmptyTitle => 'لا توجد إقامات قريبة الآن';
+
+  @override
+  String get homeNearbyEmptyBody => 'حاول تاني بعد قوي أو اختر منطقة مختلفة.';
+
+  @override
+  String get homeNearbyErrorTitle => 'تعذر تحميل الإقامات القريبة';
+
+  @override
+  String get homeNearbyPromotionalNote => 'سعر ترويجي لليلة الواحدة خلال الـ 7 ليالي الجاية. السعر الفعلي يظهر بعد ما تختار التواريخ.';
+
+  @override
+  String homeNearbyRadius(String radius) {
+    return 'نطاق البحث $radius كم';
+  }
+
+  @override
+  String nearbyHotelDistanceFromYou(String distance) {
+    return '$distance كم منك';
+  }
+
+  @override
+  String nearbyHotelReviews(String count) {
+    return '$count تقييم';
+  }
+
+  @override
+  String get nearbyHotelSelectDates => 'اختر التواريخ';
+
+  @override
+  String get nearbyHotelCheckIn => 'تسجيل الوصول';
+
+  @override
+  String get nearbyHotelCheckOut => 'تسجيل المغادرة';
+
+  @override
+  String get nearbyHotelAdults => 'بالغين';
+
+  @override
+  String get nearbyHotelRooms => 'غرف';
+
+  @override
+  String get nearbyHotelSearchAvailability => 'تحقق من التوفر';
+
+  @override
+  String get nearbyHotelLiveResults => 'أسعار فعلية لتواريخك';
+
+  @override
+  String get nearbyHotelNoLiveOffer => 'لا يوجد عرض فعلي لهذا الفندق في التواريخ المحددة.';
+
+  @override
+  String get nearbyHotelPromotionalCaption => 'سعر ترويجي للاكتشاف (مش عرض حجز فعلي)';
+
+  @override
+  String get settingsCitySelection => 'اختيار المدينة';
+
+  @override
+  String get settingsCityNotSet => 'اختار مدينة';
+
+  @override
+  String get settingsCityLoading => 'بيتم التحميل…';
+
+  @override
+  String get settingsCityUnavailable => 'غير متاح';
+
+  @override
+  String get cityPickerTitle => 'اختار مدينتك';
+
+  @override
+  String get cityPickerSearch => 'ابحث عن مدينة أو بلد';
+
+  @override
+  String get cityPickerLoading => 'بيتم تحميل المدن…';
+
+  @override
+  String get cityPickerUnavailableTitle => 'المدن غير متاحة';
+
+  @override
+  String get cityPickerUnavailableBody => 'اتأكد من اتصالك وحاول تاني.';
+
+  @override
+  String get cityPickerRetry => 'حاول تاني';
+
+  @override
+  String get cityPickerEmptyTitle => 'مفيش مدن';
+
+  @override
+  String get cityPickerEmptyBody => 'جرّب بحث تاني.';
+
+  @override
+  String get cityPickerCurrent => 'الاختيار الحالي';
+
+  @override
+  String get locationCardTitle => 'فعّل الموقع لاكتشاف الفنادق والإقامات القريبة منك';
+
+  @override
+  String get locationCardBody => 'بنستخدم منطقتك نعرض لك إقامات حواليك. موقعك الدقيق لا يتم تخزينه أبدًا.';
+
+  @override
+  String get locationCardEnable => 'فعّل الموقع';
+
+  @override
+  String get locationCardNotNow => 'مش دلوقتي';
+
+  @override
+  String get locationCardOpenSettings => 'افتح الإعدادات';
+
+  @override
+  String get locationCardServicesOff => 'فعّل خدمات الموقع من إعدادات الجهاز.';
 }

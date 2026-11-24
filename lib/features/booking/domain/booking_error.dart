@@ -16,6 +16,12 @@ enum BookingErrorCode {
   providerError,
   duplicateRequest,
   capabilityUnsupported,
+  /// The provider booking/payment outcome is unknown and must be reconciled
+  /// before anything else happens. This is deliberately distinct from
+  /// [duplicateRequest] (a replay of the same request) and from
+  /// [providerError] (a definitive failure): nothing proves the booking
+  /// failed, so the customer must not retry the booking or pay again.
+  bookingOutcomeUnknown,
   unknownError,
 }
 
@@ -39,7 +45,16 @@ BookingErrorCode bookingErrorCodeFrom(ApiError error) {
     return BookingErrorCode.providerUnavailable;
   }
 
-  final code = _parseBody(error.message)?['code']?.toString();
+  final body = _parseBody(error.message);
+
+  // A 409 can mean several different things. The unknown-outcome surface is
+  // recognised from its structured details (and/or code) BEFORE the generic
+  // status fallback, so it can never collapse into `duplicateRequest`.
+  if (_isReconciliationPending(body)) {
+    return BookingErrorCode.bookingOutcomeUnknown;
+  }
+
+  final code = body?['code']?.toString();
   switch (code) {
     case 'offer_not_found':
       return BookingErrorCode.offerNotFound;
@@ -63,6 +78,8 @@ BookingErrorCode bookingErrorCodeFrom(ApiError error) {
       return BookingErrorCode.duplicateRequest;
     case 'capability_unsupported':
       return BookingErrorCode.capabilityUnsupported;
+    case 'booking_outcome_unknown':
+      return BookingErrorCode.bookingOutcomeUnknown;
   }
 
   switch (error.statusCode) {
@@ -83,10 +100,46 @@ BookingErrorCode bookingErrorCodeFrom(ApiError error) {
 }
 
 /// Builds a [BookingError] (code + human message) from a network failure.
-BookingError bookingErrorFrom(ApiError error) => BookingError(
-  bookingErrorCodeFrom(error),
-  error.message ?? 'Booking failed',
-);
+/// The backend's structured `details` (e.g. the latest price-change summary)
+/// are preserved so the funnel can show the exact changed amount/terms.
+BookingError bookingErrorFrom(ApiError error) {
+  final body = _parseBody(error.message);
+  final rawDetails = body?['details'];
+  final Map<String, dynamic> details = rawDetails is Map
+      ? Map<String, dynamic>.from(rawDetails)
+      : const <String, dynamic>{};
+  // The backend's structured body carries the customer-facing message. Prefer
+  // it over the raw JSON envelope so the funnel never shows transport bytes.
+  final rawMessage = body?['message'];
+  final String message = rawMessage is String && rawMessage.trim().isNotEmpty
+      ? rawMessage
+      : (error.message ?? 'Booking failed');
+  return BookingError(bookingErrorCodeFrom(error), message, details);
+}
+
+/// Whether the backend explicitly marked the outcome as pending reconciliation.
+///
+/// The canonical payload is `{code: 'booking_outcome_unknown', details: {
+/// status: 'reconciliation_pending', requiresReconciliation: true,
+/// retryable: false, operationStatus: 'unknown'}}`. The flags are checked too,
+/// so a future response that keeps the machine state but changes the code is
+/// still classified safely instead of being mistaken for a duplicate 409.
+bool _isReconciliationPending(Map<String, dynamic>? body) {
+  if (body == null) return false;
+  if (body['code']?.toString() == 'booking_outcome_unknown') return true;
+  if (body['status']?.toString() == 'reconciliation_pending') return true;
+  if (body['requiresReconciliation'] == true) return true;
+
+  final rawDetails = body['details'];
+  if (rawDetails is! Map) return false;
+  final details = rawDetails;
+  if (details['status']?.toString() == 'reconciliation_pending') return true;
+  if (details['requiresReconciliation'] == true) return true;
+  // An explicitly non-retryable unknown provider operation is the same state:
+  // there is no proof of failure, so nothing may be resubmitted.
+  return details['operationStatus']?.toString() == 'unknown' &&
+      details['retryable'] == false;
+}
 
 Map<String, dynamic>? _parseBody(String? message) {
   if (message == null || message.isEmpty) return null;

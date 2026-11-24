@@ -20,6 +20,9 @@ export type BookingErrorCode =
   | 'capability_unsupported'
   | 'provider_unavailable'
   | 'provider_error'
+  | 'booking_outcome_unknown'
+  | 'payment_required'
+  | 'payment_not_verified'
   | 'unknown_error';
 
 const STATUS_BY_CODE: Record<BookingErrorCode, number> = {
@@ -34,6 +37,16 @@ const STATUS_BY_CODE: Record<BookingErrorCode, number> = {
   capability_unsupported: HttpStatus.UNPROCESSABLE_ENTITY,
   provider_unavailable: HttpStatus.SERVICE_UNAVAILABLE,
   provider_error: HttpStatus.BAD_GATEWAY,
+  /**
+   * NOT a 2xx: the Flutter transport treats every 2xx as success and would
+   * falsely confirm the booking. 409 is a stable error surface that carries
+   * the `{code, message, details}` body; the client must not retry.
+   */
+  booking_outcome_unknown: HttpStatus.CONFLICT,
+  /** A verified customer payment is required before a provider booking. */
+  payment_required: HttpStatus.CONFLICT,
+  /** Payment evidence exists but does not prove this exact booking amount. */
+  payment_not_verified: HttpStatus.CONFLICT,
   unknown_error: HttpStatus.INTERNAL_SERVER_ERROR,
 };
 

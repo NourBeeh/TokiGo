@@ -14,6 +14,7 @@ import 'package:tokigo/core/widgets/step_progress.dart';
 import 'package:tokigo/core/widgets/sticky_cta_bar.dart';
 import 'package:tokigo/features/booking/application/providers/checkout_flow_providers.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
+import 'package:tokigo/core/ui/directional_icons.dart';
 
 /// Step 3 of the booking funnel — optional extras (bags, seats, meals).
 ///
@@ -92,7 +93,7 @@ class AddOnsPage extends ConsumerWidget {
             Expanded(
               child: AppButton(
                 label: l10n.continueAction,
-                trailingIcon: Icons.chevron_right_rounded,
+                trailingIcon: DirectionalIcons.chevron(context),
                 onPressed: () {
                   // No provider extras to carry: the selection is explicitly
                   // empty (the checkout keeps reading the same provider).

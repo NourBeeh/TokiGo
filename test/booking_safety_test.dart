@@ -14,6 +14,7 @@ import 'package:tokigo/features/booking/application/revalidate_booking_usecase.d
 import 'package:tokigo/features/booking/domain/booking_error.dart';
 import 'package:tokigo/features/booking/domain/booking_preparation.dart';
 import 'package:tokigo/features/booking/domain/booking_record.dart';
+import 'package:tokigo/features/booking/domain/price_change.dart';
 
 /// Phase 2P-Fix — deterministic safety tests for the booking confirm path.
 ///
@@ -28,6 +29,35 @@ const List<dynamic> _validTravelers = <dynamic>[
   <String, dynamic>{'firstName': 'Test', 'lastName': 'Guest', 'adult': true},
 ];
 
+PriceChangeConfirmation _change({
+  double previousPrice = 100,
+  double currentPrice = 175,
+  bool requiresAcceptance = true,
+  bool accepted = false,
+  String? decision,
+}) {
+  return PriceChangeConfirmation(
+    providerId: 'nuitee',
+    offerId: 'offer-c10',
+    offerType: 'hotel',
+    previousPrice: previousPrice,
+    currentPrice: currentPrice,
+    currency: 'USD',
+    priceDifference: currentPrice - previousPrice,
+    priceChangePercent: previousPrice == 0
+        ? null
+        : ((currentPrice - previousPrice) / previousPrice) * 100,
+    priceChanged: true,
+    termsChanged: false,
+    changedTerms: const <String>[],
+    termsVersion: 'terms-v1-safety',
+    requiresAcceptance: requiresAcceptance,
+    accepted: accepted,
+    decision: decision,
+    checkedAt: DateTime.utc(2026, 1, 2),
+  );
+}
+
 BookingRecord _record({
   String bookingId = 'bk-1',
   String offerId = 'offer-1',
@@ -35,6 +65,7 @@ BookingRecord _record({
   String searchId = 'search-1',
   double price = 100,
   BookingStatus status = BookingStatus.pending,
+  PriceChangeConfirmation? priceChange,
 }) {
   return BookingRecord(
     bookingId: bookingId,
@@ -52,6 +83,7 @@ BookingRecord _record({
     bookingReference: '',
     createdAt: DateTime.utc(2026, 1, 1),
     updatedAt: DateTime.utc(2026, 1, 1),
+    priceChange: priceChange,
   );
 }
 
@@ -550,7 +582,8 @@ void main() {
             bookingId: 'bk-c10',
             offerId: 'offer-c10',
             searchId: 'search-c10',
-            price: 100,
+            price: 175,
+            priceChange: _change(),
           ),
           preparation: _preparation(
             offerId: 'offer-c10',
@@ -564,8 +597,9 @@ void main() {
         await h.controller.confirm(travelers: _validTravelers);
 
         expect(repo.createCalls, isEmpty);
-        expect(h.controller.state.phase, BookingPhase.error);
+        expect(h.controller.state.phase, BookingPhase.priceChanged);
         expect(h.controller.state.errorCode, BookingErrorCode.priceChanged);
+        expect(h.controller.state.record?.priceChange?.currentPrice, 175);
 
         // Explicit acceptance is the only way past the gate.
         h.controller.state = _readyState(
@@ -574,6 +608,11 @@ void main() {
             offerId: 'offer-c10',
             searchId: 'search-c10',
             price: 175,
+            priceChange: _change(
+              requiresAcceptance: false,
+              accepted: true,
+              decision: 'accepted',
+            ),
           ),
           preparation: _preparation(
             offerId: 'offer-c10',

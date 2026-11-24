@@ -30,12 +30,25 @@ class FakeDuffelService {
     return {
       id: 'ord_1',
       booking_reference: 'ABC123',
-      status: 'confirmed',
       total_amount: '800.00',
       total_currency: 'USD',
+      payment_status: {
+        awaiting_payment: false,
+        paid_at: '2026-01-01T00:00:00Z',
+      },
     };
   }
 }
+
+/** The server-authoritative payment binding every successful call needs. */
+const AUTHORITATIVE_PAYMENT = {
+  bookingId: 'bk_1',
+  amount: 800,
+  currency: 'USD',
+  amountText: '800.00',
+  priceVersion: 'pv_1',
+  paymentAttemptId: 'pay_1',
+} as const;
 
 class FakeNuiteeFlightService {
   prebookFlightCalls: Array<Record<string, unknown>> = [];
@@ -115,6 +128,7 @@ describe('Provider isolation — Duffel payload', () => {
         duffelSupportedDocumentTypes: ['passport'],
       },
       travelers: [TRAVELER],
+      ...AUTHORITATIVE_PAYMENT,
     });
 
     expect(result.success).toBe(true);
@@ -142,6 +156,7 @@ describe('Provider isolation — Duffel payload', () => {
         duffelSupportedDocumentTypes: ['passport'],
       },
       travelers: [TRAVELER],
+      ...AUTHORITATIVE_PAYMENT,
     });
 
     const sent = fake.createOrderCalls[0].passengers[0];

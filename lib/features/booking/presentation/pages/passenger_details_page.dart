@@ -15,6 +15,7 @@ import 'package:tokigo/features/booking/application/providers/checkout_flow_prov
 import 'package:tokigo/features/search/application/controllers/flight_search_controller.dart';
 import 'package:tokigo/features/search/application/providers/offer_selection_provider.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
+import 'package:tokigo/core/ui/directional_icons.dart';
 
 /// Step 2 of the booking funnel — traveller/guest details.
 ///
@@ -99,9 +100,9 @@ class _PassengerDetailsPageState extends ConsumerState<PassengerDetailsPage> {
     final emailOk = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(_email.text);
     final phoneOk = _phone.text.trim().length >= 8;
     // LiteAPI requires the calling code separately (1-3 digits, no '+').
-    final countryCodeOk = RegExp(r'^\d{1,3}$').hasMatch(
-      _phoneCountryCode.text.trim(),
-    );
+    final countryCodeOk = RegExp(
+      r'^\d{1,3}$',
+    ).hasMatch(_phoneCountryCode.text.trim());
     final travelersOk = _travelers.every((t) => t.isValid);
     // An infant must name the adult it travels with, and that reference must
     // still resolve to an adult in the current list.
@@ -168,13 +169,18 @@ class _PassengerDetailsPageState extends ConsumerState<PassengerDetailsPage> {
                           adultLabels: <int, String>{
                             for (int j = 0; j < _travelers.length; j++)
                               if (_travelers[j].passengerType == 'adult')
-                                j: _travelers[j].firstName.text.trim().isNotEmpty
+                                j:
+                                    _travelers[j].firstName.text
+                                        .trim()
+                                        .isNotEmpty
                                     ? _travelers[j].firstName.text.trim()
                                     : '${l10n.passengerDetails} ${j + 1}',
                           },
-                          accompanyingAdultError: _showErrors &&
-                                  !_travelers[i]
-                                      .hasValidAccompanyingAdult(_travelers)
+                          accompanyingAdultError:
+                              _showErrors &&
+                                  !_travelers[i].hasValidAccompanyingAdult(
+                                    _travelers,
+                                  )
                               ? l10n.bookingAccompanyingAdultRequired
                               : null,
                         ),
@@ -193,9 +199,7 @@ class _PassengerDetailsPageState extends ConsumerState<PassengerDetailsPage> {
                       decoration: BoxDecoration(
                         color: context.tokigoColors.surface,
                         borderRadius: BorderRadius.circular(AppRadius.lg),
-                        border: Border.all(
-                          color: context.tokigoColors.outline,
-                        ),
+                        border: Border.all(color: context.tokigoColors.outline),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,7 +257,7 @@ class _PassengerDetailsPageState extends ConsumerState<PassengerDetailsPage> {
             Expanded(
               child: AppButton(
                 label: l10n.continueAction,
-                trailingIcon: Icons.chevron_right_rounded,
+                trailingIcon: DirectionalIcons.chevron(context),
                 onPressed: _continue,
               ),
             ),
@@ -396,8 +400,7 @@ class _TravelerCardState extends State<_TravelerCard> {
               for (final String title in TravelerForm.titleOptions)
                 title: _titleLabel(title),
             },
-            errorText:
-                widget.showErrors && controller.title.text.isEmpty
+            errorText: widget.showErrors && controller.title.text.isEmpty
                 ? l10n.bookingRequiredField
                 : null,
             onChanged: (String? value) =>
@@ -416,7 +419,8 @@ class _TravelerCardState extends State<_TravelerCard> {
             fieldKey: Key('traveler-${widget.index}-gender'),
             label: 'Gender',
             controller: controller.gender,
-            errorText: widget.showErrors && controller.gender.text.trim().isEmpty
+            errorText:
+                widget.showErrors && controller.gender.text.trim().isEmpty
                 ? l10n.bookingRequiredField
                 : null,
           ),
@@ -436,9 +440,11 @@ class _TravelerCardState extends State<_TravelerCard> {
             label: l10n.bookingEmailLabel,
             controller: controller.email,
             keyboardType: TextInputType.emailAddress,
-            errorText: widget.showErrors &&
-                    !_TravelerController.emailPattern
-                        .hasMatch(controller.email.text)
+            errorText:
+                widget.showErrors &&
+                    !_TravelerController.emailPattern.hasMatch(
+                      controller.email.text,
+                    )
                 ? l10n.bookingValidEmail
                 : null,
           ),
@@ -462,8 +468,7 @@ class _TravelerCardState extends State<_TravelerCard> {
               for (final String type in TravelerForm.documentTypeOptions)
                 type: _documentTypeLabel(l10n, type),
             },
-            errorText:
-                widget.showErrors && controller.documentType.text.isEmpty
+            errorText: widget.showErrors && controller.documentType.text.isEmpty
                 ? l10n.bookingRequiredField
                 : null,
             onChanged: (String? value) =>
@@ -475,7 +480,8 @@ class _TravelerCardState extends State<_TravelerCard> {
             label: l10n.bookingDocumentNumberLabel,
             controller: controller.documentNumber,
             errorText:
-                widget.showErrors && controller.documentNumber.text.trim().isEmpty
+                widget.showErrors &&
+                    controller.documentNumber.text.trim().isEmpty
                 ? l10n.bookingRequiredField
                 : null,
           ),
@@ -486,7 +492,7 @@ class _TravelerCardState extends State<_TravelerCard> {
             controller: controller.documentIssueCountry,
             errorText:
                 widget.showErrors &&
-                controller.documentIssueCountry.text.trim().isEmpty
+                    controller.documentIssueCountry.text.trim().isEmpty
                 ? l10n.bookingRequiredField
                 : null,
           ),
@@ -496,7 +502,8 @@ class _TravelerCardState extends State<_TravelerCard> {
             label: l10n.bookingDocumentExpiryLabel,
             controller: controller.documentExpiry,
             errorText:
-                widget.showErrors && controller.documentExpiry.text.trim().isEmpty
+                widget.showErrors &&
+                    controller.documentExpiry.text.trim().isEmpty
                 ? l10n.bookingRequiredField
                 : null,
           ),
@@ -662,9 +669,9 @@ class _ContactFields extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final emailOk = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email.text);
-    final countryCodeOk = RegExp(r'^\d{1,3}$').hasMatch(
-      phoneCountryCode.text.trim(),
-    );
+    final countryCodeOk = RegExp(
+      r'^\d{1,3}$',
+    ).hasMatch(phoneCountryCode.text.trim());
     return Column(
       children: <Widget>[
         _LabeledField(

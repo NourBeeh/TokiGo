@@ -3,7 +3,6 @@
   "appTitle": "TokiGo",
   "navHome": "الرئيسية",
   "navSearch": "بحث",
-  "navGroups": "مجموعات",
   "navExplore": "استكشف",
   "navAi": "المساعد الذكي",
   "bag": "رحلاتي",
@@ -133,11 +132,8 @@
   "searchCars": "تأجير سيارات",
   "searchPackages": "إجازات",
   "homeNavActivities": "الباقات",
-  "homeNavGroups": "مجموعات",
   "homeNavTrips": "رحلاتي",
   "searchTransfers": " transfére المطار",
-  "groupsTitle": "مجموعات",
-  "groupsSubtitle": "مجموعات",
   "viewAll": "عرض الكل",
   "continueAsGuest": "الاستكشاف كضيف",
   "signIn": "تسجيل الدخول",
@@ -336,6 +332,22 @@
   "bookingStepReady": "جاهز للتأكيد",
   "bookingPriceChanged": "تغيّر السعر",
   "bookingAcceptNewPrice": "قبول السعر الجديد",
+  "bookingUpdatePrice": "تحديث السعر",
+  "bookingDeclinePriceChange": "رفض",
+  "bookingChooseAnotherOffer": "اختر عرضًا آخر",
+  "bookingPriceChangeDeclined": "لقد رفضت السعر المحدث. اختر عرضًا آخر للمتابعة.",
+  "bookingPreviousPrice": "السعر السابق",
+  "bookingUpdatedPrice": "السعر المحدث",
+  "bookingPriceDifference": "الفرق",
+  "bookingConditionsChanged": "تغيّرت الشروط",
+  "bookingNoChargeYet": "لم يتم إجراء أي حجز بالسعر المحدث.",
+  "bookingTermFareConditions": "شروط التذكرة",
+  "bookingTermBaggage": "وزن الأمتعة المسموح",
+  "bookingTermFareBrand": "نوع التعرفة",
+  "bookingTermCabin": "درجة السفر",
+  "bookingTermItinerary": "مسار الرحلة",
+  "bookingTermCancellation": "سياسة الإلغاء",
+  "bookingTermBoard": "نظام الوجبات",
   "bookingPrepare": "تجهيز الحجز",
   "bookingValidating": "جارٍ التحقق…",
   "bookingValidatePrice": "تحقق من السعر",
@@ -382,12 +394,12 @@
   "bookingDocumentNumberLabel": "رقم المستند",
   "bookingDocumentIssueCountryLabel": "بلد الإصدار (ISO)",
   "bookingDocumentExpiryLabel": "تاريخ الانتهاء (YYYY-MM-DD)",
-  "groupsCreateTrip": "أنشئ رحلة جماعية",
-  "groupsPlanTogether": "خططوا معًا، وقرروا معًا",
   "carIdleBody": "قارن عروض تأجير السيارات في نقاط الاستلام حول العالم",
   "carNoMatchesBody": "جرّب توسيع نطاق السعر أو مسح عوامل التصفية",
   "carNoCarsBody": "جرّب مكانًا أو تواريخ أخرى",
   "offlineShowingCached": "أنت غير متصل بالإنترنت — نعرض آخر بيانات تم حفظها",
+  "homePriceUnverified": "السعر غير مؤكد",
+  "homePriceUpdateFailed": "تعذّر تحديث السعر. تحقّق من اتصال الإنترنت وحاول مرة أخرى.",
   "homeCompleteYourTrip": "أكمل رحلتك",
   "homeFinishWhatYouStarted": "أكمل ما بدأته",
   "homeForYourTripTo": "لرحلة إلى {destination}",
@@ -433,8 +445,6 @@
     }
   },
   "wishlistExploreStays": "استكشف الفنادق",
-  "groupsEmptyTitle": "الرحلات الجماعية قادمة قريبًا",
-  "groupsEmptyBody": "إنشاء رحلة ودعوة الأصدقاء وتقسيم الخطة هيتفتحوا هنا أول ما يتم ربط خدمات الرحلات الجماعية.",
   "exploreCitiesTitle": "المدن",
   "createNewTrip": "أنشئ رحلة جديدة",
   "tripBuilderTitle": "خطط رحلتك",
@@ -461,6 +471,8 @@
   "paymentUnavailableBody": "الدفع مش متاح دلوقتي، فمفيش حجز اتعمل. جرّب تاني بعد شوية.",
   "paymentPendingBody": "البنك لسه بيتحقق من الدفع. الحجز هيتأكد أول ما الدفع يكتمل.",
   "bookingConfirmFailedBody": "الدفع مكتملش، فالحجز متأكّدش. مفيش حجز اتعمل.",
+  "bookingOutcomePendingTitle": "الحجز قيد التحقق",
+  "bookingOutcomePendingBody": "المزوّد لسه ما أكّدش الحجز ده. متحاولش تحجز تاني ولا تدفع تاني. إحنا بنراجع الحالة النهائية، وهتظهر في رحلاتي بس بعد ما تتأكد.",
   "bookingConfirmLabel": "تأكيد الحجز",
   "payAmount": "ادفع {amount}",
   "confirmationNoneTitle": "مفيش حجز مؤكَّد لعرضه",
@@ -711,6 +723,89 @@
   "offerRefundableYes": "نعم",
   "offerRevalidated": "يُعاد تأكيده عند الحجز",
   "offerRoom": "الغرفة",
+  "offerChooseRoom": "اختر غرفة",
+  "offerChooseFare": "اختر نوع التذكرة",
+  "offerFareOption": "التذكرة {number}",
+  "@offerFareOption": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "offerFareCount": "{count, plural, =1{سعر واحد} two{سعران} few{{count} أسعار} many{{count} سعرًا} other{{count} سعر}}",
+  "@offerFareCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offerBaggageCabin": "حقيبة يد",
+  "offerBaggageChecked": "حقيبة مسجّلة",
+  "offerBaggageEquipment": "معدات رياضية",
+  "offerBaggageCabinCount": "{count, plural, =1{حقيبة يد واحدة} two{حقيبتا يد} few{{count} حقائب يد} many{{count} حقيبة يد} other{{count} حقيبة يد}}",
+  "@offerBaggageCabinCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offerBaggageCheckedCount": "{count, plural, =1{حقيبة مسجّلة واحدة} two{حقيبتان مسجّلتان} few{{count} حقائب مسجّلة} many{{count} حقيبة مسجّلة} other{{count} حقيبة مسجّلة}}",
+  "@offerBaggageCheckedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offerBaggageWeight": "{allowance} ({weight} كجم)",
+  "@offerBaggageWeight": {
+    "placeholders": {
+      "allowance": {
+        "type": "String"
+      },
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "offerConditionsUnknown": "شروط التذكرة عند الحجز",
+  "offerNotChangeable": "غير قابلة للتغيير",
+  "offerChanges": "التغييرات",
+  "offerChangeable": "قابلة للتغيير",
+  "offerChangeableWithFee": "قابلة للتغيير · رسوم {fee}",
+  "@offerChangeableWithFee": {
+    "placeholders": {
+      "fee": {
+        "type": "String"
+      }
+    }
+  },
+  "offerChangeableFeeOnRequest": "قابلة للتغيير · الرسوم عند الطلب",
+  "offerRefundableWithFee": "قابلة للاسترداد · رسوم {fee}",
+  "@offerRefundableWithFee": {
+    "placeholders": {
+      "fee": {
+        "type": "String"
+      }
+    }
+  },
+  "offerRefundableFeeOnRequest": "قابلة للاسترداد · الرسوم عند الطلب",
+  "offerRestrictions": "القيود",
+  "offerOperatedBy": "تشغلها {carrier}",
+  "@offerOperatedBy": {
+    "placeholders": {
+      "carrier": {
+        "type": "String"
+      }
+    }
+  },
+  "offerFreeCancellation": "إلغاء مجاني",
+  "offerNonRefundable": "غير قابل للاسترداد",
+  "offerCancellationUnknown": "شروط الإلغاء عند الحجز",
+  "offerPerStay": "لكل إقامة",
   "offerSeats": "المقاعد",
   "offerStars": "النجوم",
   "offerTaxesFees": "الضرائب والرسوم",
@@ -845,10 +940,10 @@
   "locationPromptAllow": "تفعيل الموقع",
   "locationPromptNotNow": "مش دلوقتي",
   "locationPromptBlockedTitle": "صلاحية الموقع مقفولة",
-  "locationPromptBlockedBody": "اسمح بالموقع لتوكي جو من إعدادات النظام عشان نقترح مطار الإقلاع.",
+  "locationPromptBlockedBody": "اسمح بالموقع لتوكي جو من إعدادات النظام عشان نحدد مدينتك ونعرض الإقامات القريبة منك.",
   "locationPromptOpenSettings": "فتح الإعدادات",
   "locationPromptServiceOffTitle": "خدمة الموقع مقفولة",
-  "locationPromptServiceOffBody": "فعّل خدمة الموقع عشان نقترح مطار الإقلاع.",
+  "locationPromptServiceOffBody": "فعّل خدمة الموقع عشان نحدد مدينتك ونعرض الإقامات القريبة منك.",
   "locationPromptLocationSettings": "إعدادات الموقع",
   "locationChooseCountry": "اختار بلدك يدويًا",
   "locationCountrySaveFailed": "تعذر حفظ البلد. حاول مرة أخرى.",
@@ -915,5 +1010,57 @@
   "offerLayoverLabel": "التوقف",
   "flightCardShowDetails": "تفاصيل الرحلة",
   "flightCardHideDetails": "إخفاء التفاصيل",
-  "flightCardViewOffer": "عرض العرض والحجز"
+  "flightCardViewOffer": "عرض العرض والحجز",
+  "homeNearbyLocationTitle": "فعّل الموقع لرؤية الإقامات القريبة",
+  "homeNearbyLocationBody": "بنستخدم منطقتك ندور على فنادق قريبة منك فعلًا. موقعك الدقيق لا يتم تخزينه أبدًا.",
+  "homeNearbyEmptyTitle": "لا توجد إقامات قريبة الآن",
+  "homeNearbyEmptyBody": "حاول تاني بعد قوي أو اختر منطقة مختلفة.",
+  "homeNearbyErrorTitle": "تعذر تحميل الإقامات القريبة",
+  "homeNearbyPromotionalNote": "سعر ترويجي لليلة الواحدة خلال الـ 7 ليالي الجاية. السعر الفعلي يظهر بعد ما تختار التواريخ.",
+  "homeNearbyRadius": "نطاق البحث {radius} كم",
+  "@homeNearbyRadius": {
+    "placeholders": {
+      "radius": { "type": "String" }
+    }
+  },
+  "nearbyHotelDistanceFromYou": "{distance} كم منك",
+  "@nearbyHotelDistanceFromYou": {
+    "placeholders": {
+      "distance": { "type": "String" }
+    }
+  },
+  "nearbyHotelReviews": "{count} تقييم",
+  "@nearbyHotelReviews": {
+    "placeholders": {
+      "count": { "type": "String" }
+    }
+  },
+  "nearbyHotelSelectDates": "اختر التواريخ",
+  "nearbyHotelCheckIn": "تسجيل الوصول",
+  "nearbyHotelCheckOut": "تسجيل المغادرة",
+  "nearbyHotelAdults": "بالغين",
+  "nearbyHotelRooms": "غرف",
+  "nearbyHotelSearchAvailability": "تحقق من التوفر",
+  "nearbyHotelLiveResults": "أسعار فعلية لتواريخك",
+  "nearbyHotelNoLiveOffer": "لا يوجد عرض فعلي لهذا الفندق في التواريخ المحددة.",
+  "nearbyHotelPromotionalCaption": "سعر ترويجي للاكتشاف (مش عرض حجز فعلي)",
+  "settingsCitySelection": "اختيار المدينة",
+  "settingsCityNotSet": "اختار مدينة",
+  "settingsCityLoading": "بيتم التحميل…",
+  "settingsCityUnavailable": "غير متاح",
+  "cityPickerTitle": "اختار مدينتك",
+  "cityPickerSearch": "ابحث عن مدينة أو بلد",
+  "cityPickerLoading": "بيتم تحميل المدن…",
+  "cityPickerUnavailableTitle": "المدن غير متاحة",
+  "cityPickerUnavailableBody": "اتأكد من اتصالك وحاول تاني.",
+  "cityPickerRetry": "حاول تاني",
+  "cityPickerEmptyTitle": "مفيش مدن",
+  "cityPickerEmptyBody": "جرّب بحث تاني.",
+  "cityPickerCurrent": "الاختيار الحالي",
+  "locationCardTitle": "فعّل الموقع لاكتشاف الفنادق والإقامات القريبة منك",
+  "locationCardBody": "بنستخدم منطقتك نعرض لك إقامات حواليك. موقعك الدقيق لا يتم تخزينه أبدًا.",
+  "locationCardEnable": "فعّل الموقع",
+  "locationCardNotNow": "مش دلوقتي",
+  "locationCardOpenSettings": "افتح الإعدادات",
+  "locationCardServicesOff": "فعّل خدمات الموقع من إعدادات الجهاز."
 }

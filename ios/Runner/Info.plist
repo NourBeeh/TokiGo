@@ -100,9 +100,7 @@
 			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
 		<key>NSLocationWhenInUseUsageDescription</key>
-		<string>TokiGo uses your location to suggest a nearby departure airport.</string>
-		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-		<string>TokiGo uses your location to suggest a nearby departure airport.</string>
+		<string>TokiGo uses your location to find your city and show stays near you.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>TokiGo lets you choose a photo from your library for your profile picture.</string>
 		<key>NSMicrophoneUsageDescription</key>

@@ -1,53 +1,34 @@
 import '../../domain/models/home/home_section.dart';
-import '../../domain/models/home/home_item.dart';
 import '../../../core/network/api_result.dart';
+import '../../../features/home/domain/promotional_stay.dart';
 
-/// The freshness state of a cached Home snapshot, as the data layer reports it.
-/// This is a plain enum (no classes, no factories) so it can be used as a
-/// type argument in the `snapshotState` contract method.
-enum SnapshotState { fresh, stale, unavailable }
-
+/// The Home data contract.
+///
+/// Only two things remain: the backend destination feed used by the Explore
+/// Cities page, and the promotional Nearby Stays cache/fetch. The old Home
+/// snapshot, recommended-rail and price-verification methods are gone.
 abstract interface class HomeRepository {
+  /// Backend-published destination sections (Explore Cities page).
   Future<ApiResult<List<HomeSection>>> getHomeSections();
-  Future<ApiResult<List<HomeItem>>> getRecommendedHotels({
-    int limit = 6,
 
-    /// ISO-2 country the rail should be built for. Omitted → the backend falls
-    /// back to the signed-in profile's country, then to the launch market.
-    /// Every provider query needs the city's country; without it Nuitee
-    /// answers with an empty list (a false "no availability").
-    String? countryCode,
+  /// Promotional Nearby Stays (R5). Returns null when no cached payload
+  /// exists. Implementations must not throw.
+  Future<NearbyStaysResponse?> readCachedNearbyStays();
+
+  /// Replaces the promotional Nearby Stays cache (best-effort; never throws).
+  Future<void> writeCachedNearbyStays(NearbyStaysResponse response);
+
+  /// Fetches fresh promotional Nearby Stays from the backend. A null
+  /// latitude/longitude/city means "no usable center": the backend answers
+  /// `locationRequired` instead of a nationwide list.
+  Future<ApiResult<NearbyStaysResponse>> fetchNearbyStays({
+    double? latitude,
+    double? longitude,
+    double? accuracy,
+    String? cityId,
+    String? city,
+    String? country,
     String languageCode = 'en',
-
-    /// Explicit display currency (ISO-4217) chosen by the traveller. Null =
-    /// the backend applies the market currency (EGP/SAR/AED, else USD).
     String? currency,
   });
-  Future<ApiResult<void>> refresh();
-
-  /// Reads the audience-scoped persistent Home snapshot (Phase 1A — Instant
-  /// Home) from local storage without touching the network. Returns null when
-  /// no snapshot exists for [audience]; never returns another audience's
-  /// snapshot. Implementations must not throw.
-  Future<List<HomeSection>?> readHomeSnapshot({required String audience});
-
-  /// Removes the audience's persisted Home snapshot (best-effort; never
-  /// throws). Called when the backend confirms the feed is legitimately EMPTY
-  /// so a stale snapshot (e.g. legacy fake sections) can never resurface on
-  /// cold starts or offline.
-  Future<void> clearHomeSnapshot({required String audience});
-
-  /// Persists network-confirmed sections as the audience's final Home
-  /// snapshot (best-effort; storage failures must never throw).
-  Future<void> saveHomeSnapshot(
-    List<HomeSection> sections, {
-    required String audience,
-  });
-
-  /// Reports whether the cached Home snapshot for [audience] is fresh, stale,
-  /// or unavailable. A snapshot is fresh within [HomeCacheConfig.ttl] of
-  /// `savedAt`; it is stale when it is older than the TTL or when the envelope
-  /// lacks a parseable `savedAt`; it is unavailable when no snapshot exists.
-  /// Implementations must not throw.
-  Future<SnapshotState> snapshotState({required String audience});
 }

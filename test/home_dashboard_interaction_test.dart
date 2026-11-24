@@ -7,12 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
-import 'package:tokigo/core/network/api_result.dart';
-import 'package:tokigo/core/repositories/contracts/home_repository.dart';
 import 'package:tokigo/core/theme/app_theme.dart';
 import 'package:tokigo/features/home/domain/home_action.dart';
-import 'package:tokigo/features/home/domain/home_composer.dart';
-import 'package:tokigo/features/home/presentation/home_controller.dart';
 import 'package:tokigo/features/home/presentation/pages/home_page.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_top_bar.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart';
@@ -55,69 +51,12 @@ List<HomeItem> _recommendedHotels() => const <HomeItem>[
 ];
 
 /// A repository that serves the dashboard without a real HTTP request.
-class _DashboardRepository implements HomeRepository {
-  _DashboardRepository({this.sections, this.hotels});
-
-  final List<HomeSection>? sections;
-  final List<HomeItem>? hotels;
-
-  @override
-  Future<List<HomeSection>?> readHomeSnapshot({
-    required String audience,
-  }) async => null;
-
-  @override
-  Future<void> clearHomeSnapshot({required String audience}) async {}
-
-  @override
-  Future<void> saveHomeSnapshot(
-    List<HomeSection> sections, {
-    required String audience,
-  }) async {}
-
-  @override
-  Future<ApiResult<List<HomeSection>>> getHomeSections() async =>
-      ApiResult<List<HomeSection>>.success(sections ?? _sections());
-
-  @override
-  Future<ApiResult<List<HomeItem>>> getRecommendedHotels({
-    int limit = 6,
-    String? countryCode,
-    String languageCode = 'en',
-    String? currency,
-  }) async => ApiResult<List<HomeItem>>.success(hotels ?? _recommendedHotels());
-
-  @override
-  Future<ApiResult<void>> refresh() async =>
-      const ApiResult<void>.success(null);
-
-  @override
-  Future<SnapshotState> snapshotState({required String audience}) async =>
-      SnapshotState.unavailable;
-}
-
-HomeController _controller({
-  List<HomeSection>? sections,
-  List<HomeItem>? hotels,
-}) => HomeController(
-  _DashboardRepository(sections: sections, hotels: hotels),
-  audience: 'anon',
-  contextBuilder: (_) async =>
-      const HomeCompositionContext(userState: HomeUserState.freshAnonymous),
-  liveValidation: null,
-  countryCode: null,
-  languageCode: null,
-  currencyCode: null,
-);
-
 Widget _app({
   required GoRouter router,
   Locale locale = const Locale('en'),
-  HomeController? controller,
 }) {
   return ProviderScope(
     overrides: [
-      homeControllerProvider.overrideWith((ref) => controller ?? _controller()),
       geoCountryProvider.overrideWith((ref) async => null),
     ],
     child: MaterialApp.router(
@@ -172,10 +111,6 @@ GoRouter _router() {
           GoRoute(
             path: 'packages',
             builder: (context, state) => _sectionPlaceholder('packages'),
-          ),
-          GoRoute(
-            path: 'groups',
-            builder: (context, state) => _sectionPlaceholder('groups'),
           ),
         ],
       ),

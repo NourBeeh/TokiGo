@@ -28,6 +28,7 @@ import { PaymentAttempt } from '../../database/entities/payment-attempt.entity';
 import { ProcessedWebhook } from '../../database/entities/processed_webhook.entity';
 import { InvalidPaymentAttemptTransitionError } from './payment-attempt.state';
 import { PaymentIntent } from './payment.gateway';
+import { isProductionRuntime } from '../../common/runtime/runtime';
 
 /** How long a concurrent retry waits for the winning request's gateway ref. */
 const CLAIM_WAIT_MS = 1000;
@@ -40,6 +41,27 @@ const CLAIM_POLL_MS = 50;
  * JSON round trip; anything within one cent is the same money.
  */
 const MONEY_TOLERANCE = 0.01;
+
+/**
+ * Booking states in which a customer payment may still be completed. A
+ * confirmed booking must never be charged again, an unresolved provider
+ * outcome must not take more money, and an expired/cancelled booking has no
+ * payable offer.
+ */
+const PAYABLE_BOOKING_STATUSES = ['prepared', 'revalidated', 'failed'] as const;
+
+/**
+ * Booking states in which an ADMIN may refund a captured customer payment.
+ * `confirming` / `confirmed` / `reconciliation_pending` are excluded because a
+ * refund while a provider booking may be live would leave an unpaid booking.
+ */
+const REFUNDABLE_BOOKING_STATUSES = [
+  'prepared',
+  'revalidated',
+  'expired',
+  'cancelled',
+  'failed',
+] as const;
 
 /** The payable amount and currency, derived from trusted server-side data. */
 interface ServerPricing {
@@ -109,6 +131,32 @@ export class PaymentService {
 
     const booking = await this.requireOwnedBooking(input.bookingId, userId);
 
+    // Booking-outcome safety: never create a payment intent for a booking
+    // whose provider outcome is unknown/in progress, or that is already
+    // confirmed. A retry of the checkout must not produce a second charge.
+    if (
+      booking.status === 'reconciliation_pending' ||
+      booking.status === 'confirming' ||
+      booking.status === 'confirmed'
+    ) {
+      return {
+        status: 'UNKNOWN' as const,
+        reason:
+          booking.status === 'reconciliation_pending'
+            ? 'booking_outcome_unknown'
+            : booking.status === 'confirming'
+              ? 'booking_confirmation_in_progress'
+              : 'booking_already_confirmed',
+        bookingId: booking.id,
+        bookingStatus: booking.status,
+        retryable: false,
+      };
+    }
+
+    // Expired/cancelled bookings have no payable offer left. `failed` stays
+    // payable because a definitive provider rejection may be retried.
+    this.assertBookingPayable(booking);
+
     // The payable amount is derived from the durable booking row, never from
     // the request. `authoritativePrice` / `currency` are written only by
     // provider revalidation in BookingsService, so they are the trusted
@@ -121,18 +169,27 @@ export class PaymentService {
     // both are rejected, and the charge always uses the server value.
     this.assertQuoteMatchesServerPricing(input, pricing);
 
+    // A payment may only settle the EXACT commercial state the customer
+    // accepted. Without an accepted version there is no trustworthy amount to
+    // charge — a pending price change clears it.
+    const priceVersion = this.requireBookingPriceVersion(booking);
+
     const { attempt, created } = await this.attempts.claim({
       userId: booking.userId,
       bookingId: booking.id,
       idempotencyKey: input.idempotencyKey,
       amount: pricing.amount,
       currency: pricing.currency,
+      priceVersion,
       gatewayId: gateway.gatewayId,
     });
 
     if (!created) {
       // A retry (or a race loser) with the same key resolves to the SAME
-      // durable attempt. Never create a second one, never charge twice.
+      // durable attempt. Never create a second one, never charge twice — but
+      // also never let an attempt created for an older price settle this
+      // booking.
+      this.assertAttemptMatchesBooking(attempt, booking, pricing, priceVersion);
       return this.resolveExistingAttempt(gateway.gatewayId, attempt);
     }
 
@@ -196,6 +253,110 @@ export class PaymentService {
       );
     }
     return { amount, currency };
+  }
+
+  /** The accepted price version, or a hard stop when none is recorded. */
+  private requireBookingPriceVersion(booking: Booking): string {
+    if (
+      typeof booking.priceVersion !== 'string' ||
+      booking.priceVersion.length === 0
+    ) {
+      throw this.priceChanged(
+        'No accepted price version is recorded for this booking. Review the current price before paying.',
+      );
+    }
+    return booking.priceVersion;
+  }
+
+  /**
+   * An existing attempt may only be reused when it was created for this exact
+   * booking, user, amount, currency and accepted price version. Otherwise the
+   * caller must start a NEW attempt (new idempotency key) — silently reusing a
+   * cheaper attempt is forbidden.
+   */
+  private assertAttemptMatchesBooking(
+    attempt: PaymentAttempt,
+    booking: Booking,
+    pricing: ServerPricing,
+    priceVersion: string,
+  ): void {
+    if (
+      attempt.bookingId !== booking.id ||
+      attempt.userId !== booking.userId ||
+      attempt.currency !== pricing.currency ||
+      Math.abs(attempt.amount - pricing.amount) > MONEY_TOLERANCE ||
+      attempt.priceVersion !== priceVersion
+    ) {
+      throw this.priceChanged(
+        'The booking price changed; start a new payment attempt with a new idempotency key.',
+      );
+    }
+  }
+
+  private priceChanged(message: string): ConflictException {
+    return new ConflictException({
+      statusCode: 409,
+      code: 'PRICE_CHANGED',
+      error: 'PRICE_CHANGED',
+      message,
+    });
+  }
+
+  private paymentNotVerified(message: string): ConflictException {
+    return new ConflictException({
+      statusCode: 409,
+      code: 'PAYMENT_NOT_VERIFIED',
+      error: 'PAYMENT_NOT_VERIFIED',
+      message,
+    });
+  }
+
+  private assertPaymentMethodAllowed(method: string): void {
+    // `CARD_SUCCESS` is a deterministic mock instruction, not payment evidence.
+    // It must never be accepted as a production payment method.
+    if (isProductionRuntime() && method === 'CARD_SUCCESS') {
+      throw new BadRequestException({
+        statusCode: 400,
+        code: 'TEST_PAYMENT_METHOD_FORBIDDEN',
+        error: 'TEST_PAYMENT_METHOD_FORBIDDEN',
+        message:
+          'CARD_SUCCESS is a test-only payment method and is not accepted in production.',
+      });
+    }
+  }
+
+  /** A payment may only be completed while the booking is still payable. */
+  private assertBookingPayable(booking: Booking): void {
+    if (
+      !(PAYABLE_BOOKING_STATUSES as readonly string[]).includes(booking.status)
+    ) {
+      throw new ConflictException({
+        statusCode: 409,
+        code: 'BOOKING_NOT_PAYABLE',
+        error: 'BOOKING_NOT_PAYABLE',
+        message: `Booking cannot be paid in status '${booking.status}'.`,
+      });
+    }
+  }
+
+  private assertAdmin(actorRole: string | undefined): void {
+    if (actorRole !== 'admin') {
+      throw new ForbiddenException('Admin access required.');
+    }
+  }
+
+  /** Sum of successful CUSTOMER refunds already recorded for an attempt. */
+  private async refundedTotal(attemptId: string): Promise<number> {
+    const rows = await this.ledger.forAttempt(attemptId);
+    const total = rows
+      .filter(
+        row =>
+          row.leg === 'CUSTOMER' &&
+          row.type === 'refund' &&
+          row.status === 'succeeded',
+      )
+      .reduce((sum, row) => sum + row.amount, 0);
+    return Math.round(total * 100) / 100;
   }
 
   /**
@@ -353,6 +514,10 @@ export class PaymentService {
     }
     this.assertOwnership(attempt.userId, userId, attempt.bookingId, input.bookingId);
 
+    // `CARD_SUCCESS` is a deterministic mock instruction, never production
+    // payment evidence. Reject it before any state change or gateway call.
+    this.assertPaymentMethodAllowed(input.methodReference);
+
     // Already terminal: replay the state instead of calling the gateway again.
     if (attempt.status === 'succeeded') {
       return {
@@ -374,6 +539,19 @@ export class PaymentService {
         reason: `attempt_${attempt.status}`,
       };
     }
+
+    // A payment may only complete against the booking state it was created
+    // for. This is checked BEFORE the gateway: an expired/cancelled booking,
+    // or one whose accepted price moved, must not be charged.
+    const booking = await this.requireOwnedBooking(attempt.bookingId, userId);
+    this.assertBookingPayable(booking);
+    const priceVersion = this.requireBookingPriceVersion(booking);
+    this.assertAttemptMatchesBooking(
+      attempt,
+      booking,
+      { amount: booking.authoritativePrice, currency: booking.currency },
+      priceVersion,
+    );
 
     const transition = await this.attempts.transition(attempt.id, 'processing', {
       method: input.methodReference,
@@ -414,7 +592,11 @@ export class PaymentService {
     }
 
     const target = statusFromGateway(intent.status);
-    await this.attempts.transition(attempt.id, target);
+    await this.attempts.transition(
+      attempt.id,
+      target,
+      target === 'succeeded' ? { verifiedAt: new Date() } : {},
+    );
 
     if (target === 'succeeded') {
       // The ONLY place a successful customer capture is recorded.
@@ -461,7 +643,13 @@ export class PaymentService {
       bookingId: string;
     },
     userId?: string,
+    actorRole?: string,
   ) {
+    // Refunds move money back to the customer and are never a customer action.
+    // The controller enforces this with RolesGuard; the service enforces it
+    // again so a direct/internal caller cannot bypass the route metadata.
+    this.assertAdmin(actorRole);
+
     const gateway = this.router.forMarket(routesForMarket(input.market) ?? input.market);
     if (!gateway) {
       return { status: 'UNAVAILABLE' as const };
@@ -471,7 +659,21 @@ export class PaymentService {
     if (!attempt) {
       throw new NotFoundException('Payment not found.');
     }
-    this.assertOwnership(attempt.userId, userId, attempt.bookingId, input.bookingId);
+
+    // The attempt must belong to the booking named by the caller. The booking
+    // owner is derived from the durable row — never from the request.
+    if (!input.bookingId || attempt.bookingId !== input.bookingId) {
+      throw new BadRequestException('Payment does not belong to this booking.');
+    }
+    const booking = await this.bookings.findOne({
+      where: { id: attempt.bookingId },
+    });
+    if (!booking) {
+      throw new NotFoundException('Booking not found.');
+    }
+    if (booking.userId !== attempt.userId) {
+      throw new ForbiddenException('Payment does not belong to this booking owner.');
+    }
 
     if (!['succeeded', 'partially_refunded'].includes(attempt.status)) {
       return {
@@ -481,6 +683,28 @@ export class PaymentService {
         reason: `attempt_${attempt.status}`,
       };
     }
+
+    // Only a server-observed success may be refunded. A client-declared
+    // success or a pre-3C.1 row without `verifiedAt` is not payment evidence.
+    if (!attempt.verifiedAt) {
+      throw this.paymentNotVerified(
+        'Payment has no server-verified success evidence and cannot be refunded.',
+      );
+    }
+
+    if (
+      !(REFUNDABLE_BOOKING_STATUSES as readonly string[]).includes(
+        booking.status,
+      )
+    ) {
+      throw new ConflictException({
+        statusCode: 409,
+        code: 'REFUND_NOT_ALLOWED',
+        error: 'REFUND_NOT_ALLOWED',
+        message: `Refund is not allowed while the booking is '${booking.status}'.`,
+      });
+    }
+
     if (
       typeof input.amount !== 'number' ||
       !Number.isFinite(input.amount) ||
@@ -488,10 +712,17 @@ export class PaymentService {
     ) {
       throw new BadRequestException('Refund amount must be positive.');
     }
-    // A refund can never exceed what was actually captured for this attempt.
-    if (input.amount > attempt.amount + MONEY_TOLERANCE) {
+
+    // Cap by what is STILL refundable, not merely the original capture: prior
+    // successful refunds for this attempt are subtracted.
+    const alreadyRefunded = await this.refundedTotal(attempt.id);
+    const remaining = Math.max(
+      0,
+      Math.round((attempt.amount - alreadyRefunded) * 100) / 100,
+    );
+    if (input.amount > remaining + MONEY_TOLERANCE) {
       throw new BadRequestException(
-        `Refund amount exceeds the captured amount of ${attempt.amount} ${attempt.currency}.`,
+        `Refund amount exceeds the remaining refundable amount of ${remaining} ${attempt.currency}.`,
       );
     }
 
@@ -537,8 +768,10 @@ export class PaymentService {
       };
     }
 
-    // A partial refund must not mark the whole payment refunded.
-    const fullyRefunded = input.amount >= attempt.amount;
+    // A partial refund must not mark the whole payment refunded. `remaining`
+    // is what was refundable BEFORE this refund, so reaching it is a full
+    // refund of the outstanding capture.
+    const fullyRefunded = input.amount >= remaining - MONEY_TOLERANCE;
     const target = fullyRefunded ? 'refunded' : 'partially_refunded';
     await this.attempts.transition(attempt.id, target);
 
@@ -552,8 +785,27 @@ export class PaymentService {
       attemptId: attempt.id,
       gatewayRef: input.paymentId,
       idempotencyKey: `refund:${attempt.id}:${input.idempotencyKey}`,
-      metadata: input.reason ? { reason: input.reason } : null,
+      metadata: {
+        ...(input.reason ? { reason: input.reason } : {}),
+        refundedBy: userId ?? null,
+        source: 'admin_endpoint',
+      },
     });
+
+    // Keep the booking's payment projection consistent with the durable
+    // attempt. A full refund releases the consumed-attempt link so a fresh
+    // attempt can be made; a partial refund keeps the link but must never be
+    // treated as full payment evidence.
+    await this.bookings.update(
+      { id: booking.id },
+      fullyRefunded
+        ? {
+            paymentAttemptId: null,
+            paymentStatus: 'refunded',
+            consumedAt: null,
+          }
+        : { paymentStatus: 'partially_refunded' },
+    );
 
     return {
       status: 'OK' as const,
@@ -721,7 +973,12 @@ export class PaymentService {
     // archived, so a redelivery can complete the effect exactly once.
     try {
       await this.attempts.getManager().transaction(async em => {
-        const transition = await this.attempts.transitionWithin(em, attempt.id, target);
+        const transition = await this.attempts.transitionWithin(
+          em,
+          attempt.id,
+          target,
+          target === 'succeeded' ? { verifiedAt: new Date() } : {},
+        );
         if (transition.outcome === 'conflict' && transition.attempt.status !== target) {
           // Another writer moved the attempt to a state that contradicts this
           // event's authoritative outcome. `transitionWithin` re-read the row

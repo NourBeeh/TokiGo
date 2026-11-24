@@ -180,9 +180,11 @@ async function main() {
   results.push(await sample('GET /home/sections (gzip)', '/home/sections', { gzip: true }));
   results.push(await sample('GET /home/sections (raw)', '/home/sections'));
   results.push(
-    await sample('GET /home/recommended (gzip)', '/home/recommended?limit=6&code=EG', {
-      gzip: true,
-    }),
+    await sample(
+      'GET /home/nearby-stays (gzip)',
+      '/home/nearby-stays?city=Cairo&country=EG&limit=6',
+      { gzip: true },
+    ),
   );
 
   const fresh = searchBody();

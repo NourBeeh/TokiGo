@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:tokigo/core/theme/app_elevation.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 
 /// The Home surface's own palette — the owner's Home design spec.
@@ -64,17 +65,15 @@ abstract final class HomeDesignTokens {
 
   /// Soft halo under the AI composer pill.
   ///
-  /// A single low-opacity stop (blur 20, offset y 4) that works on both
-  /// canvases: ink at 10% on the light page, black at 35% on the dark one.
-  static List<BoxShadow> composerShadowOf(BuildContext context) => <BoxShadow>[
-    BoxShadow(
-      color: isDark(context)
-          ? const Color(0x59000000)
-          : const Color(0x1A111111),
-      blurRadius: 20,
-      offset: const Offset(0, 4),
-    ),
-  ];
+  /// Light theme is FLAT: the pill's edge comes from the surface step against
+  /// the canvas, not from a shadow. The halo is drawn only on the dark canvas,
+  /// where a white pill would otherwise have no separation at all.
+  static List<BoxShadow> composerShadowOf(BuildContext context) =>
+      AppElevation.darkOnly(
+        context,
+        background: surface,
+        level: AppElevation.lg,
+      );
 
   static bool isDark(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark;

@@ -219,7 +219,6 @@ abstract final class AppColors {
   static const Color carHue = Color(0xFF111111);
   static const Color packageHue = Color(0xFF111111);
   static const Color exploreHue = Color(0xFF111111);
-  static const Color groupsHue = Color(0xFF111111);
 
   /// Paired containers for the search service tiles.
   static const Color flightContainer = Color(0xFFF0F0F0);

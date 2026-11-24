@@ -28,3 +28,19 @@ abstract class BookingRepository {
 
   Future<ApiResult<BookingRecord>> getBookingStatus(String bookingId);
 }
+
+/// The shared price/terms-change decision surface.
+///
+/// Kept separate from [BookingRepository] so existing booking repositories and
+/// test doubles remain valid; the real implementation implements both.
+abstract class PriceChangeDecisionRepository {
+  /// Record the customer's explicit decision on a revalidated price/terms
+  /// change. The expected values bind the decision to exactly what was shown.
+  Future<ApiResult<BookingRecord>> decidePriceChange(
+    String bookingId, {
+    required String decision,
+    double? expectedPrice,
+    String? expectedCurrency,
+    String? expectedTermsVersion,
+  });
+}

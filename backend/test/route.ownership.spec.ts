@@ -1,18 +1,14 @@
 import { RequestMethod } from '@nestjs/common';
 import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 import { HomeController } from '../src/modules/home/home.controller';
-import { RecommendedHotelsController } from '../src/modules/recommend/recommended-hotels.controller';
+import { NearbyStaysController } from '../src/modules/nearby/nearby-stays.controller';
 
 /**
- * Route-ownership regression (2026-10-25).
+ * Home route surface after the legacy Home removal.
  *
- * `GET /home/recommended` was registered TWICE — once by HomeController (fixed
- * Cairo list, no country) and once by RecommendedHotelsController (country
- * aware + deterministic scoring). Because HomeModule is imported before
- * RecommendModule, Express served the first match and the recommendation
- * engine was unreachable: every user saw Cairo hotels, and no error was ever
- * raised. Registration order is not a contract, so this test pins the real
- * invariant: exactly ONE handler owns the path.
+ * The old `/home/recommended` rail, the mood flight rail and `/home/refresh`
+ * were removed with the old Home system. Only the destination feed used by
+ * Explore and the promotional Nearby Stays endpoint remain.
  */
 
 interface MountedRoute {
@@ -54,37 +50,32 @@ function signature(route: MountedRoute): string {
   return `${RequestMethod[route.method]} ${route.path}`;
 }
 
-describe('Route ownership — GET /home/recommended', () => {
+describe('Home route surface after legacy removal', () => {
   const home = routesOf(HomeController);
-  const recommend = routesOf(RecommendedHotelsController);
-  const all = [...home, ...recommend];
+  const nearby = routesOf(NearbyStaysController);
+  const all = [...home, ...nearby];
 
-  it('is registered by exactly one controller', () => {
-    const owners = all.filter(
-      (r) => r.method === RequestMethod.GET && r.path === '/home/recommended',
-    );
+  it('HomeController serves only the destination feed', () => {
+    expect(home.map(signature)).toEqual(['GET /home/sections']);
+  });
+
+  it('the removed legacy endpoints are gone', () => {
+    for (const path of <string>[
+      '/home/recommended',
+      '/home/flights-for-mood',
+      '/home/refresh',
+    ]) {
+      expect(all.some((r) => r.path === path)).toBe(false);
+    }
+  });
+
+  it('nearby stays has exactly one owner', () => {
+    const owners = all.filter((r) => r.path === '/home/nearby-stays');
     expect(owners).toHaveLength(1);
-    expect(owners[0].controller).toBe('RecommendedHotelsController');
+    expect(owners[0].controller).toBe('NearbyStaysController');
   });
 
-  it('HomeController no longer serves the rail', () => {
-    expect(home.some((r) => r.path === '/home/recommended')).toBe(false);
-    // The rest of the Home surface is untouched.
-    expect(home.map(signature)).toEqual(
-      expect.arrayContaining([
-        'GET /home/sections',
-        'GET /home/flights-for-mood',
-        'POST /home/refresh',
-      ]),
-    );
-  });
-
-  it('RecommendedHotelsController owns it with the documented method', () => {
-    expect(recommend.map(signature)).toContain('GET /home/recommended');
-    expect(recommend.every((r) => r.method === RequestMethod.GET)).toBe(true);
-  });
-
-  it('no other path is registered twice either', () => {
+  it('no path is registered twice', () => {
     const seen = new Map<string, string>();
     const duplicates: string[] = [];
     for (const route of all) {

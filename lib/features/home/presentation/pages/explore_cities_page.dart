@@ -15,7 +15,7 @@ import 'package:tokigo/features/home/domain/explore_catalog.dart';
 import 'package:tokigo/features/home/domain/explore_catalog_item.dart';
 import 'package:tokigo/features/home/domain/explore_home_section.dart';
 import 'package:tokigo/features/home/presentation/destination_localization.dart';
-import 'package:tokigo/features/home/presentation/home_controller.dart';
+import 'package:tokigo/features/home/presentation/explore_feed_controller.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_discovery_stay_card.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
@@ -177,7 +177,7 @@ class _ExploreCitiesPageState extends ConsumerState<ExploreCitiesPage> {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
-    final HomeState state = ref.watch(homeControllerProvider);
+    final ExploreFeedState state = ref.watch(exploreFeedControllerProvider);
     // The full destination catalog. The bundled catalog is the base; any
     // destination cards the backend publishes are merged in, so View All shows
     // everything without a second page or a parallel flow.
@@ -266,7 +266,7 @@ class _ExploreCitiesPageState extends ConsumerState<ExploreCitiesPage> {
   ///
   /// The bundled catalog guarantees the page is never empty on a first offline
   /// launch; backend cards extend it when the feed has them.
-  List<HomeItem> _allCities(HomeState state) {
+  List<HomeItem> _allCities(ExploreFeedState state) {
     final Map<String, HomeItem> byId = <String, HomeItem>{
       for (final HomeItem item in exploreCitiesToHomeItems(exploreCities))
         item.id: item,
@@ -284,19 +284,19 @@ class _ExploreCitiesPageState extends ConsumerState<ExploreCitiesPage> {
   }
 
   Widget _buildCities({
-    required HomeState state,
+    required ExploreFeedState state,
     required List<HomeItem> cities,
     required List<HomeItem> visibleCities,
     required AppLocalizations l10n,
   }) {
     if (visibleCities.isEmpty) {
-      if (state.status == HomeStatus.loading && cities.isEmpty) {
+      if (state.status == ExploreFeedStatus.loading && cities.isEmpty) {
         return const Center(child: CircularProgressIndicator());
       }
 
       final bool filtersApplied =
           _query.trim().isNotEmpty || _filter != ExploreCityFilter.all;
-      if (state.status == HomeStatus.error && cities.isEmpty) {
+      if (state.status == ExploreFeedStatus.error && cities.isEmpty) {
         return Center(
           child: AppMessageState(
             icon: Icons.wifi_off_rounded,
@@ -304,7 +304,7 @@ class _ExploreCitiesPageState extends ConsumerState<ExploreCitiesPage> {
             title: l10n.exploreCitiesErrorTitle,
             body: l10n.exploreCitiesErrorBody,
             actionLabel: l10n.retry,
-            onAction: () => ref.read(homeControllerProvider.notifier).load(),
+            onAction: () => ref.read(exploreFeedControllerProvider.notifier).load(),
           ),
         );
       }

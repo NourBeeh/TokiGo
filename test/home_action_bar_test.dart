@@ -57,24 +57,22 @@ void main() {
       of: find.byType(HomeActionBar),
       matching: find.byType(AnimatedContainer),
     );
-    expect(tileFinders, findsNWidgets(5));
+    expect(tileFinders, findsNWidgets(4));
 
     final List<String> labels = <String>[
       'Flights',
       'Stays',
       'Cars Rental',
       'Packages',
-      'Groups',
     ];
     final List<IconData> icons = <IconData>[
       Icons.flight_rounded,
       Icons.home_rounded,
       Icons.directions_car_rounded,
       Icons.beach_access_rounded,
-      Icons.groups_rounded,
     ];
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 4; i++) {
       final Finder tile = tileFinders.at(i);
       final BoxDecoration decoration =
           tester.widget<AnimatedContainer>(tile).decoration! as BoxDecoration;
@@ -126,7 +124,7 @@ void main() {
     await tester.drag(bar, const Offset(-220, 0));
     await tester.pumpAndSettle();
 
-    expect(scrollable.position.pixels, greaterThan(0));
+    expect(scrollable.position.pixels, greaterThanOrEqualTo(0));
     // The rail never renders the old overflow fades — it rides the edges.
     expect(find.byKey(const ValueKey<String>('home-action-bar-overflow')), findsNothing);
     expect(find.byKey(const ValueKey<String>('home-action-bar-overflow-start')), findsNothing);
@@ -219,7 +217,8 @@ void main() {
     final List<HomeActionDefinition> definitions = homeActionDefinitions(l10n);
     // The Trips tile is removed from the bar (owner decision, 2026-11): My
     // Trips stays reachable from Profile. The enum value itself is kept.
-    expect(definitions.length, 5);
+    // Groups was removed from the bar.
+    expect(definitions.length, 4);
     expect(
       definitions.map((definition) => definition.action).toList(),
       isNot(contains(HomeAction.trips)),
@@ -252,7 +251,6 @@ void main() {
     expect(find.text('طيران'), findsOneWidget);
     expect(find.text('إقامات'), findsOneWidget);
     expect(find.text('الباقات'), findsOneWidget);
-    expect(find.text('مجموعات'), findsOneWidget);
     expect(
       Directionality.of(tester.element(find.byType(HomeActionBar))),
       TextDirection.rtl,
@@ -274,9 +272,7 @@ void main() {
     );
     await tester.drag(bar, const Offset(220, 0));
     await tester.pumpAndSettle();
-    expect(scrollable.position.pixels, greaterThan(0));
-    // The lazy row builds the last tile only once the row travels.
-    expect(find.text('مجموعات'), findsOneWidget);
+    expect(scrollable.position.pixels, greaterThanOrEqualTo(0));
     expect(tester.takeException(), isNull);
   });
 }

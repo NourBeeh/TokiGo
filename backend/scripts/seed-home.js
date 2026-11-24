@@ -25,6 +25,7 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
 
 const { Client } = require('pg');
+const { sanitizeCardContent } = require('./lib/sanitize_card_content');
 
 // Defaults mirror `src/config/database.config.ts` and `docker-compose.yml`,
 // so the seed connects exactly like the Nest app when DB_* are unset.
@@ -71,18 +72,18 @@ const SEED_CARDS = [
   // Recommended for you
   card('00000000-0000-4000-8000-000000000101', 1, 'hotel', {
     title: 'Grand Palm Hotel', subtitle: 'Paris, France',
-    price: 320, currency: 'USD', rating: 4.6, reviewCount: 214,
+    currency: 'USD', rating: 4.6, reviewCount: 214,
     badge: 'Popular', tags: ['4-star', 'City center'],
     imageUrl: 'https://loremflickr.com/400/300/paris,hotel',
   }),
   card('00000000-0000-4000-8000-000000000102', 2, 'flight', {
     title: 'Cairo → Istanbul', subtitle: 'Round trip · 7 days',
-    price: 289, currency: 'USD', rating: 4.4, reviewCount: 96,
+    currency: 'USD', rating: 4.4, reviewCount: 96,
     badge: 'Deal', tags: ['Direct', 'Economy'],
   }),
   card('00000000-0000-4000-8000-000000000103', 3, 'deal', {
     title: 'Weekend in Alexandria', subtitle: 'Hotel + breakfast included',
-    price: 145, currency: 'USD', rating: 4.2, reviewCount: 58, badge: '-30%',
+    currency: 'USD', rating: 4.2, reviewCount: 58, badge: '-30%',
   }),
   // Trending destinations
   card('00000000-0000-4000-8000-000000000201', 1, 'destination', {
@@ -103,19 +104,19 @@ const SEED_CARDS = [
   // Tour packages
   card('00000000-0000-4000-8000-000000000301', 1, 'package', {
     title: 'Sharm El Sheikh · 5 days', subtitle: 'Flights + resort + transfers',
-    price: 599, currency: 'USD', rating: 4.7, reviewCount: 132,
+    currency: 'USD', rating: 4.7, reviewCount: 132,
     highlights: ['All inclusive', 'Airport transfer'],
     imageUrl: 'https://loremflickr.com/400/300/redsea,resort',
   }, 3),
   card('00000000-0000-4000-8000-000000000302', 2, 'package', {
     title: 'Luxor & Aswan cruise · 4 nights', subtitle: 'Nile cruise with guided tours',
-    price: 749, currency: 'USD', rating: 4.8, reviewCount: 87,
+    currency: 'USD', rating: 4.8, reviewCount: 87,
     highlights: ['Guided temples', 'Full board'],
   }, 3),
   // Experiences & stories
   card('00000000-0000-4000-8000-000000000401', 1, 'experience', {
     title: 'Sunset felucca ride', subtitle: 'Aswan, Egypt',
-    price: 25, currency: 'USD', rating: 4.9, reviewCount: 41,
+    currency: 'USD', rating: 4.9, reviewCount: 41,
     imageUrl: 'https://loremflickr.com/400/300/nile,felucca,sunset',
   }, 4),
   card('00000000-0000-4000-8000-000000000402', 2, 'story', {
@@ -125,12 +126,15 @@ const SEED_CARDS = [
 ];
 
 function card(id, order, cardType, content, sectionIndex = 1) {
+  // P0-S4 / L2: a Home card never stores a live price. The shared sanitizer is
+  // applied here (not just in the admin API) so a direct-SQL seed cannot
+  // persist one either — including prices nested in `metadata`.
   return {
     id,
     sectionId: SEED_SECTIONS[sectionIndex - 1].id,
     cardType,
     order,
-    content,
+    content: sanitizeCardContent(content),
   };
 }
 

@@ -21,4 +21,17 @@ class HomeSection {
   final List<HomeItem> items;
   final bool isPaginated;
   final Map<String, dynamic> metadata;
+
+  /// Returns a copy of this section with [items] replaced. Every other field is
+  /// preserved, so a presentation-layer guard (hiding an unverified price, for
+  /// example) cannot accidentally drop the composer's tags or pagination.
+  HomeSection withItems(List<HomeItem> items) => HomeSection(
+    id: id,
+    title: title,
+    subtitle: subtitle,
+    layout: layout,
+    items: items,
+    isPaginated: isPaginated,
+    metadata: metadata,
+  );
 }

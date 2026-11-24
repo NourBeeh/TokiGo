@@ -85,6 +85,22 @@ export class PaymentAttempt {
   @Column({ type: 'varchar', length: 3 })
   currency!: string;
 
+  /**
+   * The accepted price version this attempt was charged for. A booking may only
+   * consume an attempt whose version equals `bookings.priceVersion`; an attempt
+   * created for an older/lower price can never authorize a newer booking.
+   */
+  @Column({ type: 'varchar', nullable: true })
+  priceVersion?: string | null;
+
+  /**
+   * Set only when the SERVER observed an authoritative `succeeded` transition
+   * (confirm response or signed webhook). A client-declared `CARD_SUCCESS` or
+   * any locally fabricated success leaves this null and is never payment proof.
+   */
+  @Column({ type: 'timestamptz', nullable: true })
+  verifiedAt?: Date | null;
+
   /** See {@link PaymentAttemptStatus} for the state machine. */
   @Column({ type: 'varchar', default: 'created' })
   status!: PaymentAttemptStatus;

@@ -10,7 +10,7 @@ import 'package:tokigo/core/domain/models/home/home_types.dart';
 import 'package:tokigo/core/network/api_result.dart';
 import 'package:tokigo/core/repositories/contracts/home_repository.dart';
 import 'package:tokigo/core/theme/app_theme.dart';
-import 'package:tokigo/features/home/presentation/home_controller.dart';
+import 'package:tokigo/features/home/presentation/explore_feed_controller.dart';
 import 'package:tokigo/features/home/presentation/pages/explore_cities_page.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
@@ -131,8 +131,10 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: <Override>[
-          homeControllerProvider.overrideWith(
-            (ref) => _TestHomeController(<HomeSection>[_section(cities)]),
+          exploreFeedControllerProvider.overrideWith(
+            (ref) => ExploreFeedController(
+              _TestHomeRepository(<HomeSection>[_section(cities)]),
+            ),
           ),
         ],
         child: MaterialApp.router(
@@ -173,12 +175,10 @@ void main() {
   });
 }
 
-class _TestHomeController extends HomeController {
-  _TestHomeController(List<HomeSection> sections)
-    : super(_TestHomeRepository(sections));
-}
-
 class _TestHomeRepository implements HomeRepository {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+
   _TestHomeRepository(this.sections);
 
   final List<HomeSection> sections;
@@ -186,34 +186,4 @@ class _TestHomeRepository implements HomeRepository {
   @override
   Future<ApiResult<List<HomeSection>>> getHomeSections() async =>
       ApiResult<List<HomeSection>>.success(sections);
-
-  @override
-  Future<ApiResult<List<HomeItem>>> getRecommendedHotels({
-    int limit = 6,
-    String? countryCode,
-    String languageCode = 'en',
-    String? currency,
-  }) async => const ApiResult<List<HomeItem>>.success(<HomeItem>[]);
-
-  @override
-  Future<ApiResult<void>> refresh() async =>
-      const ApiResult<void>.success(null);
-
-  @override
-  Future<List<HomeSection>?> readHomeSnapshot({
-    required String audience,
-  }) async => null;
-
-  @override
-  Future<void> clearHomeSnapshot({required String audience}) async {}
-
-  @override
-  Future<void> saveHomeSnapshot(
-    List<HomeSection> sections, {
-    required String audience,
-  }) async {}
-
-  @override
-  Future<SnapshotState> snapshotState({required String audience}) async =>
-      SnapshotState.fresh;
 }

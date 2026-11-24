@@ -5,7 +5,16 @@
  * Egypt is the first production market: EG / EGP / ar-EG.
  * The market selector changes this context; it must never select a travel
  * provider directly — provider routing consumes it as a separate policy.
+ *
+ * Display currency is resolved in this order:
+ *   1. the traveller's explicit, supported override;
+ *   2. the country's ISO-4217 currency (the City Selection's country);
+ *   3. USD when the country is unknown.
+ * Payment/tax regions still come only from a fully configured market, so a
+ * display currency can never silently enable a payment region.
  */
+
+import { currencyForCountry, SUPPORTED_CURRENCIES } from './currency-by-country';
 
 export interface MarketContextValue {
   marketCountry: string; // ISO-3166-1 alpha-2
@@ -52,9 +61,8 @@ export const MARKET_CONFIGS: Record<string, MarketContextValue> = {
 export const DEFAULT_MARKET: MarketContextValue = MARKET_CONFIGS.EG;
 
 /**
- * The display currency for a country we have no full market config for.
- * Owner decision (2026-11-03): countries outside the configured markets
- * (EG/SA/AE) display in USD instead of silently inheriting EGP.
+ * The display currency when neither a country currency nor an explicit choice
+ * is available. Unknown countries fall back to USD; they never inherit EGP.
  */
 export const DEFAULT_DISPLAY_CURRENCY = 'USD';
 
@@ -62,15 +70,22 @@ export const DEFAULT_DISPLAY_CURRENCY = 'USD';
  * Currencies the app can display. A requested currency outside this set is
  * ignored (the market's own currency stands) rather than trusting arbitrary
  * input into the pricing engine.
+ *
+ * The set is the union of every country currency in the mapping plus the
+ * three cross-market majors, so a city in any catalog country can honour its
+ * own default currency.
  */
-export const SUPPORTED_DISPLAY_CURRENCIES = new Set([
-  'EGP',
-  'SAR',
-  'AED',
-  'USD',
-  'EUR',
-  'GBP',
-]);
+export const SUPPORTED_DISPLAY_CURRENCIES = new Set<string>(SUPPORTED_CURRENCIES);
+
+/**
+ * The default display currency for a country, independent of whether the
+ * country is a fully configured payment market.
+ */
+export function displayCurrencyForCountry(
+  countryCode?: string | null,
+): string {
+  return currencyForCountry(countryCode) ?? DEFAULT_DISPLAY_CURRENCY;
+}
 
 /** Normalises + validates a requested display currency (ISO-4217). */
 export function normalizeDisplayCurrency(
@@ -83,27 +98,27 @@ export function normalizeDisplayCurrency(
 
 /**
  * Resolves the market context. A country with a full config (EG/SA/AE) keeps
- * its display currency + region; any other country displays in USD while the
- * region defaults stay untouched (display-only — no new payment region is
- * enabled). An explicit, supported `currencyOverride` (the traveller's chosen
- * display currency) wins over both.
+ * its payment region + tax region; every country's display currency comes
+ * from the ISO mapping (GB→GBP, FR→EUR, US→USD, …). An unknown country falls
+ * back to USD. An explicit, supported `currencyOverride` (the traveller's
+ * chosen display currency) wins over both.
  */
 export function marketFor(
   countryCode?: string | null,
   currencyOverride?: string | null,
 ): MarketContextValue {
   const override = normalizeDisplayCurrency(currencyOverride);
-  // No country at all keeps the launch-market default (unchanged behaviour);
-  // an explicit but unconfigured country displays in USD (owner decision).
+  // No country at all keeps the launch-market default (unchanged behaviour).
   if (!countryCode) {
     return override
       ? { ...DEFAULT_MARKET, displayCurrency: override }
       : DEFAULT_MARKET;
   }
-  const configured = MARKET_CONFIGS[countryCode.toUpperCase()];
+  const code = countryCode.toUpperCase();
+  const configured = MARKET_CONFIGS[code];
   const base: MarketContextValue = configured ?? {
     ...DEFAULT_MARKET,
-    displayCurrency: DEFAULT_DISPLAY_CURRENCY,
+    displayCurrency: displayCurrencyForCountry(code),
   };
   return override ? { ...base, displayCurrency: override } : base;
 }

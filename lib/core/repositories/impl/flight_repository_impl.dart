@@ -55,11 +55,21 @@ class FlightRepositoryImpl implements FlightRepository {
 
     return result.when(
       success: (data) {
-        final List<dynamic> items =
-            (data['successes'] as List?)
-                ?.expand((s) => (s['data'] as List?) ?? [])
-                .toList() ??
-            [];
+        // Phase 2D: the backend returns one row per identical itinerary in
+        // `results`, each row carrying every valid fare in `offers`. Older
+        // backends (and hotel-style flat payloads) only have `successes`, so
+        // the flat list stays a fallback rather than a second source of truth.
+        final rawResults = data['results'];
+        final List<dynamic> items;
+        if (rawResults is List && rawResults.isNotEmpty) {
+          items = rawResults;
+        } else {
+          items =
+              (data['successes'] as List?)
+                  ?.expand((s) => (s['data'] as List?) ?? [])
+                  .toList() ??
+              [];
+        }
         final offers = <FlightOffer>[];
         for (final item in items) {
           if (item is Map<String, dynamic>) {

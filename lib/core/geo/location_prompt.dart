@@ -6,17 +6,17 @@ import 'package:tokigo/core/geo/location_permission_service.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
 /// Asks the OS for "when in use" location access and, when it is granted,
-/// re-resolves the traveller's country so the departure-airport suggestion can
-/// use GPS instead of the IP fallback.
+/// re-runs city detection so the traveller's city can come from GPS instead of
+/// the IP fallback.
 ///
 /// A denial is NOT an error and never blocks the caller: the traveller can
-/// still pick a departure airport manually later (Settings → Country). That is
+/// still pick a city manually at any time (Settings → City Selection). That is
 /// why the first-launch intro asks here without gating the flow.
 ///
 /// Only [LocationAccess.granted] has a side effect. `denied` / `unavailable`
-/// simply leave the country to the IP fallback; `deniedForever` /
-/// `serviceDisabled` are surfaced to the traveller from Settings, which owns
-/// the "open the system settings" prompt.
+/// simply leave the city to the IP fallback; `deniedForever` /
+/// `serviceDisabled` are surfaced to the traveller by the contextual Home
+/// card, which owns the "open the system settings" prompt.
 Future<void> requestLocationAccess(WidgetRef ref) async {
   final LocationPermissionService svc = ref.read(
     locationPermissionServiceProvider,

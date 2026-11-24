@@ -8,8 +8,8 @@ import 'package:tokigo/core/domain/models/home/home_section.dart';
 /// US-5 — the SAFE personalization signals Universal Search may consume.
 ///
 /// Built from the EXISTING R-4 profile read model (`GET /profile/me`:
-/// behavioral `derived` + `derivedPreferences`) and the read-only
-/// [LocalBehaviorStore] (anonymous local memory). Deliberately closed:
+/// behavioral `derived` + `derivedPreferences`) and read-only anonymous local
+/// behavior signals. Deliberately closed:
 ///
 /// - NO explicit conversation memories (`preferred_destination` /
 ///   `preferred_budget`) — the 2C rule forbids them here; that is PH-7's
@@ -95,9 +95,8 @@ class PersonalizedSections {
 
 /// US-5 — deterministic search personalization.
 ///
-/// Mirrors the EXISTING [RecommendationService] priority vocabulary (the
-/// same reason ladder the Home engine already uses) but operates on search
-/// result [HomeItem]s. Reuses that architecture without modifying it.
+/// Mirrors the existing recommendation priority vocabulary (the same reason
+/// ladder the app already uses) but operates on search result [HomeItem]s.
 ///
 /// HARD RULES (spec):
 /// - MAY influence ordering + suggestions. NEVER filters and NEVER changes
@@ -255,7 +254,7 @@ class SearchPersonalization {
     }
 
     // General discovery baseline (quality × popularity) — the existing
-    // RecommendationService shape, kept tiny so it never dominates.
+    // recommendation shape, kept tiny so it never dominates.
     final rating = item.rating ?? 0;
     final reviews = item.reviewCount ?? 0;
     score += rating * (1 + _log10(reviews + 1)) * 0.5;
@@ -293,8 +292,8 @@ class SearchPersonalization {
     'car',
   };
 
-  /// Word-overlap match — the SAME semantics as the existing Home
-  /// `RecommendationService._looselyMatches` (reused, not reinvented).
+  /// Word-overlap match — the same semantics as the existing Home
+  /// loosely-matches helper (reused, not reinvented).
   bool _matches(String haystack, String needle) {
     final n = needle.toLowerCase().trim();
     if (n.isEmpty) return false;

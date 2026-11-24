@@ -16,6 +16,8 @@ class FakeNuiteeFlightService {
   oldPrice?: number;
   newPrice?: number;
   fails = false;
+  terms?: Record<string, any>;
+  changedTerms?: string[];
 
   async verifyFlightOffer(offerId: string) {
     this.verifyCalls.push(offerId);
@@ -35,6 +37,8 @@ class FakeNuiteeFlightService {
       oldPrice: this.oldPrice,
       newPrice: this.newPrice,
       expiresAt: '2026-12-01T00:00:00Z',
+      ...(this.terms ? { terms: this.terms } : {}),
+      ...(this.changedTerms ? { changedTerms: this.changedTerms } : {}),
       timestamp: new Date(),
     };
   }
@@ -56,21 +60,70 @@ const dto = {
   offerType: 'flight',
 };
 
+// The mobile client posts to this endpoint with no Authorization header.
+const anonymousRequest = {} as any;
+
 describe('POST /offers/revalidate — nuitee-flight', () => {
   it('returns OK with the verified price (no longer UNAVAILABLE)', async () => {
     const { controller, flight } = setup();
 
-    const res = await controller.revalidate({ ...dto, knownPrice: '800' });
+    const res = await controller.revalidate(anonymousRequest, {
+      ...dto,
+      knownPrice: '800',
+    });
 
-    expect(res).toEqual({
+    expect(res).toMatchObject({
       status: 'OK',
       offerId: 'off_1',
       price: 800,
       currency: 'USD',
       expiresAt: '2026-12-01T00:00:00Z',
+      priceChanged: false,
+      termsChanged: false,
     });
+    expect(res.checkedAt).toEqual(expect.any(String));
     // The offerId from the snapshot is what the provider sees.
     expect(flight.verifyCalls).toEqual(['off_1']);
+  });
+
+  it('exposes provider terms and a deterministic terms version on OK', async () => {
+    const { controller, flight } = setup();
+    flight.terms = {
+      conditions: {
+        refundBeforeDeparture: { allowed: false },
+      },
+      baggageAllowances: [{ type: 'checked', quantity: 1 }],
+    };
+
+    const res = await controller.revalidate(anonymousRequest, {
+      ...dto,
+      knownPrice: '800',
+    });
+
+    expect(res.status).toBe('OK');
+    expect(res.terms).toEqual(flight.terms);
+    expect(res.termsVersion).toMatch(/^terms-v1-[0-9a-f]{64}$/);
+  });
+
+  it('returns PRICE_CHANGED when only the fare conditions changed', async () => {
+    const { controller, flight } = setup();
+    flight.changedTerms = ['cancellationChanged'];
+
+    const res = await controller.revalidate(anonymousRequest, {
+      ...dto,
+      knownPrice: '800',
+    });
+
+    expect(res).toMatchObject({
+      status: 'PRICE_CHANGED',
+      offerId: 'off_1',
+      oldPrice: 800,
+      newPrice: 800,
+      priceChanged: false,
+      termsChanged: true,
+      changedTerms: ['cancellationChanged'],
+    });
+    expect(res.priceDifference).toBe(0);
   });
 
   it('returns PRICE_CHANGED when the provider reports a price move', async () => {
@@ -80,7 +133,10 @@ describe('POST /offers/revalidate — nuitee-flight', () => {
     flight.newPrice = 950;
     flight.price = 950;
 
-    const res = await controller.revalidate({ ...dto, knownPrice: '800' });
+    const res = await controller.revalidate(anonymousRequest, {
+      ...dto,
+      knownPrice: '800',
+    });
 
     expect(res).toMatchObject({
       status: 'PRICE_CHANGED',
@@ -94,7 +150,10 @@ describe('POST /offers/revalidate — nuitee-flight', () => {
   it('returns PRICE_CHANGED when the verified price moved from knownPrice', async () => {
     const { controller } = setup();
 
-    const res = await controller.revalidate({ ...dto, knownPrice: '1200' });
+    const res = await controller.revalidate(anonymousRequest, {
+      ...dto,
+      knownPrice: '1200',
+    });
 
     expect(res).toMatchObject({
       status: 'PRICE_CHANGED',
@@ -107,7 +166,7 @@ describe('POST /offers/revalidate — nuitee-flight', () => {
     const { controller, flight } = setup();
     flight.fails = true;
 
-    const res = await controller.revalidate(dto);
+    const res = await controller.revalidate(anonymousRequest, dto);
 
     expect(res).toMatchObject({
       status: 'UNAVAILABLE',
@@ -115,10 +174,36 @@ describe('POST /offers/revalidate — nuitee-flight', () => {
     });
   });
 
+  it('fails closed when verify returns no positive price', async () => {
+    const { controller, flight } = setup();
+    flight.price = 0;
+
+    const res = await controller.revalidate(anonymousRequest, dto);
+
+    expect(res).toEqual({
+      status: 'UNAVAILABLE',
+      offerId: 'off_1',
+      reason: 'Provider returned no usable price',
+    });
+  });
+
+  it('fails closed when verify returns no currency', async () => {
+    const { controller, flight } = setup();
+    flight.currency = '';
+
+    const res = await controller.revalidate(anonymousRequest, dto);
+
+    expect(res).toEqual({
+      status: 'UNAVAILABLE',
+      offerId: 'off_1',
+      reason: 'Provider returned no usable price',
+    });
+  });
+
   it('never calls a prebook — the path is read-only', async () => {
     const { controller } = setup();
 
-    await controller.revalidate(dto);
+    await controller.revalidate(anonymousRequest, dto);
 
     // The fake only exposes verifyFlightOffer; a prebook call would be a
     // TypeError. Reaching the assertion proves no prebook path was touched.

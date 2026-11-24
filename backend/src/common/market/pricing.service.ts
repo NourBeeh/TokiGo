@@ -28,6 +28,12 @@ export interface PriceQuote {
   pricingVersion: string;
   expiresAt: string;
   market: string;
+  /**
+   * False when no trustworthy FX rate existed. `customerCurrency` then equals
+   * the provider currency and no conversion was applied — the amount is never
+   * relabelled into the requested display currency.
+   */
+  conversionAvailable: boolean;
 }
 
 export const PRICING_VERSION = '2026.09.1';
@@ -63,6 +69,10 @@ export class PricingService {
       providerCurrency,
       displayCurrency,
     );
+    // When FX is unavailable the converted amount stays in the provider
+    // currency; every downstream line must use that same currency so the
+    // displayed total is never relabelled.
+    const customerCurrency = converted.customerCurrency;
 
     const markupPct = opts.markupPct ?? 0;
     const paymentFeePct = opts.paymentFeePct ?? 0;
@@ -73,23 +83,23 @@ export class PricingService {
     const subtotal = base + markup + paymentFee;
 
     const rounding =
-      WHOLE_UNIT_CURRENCIES.has(displayCurrency) && !Number.isInteger(subtotal)
+      WHOLE_UNIT_CURRENCIES.has(customerCurrency) && !Number.isInteger(subtotal)
         ? Math.ceil(subtotal) - subtotal
         : 0;
     const customerTotal = Math.round((subtotal + rounding) * 100) / 100;
 
     const lines: PriceBreakdownLine[] = [
-      { type: 'BASE', label: 'Base fare', amount: base, currency: displayCurrency },
+      { type: 'BASE', label: 'Base fare', amount: base, currency: customerCurrency },
     ];
     if (markup > 0) {
-      lines.push({ type: 'MARKUP', label: 'Service fee', amount: markup, currency: displayCurrency });
+      lines.push({ type: 'MARKUP', label: 'Service fee', amount: markup, currency: customerCurrency });
     }
     if (paymentFee > 0) {
       lines.push({
         type: 'PAYMENT_FEE',
         label: 'Payment fee',
         amount: paymentFee,
-        currency: displayCurrency,
+        currency: customerCurrency,
       });
     }
     if (rounding > 0) {
@@ -97,7 +107,7 @@ export class PricingService {
         type: 'TAX',
         label: 'Rounding',
         amount: rounding,
-        currency: displayCurrency,
+        currency: customerCurrency,
       });
     }
 
@@ -105,12 +115,13 @@ export class PricingService {
       providerAmount: converted.providerAmount,
       providerCurrency: converted.providerCurrency,
       customerAmount: customerTotal,
-      customerCurrency: displayCurrency,
+      customerCurrency,
       lines,
       fx: converted.fx,
       pricingVersion: PRICING_VERSION,
       expiresAt: new Date(Date.now() + (opts.ttlMinutes ?? 30) * 60 * 1000).toISOString(),
       market: market.marketCountry,
+      conversionAvailable: converted.fx.available,
     };
   }
 

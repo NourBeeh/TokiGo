@@ -9,6 +9,7 @@ import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_button.dart';
 import 'package:tokigo/core/ui/app_message_state.dart';
+import 'package:tokigo/core/ui/directional_icons.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/core/widgets/step_progress.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
@@ -202,7 +203,9 @@ class _AdminContentTabState extends ConsumerState<AdminContentTab> {
             heroTag: 'admin-add-section',
             backgroundColor: context.tokigoColors.primary,
             foregroundColor: context.tokigoColors.onPrimary,
-            elevation: AppElevation.md,
+            elevation: Theme.of(context).brightness == Brightness.dark
+                ? AppElevation.md
+                : AppElevation.none,
             onPressed: _busy ? null : () => _createSection(context),
             icon: const Icon(Icons.add_rounded),
             label: Text(l10n.adminAddSection),
@@ -434,7 +437,7 @@ class _SectionRow extends StatelessWidget {
                 child: Icon(
                   expanded
                       ? Icons.expand_more_rounded
-                      : Icons.chevron_right_rounded,
+                      : DirectionalIcons.chevron(context),
                   size: 20,
                   color: context.tokigoColors.textTertiary,
                 ),

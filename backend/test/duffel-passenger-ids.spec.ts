@@ -45,9 +45,12 @@ class FakeDuffelService {
     return {
       id: 'ord_1',
       booking_reference: 'ABC123',
-      status: 'confirmed',
       total_amount: '800.00',
       total_currency: 'USD',
+      payment_status: {
+        awaiting_payment: false,
+        paid_at: '2026-01-01T00:00:00Z',
+      },
     };
   }
 
@@ -95,6 +98,16 @@ const TWO_ADULTS_ONE_INFANT = [
   { id: 'pas_3', type: 'infant_without_seat', age: 1 },
 ];
 
+/** The server-authoritative payment binding every successful call needs. */
+const AUTHORITATIVE_PAYMENT = {
+  bookingId: 'bk_1',
+  amount: 800,
+  currency: 'USD',
+  amountText: '800.00',
+  priceVersion: 'pv_1',
+  paymentAttemptId: 'pay_1',
+} as const;
+
 describe('Duffel revalidation — passenger id capture', () => {
   it('surfaces the offer passenger ids through the handoff', async () => {
     const fake = new FakeDuffelService();
@@ -130,6 +143,7 @@ describe('Duffel createBooking — id mapping by type and ordinal', () => {
 
     const result = await provider.createBooking({
       offerId: 'off_1',
+      ...AUTHORITATIVE_PAYMENT,
       offerSnapshot: snapshot(TWO_ADULTS_ONE_INFANT),
       travelers: [
         traveler({ firstName: 'Nour' }),
@@ -157,6 +171,7 @@ describe('Duffel createBooking — id mapping by type and ordinal', () => {
 
     await provider.createBooking({
       offerId: 'off_1',
+      ...AUTHORITATIVE_PAYMENT,
       offerSnapshot: snapshot([
         { id: 'pas_1', type: 'adult', age: null },
         { id: 'pas_2', type: 'child', age: 7 },
@@ -179,6 +194,7 @@ describe('Duffel createBooking — id mapping by type and ordinal', () => {
 
     const result = await provider.createBooking({
       offerId: 'off_1',
+      ...AUTHORITATIVE_PAYMENT,
       offerSnapshot: snapshot(TWO_ADULTS_ONE_INFANT),
       travelers: [
         traveler({ firstName: 'Nour' }),
@@ -197,6 +213,7 @@ describe('Duffel createBooking — id mapping by type and ordinal', () => {
 
     const result = await provider.createBooking({
       offerId: 'off_1',
+      ...AUTHORITATIVE_PAYMENT,
       offerSnapshot: snapshot([
         { id: 'pas_1', type: 'adult', age: null },
         { id: 'pas_2', type: 'adult', age: null },
@@ -219,6 +236,7 @@ describe('Duffel createBooking — id mapping by type and ordinal', () => {
 
     const result = await provider.createBooking({
       offerId: 'off_1',
+      ...AUTHORITATIVE_PAYMENT,
       offerSnapshot: snapshot(TWO_ADULTS_ONE_INFANT),
       travelers: [traveler({ passengerType: undefined })],
     });
@@ -236,6 +254,7 @@ describe('Duffel createBooking — infant relationship', () => {
 
     const result = await provider.createBooking({
       offerId: 'off_1',
+      ...AUTHORITATIVE_PAYMENT,
       offerSnapshot: snapshot(TWO_ADULTS_ONE_INFANT),
       travelers: [
         traveler({ firstName: 'Nour' }),
@@ -262,6 +281,7 @@ describe('Duffel createBooking — infant relationship', () => {
 
     const result = await provider.createBooking({
       offerId: 'off_1',
+      ...AUTHORITATIVE_PAYMENT,
       offerSnapshot: snapshot(TWO_ADULTS_ONE_INFANT),
       travelers: [
         traveler({ firstName: 'Nour' }),
@@ -285,6 +305,7 @@ describe('Duffel createBooking — infant relationship', () => {
 
     const result = await provider.createBooking({
       offerId: 'off_1',
+      ...AUTHORITATIVE_PAYMENT,
       offerSnapshot: snapshot([
         { id: 'pas_1', type: 'child', age: 7 },
         { id: 'pas_2', type: 'infant_without_seat', age: 1 },
@@ -311,6 +332,7 @@ describe('Duffel createBooking — infant relationship', () => {
 
     const result = await provider.createBooking({
       offerId: 'off_1',
+      ...AUTHORITATIVE_PAYMENT,
       offerSnapshot: snapshot([
         { id: 'pas_1', type: 'adult', age: null },
         { id: 'pas_2', type: 'infant_without_seat', age: 1 },
@@ -346,6 +368,7 @@ describe('Duffel createBooking — conditional identity documents', () => {
 
     const result = await provider.createBooking({
       offerId: 'off_1',
+      ...AUTHORITATIVE_PAYMENT,
       offerSnapshot: {
         ...snapshot(TWO_ADULTS_ONE_INFANT),
         duffelIdentityDocumentsRequired: true,
@@ -364,6 +387,7 @@ describe('Duffel createBooking — conditional identity documents', () => {
 
     const result = await provider.createBooking({
       offerId: 'off_1',
+      ...AUTHORITATIVE_PAYMENT,
       offerSnapshot: {
         ...snapshot(TWO_ADULTS_ONE_INFANT),
         duffelIdentityDocumentsRequired: true,
@@ -383,6 +407,7 @@ describe('Duffel createBooking — conditional identity documents', () => {
 
     const result = await provider.createBooking({
       offerId: 'off_1',
+      ...AUTHORITATIVE_PAYMENT,
       offerSnapshot: snapshot([{ id: 'pas_1', type: 'adult', age: null }]),
       travelers: [traveler()],
     });

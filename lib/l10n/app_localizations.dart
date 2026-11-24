@@ -113,12 +113,6 @@ abstract class AppLocalizations {
   /// **'Search'**
   String get navSearch;
 
-  /// No description provided for @navGroups.
-  ///
-  /// In en, this message translates to:
-  /// **'Groups'**
-  String get navGroups;
-
   /// No description provided for @navExplore.
   ///
   /// In en, this message translates to:
@@ -647,12 +641,6 @@ abstract class AppLocalizations {
   /// **'Packages'**
   String get homeNavActivities;
 
-  /// No description provided for @homeNavGroups.
-  ///
-  /// In en, this message translates to:
-  /// **'Groups'**
-  String get homeNavGroups;
-
   /// No description provided for @homeNavTrips.
   ///
   /// In en, this message translates to:
@@ -664,18 +652,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Airport transfer'**
   String get searchTransfers;
-
-  /// No description provided for @groupsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Groups'**
-  String get groupsTitle;
-
-  /// No description provided for @groupsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Groups'**
-  String get groupsSubtitle;
 
   /// No description provided for @viewAll.
   ///
@@ -1823,6 +1799,102 @@ abstract class AppLocalizations {
   /// **'Accept new price'**
   String get bookingAcceptNewPrice;
 
+  /// No description provided for @bookingUpdatePrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Update price'**
+  String get bookingUpdatePrice;
+
+  /// No description provided for @bookingDeclinePriceChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get bookingDeclinePriceChange;
+
+  /// No description provided for @bookingChooseAnotherOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose another offer'**
+  String get bookingChooseAnotherOffer;
+
+  /// No description provided for @bookingPriceChangeDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'You declined the updated price. Choose another offer to continue.'**
+  String get bookingPriceChangeDeclined;
+
+  /// No description provided for @bookingPreviousPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous price'**
+  String get bookingPreviousPrice;
+
+  /// No description provided for @bookingUpdatedPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated price'**
+  String get bookingUpdatedPrice;
+
+  /// No description provided for @bookingPriceDifference.
+  ///
+  /// In en, this message translates to:
+  /// **'Difference'**
+  String get bookingPriceDifference;
+
+  /// No description provided for @bookingConditionsChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Conditions changed'**
+  String get bookingConditionsChanged;
+
+  /// No description provided for @bookingNoChargeYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No booking has been made at the updated price.'**
+  String get bookingNoChargeYet;
+
+  /// No description provided for @bookingTermFareConditions.
+  ///
+  /// In en, this message translates to:
+  /// **'Fare conditions'**
+  String get bookingTermFareConditions;
+
+  /// No description provided for @bookingTermBaggage.
+  ///
+  /// In en, this message translates to:
+  /// **'Baggage allowance'**
+  String get bookingTermBaggage;
+
+  /// No description provided for @bookingTermFareBrand.
+  ///
+  /// In en, this message translates to:
+  /// **'Fare brand'**
+  String get bookingTermFareBrand;
+
+  /// No description provided for @bookingTermCabin.
+  ///
+  /// In en, this message translates to:
+  /// **'Cabin class'**
+  String get bookingTermCabin;
+
+  /// No description provided for @bookingTermItinerary.
+  ///
+  /// In en, this message translates to:
+  /// **'Itinerary'**
+  String get bookingTermItinerary;
+
+  /// No description provided for @bookingTermCancellation.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancellation policy'**
+  String get bookingTermCancellation;
+
+  /// No description provided for @bookingTermBoard.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal plan'**
+  String get bookingTermBoard;
+
   /// No description provided for @bookingPrepare.
   ///
   /// In en, this message translates to:
@@ -2099,18 +2171,6 @@ abstract class AppLocalizations {
   /// **'Expiry (YYYY-MM-DD)'**
   String get bookingDocumentExpiryLabel;
 
-  /// No description provided for @groupsCreateTrip.
-  ///
-  /// In en, this message translates to:
-  /// **'Create a group trip'**
-  String get groupsCreateTrip;
-
-  /// No description provided for @groupsPlanTogether.
-  ///
-  /// In en, this message translates to:
-  /// **'Plan together, decide together'**
-  String get groupsPlanTogether;
-
   /// No description provided for @carIdleBody.
   ///
   /// In en, this message translates to:
@@ -2134,6 +2194,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You are offline — showing the last saved data'**
   String get offlineShowingCached;
+
+  /// No description provided for @homePriceUnverified.
+  ///
+  /// In en, this message translates to:
+  /// **'Price not verified'**
+  String get homePriceUnverified;
+
+  /// No description provided for @homePriceUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to update the price. Check your connection and try again.'**
+  String get homePriceUpdateFailed;
 
   /// No description provided for @homeCompleteYourTrip.
   ///
@@ -2363,18 +2435,6 @@ abstract class AppLocalizations {
   /// **'Explore stays'**
   String get wishlistExploreStays;
 
-  /// No description provided for @groupsEmptyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Group trips are coming soon'**
-  String get groupsEmptyTitle;
-
-  /// No description provided for @groupsEmptyBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Creating a trip, inviting friends and splitting the plan will open here once the group trips backend is connected.'**
-  String get groupsEmptyBody;
-
   /// No description provided for @exploreCitiesTitle.
   ///
   /// In en, this message translates to:
@@ -2530,6 +2590,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The payment was not completed, so the booking was not confirmed. Nothing was booked.'**
   String get bookingConfirmFailedBody;
+
+  /// No description provided for @bookingOutcomePendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking is being verified'**
+  String get bookingOutcomePendingTitle;
+
+  /// No description provided for @bookingOutcomePendingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The provider has not confirmed this booking yet. Do not retry the booking or make another payment. We are checking the final status; it will appear in My Trips only after it is confirmed.'**
+  String get bookingOutcomePendingBody;
 
   /// No description provided for @bookingConfirmLabel.
   ///
@@ -3461,6 +3533,150 @@ abstract class AppLocalizations {
   /// **'Room'**
   String get offerRoom;
 
+  /// No description provided for @offerChooseRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a room'**
+  String get offerChooseRoom;
+
+  /// No description provided for @offerChooseFare.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a fare'**
+  String get offerChooseFare;
+
+  /// No description provided for @offerFareOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Fare {number}'**
+  String offerFareOption(int number);
+
+  /// No description provided for @offerFareCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 fare} other{{count} fares}}'**
+  String offerFareCount(int count);
+
+  /// No description provided for @offerBaggageCabin.
+  ///
+  /// In en, this message translates to:
+  /// **'Carry-on'**
+  String get offerBaggageCabin;
+
+  /// No description provided for @offerBaggageChecked.
+  ///
+  /// In en, this message translates to:
+  /// **'Checked bag'**
+  String get offerBaggageChecked;
+
+  /// No description provided for @offerBaggageEquipment.
+  ///
+  /// In en, this message translates to:
+  /// **'Sports equipment'**
+  String get offerBaggageEquipment;
+
+  /// No description provided for @offerBaggageCabinCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 carry-on} other{{count} carry-ons}}'**
+  String offerBaggageCabinCount(int count);
+
+  /// No description provided for @offerBaggageCheckedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 checked bag} other{{count} checked bags}}'**
+  String offerBaggageCheckedCount(int count);
+
+  /// No description provided for @offerBaggageWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'{allowance} ({weight} kg)'**
+  String offerBaggageWeight(String allowance, String weight);
+
+  /// No description provided for @offerConditionsUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Fare conditions at booking'**
+  String get offerConditionsUnknown;
+
+  /// No description provided for @offerNotChangeable.
+  ///
+  /// In en, this message translates to:
+  /// **'No changes'**
+  String get offerNotChangeable;
+
+  /// No description provided for @offerChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes'**
+  String get offerChanges;
+
+  /// No description provided for @offerChangeable.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes allowed'**
+  String get offerChangeable;
+
+  /// No description provided for @offerChangeableWithFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes allowed · fee {fee}'**
+  String offerChangeableWithFee(String fee);
+
+  /// No description provided for @offerChangeableFeeOnRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes allowed · fee on request'**
+  String get offerChangeableFeeOnRequest;
+
+  /// No description provided for @offerRefundableWithFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Refundable · fee {fee}'**
+  String offerRefundableWithFee(String fee);
+
+  /// No description provided for @offerRefundableFeeOnRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Refundable · fee on request'**
+  String get offerRefundableFeeOnRequest;
+
+  /// No description provided for @offerRestrictions.
+  ///
+  /// In en, this message translates to:
+  /// **'Restrictions'**
+  String get offerRestrictions;
+
+  /// No description provided for @offerOperatedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Operated by {carrier}'**
+  String offerOperatedBy(String carrier);
+
+  /// No description provided for @offerFreeCancellation.
+  ///
+  /// In en, this message translates to:
+  /// **'Free cancellation'**
+  String get offerFreeCancellation;
+
+  /// No description provided for @offerNonRefundable.
+  ///
+  /// In en, this message translates to:
+  /// **'Non-refundable'**
+  String get offerNonRefundable;
+
+  /// No description provided for @offerCancellationUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancellation terms at booking'**
+  String get offerCancellationUnknown;
+
+  /// No description provided for @offerPerStay.
+  ///
+  /// In en, this message translates to:
+  /// **'per stay'**
+  String get offerPerStay;
+
   /// No description provided for @offerSeats.
   ///
   /// In en, this message translates to:
@@ -3704,7 +3920,7 @@ abstract class AppLocalizations {
   /// No description provided for @locationPromptBlockedBody.
   ///
   /// In en, this message translates to:
-  /// **'Allow location for TokiGo in the system settings to suggest your departure airport.'**
+  /// **'Allow location for TokiGo in the system settings to find your city and show stays near you.'**
   String get locationPromptBlockedBody;
 
   /// No description provided for @locationPromptOpenSettings.
@@ -3722,7 +3938,7 @@ abstract class AppLocalizations {
   /// No description provided for @locationPromptServiceOffBody.
   ///
   /// In en, this message translates to:
-  /// **'Turn on location services to suggest your departure airport.'**
+  /// **'Turn on location services to find your city and show stays near you.'**
   String get locationPromptServiceOffBody;
 
   /// No description provided for @locationPromptLocationSettings.
@@ -3976,6 +4192,228 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View offer and book'**
   String get flightCardViewOffer;
+
+  /// No description provided for @homeNearbyLocationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable location to see nearby stays'**
+  String get homeNearbyLocationTitle;
+
+  /// No description provided for @homeNearbyLocationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We use your area to search hotels really around you. Your exact location is never stored.'**
+  String get homeNearbyLocationBody;
+
+  /// No description provided for @homeNearbyEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No nearby stays right now'**
+  String get homeNearbyEmptyTitle;
+
+  /// No description provided for @homeNearbyEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again later or choose a different area.'**
+  String get homeNearbyEmptyBody;
+
+  /// No description provided for @homeNearbyErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load nearby stays'**
+  String get homeNearbyErrorTitle;
+
+  /// No description provided for @homeNearbyPromotionalNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Promotional one-night price for the next 7 nights. The live price is shown after you pick dates.'**
+  String get homeNearbyPromotionalNote;
+
+  /// No description provided for @homeNearbyRadius.
+  ///
+  /// In en, this message translates to:
+  /// **'{radius} km search area'**
+  String homeNearbyRadius(String radius);
+
+  /// No description provided for @nearbyHotelDistanceFromYou.
+  ///
+  /// In en, this message translates to:
+  /// **'{distance} km from you'**
+  String nearbyHotelDistanceFromYou(String distance);
+
+  /// No description provided for @nearbyHotelReviews.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} reviews'**
+  String nearbyHotelReviews(String count);
+
+  /// No description provided for @nearbyHotelSelectDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Select dates'**
+  String get nearbyHotelSelectDates;
+
+  /// No description provided for @nearbyHotelCheckIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-in'**
+  String get nearbyHotelCheckIn;
+
+  /// No description provided for @nearbyHotelCheckOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-out'**
+  String get nearbyHotelCheckOut;
+
+  /// No description provided for @nearbyHotelAdults.
+  ///
+  /// In en, this message translates to:
+  /// **'Adults'**
+  String get nearbyHotelAdults;
+
+  /// No description provided for @nearbyHotelRooms.
+  ///
+  /// In en, this message translates to:
+  /// **'Rooms'**
+  String get nearbyHotelRooms;
+
+  /// No description provided for @nearbyHotelSearchAvailability.
+  ///
+  /// In en, this message translates to:
+  /// **'Check availability'**
+  String get nearbyHotelSearchAvailability;
+
+  /// No description provided for @nearbyHotelLiveResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Live prices for your dates'**
+  String get nearbyHotelLiveResults;
+
+  /// No description provided for @nearbyHotelNoLiveOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'No live offer for this hotel on the selected dates.'**
+  String get nearbyHotelNoLiveOffer;
+
+  /// No description provided for @nearbyHotelPromotionalCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Promotional discovery price (not a live booking offer)'**
+  String get nearbyHotelPromotionalCaption;
+
+  /// No description provided for @settingsCitySelection.
+  ///
+  /// In en, this message translates to:
+  /// **'City Selection'**
+  String get settingsCitySelection;
+
+  /// No description provided for @settingsCityNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a city'**
+  String get settingsCityNotSet;
+
+  /// No description provided for @settingsCityLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading…'**
+  String get settingsCityLoading;
+
+  /// No description provided for @settingsCityUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable'**
+  String get settingsCityUnavailable;
+
+  /// No description provided for @cityPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your city'**
+  String get cityPickerTitle;
+
+  /// No description provided for @cityPickerSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search cities or countries'**
+  String get cityPickerSearch;
+
+  /// No description provided for @cityPickerLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading cities…'**
+  String get cityPickerLoading;
+
+  /// No description provided for @cityPickerUnavailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cities are unavailable'**
+  String get cityPickerUnavailableTitle;
+
+  /// No description provided for @cityPickerUnavailableBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your connection and try again.'**
+  String get cityPickerUnavailableBody;
+
+  /// No description provided for @cityPickerRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get cityPickerRetry;
+
+  /// No description provided for @cityPickerEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No cities found'**
+  String get cityPickerEmptyTitle;
+
+  /// No description provided for @cityPickerEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a different search.'**
+  String get cityPickerEmptyBody;
+
+  /// No description provided for @cityPickerCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current selection'**
+  String get cityPickerCurrent;
+
+  /// No description provided for @locationCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable location to discover hotels and stays near you'**
+  String get locationCardTitle;
+
+  /// No description provided for @locationCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We use your area to show stays around you. Your exact location is never stored.'**
+  String get locationCardBody;
+
+  /// No description provided for @locationCardEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable location'**
+  String get locationCardEnable;
+
+  /// No description provided for @locationCardNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get locationCardNotNow;
+
+  /// No description provided for @locationCardOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get locationCardOpenSettings;
+
+  /// No description provided for @locationCardServicesOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on location services in your device settings.'**
+  String get locationCardServicesOff;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

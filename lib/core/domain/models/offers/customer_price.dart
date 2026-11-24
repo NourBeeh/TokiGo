@@ -47,6 +47,31 @@ class CustomerPrice {
   final String? fxSource;
   final double? fxRate;
   final List<PriceLine> lines;
+
+  /// Round-trips through [CustomerPrice.fromJson] (offline cache).
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'providerAmount': providerAmount,
+    'providerCurrency': providerCurrency,
+    'customerAmount': customerAmount,
+    'customerCurrency': customerCurrency,
+    'pricingVersion': pricingVersion,
+    'expiresAt': expiresAt,
+    if (fxSource != null || fxRate != null)
+      'fx': <String, dynamic>{
+        if (fxSource != null) 'source': fxSource,
+        if (fxRate != null) 'rate': fxRate,
+      },
+    'lines': lines
+        .map(
+          (l) => <String, dynamic>{
+            'type': l.type,
+            'label': l.label,
+            'amount': l.amount,
+            'currency': l.currency,
+          },
+        )
+        .toList(growable: false),
+  };
 }
 
 /// One breakdown line of the customer quote (BASE/MARKUP/PAYMENT_FEE/...).

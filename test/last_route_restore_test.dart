@@ -13,7 +13,6 @@ void main() {
       '/hotels',
       '/cars',
       '/packages',
-      '/groups',
       '/bag',
       '/bag?section=likes',
       '/notifications',

@@ -39,8 +39,7 @@ class HomeActionDefinition {
 
 /// The single source of truth for Home's service shortcuts.
 ///
-/// Order is intentional: Flights, Hotels (labelled "Stays"), Cars,
-/// Packages, Groups.
+/// Order is intentional: Flights, Hotels (labelled "Stays"), Cars, Packages.
 ///
 /// **OWNER DECISION (2026-11):** the Trips tile is gone from the quick-action
 /// bar — My Trips stays reachable from Profile (and the Bag route), so the row
@@ -73,20 +72,13 @@ List<HomeActionDefinition> homeActionDefinitions(AppLocalizations l10n) {
       icon: Icons.beach_access_rounded,
       path: '/packages',
     ),
-    HomeActionDefinition(
-      action: HomeAction.groups,
-      label: l10n.homeNavGroups,
-      icon: Icons.groups_rounded,
-      path: '/groups',
-    ),
   ];
 }
 
 /// Home shortcuts for travel services — the owner's spec: a horizontal row of
-/// equal white tiles (Flights, Stays, Cars, Packages, Groups), each a 68dp
-/// white tile with 18dp corners ([AppRadius.lg]), a hairline border, a 24px
-/// accent glyph and a 12/600 accent label 4dp below it ([AppSpacing.xs]). No
-/// shadows.
+/// equal white tiles (Flights, Stays, Cars, Packages), each a 68dp white tile
+/// with 18dp corners ([AppRadius.lg]), a hairline border, a 24px accent glyph
+/// and a 12/600 accent label 4dp below it ([AppSpacing.xs]). No shadows.
 ///
 /// On Home these tiles are a CONTENT SWITCHER, not navigation: when
 /// [onActionSelected] is supplied the tile reports the tapped [HomeAction] and

@@ -23,11 +23,11 @@ import { DuffelModule } from './modules/duffel/duffel.module';
 import { GeoModule } from './modules/geo/geo.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { EventsModule } from './modules/events/events.module';
-import { RecommendModule } from './modules/recommend/recommend.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { MemoryModule } from './modules/memory/memory.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
 import { DiscoveryModule } from './modules/discovery/discovery.module';
+import { NearbyModule } from './modules/nearby/nearby.module';
 import { QueueModule } from './common/queue/queue.module';
 
 @Module({
@@ -85,11 +85,11 @@ import { QueueModule } from './common/queue/queue.module';
     GeoModule,
     ProfileModule,
     EventsModule,
-    RecommendModule,
     PaymentsModule,
     MemoryModule,
     BookingsModule,
     DiscoveryModule,
+    NearbyModule,
     QueueModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

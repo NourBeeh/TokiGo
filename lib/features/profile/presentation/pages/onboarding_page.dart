@@ -14,6 +14,7 @@ import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 import 'package:tokigo/shared/providers/onboarding_provider.dart';
+import 'package:tokigo/core/ui/directional_icons.dart';
 
 /// First-launch onboarding — the welcome hero, then two value slides.
 ///
@@ -73,7 +74,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     _Slide(
       title: l10n.localeName == 'ar' ? 'الأذونات' : 'Permissions',
       body: l10n.locationPromptBody,
-      icons: const <IconData>[Icons.location_on_rounded, Icons.notifications_rounded],
+      icons: const <IconData>[
+        Icons.location_on_rounded,
+        Icons.notifications_rounded,
+      ],
     ),
   ];
 
@@ -94,8 +98,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     // here and nowhere else on launch. "When in use" only (the app's
     // Info.plist carries NSLocationWhenInUseUsageDescription and the Android
     // manifest has no background location), and a denial never blocks —
-    // `requestLocationAccess` simply leaves the country to the IP fallback so
-    // the traveller can pick a departure airport manually later.
+    // `requestLocationAccess` simply leaves the city to the IP fallback so the
+    // traveller can pick a city manually later.
     await requestLocationAccess(ref);
 
     // Notifications follow, as before.
@@ -121,7 +125,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 
   String _primaryLabel(AppLocalizations l10n, List<_Slide> slides) {
     if (_page == 0) return l10n.onboardingGetStarted;
-    if (_page == slides.length - 1) return l10n.localeName == 'ar' ? 'السماح' : 'Grant permissions';
+    if (_page == slides.length - 1)
+      return l10n.localeName == 'ar' ? 'السماح' : 'Grant permissions';
     return l10n.onboardingNext;
   }
 
@@ -209,7 +214,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                     const SizedBox(height: AppSpacing.xl),
                     AppButton(
                       label: _primaryLabel(l10n, slides),
-                      trailingIcon: Icons.chevron_right_rounded,
+                      trailingIcon: DirectionalIcons.chevron(context),
                       onPressed: () => _next(slides),
                     ),
                     // The account entry sits under the primary action on the
@@ -238,9 +243,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                                     TextSpan(
                                       text: '${l10n.onboardingHaveAccount} ',
                                       style: typography.body.copyWith(
-                                        color: context
-                                            .tokigoColors
-                                            .textSecondary,
+                                        color:
+                                            context.tokigoColors.textSecondary,
                                       ),
                                     ),
                                     TextSpan(
@@ -388,7 +392,11 @@ class _ServicePlate extends StatelessWidget {
           ),
         ],
       ),
-      child: Icon(icon, size: size > 100 ? 56 : 26, color: context.tokigoColors.brand),
+      child: Icon(
+        icon,
+        size: size > 100 ? 56 : 26,
+        color: context.tokigoColors.brand,
+      ),
     );
   }
 }

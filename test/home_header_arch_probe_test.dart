@@ -8,11 +8,7 @@ import 'package:tokigo/app/widgets/home_nav_buttons.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
-import 'package:tokigo/core/network/api_result.dart';
-import 'package:tokigo/core/repositories/contracts/home_repository.dart';
 import 'package:tokigo/core/theme/app_theme.dart';
-import 'package:tokigo/features/home/domain/home_composer.dart';
-import 'package:tokigo/features/home/presentation/home_controller.dart';
 import 'package:tokigo/features/home/presentation/pages/home_page.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_ai_search_field.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_top_bar.dart';
@@ -25,46 +21,6 @@ import 'package:tokigo/l10n/app_localizations.dart';
 /// The original header and the feed are ONE scroll view; the compact search is
 /// an OVERLAY outside it. These checks complement the measured-geometry
 /// contract in `home_header_scroll_animation_test.dart`.
-class _Repo implements HomeRepository {
-  _Repo(this.sections, this.hotels);
-
-  final List<HomeSection> sections;
-  final List<HomeItem> hotels;
-
-  @override
-  Future<List<HomeSection>?> readHomeSnapshot({required String audience}) async =>
-      null;
-
-  @override
-  Future<void> clearHomeSnapshot({required String audience}) async {}
-
-  @override
-  Future<void> saveHomeSnapshot(
-    List<HomeSection> sections, {
-    required String audience,
-  }) async {}
-
-  @override
-  Future<ApiResult<List<HomeSection>>> getHomeSections() async =>
-      ApiResult<List<HomeSection>>.success(sections);
-
-  @override
-  Future<ApiResult<List<HomeItem>>> getRecommendedHotels({
-    int limit = 6,
-    String? countryCode,
-    String languageCode = 'en',
-    String? currency,
-  }) async =>
-      ApiResult<List<HomeItem>>.success(hotels);
-
-  @override
-  Future<ApiResult<void>> refresh() async => const ApiResult<void>.success(null);
-
-  @override
-  Future<SnapshotState> snapshotState({required String audience}) async =>
-      SnapshotState.unavailable;
-}
-
 List<HomeSection> _sections() => <HomeSection>[
       HomeSection(
         id: 'discover',
@@ -96,19 +52,6 @@ List<HomeItem> _hotels() => <HomeItem>[
 
 Widget _app() => ProviderScope(
       overrides: <Override>[
-        homeControllerProvider.overrideWith(
-          (ref) => HomeController(
-            _Repo(_sections(), _hotels()),
-            audience: 'anon',
-            contextBuilder: (_) async => const HomeCompositionContext(
-              userState: HomeUserState.freshAnonymous,
-            ),
-            liveValidation: null,
-            countryCode: null,
-            languageCode: null,
-            currencyCode: null,
-          ),
-        ),
         geoCountryProvider.overrideWith((ref) async => null),
       ],
       child: MaterialApp.router(

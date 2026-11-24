@@ -138,6 +138,22 @@ abstract final class AppTheme {
               foregroundColor: ink.onPrimary,
               disabledBackgroundColor: AppColors.surfaceTertiary,
               disabledForegroundColor: AppColors.textTertiary,
+              // Flat in light theme: the fill and the corner radius carry the
+              // button, never a shadow. Dark keeps the Material default.
+              elevation: AppElevation.none,
+              minimumSize: const Size(64, 52),
+              shape: RoundedRectangleBorder(borderRadius: AppRadius.mdBorder),
+              textStyle: typography.bodyLargeMedium,
+            ).copyWith(
+              overlayColor: WidgetStatePropertyAll<Color>(
+                ink.brand.withValues(alpha: 0.08),
+              ),
+            ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style:
+            ElevatedButton.styleFrom(
+              elevation: AppElevation.none,
               minimumSize: const Size(64, 52),
               shape: RoundedRectangleBorder(borderRadius: AppRadius.mdBorder),
               textStyle: typography.bodyLargeMedium,

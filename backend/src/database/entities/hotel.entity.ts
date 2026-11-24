@@ -80,9 +80,34 @@ export class Hotel {
   @Column({ type: 'double precision', nullable: true })
   longitude?: number | null;
 
+  /**
+   * Guest review average on the app's 5-point display scale (0–5).
+   *
+   * The provider quotes a 10-point score; the mapping to 5 points happens in
+   * `mapProviderHotel`, the same conversion the live offer mapper applies, so
+   * a hotel's Home card and its search result never disagree. Null when the
+   * provider has not reported a rating — never invented, never defaulted.
+   */
+  @Column({ type: 'double precision', nullable: true })
+  rating?: number | null;
+
+  /** Provider-reported review count. Null when the provider said nothing. */
+  @Column({ type: 'integer', nullable: true })
+  reviewCount?: number | null;
+
   /** Deterministic object key of the optimized CDN image (no binary data). */
   @Column({ type: 'varchar', nullable: true })
   imageObjectKey?: string | null;
+
+  /**
+   * Provider's own photo URL, cached as discovery metadata.
+   *
+   * The optimized-image pipeline may replace this with an `imageObjectKey`
+   * later; until then the Nearby Stays card can render a real photograph
+   * through the existing image proxy. Null when the provider sent none.
+   */
+  @Column({ type: 'varchar', length: 1024, nullable: true })
+  imageUrl?: string | null;
 
   @Column({ default: true })
   isActive!: boolean;

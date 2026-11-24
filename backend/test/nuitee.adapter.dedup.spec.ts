@@ -1,17 +1,12 @@
 import { NuiteeService } from '../src/modules/nuitee/nuitee.service';
 
 /**
- * BUGFIX regression (user report 2026-09-08) — "the same hotel appears twice
- * with different prices" on the Home rail and search:
+ * Nuitee rates adapter contracts (Phase 2C).
  *
- * Root cause: extractRateResults emits one {hotel, roomType, rate} entry per
- * ROOM TYPE, and searchHotels mapped every entry → the same hotel surfaced
- * 2–3 times (Standard vs Deluxe at different prices). The original comment
- * said "cheapest rate per hotel" but no dedup ever ran.
- *
- * Fix under test: searchHotels keeps exactly ONE offer per hotel — the
- * cheapest available room — with the cheapest room's rateId preserved for
- * the prebook path. Verified here with a fully mocked fetch (no network).
+ * One hotel row per hotel, carrying EVERY valid room-type offer in `offers`;
+ * the row's own fields are the cheapest offer. Pagination is sequential and
+ * bounded, and an incomplete walk is reported (never cached or presented as
+ * the whole market). Prebook/book follow the documented LiteAPI contracts.
  */
 
 /** Live-shape fixture: rates array wrapped in `data`, hotels under `hotels`. */
@@ -23,11 +18,26 @@ function nuiteeResponse(hotelsPayload: any) {
   };
 }
 
-function rate(rateId: string, amount: number) {
+function rate(rateId: string, amount: number, currency = 'USD') {
   return {
     rateId,
-    retailRate: { total: [{ amount, currency: 'USD' }] },
+    retailRate: { total: [{ amount, currency }] },
     cancellationPolicies: { refundableTag: 'RFN' },
+  };
+}
+
+function roomType(
+  offerId: string,
+  roomTypeName: string,
+  rates: any[],
+  total: number,
+  currency = 'USD',
+) {
+  return {
+    offerId,
+    roomTypeName,
+    rates,
+    offerRetailRate: [{ amount: total, currency }],
   };
 }
 
@@ -36,31 +46,44 @@ function makeService(contentCache?: any) {
   return new NuiteeService(config as any, contentCache);
 }
 
-/** Non-null accessor for the provider payload (success paths only). */
 function offersOf(result: any): any[] {
   return result.data ?? [];
 }
 
-describe('NuiteeService.searchHotels — one offer per hotel (cheapest room)', () => {
+const SEARCH = {
+  city: 'Cairo',
+  country: 'EG',
+  checkIn: new Date('2026-09-10'),
+  checkOut: new Date('2026-09-13'),
+  guests: 2,
+  rooms: 1,
+};
+
+describe('NuiteeService.searchHotels — one hotel row, all valid offers', () => {
   const realFetch = global.fetch;
 
   beforeEach(() => {
     (global as any).fetch = jest.fn();
   });
 
+  afterEach(() => {
+    delete process.env.NUITEE_RATES_PAGE_SIZE;
+    delete process.env.NUITEE_RATES_MAX_PAGES;
+  });
+
   afterAll(() => {
     (global as any).fetch = realFetch;
   });
 
-  it('same hotel with 2 room types → exactly ONE offer at the CHEAPEST price', async () => {
+  it('same hotel with 2 room types → ONE row carrying BOTH offers, cheapest on top', async () => {
     (global as any).fetch = jest.fn().mockResolvedValue(
       nuiteeResponse({
         data: [
           {
             hotelId: 'H1',
             roomTypes: [
-              { roomTypeName: 'Standard Room', rates: [rate('rate-std', 120)] },
-              { roomTypeName: 'Deluxe Room', rates: [rate('rate-dlx', 180)] },
+              roomType('offer-std', 'Standard Room', [rate('rate-std', 120)], 120),
+              roomType('offer-dlx', 'Deluxe Room', [rate('rate-dlx', 180)], 180),
             ],
           },
         ],
@@ -68,40 +91,36 @@ describe('NuiteeService.searchHotels — one offer per hotel (cheapest room)', (
       }),
     );
 
-    const result = await makeService().searchHotels({
-      city: 'Cairo',
-      country: 'EG',
-      checkIn: new Date('2026-09-10'),
-      checkOut: new Date('2026-09-13'),
-      guests: 2,
-      rooms: 1,
-    });
+    const result = await makeService().searchHotels(SEARCH);
 
     expect(result.success).toBe(true);
-    expect(offersOf(result)).toHaveLength(1); // NOT 2 — the duplicate is gone
-    const offer = offersOf(result)[0];
-    expect(offer.price).toBe(120); // cheapest room wins
-    expect(offer.title).toBe('Cairo Grand');
-    // Cheapest room's rateId survives for the prebook path.
-    expect(offer.metadata.providerRateId).toBe('rate-std');
-    expect(offer.metadata.providerHotelId).toBe('H1');
+    const offers = offersOf(result);
+    expect(offers).toHaveLength(1);
+    expect(offers[0].id).toBe('offer-std');
+    expect(offers[0].price).toBe(120);
+    expect(offers[0].offers.map((o: any) => o.id)).toEqual([
+      'offer-std',
+      'offer-dlx',
+    ]);
+    expect(offers[0].offers.map((o: any) => o.price)).toEqual([120, 180]);
+    // The booking identity is the room-type offerId, not a per-room rate id.
+    expect(offers[0].metadata.providerOfferId).toBe('offer-std');
   });
 
-  it('different hotels each keep their own (cheapest) offer', async () => {
+  it('different hotels each keep their own row, cheapest first', async () => {
     (global as any).fetch = jest.fn().mockResolvedValue(
       nuiteeResponse({
         data: [
           {
             hotelId: 'H1',
             roomTypes: [
-              { roomTypeName: 'Standard', rates: [rate('r-h1', 120)] },
-              { roomTypeName: 'Deluxe', rates: [rate('r-h1b', 180)] },
+              roomType('offer-h1', 'Standard', [rate('r-h1', 120)], 120),
             ],
           },
           {
             hotelId: 'H2',
             roomTypes: [
-              { roomTypeName: 'Suite', rates: [rate('r-h2', 90)] },
+              roomType('offer-h2', 'Suite', [rate('r-h2', 90)], 90),
             ],
           },
         ],
@@ -112,34 +131,28 @@ describe('NuiteeService.searchHotels — one offer per hotel (cheapest room)', (
       }),
     );
 
-    const result = await makeService().searchHotels({
-      city: 'Cairo',
-      checkIn: new Date('2026-09-10'),
-      checkOut: new Date('2026-09-13'),
-    });
+    const result = await makeService().searchHotels(SEARCH);
 
     expect(result.success).toBe(true);
-    expect(offersOf(result)).toHaveLength(2);
-    // Cheapest-first ordering across hotels.
-    expect(offersOf(result).map((o: any) => o.metadata.providerHotelId)).toEqual([
-      'H2',
-      'H1',
+    expect(offersOf(result).map((o: any) => o.id)).toEqual([
+      'offer-h2',
+      'offer-h1',
     ]);
-    expect(offersOf(result)[0].price).toBe(90);
-    expect(offersOf(result)[1].price).toBe(120);
   });
 
-  it('multiple rates within ONE room type still resolve to the cheapest rate', async () => {
+  it('multiple rates within ONE room type stay ONE offer priced at the all-room total', async () => {
     (global as any).fetch = jest.fn().mockResolvedValue(
       nuiteeResponse({
         data: [
           {
             hotelId: 'H1',
             roomTypes: [
-              {
-                roomTypeName: 'Standard Room',
-                rates: [rate('r-expensive', 200), rate('r-cheap', 100)],
-              },
+              roomType(
+                'offer-multi',
+                'Family Room',
+                [rate('r-room-1', 100), rate('r-room-2', 100)],
+                200,
+              ),
             ],
           },
         ],
@@ -148,152 +161,377 @@ describe('NuiteeService.searchHotels — one offer per hotel (cheapest room)', (
     );
 
     const result = await makeService().searchHotels({
-      city: 'Cairo',
-      checkIn: new Date('2026-09-10'),
-      checkOut: new Date('2026-09-13'),
+      ...SEARCH,
+      rooms: 2,
+      guests: 4,
+      occupancies: [
+        { adults: 2 },
+        { adults: 2 },
+      ],
     });
 
     expect(offersOf(result)).toHaveLength(1);
-    expect(offersOf(result)[0].price).toBe(100);
-    expect(offersOf(result)[0].metadata.providerRateId).toBe('r-cheap');
+    expect(offersOf(result)[0].id).toBe('offer-multi');
+    expect(offersOf(result)[0].price).toBe(200);
+    expect(offersOf(result)[0].metadata.providerRateIds).toEqual([
+      'r-room-1',
+      'r-room-2',
+    ]);
+    expect(offersOf(result)[0].offers).toHaveLength(1);
   });
 
-  it('uses Nuitee Arabic content for Arabic search results and preserves English metadata', async () => {
+  it('walks pages until a short page and reports the set complete', async () => {
+    process.env.NUITEE_RATES_PAGE_SIZE = '2';
     const fetch = jest
       .fn()
       .mockResolvedValueOnce(
         nuiteeResponse({
           data: [
-            {
-              hotelId: 'H1',
-              roomTypes: [
-                { roomTypeName: 'Standard', rates: [rate('r-ar', 120)] },
-              ],
-            },
+            { hotelId: 'H1', roomTypes: [roomType('o1', 'A', [rate('r1', 100)], 100)] },
+            { hotelId: 'H2', roomTypes: [roomType('o2', 'A', [rate('r2', 110)], 110)] },
           ],
-          hotels: [{ id: 'H1', name: 'Cairo Grand', city_name: 'Cairo' }],
+          hotels: [{ id: 'H1' }, { id: 'H2' }],
         }),
       )
       .mockResolvedValueOnce(
         nuiteeResponse({
-          data: [{ id: 'H1', name: 'فندق القاهرة الكبير' }],
+          data: [
+            { hotelId: 'H3', roomTypes: [roomType('o3', 'A', [rate('r3', 90)], 90)] },
+          ],
+          hotels: [{ id: 'H3' }],
         }),
       );
     (global as any).fetch = fetch;
 
+    const result = await makeService().searchHotels(SEARCH);
+
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(fetch.mock.calls[1][1].body)).toMatchObject({
+      limit: 2,
+      offset: 2,
+    });
+    expect(offersOf(result)).toHaveLength(3);
+    expect(result.metadata).toMatchObject({
+      complete: true,
+      capReached: false,
+      pagesFetched: 2,
+      failedOffsets: [],
+    });
+  });
+
+  it('keeps earlier pages but marks the set incomplete when a page fails', async () => {
+    process.env.NUITEE_RATES_PAGE_SIZE = '2';
+    const fetch = jest
+      .fn()
+      .mockResolvedValueOnce(
+        nuiteeResponse({
+          data: [
+            { hotelId: 'H1', roomTypes: [roomType('o1', 'A', [rate('r1', 100)], 100)] },
+            { hotelId: 'H2', roomTypes: [roomType('o2', 'A', [rate('r2', 110)], 110)] },
+          ],
+          hotels: [{ id: 'H1' }, { id: 'H2' }],
+        }),
+      )
+      .mockRejectedValueOnce(new Error('vendor 500'));
+    (global as any).fetch = fetch;
+
+    const result = await makeService().searchHotels(SEARCH);
+
+    expect(result.success).toBe(true);
+    expect(offersOf(result)).toHaveLength(2);
+    expect(result.metadata).toMatchObject({
+      complete: false,
+      capReached: false,
+      pagesFetched: 1,
+      failedOffsets: [2],
+    });
+  });
+
+  it('marks the page cap as incomplete instead of calling it the whole market', async () => {
+    process.env.NUITEE_RATES_PAGE_SIZE = '1';
+    process.env.NUITEE_RATES_MAX_PAGES = '1';
+    (global as any).fetch = jest.fn().mockResolvedValue(
+      nuiteeResponse({
+        data: [
+          { hotelId: 'H1', roomTypes: [roomType('o1', 'A', [rate('r1', 100)], 100)] },
+        ],
+        hotels: [{ id: 'H1' }],
+      }),
+    );
+
+    const result = await makeService().searchHotels(SEARCH);
+
+    expect(offersOf(result)).toHaveLength(1);
+    expect(result.metadata).toMatchObject({
+      complete: false,
+      capReached: true,
+      pagesFetched: 1,
+    });
+  });
+
+  it('rejects a multi-room request with no per-room occupancy', async () => {
+    const fetch = jest.fn();
+    (global as any).fetch = fetch;
+
     const result = await makeService().searchHotels({
-      city: 'Cairo',
-      country: 'EG',
-      checkIn: new Date('2027-01-10'),
-      checkOut: new Date('2027-01-12'),
-      language: 'ar',
+      ...SEARCH,
+      rooms: 2,
+      guests: 4,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/occupancy/i);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('sends the configured settlement currency and the explicit nationality', async () => {
+    const fetch = jest.fn().mockResolvedValue(
+      nuiteeResponse({
+        data: [
+          { hotelId: 'H1', roomTypes: [roomType('o1', 'A', [rate('r1', 100)], 100)] },
+        ],
+        hotels: [{ id: 'H1' }],
+      }),
+    );
+    (global as any).fetch = fetch;
+
+    await makeService().searchHotels({
+      ...SEARCH,
+      nationality: 'ae',
+      occupancies: [{ adults: 2, children: [7] }],
+    });
+
+    const body = JSON.parse(fetch.mock.calls[0][1].body);
+    expect(body).toMatchObject({
+      currency: 'USD',
+      guestNationality: 'AE',
+      occupancies: [{ adults: 2, children: [7] }],
+    });
+  });
+});
+
+describe('NuiteeService.prebookHotel — documented contract', () => {
+  const realFetch = global.fetch;
+
+  beforeEach(() => {
+    (global as any).fetch = jest.fn();
+  });
+
+  afterAll(() => {
+    (global as any).fetch = realFetch;
+  });
+
+  it('posts { offerId, usePaymentSdk:false } and maps the root data quote', async () => {
+    const fetch = jest.fn().mockResolvedValue(
+      nuiteeResponse({
+        data: {
+          prebookId: 'pb-1',
+          hotelId: 'H1',
+          checkin: '2026-09-10',
+          checkout: '2026-09-13',
+          currency: 'USD',
+          price: 120,
+          priceDifferencePercent: 2,
+          cancellationChanged: true,
+          boardChanged: true,
+          roomTypes: [{}, {}],
+        },
+      }),
+    );
+    (global as any).fetch = fetch;
+
+    const result = await makeService().prebookHotel({ offerId: 'offer-1' });
+
+    expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({
+      offerId: 'offer-1',
+      usePaymentSdk: false,
+    });
+    expect(result).toMatchObject({
+      success: true,
+      prebookId: 'pb-1',
+      newPrice: 120,
+      currency: 'USD',
+      priceChanged: true,
+      cancellationChanged: true,
+      boardChanged: true,
+      roomCount: 2,
+    });
+    // No Payment SDK → no transactionId is required or invented.
+    expect(result.transactionId).toBeUndefined();
+  });
+
+  it('rejects a prebook response without a price or currency', async () => {
+    (global as any).fetch = jest.fn().mockResolvedValue(
+      nuiteeResponse({ data: { prebookId: 'pb-1', currency: 'USD' } }),
+    );
+
+    const result = await makeService().prebookHotel({ offerId: 'offer-1' });
+
+    expect(result.success).toBe(false);
+    expect(result.prebookId).toBeUndefined();
+  });
+
+  it('rejects an empty offerId before any HTTP call', async () => {
+    const fetch = jest.fn();
+    (global as any).fetch = fetch;
+
+    const result = await makeService().prebookHotel({ offerId: '  ' });
+
+    expect(result.success).toBe(false);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe('NuiteeService.bookHotel — documented contract', () => {
+  const realFetch = global.fetch;
+
+  beforeEach(() => {
+    (global as any).fetch = jest.fn();
+  });
+
+  afterAll(() => {
+    (global as any).fetch = realFetch;
+  });
+
+  const holder = {
+    firstName: 'Steve',
+    lastName: 'Doe',
+    email: 'steve@example.com',
+    phone: '+201000000000',
+  };
+  const guests = [
+    {
+      occupancyNumber: 1,
+      firstName: 'Sunny',
+      lastName: 'Mars',
+      email: 'sunny@example.com',
+    },
+  ];
+
+  it('posts holder/guests/ACC_CREDIT_CARD with NO transactionId and maps the booking', async () => {
+    const fetch = jest.fn().mockResolvedValue(
+      nuiteeResponse({
+        data: {
+          bookingId: 'bk-1',
+          status: 'CONFIRMED',
+          currency: 'USD',
+          price: 120,
+          hotelConfirmationCode: 'HTL-123',
+        },
+      }),
+    );
+    (global as any).fetch = fetch;
+
+    const result = await makeService().bookHotel({
+      prebookId: 'pb-1',
+      holder,
+      guests,
+    });
+
+    const body = JSON.parse(fetch.mock.calls[0][1].body);
+    expect(body).toEqual({
+      prebookId: 'pb-1',
+      holder,
+      guests,
+      payment: { method: 'ACC_CREDIT_CARD' },
+    });
+    expect(body.transactionId).toBeUndefined();
+    expect(result.success).toBe(true);
+    expect(result.data).toMatchObject({
+      bookingId: 'bk-1',
+      reference: 'HTL-123',
+      hotelConfirmationCode: 'HTL-123',
+      status: 'CONFIRMED',
+      total: 120,
+      currency: 'USD',
+    });
+  });
+
+  it('leaves an absent hotel confirmation code absent (no invented reference)', async () => {
+    (global as any).fetch = jest.fn().mockResolvedValue(
+      nuiteeResponse({
+        data: { bookingId: 'bk-2', status: 'CONFIRMED', price: 90, currency: 'USD' },
+      }),
+    );
+
+    const result = await makeService().bookHotel({
+      prebookId: 'pb-2',
+      holder,
+      guests,
     });
 
     expect(result.success).toBe(true);
-    expect(offersOf(result)[0].title).toBe('فندق القاهرة الكبير');
-    expect(offersOf(result)[0].metadata).toMatchObject({
-      hotelNameEn: 'Cairo Grand',
-      hotelNameAr: 'فندق القاهرة الكبير',
-    });
-    expect(fetch).toHaveBeenCalledTimes(2);
-    const contentUrl = String(fetch.mock.calls[1][0]);
-    expect(contentUrl).toContain('/v3.0/data/hotels?');
-    expect(contentUrl).toContain('hotelIds=H1');
-    expect(contentUrl).toContain('language=ar');
+    expect(result.data.hotelConfirmationCode).toBeUndefined();
+    expect(result.data.reference).toBe('bk-2');
   });
 
-  it('falls back to the original hotel name when Nuitee has no Arabic name', async () => {
-    (global as any).fetch = jest
-      .fn()
-      .mockResolvedValueOnce(
-        nuiteeResponse({
-          data: [
-            {
-              hotelId: 'H1',
-              roomTypes: [
-                { roomTypeName: 'Standard', rates: [rate('r-en', 120)] },
-              ],
-            },
-          ],
-          hotels: [{ id: 'H1', name: 'Cairo Grand' }],
-        }),
-      )
-      .mockResolvedValueOnce(
-        nuiteeResponse({ data: [{ id: 'H1', name: 'Cairo Grand' }] }),
-      );
-
-    const result = await makeService().searchHotels({
-      city: 'Cairo',
-      checkIn: new Date('2027-01-10'),
-      checkOut: new Date('2027-01-12'),
-      language: 'ar',
-    });
-
-    expect(offersOf(result)[0].title).toBe('Cairo Grand');
-    expect(offersOf(result)[0].metadata.hotelNameAr).toBeUndefined();
-  });
-
-  it('caches Arabic names by language and reuses them on later searches', async () => {
-    const stored = new Map<string, any>();
-    const contentCache = {
-      get: jest.fn(async (key: string) => stored.get(key) ?? null),
-      set: jest.fn(async (key: string, value: any) => stored.set(key, value)),
-    };
-    const fetch = jest
-      .fn()
-      .mockResolvedValueOnce(
-        nuiteeResponse({
-          data: [
-            {
-              hotelId: 'H1',
-              roomTypes: [
-                { roomTypeName: 'Standard', rates: [rate('r-first', 120)] },
-              ],
-            },
-          ],
-          hotels: [{ id: 'H1', name: 'Cairo Grand' }],
-        }),
-      )
-      .mockResolvedValueOnce(
-        nuiteeResponse({
-          data: [{ id: 'H1', name: 'فندق القاهرة الكبير' }],
-        }),
-      )
-      .mockResolvedValueOnce(
-        nuiteeResponse({
-          data: [
-            {
-              hotelId: 'H1',
-              roomTypes: [
-                { roomTypeName: 'Standard', rates: [rate('r-second', 125)] },
-              ],
-            },
-          ],
-          hotels: [{ id: 'H1', name: 'Cairo Grand' }],
-        }),
-      );
+  it('forwards the documented clientReference idempotency key and customTags', async () => {
+    const fetch = jest.fn().mockResolvedValue(
+      nuiteeResponse({
+        data: {
+          bookingId: 'bk-3',
+          status: 'CONFIRMED',
+          price: 120,
+          currency: 'USD',
+        },
+      }),
+    );
     (global as any).fetch = fetch;
 
-    const service = makeService(contentCache);
-    const params = {
-      city: 'Cairo',
-      checkIn: new Date('2027-01-10'),
-      checkOut: new Date('2027-01-12'),
-      language: 'ar' as const,
-    };
-    await service.searchHotels(params);
-    const repeated = await service.searchHotels(params);
+    const result = await makeService().bookHotel({
+      prebookId: 'pb-3',
+      holder,
+      guests,
+      clientReference: 'booking-1',
+      customTags: {
+        BOOKING_ID: 'booking-1',
+        PRICE_VERSION: 'pv-1',
+        AMOUNT: '120',
+        CURRENCY: 'USD',
+      },
+    });
 
-    expect(offersOf(repeated)[0].title).toBe('فندق القاهرة الكبير');
-    expect(fetch).toHaveBeenCalledTimes(3);
-    expect(contentCache.set).toHaveBeenCalledWith(
-      'nuitee:hotel-content:ar:H1',
-      expect.objectContaining({ name: 'فندق القاهرة الكبير' }),
-      7 * 24 * 60 * 60,
-    );
-    expect(contentCache.get).toHaveBeenCalledWith(
-      'nuitee:hotel-content:ar:H1',
-    );
-    expect([...stored.keys()]).toEqual(['nuitee:hotel-content:ar:H1']);
+    const body = JSON.parse(fetch.mock.calls[0][1].body);
+    expect(body).toMatchObject({
+      prebookId: 'pb-3',
+      clientReference: 'booking-1',
+      customTags: {
+        BOOKING_ID: 'booking-1',
+        PRICE_VERSION: 'pv-1',
+        AMOUNT: '120',
+        CURRENCY: 'USD',
+      },
+      payment: { method: 'ACC_CREDIT_CARD' },
+    });
+    expect(result.success).toBe(true);
+    expect(result.data.status).toBe('CONFIRMED');
+  });
+
+  it('refuses to book without a complete holder (no placeholder email/phone)', async () => {
+    const fetch = jest.fn();
+    (global as any).fetch = fetch;
+
+    const result = await makeService().bookHotel({
+      prebookId: 'pb-1',
+      holder: { ...holder, phone: '' },
+      guests,
+    });
+
+    expect(result.success).toBe(false);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('refuses to book without at least one guest with an email', async () => {
+    const fetch = jest.fn();
+    (global as any).fetch = fetch;
+
+    const result = await makeService().bookHotel({
+      prebookId: 'pb-1',
+      holder,
+      guests: [{ occupancyNumber: 1, firstName: 'A', lastName: 'B', email: '' } as any],
+    });
+
+    expect(result.success).toBe(false);
+    expect(fetch).not.toHaveBeenCalled();
   });
 });

@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tokigo/core/auth/auth_provider.dart';
 import 'package:tokigo/core/events/events_tracker.dart';
+import 'package:tokigo/core/geo/city_selection.dart';
 import 'package:tokigo/core/geo/country_options.dart';
+import 'package:tokigo/core/geo/currency.dart';
 import 'package:tokigo/core/geo/geo_client.dart';
 import 'package:tokigo/core/geo/location_permission_providers.dart'
     show geoRefreshProvider, locationAccessProvider;
@@ -11,20 +13,14 @@ import 'package:tokigo/core/geo/location_permission_service.dart';
 import 'package:tokigo/core/geo/user_location.dart';
 import 'package:tokigo/core/network/http_api_client.dart';
 import 'package:tokigo/core/profile/profile_repository.dart';
+import 'package:tokigo/core/repositories/contracts/home_repository.dart';
 import 'package:tokigo/core/repositories/impl/home_repository_impl.dart';
 import 'package:tokigo/core/storage/offline_cache_providers.dart';
 import 'package:tokigo/core/storage/secure_token_storage_provider.dart';
-import 'package:tokigo/features/bag/application/bag_controller.dart';
-import 'package:tokigo/features/booking/application/services/offer_revalidation_service.dart';
-import 'package:tokigo/features/home/application/home_live_validation_service.dart';
 import 'package:tokigo/features/home/application/hotel_image_cache.dart';
 import 'package:tokigo/features/home/application/hotel_image_memory_cache.dart';
-import 'package:tokigo/features/home/application/home_personalization_orchestrator.dart';
-import 'package:tokigo/features/home/application/local_behavior_store.dart';
-import 'package:tokigo/features/home/application/recommendation_service.dart';
-import 'package:tokigo/features/home/domain/home_composer.dart';
-import 'package:tokigo/features/home/domain/personalization_context.dart';
-import 'package:tokigo/features/home/presentation/home_controller.dart';
+import 'package:tokigo/features/home/presentation/explore_feed_controller.dart';
+import 'package:tokigo/features/home/presentation/nearby_stays_controller.dart';
 import 'package:tokigo/shared/providers/locale_provider.dart';
 
 final apiClientProvider = Provider((ref) => HttpApiClient());
@@ -91,7 +87,7 @@ class ManualCountryCodeController extends Notifier<String?> {
   }
 }
 
-final homeRepositoryProvider = Provider((ref) {
+final homeRepositoryProvider = Provider<HomeRepository>((ref) {
   final client = ref.watch(apiClientProvider);
   final cache = ref.watch(offlineCacheProvider);
   return HomeRepositoryImpl(client, offlineCache: cache);
@@ -130,6 +126,7 @@ final userLocationProvider = FutureProvider<UserLocation?>((ref) async {
   return UserLocation(
     latitude: position.latitude,
     longitude: position.longitude,
+    accuracy: position.accuracy >= 0 ? position.accuracy : null,
   );
 });
 
@@ -217,39 +214,6 @@ final eventsTrackerProvider = Provider<EventsTracker>((ref) {
   );
 });
 
-/// Phase 1C — deterministic candidate ranking (no ML, no AI).
-final recommendationServiceProvider = Provider<RecommendationService>((ref) {
-  return const RecommendationService();
-});
-
-/// Read-only local behavior signals (Phase 1B). Backed by the shared offline
-/// cache; scans existing search keys, never writes.
-final localBehaviorStoreProvider = Provider<LocalBehaviorStore>((ref) {
-  return LocalBehaviorStore(ref.watch(offlineCacheProvider));
-});
-
-/// Phase 1C — parallel personalization orchestrator (profile/geo/behavior).
-final homePersonalizationOrchestratorProvider =
-    Provider<HomePersonalizationOrchestrator>((ref) {
-      return HomePersonalizationOrchestrator(
-        profileRepository: ref.watch(profileRepositoryProvider),
-        geoClient: ref.watch(geoClientProvider),
-        behaviorStore: ref.watch(localBehaviorStoreProvider),
-        hasTripsResolver: (user) async {
-          return ref.read(bagControllerProvider).currentTrips.isNotEmpty;
-        },
-      );
-    });
-
-/// Phase 1D — background live product validation for the Home snapshot.
-/// Wraps the EXISTING `/offers/revalidate` pipeline (the same one booking
-/// uses); no parallel revalidation architecture.
-final homeLiveValidationServiceProvider = Provider<HomeLiveValidationService>((
-  ref,
-) {
-  return HomeLiveValidationService(ref.watch(offerRevalidationServiceProvider));
-});
-
 /// H3 — hotel image cache: bytes on disk (app cache dir), metadata in the
 /// shared offline cache box. Byte caps and TTL live in [HotelImageCache].
 final hotelImageCacheProvider = Provider<HotelImageCache>((ref) {
@@ -269,104 +233,36 @@ final hotelImageMemoryCacheProvider = Provider<HotelImageMemoryCache>((ref) {
   return HotelImageMemoryCache();
 });
 
-/// Home is scoped to the caller's identity: anonymous users share the
-/// `'anon'` snapshot while each authenticated user gets `'<userId>'`.
-///
-/// Watching [authUserProvider] means login/logout automatically rebuilds
-/// the controller with the new scope — a user's snapshot can never render on
-/// the anonymous surface (or another user's surface) and vice versa.
-///
-/// The context builder runs the personalization spine in the background —
-/// profile ‖ geo ‖ local behavior ‖ trips, followed by deterministic ranking.
-/// Opening Home never triggers an AI call.
-final homeControllerProvider = StateNotifierProvider<HomeController, HomeState>(
-  (ref) {
-    final repo = ref.watch(homeRepositoryProvider);
-    final user = ref.watch(authUserProvider);
-    final orchestrator = ref.watch(homePersonalizationOrchestratorProvider);
-    final recommendationService = ref.watch(recommendationServiceProvider);
+/// Backend destination feed for the Explore Cities page. Home itself does NOT
+/// use this: it renders the bundled Explore catalog directly. No snapshot, no
+/// price validation, no composer, no recommendation rail.
+final exploreFeedControllerProvider =
+    StateNotifierProvider<ExploreFeedController, ExploreFeedState>((ref) {
+      return ExploreFeedController(ref.watch(homeRepositoryProvider));
+    });
 
-    return HomeController(
-      repo,
-      audience: HomeRepositoryImpl.homeAudienceFor(user?.id),
-      liveValidation: ref.watch(homeLiveValidationServiceProvider),
-      // Read (not watch): a country change must NOT rebuild the controller and
-      // replay the Home startup. Resolved per request instead.
-      countryCode: () {
-        final manual = ref.read(manualCountryCodeProvider);
-        final geo = ref.read(geoCountryProvider).asData?.value?.countryCode;
-        final code = (manual ?? geo)?.trim().toUpperCase();
-        return (code != null && code.length == 2) ? code : null;
-      },
-      languageCode: () => ref.read(localeProvider).languageCode,
-      currencyCode: () => ref.read(currencyProvider),
-      // Truthful "Stays Near You": read (not watch) so a position change does
-      // not rebuild the controller; resolved per request. Null when permission
-      // is not granted or no fix exists — the rail keeps the backend order.
-      location: () => ref.read(userLocationProvider.future),
-      contextBuilder: (recommendedHotels) async {
-        // 1) R-4 recommended hotels → deterministic candidates (real data
-        //    only; the AI is never a product source).
-        final baseCandidates = recommendedHotels.isEmpty
-            ? const <PersonalizationCandidate>[]
-            : recommendedHotels
-                  .map(
-                    (h) => PersonalizationCandidate(
-                      id: h.id,
-                      title: h.title,
-                      subtitle: h.subtitle,
-                      imageUrl: h.imageUrl,
-                      price: h.price,
-                      currency: h.currency,
-                      rating: h.rating,
-                      reviewCount: h.reviewCount,
-                    ),
-                  )
-                  .toList();
-
-        // 2) Parallel spine: profile ‖ geo ‖ behavior ‖ trips (each silent).
-        final personalized = await orchestrator.build(
-          user: user,
-          candidates: baseCandidates,
-        );
-
-        // 3) Deterministic ranking on top (§6 priorities).
-        final ranked = recommendationService.rank(baseCandidates, personalized);
-
-        // 4) Compose the final context consumed by the deterministic composer.
-        return HomeCompositionContext(
-          userState: personalized.userState,
-          displayName: personalized.displayName,
-          recommendedHotels: recommendedHotels,
-          recentSearches: personalized.recentSearches,
-          hasBagTrips: personalized.hasTrips,
-          viewedTitles: personalized.viewedTitles,
-          favoriteTitles: personalized.favoriteTitles,
-          upcomingDestination: personalized.upcomingDestination,
-          personalizationEnabled: personalized.personalizationEnabled,
-          rankedCandidates: ranked
-              .map(
-                (c) => RankedCandidate(
-                  id: c.id,
-                  title: c.title,
-                  subtitle: c.subtitle,
-                  imageUrl: c.imageUrl,
-                  price: c.price,
-                  currency: c.currency,
-                  rating: c.rating,
-                  reviewCount: c.reviewCount,
-                  reason: c.reason,
-                  source: c.source,
-                  confidence: c.confidence,
-                ),
-              )
-              .toList(),
-          geoCountryCode: personalized.geoCountryCode,
-        );
-      },
-    );
-  },
-);
+/// Promotional Nearby Stays (R5): cached cards render immediately, the
+/// background refresh replaces them, and a failure preserves them. The
+/// location function is read (not watched) so a position change does not
+/// rebuild the controller.
+final nearbyStaysControllerProvider =
+    StateNotifierProvider<NearbyStaysController, NearbyStaysState>((ref) {
+  return NearbyStaysController(
+    ref.watch(homeRepositoryProvider),
+    location: () => ref.read(userLocationProvider.future),
+    manualCity: () => ref.read(citySelectionProvider).manual?.city,
+    automaticCity: () => ref.read(citySelectionProvider).automatic?.city,
+    languageCode: () => ref.read(localeProvider).languageCode,
+    currencyCode: () {
+      final city = ref.read(citySelectionProvider).effective?.city;
+      return effectiveCurrency(
+        chosen: ref.read(currencyProvider),
+        countryCode: city?.countryCode,
+        cityCurrency: city?.currency,
+      );
+    },
+  );
+});
 
 /// A one-shot request to bring a Home section into view.
 ///

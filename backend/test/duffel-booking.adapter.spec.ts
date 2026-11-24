@@ -22,14 +22,22 @@ class FakeDuffelService {
     offerId: string;
     passengers: Array<Record<string, unknown>>;
     payments: Array<Record<string, unknown>>;
+    metadata?: Record<string, string>;
   }> = [];
 
   createOrderResult: Record<string, unknown> = {
     id: 'ord_1',
     booking_reference: 'ABC123',
-    status: 'confirmed',
     total_amount: '800.00',
     total_currency: 'USD',
+    // Duffel has no generic order status: paid_at + awaiting_payment are the
+    // documented payment-state evidence for a confirmed instant order.
+    payment_status: {
+      awaiting_payment: false,
+      paid_at: '2026-01-01T00:00:00Z',
+      payment_required_by: '2026-01-01T00:00:00Z',
+      price_guarantee_expires_at: '2026-01-01T00:00:00Z',
+    },
   };
 
   createOrderError: Error | null = null;
@@ -38,8 +46,9 @@ class FakeDuffelService {
     offerId: string,
     passengers: Array<Record<string, unknown>>,
     payments: Array<Record<string, unknown>>,
+    metadata?: Record<string, string>,
   ): Promise<Record<string, unknown>> {
-    this.createOrderCalls.push({ offerId, passengers, payments });
+    this.createOrderCalls.push({ offerId, passengers, payments, metadata });
     if (this.createOrderError) throw this.createOrderError;
     return this.createOrderResult;
   }
@@ -74,6 +83,16 @@ const TWO_ADULTS = [
   { id: 'pas_2', type: 'adult', age: null },
 ];
 
+/** The server-authoritative payment binding every successful call needs. */
+const AUTHORITATIVE_PAYMENT = {
+  bookingId: 'bk_1',
+  amount: 800,
+  currency: 'USD',
+  amountText: '800.00',
+  priceVersion: 'pv_1',
+  paymentAttemptId: 'pay_1',
+} as const;
+
 function offerSnapshot(
   overrides: Record<string, unknown> = {},
 ): Record<string, unknown> {
@@ -95,13 +114,26 @@ describe('Duffel booking adapter — passenger mapping', () => {
       offerId: 'off_1',
       offerSnapshot: offerSnapshot(),
       travelers: [completeTraveler()],
+      ...AUTHORITATIVE_PAYMENT,
     });
 
     expect(result.success).toBe(true);
     expect(fake.createOrderCalls).toHaveLength(1);
-    const { offerId, passengers, payments } = fake.createOrderCalls[0];
+    const { offerId, passengers, payments, metadata } =
+      fake.createOrderCalls[0];
     expect(offerId).toBe('off_1');
-    expect(payments).toEqual([]);
+    // Duffel's official `balance` instrument, bound to the exact accepted
+    // amount/currency. No card data is ever sent.
+    expect(payments).toEqual([
+      { type: 'balance', amount: '800.00', currency: 'USD' },
+    ]);
+    expect(metadata).toEqual({
+      BOOKING_ID: 'bk_1',
+      PRICE_VERSION: 'pv_1',
+      PAYMENT_ATTEMPT: 'pay_1',
+      AMOUNT: '800',
+      CURRENCY: 'USD',
+    });
     expect(passengers).toEqual([
       {
         id: 'pas_1',
@@ -132,6 +164,7 @@ describe('Duffel booking adapter — passenger mapping', () => {
       offerId: 'off_1',
       offerSnapshot: offerSnapshot(),
       travelers: [completeTraveler()],
+      ...AUTHORITATIVE_PAYMENT,
     });
 
     const passenger = fake.createOrderCalls[0].passengers[0];
@@ -169,6 +202,7 @@ describe('Duffel booking adapter — passenger mapping', () => {
         completeTraveler({ firstName: 'Mona', gender: 'F' }),
         completeTraveler({ firstName: 'Youssef' }),
       ],
+      ...AUTHORITATIVE_PAYMENT,
     });
 
     const passengers = fake.createOrderCalls[0].passengers;
@@ -195,6 +229,7 @@ describe('Duffel booking adapter — passenger mapping', () => {
         completeTraveler({ gender: 'F', title: 'MRS' }),
         completeTraveler({ gender: 'female', title: 'Miss' }),
       ],
+      ...AUTHORITATIVE_PAYMENT,
     });
 
     const passengers = fake.createOrderCalls[0].passengers;
@@ -212,6 +247,7 @@ describe('Duffel booking adapter — passenger mapping', () => {
       offerId: 'off_1',
       offerSnapshot: offerSnapshot(),
       travelers: [completeTraveler({ documentNumber: undefined })],
+      ...AUTHORITATIVE_PAYMENT,
     });
 
     // The document is optional at this boundary; the rest still maps.
@@ -240,6 +276,7 @@ describe('Duffel booking adapter — passenger mapping', () => {
           phone_number: '+201111111111',
         },
       ],
+      ...AUTHORITATIVE_PAYMENT,
     });
 
     expect(fake.createOrderCalls[0].passengers[0]).toEqual({
@@ -348,6 +385,7 @@ describe('Duffel booking adapter — unchanged error handling', () => {
       offerId: 'off_1',
       offerSnapshot: offerSnapshot(),
       travelers: [completeTraveler()],
+      ...AUTHORITATIVE_PAYMENT,
     });
 
     expect(result.success).toBe(false);
@@ -363,10 +401,107 @@ describe('Duffel booking adapter — unchanged error handling', () => {
       offerId: 'off_1',
       offerSnapshot: offerSnapshot(),
       travelers: [completeTraveler()],
+      ...AUTHORITATIVE_PAYMENT,
     });
 
     expect(result.success).toBe(true);
     expect(result.data?.reference).toBe('ABC123');
     expect(result.data?.providerBookingId).toBe('ord_1');
+  });
+});
+
+describe('Duffel booking adapter — provider confirmation evidence', () => {
+  it('does not confirm an order that is still awaiting payment', async () => {
+    const fake = new FakeDuffelService();
+    fake.createOrderResult = {
+      id: 'ord_hold',
+      booking_reference: 'ABC123',
+      total_amount: '800.00',
+      total_currency: 'USD',
+      payment_status: {
+        awaiting_payment: true,
+        paid_at: null,
+      },
+    };
+    const provider = new DuffelBookingProvider(fake as unknown as DuffelService);
+
+    const result = await provider.createBooking({
+      offerId: 'off_1',
+      offerSnapshot: offerSnapshot(),
+      travelers: [completeTraveler()],
+      ...AUTHORITATIVE_PAYMENT,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.status).toBe('pending_payment');
+    expect(result.data?.confirmationState).toBe('pending');
+  });
+
+  it('does not confirm an order whose payment has not settled', async () => {
+    const fake = new FakeDuffelService();
+    fake.createOrderResult = {
+      id: 'ord_pending',
+      booking_reference: 'ABC123',
+      total_amount: '800.00',
+      total_currency: 'USD',
+      payment_status: {
+        awaiting_payment: false,
+        paid_at: null,
+      },
+    };
+    const provider = new DuffelBookingProvider(fake as unknown as DuffelService);
+
+    const result = await provider.createBooking({
+      offerId: 'off_1',
+      offerSnapshot: offerSnapshot(),
+      travelers: [completeTraveler()],
+      ...AUTHORITATIVE_PAYMENT,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.confirmationState).toBe('pending');
+  });
+
+  it('treats a cancelled order as a definitive provider failure', async () => {
+    const fake = new FakeDuffelService();
+    fake.createOrderResult = {
+      id: 'ord_cancelled',
+      booking_reference: 'ABC123',
+      total_amount: '800.00',
+      total_currency: 'USD',
+      cancelled_at: '2026-01-01T00:00:00Z',
+      payment_status: {
+        awaiting_payment: false,
+        paid_at: '2026-01-01T00:00:00Z',
+      },
+    };
+    const provider = new DuffelBookingProvider(fake as unknown as DuffelService);
+
+    const result = await provider.createBooking({
+      offerId: 'off_1',
+      offerSnapshot: offerSnapshot(),
+      travelers: [completeTraveler()],
+      ...AUTHORITATIVE_PAYMENT,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.status).toBe('cancelled');
+    expect(result.data?.confirmationState).toBe('failed');
+  });
+
+  it('blocks the provider call when amount/currency are missing', async () => {
+    const fake = new FakeDuffelService();
+    const provider = new DuffelBookingProvider(fake as unknown as DuffelService);
+
+    const result = await provider.createBooking({
+      offerId: 'off_1',
+      offerSnapshot: offerSnapshot(),
+      travelers: [completeTraveler()],
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.failureKind).toBe('definitive');
+    expect(result.error).toContain('amount');
+    expect(fake.createOrderCalls).toHaveLength(0);
   });
 });

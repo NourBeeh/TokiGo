@@ -36,6 +36,13 @@ export const BOOKING_STATUSES = [
   'failed',
   'cancelled',
   'expired',
+  /**
+   * The provider booking call happened but its outcome is unknown (timeout,
+   * lost response, 5xx, malformed body). The idempotency key is RETAINED and
+   * no automatic retry, re-book or charge is allowed. An authorized operator
+   * must resolve it through the explicit reconciliation endpoint.
+   */
+  'reconciliation_pending',
 ] as const;
 
 export type BookingStatus = (typeof BOOKING_STATUSES)[number];
@@ -83,6 +90,15 @@ export class Booking {
   /** Provider-side authoritative amount (never a client-supplied price). */
   @Column({ type: 'real', default: 0 })
   authoritativePrice!: number;
+
+  /**
+   * The exact accepted commercial state (provider + offer + amount + currency +
+   * terms version). Null when no price is currently accepted — e.g. a pending
+   * price/terms change. Payment creation and booking confirmation both require
+   * this version to match the verified payment attempt.
+   */
+  @Column({ type: 'varchar', nullable: true })
+  priceVersion?: string | null;
 
   /** Previous authoritative amount when a revalidation moved the price. */
   @Column({ type: 'real', nullable: true })

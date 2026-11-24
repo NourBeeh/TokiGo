@@ -2,7 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FlightProvider } from '../../common/providers/flight.provider';
 import { ProviderResult } from '../../common/providers/provider.result';
+import {
+  termsFromChangedFlags,
+  termsFromNormalizedFlightOffer,
+  termsVersionOf,
+} from '../../common/pricing/offer-terms';
 import { resolveIataCode } from '../duffel/duffel.service';
+import { flightDesignator } from '../providers/flight-itinerary';
 
 /**
  * Phase 3B — Nuitee flights adapter behind the shared FlightProvider contract
@@ -25,6 +31,113 @@ const NUITEE_BASE_URL = 'https://api.liteapi.travel/v3.0';
 
 /** Per-provider budget for ONE search call (spec point 12/15 + 3B). */
 const FLIGHT_SEARCH_TIMEOUT_MS = 20_000;
+
+function nonEmptyString(value: any): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+function finiteAmount(value: any): number | null {
+  const number = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+interface NuiteeCondition {
+  allowed: boolean | null;
+  penaltyAmount: number | null;
+  penaltyCurrency: string | null;
+  /** Provider signalled a fee applies even when it published no amount. */
+  feeApplies: boolean | null;
+}
+
+/**
+ * Maps one Nuitee booking-term block. `allowed` is the provider's boolean;
+ * a missing boolean is UNKNOWN, never "not allowed". The fee amount is only
+ * taken from `pricing.display.amount` (the customer-facing amount), never
+ * guessed from `percent` or a sibling field.
+ */
+function nuiteeCondition(
+  terms: any,
+  allowedKey: 'refundable' | 'changeable',
+  feeKey: 'refundFee' | 'changeFee',
+  hasFeeKey: 'hasRefundFee' | 'hasChangeFee',
+): NuiteeCondition | null {
+  const allowed =
+    typeof terms?.[allowedKey] === 'boolean' ? terms[allowedKey] : null;
+  const fee = terms?.[feeKey];
+  const penaltyAmount = finiteAmount(fee?.pricing?.display?.amount);
+  const penaltyCurrency = nonEmptyString(fee?.pricing?.display?.currency);
+  const hasFee =
+    typeof terms?.[hasFeeKey] === 'boolean' ? terms[hasFeeKey] : null;
+  if (allowed === null && penaltyAmount === null && hasFee === null) {
+    return null;
+  }
+  return {
+    allowed,
+    penaltyAmount,
+    penaltyCurrency: penaltyAmount !== null ? penaltyCurrency : null,
+    feeApplies:
+      hasFee === true || penaltyAmount !== null
+        ? true
+        : hasFee === false
+          ? false
+          : null,
+  };
+}
+
+interface NuiteeBaggageAllowance {
+  type: string;
+  /** Pieces allowed; null when the provider states a weight-only allowance. */
+  quantity: number | null;
+  weightKg: number | null;
+  description?: string;
+  passengerType?: string;
+}
+
+function nuiteeBaggageAllowances(offer: any): NuiteeBaggageAllowance[] {
+  const included = Array.isArray(offer?.baggage?.included)
+    ? offer.baggage.included
+    : [];
+  const allowances: NuiteeBaggageAllowance[] = [];
+  for (const item of included) {
+    const type = nonEmptyString(item?.bagType);
+    if (!type) continue;
+    const pieces = finiteAmount(item?.pieces);
+    const weightKg = finiteAmount(item?.weightKg);
+    const description = nonEmptyString(item?.description);
+    const passengerType = nonEmptyString(item?.passengerType);
+    allowances.push({
+      type,
+      quantity:
+        pieces !== null && pieces >= 0 ? Math.trunc(pieces) : null,
+      weightKg,
+      ...(description ? { description } : {}),
+      ...(passengerType ? { passengerType } : {}),
+    });
+  }
+  return allowances;
+}
+
+/**
+ * Leg index per segment. Nuitee marks each segment with OUTBOUND/INBOUND;
+ * a change of direction starts the next leg. Segments without a direction
+ * stay in the first leg — never an invented split.
+ */
+function nuiteeLegIndexes(segments: any[]): number[] {
+  const indexes: number[] = [];
+  let leg = 0;
+  let previousDirection: string | null = null;
+  for (let i = 0; i < segments.length; i++) {
+    const direction = nonEmptyString(segments[i]?.direction);
+    if (i > 0 && direction && previousDirection && direction !== previousDirection) {
+      leg++;
+    }
+    indexes.push(leg);
+    if (direction) previousDirection = direction;
+  }
+  return indexes;
+}
 
 @Injectable()
 export class NuiteeFlightService implements FlightProvider {
@@ -61,9 +174,17 @@ export class NuiteeFlightService implements FlightProvider {
       throw new Error(`Nuitee flights returned non-JSON (${response.status}): ${text.slice(0, 120)}`);
     }
     if (!response.ok) {
+      const providerCode =
+        body?.error?.code ?? body?.error?.errorCode ?? body?.code ?? body?.errorCode;
       const detail =
         body?.error?.message ?? body?.message ?? JSON.stringify(body).slice(0, 160);
-      throw new Error(`Nuitee ${path} failed (${response.status}): ${String(detail)}`);
+      const codeSuffix =
+        providerCode === undefined || providerCode === null
+          ? ''
+          : ` [${String(providerCode)}]`;
+      throw new Error(
+        `Nuitee ${path} failed (${response.status})${codeSuffix}: ${String(detail)}`,
+      );
     }
     return body;
   }
@@ -151,58 +272,274 @@ export class NuiteeFlightService implements FlightProvider {
     return offers;
   }
 
-  /** Pure mapper — unit-testable without any HTTP. */
+  /**
+   * Pure mapper — unit-testable without any HTTP.
+   *
+   * Every field is provider truth. An offer without a usable id, price,
+   * currency or complete ordered segments is DROPPED: a fabricated USD/zero
+   * price or a route taken from the request would show a bookable-looking
+   * flight the provider never sold.
+   */
   mapOffer(
     offer: any,
     journey: any,
-    params: { origin: string; destination: string },
+    _params: { origin: string; destination: string },
   ) {
-    const offerId = offer?.offerId;
-    const total = offer?.pricing?.display?.total;
-    const currency = offer?.pricing?.display?.currency;
-    // Malformed offers are dropped, never invented (3B rule).
-    if (typeof offerId !== 'string' || typeof total !== 'number' || !currency) {
+    const offerId = nonEmptyString(offer?.offerId);
+    const display = offer?.pricing?.display;
+    const total = finiteAmount(display?.total);
+    const currency = nonEmptyString(display?.currency);
+    if (!offerId || total === null || total <= 0 || !currency) {
       return null;
     }
 
-    const segments: any[] = Array.isArray(journey?.segments) ? journey.segments : [];
+    const rawSegments: any[] = Array.isArray(journey?.segments)
+      ? journey.segments
+      : [];
+    if (rawSegments.length === 0) return null;
+
+    const segmentFares: any[] = Array.isArray(offer?.segmentFares)
+      ? offer.segmentFares
+      : [];
+    const segmentAmenities: any[] = Array.isArray(offer?.segmentAmenities)
+      ? offer.segmentAmenities
+      : [];
+    const legIndexes = nuiteeLegIndexes(rawSegments);
+    const segments: any[] = [];
+
+    for (let index = 0; index < rawSegments.length; index++) {
+      const segment = rawSegments[index];
+      const origin = nonEmptyString(segment?.originCode);
+      const destination = nonEmptyString(segment?.destinationCode);
+      const departureAt = nonEmptyString(segment?.departureTime);
+      const arrivalAt = nonEmptyString(segment?.arrivalTime);
+      if (!origin || !destination || !departureAt || !arrivalAt) return null;
+
+      const segmentKey = nonEmptyString(segment?.segmentKey);
+      const fare = segmentKey
+        ? segmentFares.find((entry: any) => entry?.segmentKey === segmentKey)
+        : undefined;
+      const amenities = segmentKey
+        ? segmentAmenities.find(
+            (entry: any) => entry?.segmentKey === segmentKey,
+          )
+        : undefined;
+      const rawStopCount = finiteAmount(segment?.stopCount);
+      const stopCount =
+        rawStopCount !== null && rawStopCount >= 0
+          ? Math.trunc(rawStopCount)
+          : null;
+
+      segments.push({
+        sliceIndex: legIndexes[index],
+        segmentIndex: index,
+        segmentKey: segmentKey ?? undefined,
+        origin,
+        destination,
+        departureAt,
+        arrivalAt,
+        marketingCarrier: {
+          code: nonEmptyString(segment?.carrier?.marketingCode) ?? '',
+          name: nonEmptyString(segment?.carrier?.marketingName) ?? '',
+        },
+        operatingCarrier: {
+          code: nonEmptyString(segment?.carrier?.operatingCode) ?? '',
+          name: nonEmptyString(segment?.carrier?.operatingName) ?? '',
+        },
+        marketingFlightNumber:
+          nonEmptyString(segment?.flight?.marketingNumber) ?? '',
+        operatingFlightNumber:
+          nonEmptyString(segment?.flight?.operatingNumber) ?? '',
+        stopCount,
+        cabinClass: nonEmptyString(fare?.cabin),
+        fareBasisCode: nonEmptyString(fare?.fareBasisCode),
+        aircraft: nonEmptyString(amenities?.aircraftType),
+        duration: nonEmptyString(segment?.duration?.iso8601),
+      });
+    }
+
     const first = segments[0];
     const last = segments[segments.length - 1];
-    const carrier = first?.carrier?.marketingName ?? first?.carrier?.marketingCode;
-    const flightNumber = first?.flight?.marketingNumber
-      ? `${first?.carrier?.marketingCode ?? ''}${first.flight.marketingNumber}`
-      : '';
+
+    // What the passenger sees is the marketing carrier; the operating carrier
+    // is only a fallback. Never a placeholder airline string.
+    const airline =
+      first.marketingCarrier.name || first.operatingCarrier.name || '';
+    const flightNumber =
+      flightDesignator(
+        first.marketingCarrier.code,
+        first.marketingFlightNumber,
+      ) ||
+      flightDesignator(
+        first.operatingCarrier.code,
+        first.operatingFlightNumber,
+      );
+
+    // Leg starts, then the final arrival. A round trip names its return
+    // ("JFK → CDG → JFK") instead of pretending the last segment ends abroad.
+    const chain: string[] = [first.origin];
+    for (let i = 1; i < segments.length; i++) {
+      if (legIndexes[i] !== legIndexes[i - 1]) chain.push(segments[i].origin);
+    }
+    chain.push(last.destination);
+    const uniqueChain = chain.filter(
+      (code, index) => index === 0 || code !== chain[index - 1],
+    );
+    const title =
+      uniqueChain.length > 2
+        ? uniqueChain.join(' → ')
+        : `${first.origin} → ${last.destination}`;
+
+    const legCount = new Set(legIndexes).size;
+    const connectionCount = Array.isArray(journey?.connections)
+      ? journey.connections.length
+      : Math.max(0, segments.length - legCount);
+    const technicalStops = segments.reduce(
+      (sum, segment) =>
+        sum + (typeof segment.stopCount === 'number' ? segment.stopCount : 0),
+      0,
+    );
+    const stops = Math.max(0, connectionCount + technicalStops);
+
+    const connectionAirports: string[] = [];
+    if (
+      Array.isArray(journey?.connections) &&
+      journey.connections.length > 0
+    ) {
+      for (const connection of journey.connections) {
+        const code = nonEmptyString(connection?.arrivalAirportCode);
+        if (code) connectionAirports.push(code);
+      }
+    } else {
+      for (let i = 1; i < segments.length; i++) {
+        if (legIndexes[i] === legIndexes[i - 1]) {
+          connectionAirports.push(segments[i - 1].destination);
+        }
+      }
+    }
+
+    const cabins = new Set(
+      segments
+        .map((segment) => segment.cabinClass)
+        .filter((value: any): value is string => Boolean(value)),
+    );
+    const cabinClass = cabins.size === 1 ? [...cabins][0] : undefined;
+    const mixedCabin = offer?.fare?.mixedCabin === true || cabins.size > 1;
+
+    const fareFamily = nonEmptyString(offer?.fare?.family);
+    const mixedFareFamily = offer?.fare?.mixedFareFamily === true;
+    // When legs are sold under different brands the documented `family`
+    // reflects the first leg only; a single top-level brand would misstate
+    // the return. The provider's raw label stays in metadata.
+    const fareBrand = mixedFareFamily
+      ? undefined
+      : fareFamily ?? undefined;
+
+    const refund = nuiteeCondition(
+      offer?.terms,
+      'refundable',
+      'refundFee',
+      'hasRefundFee',
+    );
+    const change = nuiteeCondition(
+      offer?.terms,
+      'changeable',
+      'changeFee',
+      'hasChangeFee',
+    );
+    const conditions =
+      refund || change
+        ? {
+            refundBeforeDeparture: refund,
+            changeBeforeDeparture: change,
+          }
+        : undefined;
+
+    const baggageAllowances = nuiteeBaggageAllowances(offer);
+    const legacyBaggage = baggageAllowances.find(
+      (allowance) =>
+        allowance.quantity !== null && allowance.quantity > 0,
+    );
+
+    const seatsRemaining = finiteAmount(offer?.fare?.seatsRemaining);
+    const termsSummary = Array.isArray(offer?.terms?.summary)
+      ? offer.terms.summary
+          .map((entry: any) => ({
+            level: nonEmptyString(entry?.level),
+            message: nonEmptyString(entry?.message),
+          }))
+          .filter((entry: any) => entry.message)
+      : [];
+
+    const expiresAt = nonEmptyString(offer?.expiration);
+    const searchId = nonEmptyString(offer?.searchId);
+    const firstFareBasisCode = first.fareBasisCode;
+    const firstAircraft = first.aircraft;
 
     return {
       id: offerId,
       type: 'flight',
       providerId: this.providerId,
       providerName: this.providerName,
-      title: `${first?.originCode ?? params.origin} → ${last?.destinationCode ?? params.destination}`,
-      subtitle: carrier ?? 'Airline',
-      origin: first?.originCode ?? params.origin,
-      destination: last?.destinationCode ?? params.destination,
-      departureTime: first?.departureTime,
-      arrivalTime: last?.arrivalTime,
-      airline: carrier ?? '',
+      title,
+      subtitle: airline || null,
+      origin: first.origin,
+      destination: last.destination,
+      departureTime: first.departureAt,
+      arrivalTime: last.arrivalAt,
+      airline,
       flightNumber,
       price: total,
       currency,
-      duration: journey?.totalDuration?.iso8601,
-      stops: Math.max(0, segments.length - 1),
-      fareFamily: offer?.fare?.family,
-      refundable: offer?.terms?.refundable ?? undefined,
+      duration: nonEmptyString(journey?.totalDuration?.iso8601) ?? undefined,
+      stops,
+      cabinClass,
+      fareBrand,
+      conditions,
+      baggageAllowances,
+      segments,
+      ...(expiresAt ? { validUntil: expiresAt } : {}),
       // Price provenance (spec point 7): search prices are provisional.
+      // `expiresAt` is only carried when Nuitee actually sent one — an
+      // invented "30 minutes from now" window would become a fake deadline.
       metadata: {
         providerOfferId: offerId,
         journeyKey: journey?.journeyKey,
         retrievedAt: new Date().toISOString(),
-        expiresAt:
-          offer?.expiration ?? new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+        ...(expiresAt ? { expiresAt } : {}),
         // 3D — verbatim detail fields for the details page (never invented).
-        fareFamily: offer?.fare?.family,
-        refundable: offer?.terms?.refundable ?? undefined,
-        baggage: offer?.baggage ?? undefined,
+        ...(fareFamily ? { fareFamily } : {}),
+        ...(mixedFareFamily ? { mixedFareFamily: true } : {}),
+        ...(typeof offer?.terms?.refundable === 'boolean'
+          ? { refundable: offer.terms.refundable }
+          : {}),
+        ...(typeof offer?.terms?.changeable === 'boolean'
+          ? { changeable: offer.terms.changeable }
+          : {}),
+        ...(termsSummary.length > 0 ? { termsSummary } : {}),
+        ...(legacyBaggage && legacyBaggage.quantity !== null
+          ? {
+              baggage: {
+                type: legacyBaggage.type,
+                quantity: legacyBaggage.quantity,
+              },
+            }
+          : {}),
+        ...(seatsRemaining !== null && seatsRemaining >= 0
+          ? { seatsLeft: Math.trunc(seatsRemaining) }
+          : {}),
+        ...(cabinClass ? { cabinClass } : {}),
+        ...(firstFareBasisCode ? { fareBasisCode: firstFareBasisCode } : {}),
+        ...(firstAircraft ? { aircraft: firstAircraft } : {}),
+        ...(connectionAirports.length > 0
+          ? {
+              stopAirport: connectionAirports[0],
+              connectionAirports,
+            }
+          : {}),
+        ...(technicalStops > 0 ? { technicalStops } : {}),
+        ...(mixedCabin ? { mixedCabin: true } : {}),
+        ...(searchId ? { searchId } : {}),
       },
     };
   }
@@ -263,6 +600,9 @@ export class NuiteeFlightService implements FlightProvider {
     oldPrice?: number;
     newPrice?: number;
     expiresAt?: string;
+    terms?: Record<string, any>;
+    termsVersion?: string;
+    changedTerms?: string[];
     error?: string;
     timestamp?: Date;
   }> {
@@ -289,6 +629,33 @@ export class NuiteeFlightService implements FlightProvider {
         typeof changes?.pricing?.new?.display?.total === 'number'
           ? changes.pricing.new.display.total
           : undefined;
+
+      // The verified offer may be nested under `offer`, or the response item
+      // itself may carry the documented offer fields. Map only what exists;
+      // an absent offer leaves the terms unknown rather than fabricated.
+      const offerCandidate =
+        first?.offer ??
+        (typeof first?.offerId === 'string'
+          ? first
+          : Array.isArray(journey?.offers)
+            ? journey.offers.find(
+                (entry: any) => entry?.offerId === offerId,
+              )
+            : undefined);
+      const mapped = offerCandidate
+        ? this.mapOffer(offerCandidate, journey, {
+            origin: '',
+            destination: '',
+          })
+        : null;
+      const terms = termsFromNormalizedFlightOffer(mapped);
+      const providerFlags = termsFromChangedFlags(changes);
+      const changedTerms = Object.keys(providerFlags);
+      const combinedTerms =
+        terms || changedTerms.length > 0
+          ? { ...(terms ?? {}), ...providerFlags }
+          : undefined;
+
       return {
         success: true,
         price,
@@ -300,6 +667,13 @@ export class NuiteeFlightService implements FlightProvider {
         oldPrice: changesOld,
         newPrice: changesNew,
         expiresAt: journey?.expiration,
+        ...(combinedTerms
+          ? {
+              terms: combinedTerms,
+              termsVersion: termsVersionOf(combinedTerms),
+            }
+          : {}),
+        ...(changedTerms.length > 0 ? { changedTerms } : {}),
         timestamp: new Date(),
       };
     } catch (error: any) {
@@ -380,7 +754,19 @@ export class NuiteeFlightService implements FlightProvider {
   async bookFlight(payload: {
     prebookId: string;
     payment: { method: string; token?: string; transactionId?: string };
-  }): Promise<{ success: boolean; bookingId?: string; bookingRef?: string; status?: string; order?: any; error?: string; timestamp?: Date }> {
+    /** Up to five `^[A-Z0-9_-]+$` labels persisted with the booking. */
+    customTags?: Record<string, string>;
+  }): Promise<{
+    success: boolean;
+    bookingId?: string;
+    bookingRef?: string;
+    status?: string;
+    amount?: number;
+    currency?: string;
+    order?: any;
+    error?: string;
+    timestamp?: Date;
+  }> {
     if (!this.apiKey) return { success: false, error: 'NUITEE_API_KEY missing' };
     try {
       const response = await this.nuiteeFetch('/flights/bookings', {
@@ -389,15 +775,45 @@ export class NuiteeFlightService implements FlightProvider {
         body: JSON.stringify({
           prebookId: payload.prebookId,
           payment: payload.payment,
+          ...(payload.customTags && Object.keys(payload.customTags).length > 0
+            ? { customTags: payload.customTags }
+            : {}),
         }),
       });
-      const data = response?.data ?? response;
+      // Documented success shape: `data: [{ booking: FlightBooking, message }]`.
+      // A bare object is tolerated for compatibility with older sandbox
+      // responses, but the booking is always the object carrying bookingId.
+      const entry = Array.isArray(response?.data)
+        ? response.data[0]
+        : response?.data;
+      const booking = entry?.booking ?? entry ?? {};
+      const price =
+        booking?.journey?.price ?? entry?.price ?? booking?.price ?? {};
+      // Prefer a finite provider amount; never fabricate 0/USD.
+      const amount =
+        typeof price?.total === 'number' && Number.isFinite(price.total)
+          ? price.total
+          : typeof price?.amount === 'number' && Number.isFinite(price.amount)
+            ? price.amount
+            : undefined;
+      const currency =
+        typeof price?.currency === 'string' && price.currency.trim()
+          ? price.currency.trim().toUpperCase()
+          : undefined;
       return {
         success: true,
-        bookingId: data?.bookingId,
-        bookingRef: data?.bookingRef,
-        status: data?.status,
-        order: data?.order,
+        bookingId:
+          typeof booking?.bookingId === 'string'
+            ? booking.bookingId
+            : undefined,
+        bookingRef:
+          typeof booking?.bookingRef === 'string'
+            ? booking.bookingRef
+            : undefined,
+        status: typeof booking?.status === 'string' ? booking.status : undefined,
+        amount,
+        currency,
+        order: booking,
         timestamp: new Date(),
       };
     } catch (error: any) {

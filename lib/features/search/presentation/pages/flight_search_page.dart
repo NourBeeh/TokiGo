@@ -546,7 +546,7 @@ class _FlightSearchPageState extends ConsumerState<FlightSearchPage> {
         filters: ref.read(flightFiltersProvider),
         onChanged: (f) => ref.read(flightFiltersProvider.notifier).state = f,
         // Only what these results really contain.
-        priceFacet: priceFacetOf(results),
+        priceFacet: flightPriceFacetOf(results),
         airlines: airlinesOf(results),
         showStops: true,
         showDirectOnly: true,

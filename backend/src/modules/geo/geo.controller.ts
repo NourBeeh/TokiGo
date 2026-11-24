@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Req } from '@nestjs/common';
+import { Controller, Get, Header, Query, Req } from '@nestjs/common';
 import { Request } from 'express';
 import { GeoService } from './geo.service';
 
@@ -7,10 +7,18 @@ export class GeoController {
   constructor(private readonly geoService: GeoService) {}
 
   /**
-   * Best-effort country detection. Accepts optional GPS coordinates as query
-   * params (lat/lng from the Flutter location service with user permission)
-   * and combines them with the caller IP. Never throws — returns found:false
-   * when nothing could be determined so clients can degrade gracefully.
+   * The canonical city catalog used by the customer-facing City Selection
+   * picker. Public and cacheable: it changes only with a deployment.
+   */
+  @Get('cities')
+  @Header('Cache-Control', 'public, max-age=3600')
+  cities() {
+    return this.geoService.catalog();
+  }
+
+  /**
+   * Best-effort country detection. Kept for existing clients. New clients
+   * should use `GET /geo/locate`, which also resolves the city and currency.
    */
   @Get('country')
   async country(
@@ -18,22 +26,45 @@ export class GeoController {
     @Query('lat') lat?: string,
     @Query('lng') lng?: string,
   ) {
-    const rawIp = this.clientIp(req);
-    const ip = rawIp && !this.isLoopback(rawIp) ? rawIp : undefined;
-    const latitude =
-      lat !== undefined && lat !== '' && !Number.isNaN(Number(lat))
-        ? Number(lat)
-        : undefined;
-    const longitude =
-      lng !== undefined && lng !== '' && !Number.isNaN(Number(lng))
-        ? Number(lng)
-        : undefined;
-
-    const result = await this.geoService.resolve({ ip, latitude, longitude });
+    const ip = this.trustedIp(req);
+    const result = await this.geoService.resolve({
+      ip,
+      latitude: this.numberParam(lat),
+      longitude: this.numberParam(lng),
+    });
     if (!result) {
       return { found: false, countryCode: null, source: null, confidence: null };
     }
     return { found: true, ...result };
+  }
+
+  /**
+   * City-level detection. Accepts optional GPS coordinates; when they are
+   * absent or cannot resolve a supported city the service falls back to the
+   * caller's IP. Never throws — `found:false` is the graceful answer.
+   */
+  @Get('locate')
+  async locate(
+    @Req() req: Request,
+    @Query('lat') lat?: string,
+    @Query('lng') lng?: string,
+  ) {
+    return this.geoService.locate({
+      ip: this.trustedIp(req),
+      latitude: this.numberParam(lat),
+      longitude: this.numberParam(lng),
+    });
+  }
+
+  private numberParam(value?: string): number | undefined {
+    if (value === undefined || value === '') return undefined;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+
+  private trustedIp(req: Request): string | undefined {
+    const rawIp = this.clientIp(req);
+    return rawIp && !this.isLoopback(rawIp) ? rawIp : undefined;
   }
 
   private clientIp(req: Request): string | undefined {

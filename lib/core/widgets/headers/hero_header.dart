@@ -227,13 +227,17 @@ class _SearchField extends StatelessWidget {
         color: context.tokigoColors.surface,
         border: Border.all(color: context.tokigoColors.hairline),
         borderRadius: AppRadius.mdBorder,
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: context.tokigoColors.brand.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        // Flat in light theme: the hairline edge is the separation. The dark
+        // canvas keeps its soft brand halo so the field still reads as raised.
+        boxShadow: Theme.of(context).brightness == Brightness.dark
+            ? <BoxShadow>[
+                BoxShadow(
+                  color: context.tokigoColors.brand.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : const <BoxShadow>[],
       ),
       child: Padding(
         padding: const EdgeInsetsDirectional.fromSTEB(AppSpacing.sm, 0, AppSpacing.sm, 0),

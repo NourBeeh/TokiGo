@@ -11,6 +11,7 @@ import {
   hotelSearchCacheKey,
 } from './hotel-search-key';
 import { CacheLockService } from '../../common/cache/cache-lock.service';
+import { buildFlightItineraryGroups } from './flight-itinerary';
 
 /** Per-provider search budget (spec points 12/15) — one slow provider never
  *  hangs the whole fan-out; the rest of the results still return. */
@@ -140,16 +141,24 @@ export class SearchService {
 
       const aggregated = await this.aggregateWithPricing(
         settled,
+        vertical,
         market,
         currency,
       );
-      // Only fully-successful aggregations are cached; a partial-failure
-      // response is re-fetched next time (the failing provider may recover).
+      // Only fully-successful AND complete aggregations are cached; a
+      // partial-failure or incomplete provider result is re-fetched next time.
+      // `metadata.complete === false` means Nuitee's page walk stopped early
+      // (failed page or page cap), so the hotel set is not the whole market
+      // and must never be served as a cache hit.
       // An empty provider set is not a result either — it is an absent
       // catalogue and must not be served as "no availability".
       if (
         aggregated.failures.length === 0 &&
-        aggregated.successes.length > 0
+        aggregated.successes.length > 0 &&
+        aggregated.successes.every((success: any) => {
+          const complete = success?.metadata?.complete;
+          return complete !== false;
+        })
       ) {
         try {
           await this.cache.set(cacheKey, aggregated, ttlSeconds);
@@ -195,11 +204,43 @@ export class SearchService {
   }
 
   /**
+   * Attaches the customer display quote to an offer AND every nested
+   * sub-offer. Nuitee returns one hotel row carrying all its room-type offers
+   * in `offers`; the client's price filter and details selector compare those
+   * sub-offers, so each one needs its own quote. Provider fields are copied
+   * untouched; an offer that already carries a quote is not re-priced.
+   */
+  private async enrichOfferTree(
+    offer: any,
+    market?: string,
+    currency?: string,
+  ): Promise<any> {
+    if (!offer || typeof offer !== 'object') return offer;
+    let enriched = { ...offer };
+    if (Array.isArray(offer.offers) && offer.offers.length > 0) {
+      const nested: any[] = [];
+      for (const child of offer.offers) {
+        nested.push(await this.enrichOfferTree(child, market, currency));
+      }
+      enriched = { ...enriched, offers: nested };
+    }
+    if (
+      typeof enriched.price === 'number' &&
+      typeof enriched.currency === 'string' &&
+      !enriched.customerPrice
+    ) {
+      return this.pricing.enrichOffer(enriched, { market, currency });
+    }
+    return enriched;
+  }
+
+  /**
    * Partial-failure aggregation (spec point 12) + display-currency
    * enrichment per offer. Provider truth survives intact inside each offer.
    */
   private async aggregateWithPricing(
     results: PromiseSettledResult<any>[],
+    vertical: 'flight' | 'hotel' | 'car',
     market?: string,
     currency?: string,
   ) {
@@ -223,17 +264,7 @@ export class SearchService {
         const offers = Array.isArray(value?.data) ? value.data : [];
         const enrichedOffers: any[] = [];
         for (const offer of offers) {
-          if (
-            typeof offer?.price === 'number' &&
-            typeof offer?.currency === 'string' &&
-            !offer?.customerPrice
-          ) {
-            enrichedOffers.push(
-              await this.pricing.enrichOffer(offer, { market, currency }),
-            );
-          } else {
-            enrichedOffers.push(offer);
-          }
+          enrichedOffers.push(await this.enrichOfferTree(offer, market, currency));
         }
         successes.push({ ...value, data: enrichedOffers });
       } else {
@@ -248,9 +279,25 @@ export class SearchService {
       }
     }
 
-    // Deterministic dedup (spec point 13): the FIRST provider in registry
-    // order wins a duplicate key, every later duplicate is dropped; ties
-    // break by array order so the same inputs always produce the same list.
+    // Phase 2D — flights are NOT deduped away. Every valid fare offer is
+    // preserved inside one grouped row per identical itinerary, so a cheaper
+    // fare from a second provider is still selectable. `successes` keeps the
+    // raw provider buckets untouched.
+    if (vertical === 'flight') {
+      const grouping = buildFlightItineraryGroups(successes);
+      return {
+        successes,
+        failures,
+        duplicatesDropped: grouping.duplicatesDropped,
+        invalidOffersDropped: grouping.invalidOffersDropped,
+        results: grouping.results,
+      };
+    }
+
+    // Hotels/cars keep the Phase 2C deterministic dedup: the FIRST provider in
+    // registry order wins a duplicate key, every later duplicate is dropped;
+    // ties break by array order so the same inputs always produce the same
+    // list.
     const seen = new Set<string>();
     const dedupedSuccesses: any[] = [];
     let duplicatesDropped = 0;
@@ -400,8 +447,12 @@ function withTimeout<T>(promise: Promise<T>, ms: number, providerId: string): Pr
 }
 
 /**
- * Deterministic canonical dedup key (spec point 13).
- * Flights: carrier/flight-number/times/origin/destination.
+ * Deterministic canonical dedup key (spec point 13) for hotels/cars.
+ *
+ * Flights no longer use this key: they are grouped by
+ * `flight-itinerary.ts`, which preserves every fare offer instead of dropping
+ * a duplicate itinerary.
+ *
  * Hotels: provider hotel id, else normalized name+city.
  * Cars: supplier/location/category/title.
  * Unknown shapes fall back to the offer id — never null-key merging.
@@ -412,17 +463,6 @@ function canonicalKey(offer: any): string | null {
   if (!id) return null;
   const provider = String(offer.providerId ?? '');
 
-  if (offer.type === 'flight') {
-    const parts = [
-      'f',
-      String(offer.airline ?? ''),
-      String(offer.flightNumber ?? ''),
-      String(offer.departureTime ?? ''),
-      String(offer.origin ?? ''),
-      String(offer.destination ?? ''),
-    ];
-    return parts.join('|');
-  }
   if (offer.type === 'hotel') {
     const hotelId = offer.metadata?.providerHotelId ?? offer.metadata?.providerRateId;
     if (hotelId) return `h|${hotelId}`;

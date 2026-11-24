@@ -9,6 +9,9 @@ enum BookingPhase {
   revalidating,
   readyToConfirm,
   priceChanged,
+  /// The customer declined the updated price/conditions. The funnel must
+  /// return to offer selection; nothing at the changed price may be booked.
+  priceChangeDeclined,
   unavailable,
   confirming,
   confirmed,
@@ -17,6 +20,12 @@ enum BookingPhase {
   /// The offer itself expired (the provider says so). Distinct from a
   /// transport failure so the traveller is told to search again.
   expired,
+
+  /// The provider's booking outcome is unknown and is being reconciled. No
+  /// confirmation may be claimed and no retry (booking or payment) is allowed
+  /// from this state. Kept last so the existing phase ordering/index-based
+  /// timeline logic is unchanged.
+  reconciliationPending,
 }
 
 class BookingState {

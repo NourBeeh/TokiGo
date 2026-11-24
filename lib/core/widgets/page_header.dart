@@ -7,7 +7,7 @@ import 'package:tokigo/core/widgets/app_back_button.dart';
 import 'package:tokigo/core/widgets/app_icon_action.dart';
 
 /// The unified pushed-page header — one identity for every discovery and
-/// search surface (Groups, Flights/Hotels/Cars/Packages).
+/// search surface (Flights/Hotels/Cars/Packages).
 ///
 /// **Owner decision (2026-11): the page NAME is gone.** The header carries one
 /// line only — the page's small description — sitting in the control row's

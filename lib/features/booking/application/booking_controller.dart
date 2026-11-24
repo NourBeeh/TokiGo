@@ -1,25 +1,30 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tokigo/core/network/api_error.dart';
 import 'package:tokigo/features/bag/domain/trip.dart';
 import 'package:tokigo/features/booking/application/booking_state.dart';
 import 'package:tokigo/features/booking/domain/booking_record.dart';
 import 'package:tokigo/features/booking/application/prepare_booking_usecase.dart';
 import 'package:tokigo/features/booking/application/revalidate_booking_usecase.dart';
 import 'package:tokigo/features/booking/application/confirm_booking_usecase.dart';
+import 'package:tokigo/features/booking/application/decide_price_change_usecase.dart';
 import 'package:tokigo/features/booking/domain/booking_preparation.dart'
     as prep;
 import 'package:tokigo/features/booking/domain/booking_error.dart';
+import 'package:tokigo/features/booking/domain/price_change.dart';
 import 'package:tokigo/features/bag/application/bag_controller.dart';
 
 class BookingController extends StateNotifier<BookingState> {
   final PrepareBookingUseCase prepareUseCase;
   final RevalidateBookingUseCase revalidateUseCase;
   final ConfirmBookingUseCase confirmUseCase;
+  final DecidePriceChangeUseCase? decidePriceChangeUseCase;
   final BagController bagController;
 
   BookingController({
     required this.prepareUseCase,
     required this.revalidateUseCase,
     required this.confirmUseCase,
+    this.decidePriceChangeUseCase,
     required this.bagController,
   }) : super(BookingState.idle());
 
@@ -70,66 +75,168 @@ class BookingController extends StateNotifier<BookingState> {
 
   Future<void> revalidate({
     required String bookingId,
-    required double oldPrice,
+    double? oldPrice,
   }) async {
     if (state.phase == BookingPhase.revalidating) return;
-    state = state.copyWith(
+    // Once the provider outcome is unknown, a revalidation would call the
+    // provider again (for hotels, prebook/hold) and must not be issued. The
+    // pending state can only be resolved by the admin reconciliation path,
+    // never by the customer's funnel.
+    if (state.phase == BookingPhase.reconciliationPending) return;
+    state = BookingState(
       phase: BookingPhase.revalidating,
-      errorMessage: null,
+      record: state.record,
+      preparation: state.preparation,
+      priceAccepted: state.priceAccepted,
+      idempotencyKey: state.idempotencyKey,
     );
     final res = await revalidateUseCase.call(bookingId: bookingId);
     res.when(
       success: (record) {
-        final authoritativePrice = record.authoritativePrice;
-        final changed = authoritativePrice != oldPrice;
-        if (changed) {
-          final revalidation = prep.PriceRevalidationResult(
-            authoritativePrice: authoritativePrice,
-            oldPrice: oldPrice,
-            currency: record.currency,
-            priceChanged: true,
-            available: true,
-            providerId: record.providerId,
-            offerId: record.offerId,
-          );
-          final request = prep.BookingRequest(
-            offerId: record.offerId,
-            providerId: record.providerId,
-            searchId: record.searchId ?? '',
-          );
-          final preparation = prep.BookingPreparation(
-            request: request,
-            revalidation: revalidation,
-          );
+        final change = record.priceChange;
+        final preparation = _preparationFor(
+          record,
+          change,
+          fallbackOldPrice: oldPrice,
+        );
+        if (change != null && change.requiresAcceptance) {
           state = BookingState(
             phase: BookingPhase.priceChanged,
             record: record,
             preparation: preparation,
           );
+        } else if (change?.isDeclined == true) {
+          state = BookingState(
+            phase: BookingPhase.priceChangeDeclined,
+            record: record,
+            preparation: preparation,
+          );
         } else {
-          state = state.copyWith(
+          state = BookingState(
             phase: BookingPhase.readyToConfirm,
             record: record,
+            preparation: preparation,
+            priceAccepted: change?.accepted ?? state.priceAccepted,
+            idempotencyKey: state.idempotencyKey,
           );
         }
       },
       failure: (error) {
-        state = state.copyWith(
-          phase: BookingPhase.error,
-          errorMessage: error.message,
-          errorCode: bookingErrorCodeFrom(error),
+        final parsed = bookingErrorFrom(error);
+        state = BookingState(
+          phase: _phaseForError(parsed.code),
+          record: state.record,
+          preparation: state.preparation,
+          errorMessage: parsed.message,
+          errorCode: parsed.code,
+          priceAccepted: state.priceAccepted,
+          idempotencyKey: state.idempotencyKey,
         );
       },
     );
   }
 
-  void acceptNewPrice() {
-    if (state.phase == BookingPhase.priceChanged) {
-      state = state.copyWith(
-        phase: BookingPhase.readyToConfirm,
-        priceAccepted: true,
-      );
+  /// Explicit customer acceptance of the updated price AND terms.
+  ///
+  /// The backend records the acceptance against provider + offer + amount +
+  /// currency + terms version. This method never mutates a local flag: the
+  /// new state comes from the backend response, so a failed/raced acceptance
+  /// can never unblock confirmation.
+  Future<bool> acceptNewPrice() async {
+    final local = state;
+    final record = local.record;
+    final change = record?.priceChange;
+    if (local.phase != BookingPhase.priceChanged ||
+        record == null ||
+        change == null ||
+        change.isDeclined ||
+        !change.requiresAcceptance) {
+      return false;
     }
+    final decide = decidePriceChangeUseCase;
+    if (decide == null) {
+      state = BookingState(
+        phase: BookingPhase.error,
+        record: record,
+        preparation: local.preparation,
+        errorMessage: 'Price confirmation is unavailable',
+        errorCode: BookingErrorCode.unknownError,
+      );
+      return false;
+    }
+
+    state = BookingState(
+      phase: BookingPhase.revalidating,
+      record: record,
+      preparation: local.preparation,
+      priceAccepted: local.priceAccepted,
+      idempotencyKey: local.idempotencyKey,
+    );
+    final res = await decide.call(
+      bookingId: record.bookingId,
+      decision: 'accept',
+      expectedPrice: change.currentPrice,
+      expectedCurrency: change.currency,
+      expectedTermsVersion: change.termsVersion,
+    );
+    var accepted = false;
+    res.when(
+      success: (updated) {
+        accepted = true;
+        state = BookingState(
+          phase: BookingPhase.readyToConfirm,
+          record: updated,
+          preparation: local.preparation,
+          priceAccepted: true,
+          idempotencyKey: local.idempotencyKey,
+        );
+      },
+      failure: (error) => _applyDecisionFailure(local, record, error),
+    );
+    return accepted;
+  }
+
+  /// Explicit customer refusal of the updated offer. Nothing at the changed
+  /// price may be booked; the funnel returns to offer selection.
+  Future<bool> declinePriceChange() async {
+    final local = state;
+    final record = local.record;
+    final change = record?.priceChange;
+    if (local.phase != BookingPhase.priceChanged ||
+        record == null ||
+        change == null) {
+      return false;
+    }
+    final decide = decidePriceChangeUseCase;
+    if (decide == null) return false;
+
+    state = BookingState(
+      phase: BookingPhase.revalidating,
+      record: record,
+      preparation: local.preparation,
+      priceAccepted: local.priceAccepted,
+      idempotencyKey: local.idempotencyKey,
+    );
+    final res = await decide.call(
+      bookingId: record.bookingId,
+      decision: 'decline',
+      expectedPrice: change.currentPrice,
+      expectedCurrency: change.currency,
+      expectedTermsVersion: change.termsVersion,
+    );
+    var declined = false;
+    res.when(
+      success: (updated) {
+        declined = true;
+        state = BookingState(
+          phase: BookingPhase.priceChangeDeclined,
+          record: updated,
+          preparation: local.preparation,
+        );
+      },
+      failure: (error) => _applyDecisionFailure(local, record, error),
+    );
+    return declined;
   }
 
   /// The pre-checkout offer check found the offer gone (or expired). The
@@ -180,6 +287,10 @@ class BookingController extends StateNotifier<BookingState> {
     // an in-flight/confirmed phase into a validation error.
     if (stateLocal.phase == BookingPhase.confirming) return;
     if (stateLocal.phase == BookingPhase.confirmed) return;
+    // An unknown provider outcome is terminal for the customer funnel: a
+    // second submit could double-book or double-charge. Return without
+    // touching state so the pending-verification message stays visible.
+    if (stateLocal.phase == BookingPhase.reconciliationPending) return;
     if (stateLocal.phase != BookingPhase.readyToConfirm) {
       state = state.copyWith(
         phase: BookingPhase.error,
@@ -211,12 +322,27 @@ class BookingController extends StateNotifier<BookingState> {
       return;
     }
 
-    // Price safety
-    if (stateLocal.preparation?.revalidation.priceChanged == true &&
-        !stateLocal.priceAccepted) {
-      state = state.copyWith(
-        phase: BookingPhase.error,
+    // Price/terms safety: confirmation is allowed only when the exact
+    // revalidated state was accepted. The backend re-checks this again, but
+    // the funnel must not even send a confirm it knows is unaccepted.
+    final change = record.priceChange;
+    if (change != null && change.requiresAcceptance) {
+      state = BookingState(
+        phase: BookingPhase.priceChanged,
+        record: record,
+        preparation: stateLocal.preparation,
         errorMessage: 'Price change not accepted',
+        errorCode: BookingErrorCode.priceChanged,
+        idempotencyKey: stateLocal.idempotencyKey,
+      );
+      return;
+    }
+    if (change?.isDeclined == true) {
+      state = BookingState(
+        phase: BookingPhase.priceChangeDeclined,
+        record: record,
+        preparation: stateLocal.preparation,
+        errorMessage: 'The updated offer was declined',
         errorCode: BookingErrorCode.priceChanged,
       );
       return;
@@ -269,12 +395,130 @@ class BookingController extends StateNotifier<BookingState> {
         }
       },
       failure: (error) {
-        state = state.copyWith(
+        final parsed = bookingErrorFrom(error);
+        final fresh = PriceChangeConfirmation.tryParse(
+          parsed.details['priceChange'],
+        );
+        if (parsed.code == BookingErrorCode.priceChanged && fresh != null) {
+          // A change was detected at confirm time. Never report a generic
+          // failure: show the exact updated price/conditions and require a
+          // new explicit acceptance before anything is booked.
+          final updated = record.copyWith(
+            authoritativePrice: fresh.currentPrice,
+            currency: fresh.currency,
+            priceChange: fresh,
+          );
+          state = BookingState(
+            phase: BookingPhase.priceChanged,
+            record: updated,
+            preparation: _preparationFor(updated, fresh),
+            errorMessage: parsed.message,
+            errorCode: parsed.code,
+          );
+          return;
+        }
+        if (parsed.code == BookingErrorCode.bookingOutcomeUnknown) {
+          // The provider did not establish either success or failure. This is
+          // NOT a failed booking (which would invite a retry) and NOT a
+          // confirmation. Keep the record and the exact idempotency key, block
+          // re-submission, and let the admin reconciliation flow resolve it.
+          state = BookingState(
+            phase: BookingPhase.reconciliationPending,
+            record: state.record,
+            preparation: stateLocal.preparation,
+            errorMessage: parsed.message,
+            errorCode: parsed.code,
+            priceAccepted: stateLocal.priceAccepted,
+            idempotencyKey: key,
+          );
+          return;
+        }
+        state = BookingState(
           phase: BookingPhase.failed,
-          errorMessage: error.message,
-          errorCode: bookingErrorCodeFrom(error),
+          record: state.record,
+          preparation: stateLocal.preparation,
+          errorMessage: parsed.message,
+          errorCode: parsed.code,
+          priceAccepted: stateLocal.priceAccepted,
+          idempotencyKey: stateLocal.idempotencyKey,
         );
       },
+    );
+  }
+
+  BookingPhase _phaseForError(BookingErrorCode code) {
+    return switch (code) {
+      BookingErrorCode.noAvailability => BookingPhase.unavailable,
+      BookingErrorCode.bookingExpired ||
+      BookingErrorCode.offerNotFound => BookingPhase.expired,
+      BookingErrorCode.bookingOutcomeUnknown =>
+        BookingPhase.reconciliationPending,
+      _ => BookingPhase.error,
+    };
+  }
+
+  prep.BookingPreparation _preparationFor(
+    BookingRecord record,
+    PriceChangeConfirmation? change, {
+    double? fallbackOldPrice,
+  }) {
+    return prep.BookingPreparation(
+      request: prep.BookingRequest(
+        offerId: record.offerId,
+        providerId: record.providerId,
+        searchId: record.searchId ?? '',
+      ),
+      revalidation: prep.PriceRevalidationResult(
+        authoritativePrice: change?.currentPrice ?? record.authoritativePrice,
+        oldPrice: change?.previousPrice ?? fallbackOldPrice,
+        currency: change?.currency ?? record.currency,
+        priceChanged: change?.priceChanged ?? false,
+        available: true,
+        providerId: change?.providerId ?? record.providerId,
+        offerId: change?.offerId ?? record.offerId,
+        expiresAt: change?.expiresAt,
+      ),
+    );
+  }
+
+  /// A decision call can itself discover a newer change. Never collapse that
+  /// into a generic error: surface the fresh summary and require a new
+  /// decision bound to it.
+  void _applyDecisionFailure(
+    BookingState local,
+    BookingRecord record,
+    ApiError error,
+  ) {
+    final parsed = bookingErrorFrom(error);
+    final fresh = PriceChangeConfirmation.tryParse(
+      parsed.details['priceChange'],
+    );
+    if (fresh != null) {
+      final updated = record.copyWith(
+        authoritativePrice: fresh.currentPrice,
+        currency: fresh.currency,
+        priceChange: fresh,
+      );
+      state = BookingState(
+        phase: fresh.isDeclined
+            ? BookingPhase.priceChangeDeclined
+            : BookingPhase.priceChanged,
+        record: updated,
+        preparation: _preparationFor(updated, fresh),
+        errorMessage: parsed.message,
+        errorCode: parsed.code,
+        idempotencyKey: local.idempotencyKey,
+      );
+      return;
+    }
+    state = BookingState(
+      phase: BookingPhase.error,
+      record: record,
+      preparation: local.preparation,
+      errorMessage: parsed.message,
+      errorCode: parsed.code,
+      priceAccepted: local.priceAccepted,
+      idempotencyKey: local.idempotencyKey,
     );
   }
 

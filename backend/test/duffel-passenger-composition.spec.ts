@@ -32,12 +32,25 @@ class FakeDuffelService {
     return {
       id: 'ord_1',
       booking_reference: 'ABC123',
-      status: 'confirmed',
       total_amount: '800.00',
       total_currency: 'USD',
+      payment_status: {
+        awaiting_payment: false,
+        paid_at: '2026-01-01T00:00:00Z',
+      },
     };
   }
 }
+
+/** The server-authoritative payment binding every successful call needs. */
+const AUTHORITATIVE_PAYMENT = {
+  bookingId: 'bk_1',
+  amount: 800,
+  currency: 'USD',
+  amountText: '800.00',
+  priceVersion: 'pv_1',
+  paymentAttemptId: 'pay_1',
+} as const;
 
 function traveler(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
@@ -103,6 +116,7 @@ describe('Duffel createBooking — mixed multi-party composition', () => {
           accompanyingAdultIndex: 1,
         }),
       ],
+      ...AUTHORITATIVE_PAYMENT,
     });
 
     expect(result.success).toBe(true);
@@ -148,6 +162,7 @@ describe('Duffel createBooking — mixed multi-party composition', () => {
         traveler({ firstName: 'A2', passengerType: 'adult' }),
         traveler({ firstName: 'A3', passengerType: 'adult' }),
       ],
+      ...AUTHORITATIVE_PAYMENT,
     });
 
     expect(result.success).toBe(true);
@@ -172,6 +187,7 @@ describe('Duffel createBooking — mixed multi-party composition', () => {
         traveler({ firstName: 'C1', passengerType: 'child' }),
         traveler({ firstName: 'C2', passengerType: 'child' }),
       ],
+      ...AUTHORITATIVE_PAYMENT,
     });
 
     expect(result.success).toBe(true);

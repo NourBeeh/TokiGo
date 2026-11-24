@@ -28,7 +28,6 @@ class LastRouteStore {
     '/hotels',
     '/cars',
     '/packages',
-    '/groups',
     '/bag',
     '/notifications',
     '/profile',

@@ -18,9 +18,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navSearch => 'Search';
 
   @override
-  String get navGroups => 'Groups';
-
-  @override
   String get navExplore => 'Explore';
 
   @override
@@ -295,19 +292,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeNavActivities => 'Packages';
 
   @override
-  String get homeNavGroups => 'Groups';
-
-  @override
   String get homeNavTrips => 'Trips';
 
   @override
   String get searchTransfers => 'Airport transfer';
-
-  @override
-  String get groupsTitle => 'Groups';
-
-  @override
-  String get groupsSubtitle => 'Groups';
 
   @override
   String get viewAll => 'View all';
@@ -893,6 +881,54 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingAcceptNewPrice => 'Accept new price';
 
   @override
+  String get bookingUpdatePrice => 'Update price';
+
+  @override
+  String get bookingDeclinePriceChange => 'Decline';
+
+  @override
+  String get bookingChooseAnotherOffer => 'Choose another offer';
+
+  @override
+  String get bookingPriceChangeDeclined => 'You declined the updated price. Choose another offer to continue.';
+
+  @override
+  String get bookingPreviousPrice => 'Previous price';
+
+  @override
+  String get bookingUpdatedPrice => 'Updated price';
+
+  @override
+  String get bookingPriceDifference => 'Difference';
+
+  @override
+  String get bookingConditionsChanged => 'Conditions changed';
+
+  @override
+  String get bookingNoChargeYet => 'No booking has been made at the updated price.';
+
+  @override
+  String get bookingTermFareConditions => 'Fare conditions';
+
+  @override
+  String get bookingTermBaggage => 'Baggage allowance';
+
+  @override
+  String get bookingTermFareBrand => 'Fare brand';
+
+  @override
+  String get bookingTermCabin => 'Cabin class';
+
+  @override
+  String get bookingTermItinerary => 'Itinerary';
+
+  @override
+  String get bookingTermCancellation => 'Cancellation policy';
+
+  @override
+  String get bookingTermBoard => 'Meal plan';
+
+  @override
   String get bookingPrepare => 'Prepare booking';
 
   @override
@@ -1031,12 +1067,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingDocumentExpiryLabel => 'Expiry (YYYY-MM-DD)';
 
   @override
-  String get groupsCreateTrip => 'Create a group trip';
-
-  @override
-  String get groupsPlanTogether => 'Plan together, decide together';
-
-  @override
   String get carIdleBody => 'Compare car rentals at pickup points worldwide';
 
   @override
@@ -1047,6 +1077,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get offlineShowingCached => 'You are offline — showing the last saved data';
+
+  @override
+  String get homePriceUnverified => 'Price not verified';
+
+  @override
+  String get homePriceUpdateFailed => 'Unable to update the price. Check your connection and try again.';
 
   @override
   String get homeCompleteYourTrip => 'Complete your trip';
@@ -1175,12 +1211,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wishlistExploreStays => 'Explore stays';
 
   @override
-  String get groupsEmptyTitle => 'Group trips are coming soon';
-
-  @override
-  String get groupsEmptyBody => 'Creating a trip, inviting friends and splitting the plan will open here once the group trips backend is connected.';
-
-  @override
   String get exploreCitiesTitle => 'Cities';
 
   @override
@@ -1257,6 +1287,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bookingConfirmFailedBody => 'The payment was not completed, so the booking was not confirmed. Nothing was booked.';
+
+  @override
+  String get bookingOutcomePendingTitle => 'Booking is being verified';
+
+  @override
+  String get bookingOutcomePendingBody => 'The provider has not confirmed this booking yet. Do not retry the booking or make another payment. We are checking the final status; it will appear in My Trips only after it is confirmed.';
 
   @override
   String get bookingConfirmLabel => 'Confirm booking';
@@ -1806,6 +1842,112 @@ class AppLocalizationsEn extends AppLocalizations {
   String get offerRoom => 'Room';
 
   @override
+  String get offerChooseRoom => 'Choose a room';
+
+  @override
+  String get offerChooseFare => 'Choose a fare';
+
+  @override
+  String offerFareOption(int number) {
+    return 'Fare $number';
+  }
+
+  @override
+  String offerFareCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fares',
+      one: '1 fare',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get offerBaggageCabin => 'Carry-on';
+
+  @override
+  String get offerBaggageChecked => 'Checked bag';
+
+  @override
+  String get offerBaggageEquipment => 'Sports equipment';
+
+  @override
+  String offerBaggageCabinCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count carry-ons',
+      one: '1 carry-on',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String offerBaggageCheckedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count checked bags',
+      one: '1 checked bag',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String offerBaggageWeight(String allowance, String weight) {
+    return '$allowance ($weight kg)';
+  }
+
+  @override
+  String get offerConditionsUnknown => 'Fare conditions at booking';
+
+  @override
+  String get offerNotChangeable => 'No changes';
+
+  @override
+  String get offerChanges => 'Changes';
+
+  @override
+  String get offerChangeable => 'Changes allowed';
+
+  @override
+  String offerChangeableWithFee(String fee) {
+    return 'Changes allowed · fee $fee';
+  }
+
+  @override
+  String get offerChangeableFeeOnRequest => 'Changes allowed · fee on request';
+
+  @override
+  String offerRefundableWithFee(String fee) {
+    return 'Refundable · fee $fee';
+  }
+
+  @override
+  String get offerRefundableFeeOnRequest => 'Refundable · fee on request';
+
+  @override
+  String get offerRestrictions => 'Restrictions';
+
+  @override
+  String offerOperatedBy(String carrier) {
+    return 'Operated by $carrier';
+  }
+
+  @override
+  String get offerFreeCancellation => 'Free cancellation';
+
+  @override
+  String get offerNonRefundable => 'Non-refundable';
+
+  @override
+  String get offerCancellationUnknown => 'Cancellation terms at booking';
+
+  @override
+  String get offerPerStay => 'per stay';
+
+  @override
   String get offerSeats => 'Seats';
 
   @override
@@ -1985,7 +2127,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get locationPromptBlockedTitle => 'Location is blocked';
 
   @override
-  String get locationPromptBlockedBody => 'Allow location for TokiGo in the system settings to suggest your departure airport.';
+  String get locationPromptBlockedBody => 'Allow location for TokiGo in the system settings to find your city and show stays near you.';
 
   @override
   String get locationPromptOpenSettings => 'Open settings';
@@ -1994,7 +2136,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get locationPromptServiceOffTitle => 'Location services are off';
 
   @override
-  String get locationPromptServiceOffBody => 'Turn on location services to suggest your departure airport.';
+  String get locationPromptServiceOffBody => 'Turn on location services to find your city and show stays near you.';
 
   @override
   String get locationPromptLocationSettings => 'Location settings';
@@ -2131,4 +2273,121 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get flightCardViewOffer => 'View offer and book';
+
+  @override
+  String get homeNearbyLocationTitle => 'Enable location to see nearby stays';
+
+  @override
+  String get homeNearbyLocationBody => 'We use your area to search hotels really around you. Your exact location is never stored.';
+
+  @override
+  String get homeNearbyEmptyTitle => 'No nearby stays right now';
+
+  @override
+  String get homeNearbyEmptyBody => 'Try again later or choose a different area.';
+
+  @override
+  String get homeNearbyErrorTitle => 'Could not load nearby stays';
+
+  @override
+  String get homeNearbyPromotionalNote => 'Promotional one-night price for the next 7 nights. The live price is shown after you pick dates.';
+
+  @override
+  String homeNearbyRadius(String radius) {
+    return '$radius km search area';
+  }
+
+  @override
+  String nearbyHotelDistanceFromYou(String distance) {
+    return '$distance km from you';
+  }
+
+  @override
+  String nearbyHotelReviews(String count) {
+    return '$count reviews';
+  }
+
+  @override
+  String get nearbyHotelSelectDates => 'Select dates';
+
+  @override
+  String get nearbyHotelCheckIn => 'Check-in';
+
+  @override
+  String get nearbyHotelCheckOut => 'Check-out';
+
+  @override
+  String get nearbyHotelAdults => 'Adults';
+
+  @override
+  String get nearbyHotelRooms => 'Rooms';
+
+  @override
+  String get nearbyHotelSearchAvailability => 'Check availability';
+
+  @override
+  String get nearbyHotelLiveResults => 'Live prices for your dates';
+
+  @override
+  String get nearbyHotelNoLiveOffer => 'No live offer for this hotel on the selected dates.';
+
+  @override
+  String get nearbyHotelPromotionalCaption => 'Promotional discovery price (not a live booking offer)';
+
+  @override
+  String get settingsCitySelection => 'City Selection';
+
+  @override
+  String get settingsCityNotSet => 'Choose a city';
+
+  @override
+  String get settingsCityLoading => 'Loading…';
+
+  @override
+  String get settingsCityUnavailable => 'Unavailable';
+
+  @override
+  String get cityPickerTitle => 'Choose your city';
+
+  @override
+  String get cityPickerSearch => 'Search cities or countries';
+
+  @override
+  String get cityPickerLoading => 'Loading cities…';
+
+  @override
+  String get cityPickerUnavailableTitle => 'Cities are unavailable';
+
+  @override
+  String get cityPickerUnavailableBody => 'Check your connection and try again.';
+
+  @override
+  String get cityPickerRetry => 'Try again';
+
+  @override
+  String get cityPickerEmptyTitle => 'No cities found';
+
+  @override
+  String get cityPickerEmptyBody => 'Try a different search.';
+
+  @override
+  String get cityPickerCurrent => 'Current selection';
+
+  @override
+  String get locationCardTitle => 'Enable location to discover hotels and stays near you';
+
+  @override
+  String get locationCardBody => 'We use your area to show stays around you. Your exact location is never stored.';
+
+  @override
+  String get locationCardEnable => 'Enable location';
+
+  @override
+  String get locationCardNotNow => 'Not now';
+
+  @override
+  String get locationCardOpenSettings => 'Open settings';
+
+  @override
+  String get locationCardServicesOff => 'Turn on location services in your device settings.';
 }

@@ -17,6 +17,11 @@ export interface FxRate {
   source: string;
   rateId: string;
   capturedAt: string; // ISO instant
+  /**
+   * False when no trustworthy rate could be obtained. A caller must then keep
+   * the provider amount in the provider currency — never relabel it.
+   */
+  available: boolean;
 }
 
 const RATE_TTL_SECONDS = 15 * 60;
@@ -74,19 +79,26 @@ export class FxService {
         const usdQuote = FALLBACK_RATES[`USD:${quote}`];
         if (baseUsd && usdQuote) {
           rate = baseUsd * usdQuote;
-        } else {
-          rate = 1;
         }
       }
+    }
+
+    const available = rate !== undefined && Number.isFinite(rate) && rate > 0;
+    if (!available) {
+      // Never invent a 1:1 rate: that would relabel a provider amount as a
+      // different currency without converting it. The caller keeps the
+      // provider currency instead.
+      source = 'unavailable';
     }
 
     const snapshot: FxRate = {
       base,
       quote,
-      rate,
+      rate: available ? rate! : 0,
       source,
       rateId: `${base}-${quote}-${Date.now()}`,
       capturedAt: new Date().toISOString(),
+      available,
     };
     await this.cache.set(key, snapshot, RATE_TTL_SECONDS);
     return snapshot;
@@ -95,6 +107,10 @@ export class FxService {
   /**
    * Converts a provider amount into the customer display currency and
    * returns BOTH sides (spec point 5: never silently rewrite provider money).
+   *
+   * When no trustworthy rate exists the amount is returned UNCHANGED in the
+   * PROVIDER currency and `fx.available` is false — a caller must display the
+   * provider currency rather than a converted-looking number.
    */
   async convertForDisplay(
     amount: number,
@@ -115,6 +131,7 @@ export class FxService {
         source: 'identity',
         rateId: `${providerCurrency}-${displayCurrency}-identity`,
         capturedAt: new Date().toISOString(),
+        available: true,
       };
       return {
         providerAmount: amount,
@@ -126,6 +143,15 @@ export class FxService {
     }
 
     const fx = await this.getRate(providerCurrency, displayCurrency);
+    if (!fx.available) {
+      return {
+        providerAmount: amount,
+        providerCurrency,
+        customerAmount: amount,
+        customerCurrency: providerCurrency,
+        fx,
+      };
+    }
     const customerAmount = Math.round(amount * fx.rate * 100) / 100;
     return {
       providerAmount: amount,

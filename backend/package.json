@@ -19,7 +19,6 @@
     "destinations:add": "node scripts/add-destination-cities.js",
     "destinations:fix": "node scripts/fix-destination-cards.js",
     "destinations:world": "node scripts/seed-world-cities.js",
-    "prewarm:home": "node scripts/prewarm-home.js",
     "prewarm:search": "node scripts/prewarm-search.js",
     "perf:probe": "node scripts/perf-probe.js"
   },

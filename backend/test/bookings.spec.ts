@@ -148,6 +148,7 @@ class StubProvider implements BookingProvider {
         providerId: this.providerId,
         providerName: this.providerName,
         error: 'provider blew up',
+        failureKind: 'definitive',
         timestamp: new Date(),
       };
     }

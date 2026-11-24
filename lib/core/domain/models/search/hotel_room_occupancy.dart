@@ -17,10 +17,7 @@ class HotelRoomOccupancy {
 
   int get children => childAges.length;
 
-  HotelRoomOccupancy copyWith({
-    int? adults,
-    List<int>? childAges,
-  }) {
+  HotelRoomOccupancy copyWith({int? adults, List<int>? childAges}) {
     return HotelRoomOccupancy(
       adults: adults ?? this.adults,
       childAges: childAges ?? this.childAges,
@@ -37,9 +34,9 @@ class HotelRoomOccupancy {
   int get hashCode => Object.hash(adults, Object.hashAll(childAges));
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'adults': adults,
-        'childAges': childAges,
-      };
+    'adults': adults,
+    'childAges': childAges,
+  };
 
   factory HotelRoomOccupancy.fromJson(Map<String, dynamic> json) {
     return HotelRoomOccupancy(
@@ -49,4 +46,28 @@ class HotelRoomOccupancy {
           .toList(),
     );
   }
+}
+
+/// Splits a total adult count across [rooms] rooms for a hotel search.
+///
+/// One occupancy per room, and the total the traveller picked must be spread
+/// across them: giving every room the full count would search a party several
+/// times larger than the one on screen. Every room receives at least one
+/// adult, so a party smaller than the room count still searches honestly
+/// instead of claiming zero adults. Each room is capped at the provider's
+/// 20-adult limit.
+List<HotelRoomOccupancy> distributeAdultsAcrossRooms({
+  required int adults,
+  required int rooms,
+}) {
+  final int safeRooms = rooms < 1 ? 1 : rooms;
+  final int safeAdults = adults < 1 ? 1 : adults;
+  final int baseAdults = safeAdults ~/ safeRooms;
+  final int remainder = safeAdults % safeRooms;
+  return List<HotelRoomOccupancy>.generate(
+    safeRooms,
+    (int index) => HotelRoomOccupancy(
+      adults: (baseAdults + (index < remainder ? 1 : 0)).clamp(1, 20),
+    ),
+  );
 }

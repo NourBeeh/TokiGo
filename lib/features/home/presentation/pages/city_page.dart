@@ -205,9 +205,9 @@ class CityPage extends StatelessWidget {
             ),
             // The page's own back control stays visible at every scroll offset
             // (a pushed page always offers a visible back button).
-            Positioned(
+            PositionedDirectional(
               top: 0,
-              left: AppSpacing.md,
+              start: AppSpacing.md,
               child: SafeArea(
                 bottom: false,
                 child: Padding(

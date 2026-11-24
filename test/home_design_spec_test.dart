@@ -65,9 +65,7 @@ void main() {
       // bounded-but-loose height (a bare Scaffold body would force it tall).
       await tester.pumpWidget(
         app(
-          const Center(
-            child: SizedBox(width: 360, child: HomeAiSearchField()),
-          ),
+          const Center(child: SizedBox(width: 360, child: HomeAiSearchField())),
         ),
       );
       await tester.pumpAndSettle();
@@ -84,18 +82,13 @@ void main() {
 
       expect(tester.getSize(find.byType(HomeAiSearchField)).height, 48);
       expect(decoration.color, surface);
-      // The pill floats over the feed, so it carries its own soft halo.
-      final BoxShadow halo = decoration.boxShadow!.single;
-      expect(halo.blurRadius, 20);
-      expect(halo.offset, const Offset(0, 4));
-      expect(halo.color, const Color(0x1A111111));
-      // Owner decision (2026-11): the composer is a FLOATING pill — its edge
-      // comes from the halo below, not from a 1dp border.
+      // Task 3 — the pill is FLAT in light theme: its edge is the surface step
+      // against the canvas, never a drop shadow.
+      expect(decoration.boxShadow ?? const <BoxShadow>[], isEmpty);
+      // Owner decision (2026-11): no 1dp border — the surface step is the
+      // separation.
       expect(decoration.border, isNull);
-      expect(
-        decoration.borderRadius,
-        equals(BorderRadius.circular(24)),
-      );
+      expect(decoration.borderRadius, equals(BorderRadius.circular(24)));
 
       // Leading search glyph in the accent, on the leading edge of the field.
       final Icon leading = tester.widget<Icon>(
@@ -127,26 +120,16 @@ void main() {
       phoneSize(tester);
       await tester.pumpWidget(
         app(
-          const Center(
-            child: SizedBox(width: 360, child: HomeAiSearchField()),
-          ),
+          const Center(child: SizedBox(width: 360, child: HomeAiSearchField())),
           locale: const Locale('ar'),
         ),
       );
       await tester.pumpAndSettle();
 
+      expect(find.text('ابحث عن وجهات وفنادق والمزيد'), findsOneWidget);
+      expect(find.text('Search destinations, hotels & more'), findsNothing);
       expect(
-        find.text('ابحث عن وجهات وفنادق والمزيد'),
-        findsOneWidget,
-      );
-      expect(
-        find.text('Search destinations, hotels & more'),
-        findsNothing,
-      );
-      expect(
-        Directionality.of(
-          tester.element(find.byType(HomeAiSearchField)),
-        ),
+        Directionality.of(tester.element(find.byType(HomeAiSearchField))),
         TextDirection.rtl,
       );
       expect(tester.takeException(), isNull);
@@ -154,7 +137,7 @@ void main() {
   });
 
   group('quick action cards', () {
-    testWidgets('five spec tiles on one row', (tester) async {
+    testWidgets('four spec tiles on one row', (tester) async {
       phoneSize(tester);
       await tester.pumpWidget(
         app(const SizedBox(width: 360, child: HomeNavButtons())),
@@ -165,26 +148,24 @@ void main() {
         of: find.byType(HomeNavButtons),
         matching: find.byType(AnimatedContainer),
       );
-      // Trips left the bar (owner decision, 2026-11).
-      expect(tiles, findsNWidgets(5));
+      // Trips left the bar (owner decision, 2026-11); Groups was removed.
+      expect(tiles, findsNWidgets(4));
 
       final List<String> labels = <String>[
         'Flights',
         'Stays',
         'Cars Rental',
         'Packages',
-        'Groups',
       ];
       final List<IconData> icons = <IconData>[
         Icons.flight_rounded,
         Icons.home_rounded,
         Icons.directions_car_rounded,
         Icons.beach_access_rounded,
-        Icons.groups_rounded,
       ];
 
       double previousRight = double.negativeInfinity;
-      for (int i = 0; i < 5; i++) {
+      for (int i = 0; i < 4; i++) {
         final Finder tileFinder = tiles.at(i);
         final AnimatedContainer tile = tester.widget<AnimatedContainer>(
           tileFinder,
@@ -194,10 +175,7 @@ void main() {
         expect(tester.getSize(tileFinder).height, 68);
         expect(decoration.color, surface);
         expect(decoration.boxShadow, isEmpty);
-        expect(
-          decoration.borderRadius,
-          equals(BorderRadius.circular(18)),
-        );
+        expect(decoration.borderRadius, equals(BorderRadius.circular(18)));
         final Border boxBorder = decoration.border! as Border;
         expect(boxBorder.top.color, border);
         expect(boxBorder.top.width, 1);
@@ -217,10 +195,9 @@ void main() {
         // The 6dp glyph-to-label gap.
         final double iconBottom = tester
             .getRect(
-              find.descendant(
-                of: tileFinder,
-                matching: find.byType(Icon),
-              ).first,
+              find
+                  .descendant(of: tileFinder, matching: find.byType(Icon))
+                  .first,
             )
             .bottom;
         final double labelTop = tester.getRect(find.text(labels[i])).top;
@@ -234,7 +211,7 @@ void main() {
 
       // Equal, responsive widths.
       final List<double> widths = <double>[
-        for (int i = 0; i < 5; i++) tester.getRect(tiles.at(i)).width,
+        for (int i = 0; i < 4; i++) tester.getRect(tiles.at(i)).width,
       ];
       for (final double width in widths) {
         expect(width, closeTo(widths.first, 0.01));
@@ -256,8 +233,7 @@ void main() {
       expect(find.text('إقامات'), findsOneWidget);
       expect(find.text('تأجير سيارات'), findsOneWidget);
       expect(find.text('الباقات'), findsOneWidget);
-      expect(find.text('مجموعات'), findsOneWidget);
-      // Trips left the bar (owner decision, 2026-11).
+      // Groups was removed from the bar.
       expect(find.text('رحلاتي'), findsNothing);
       expect(
         Directionality.of(tester.element(find.byType(HomeNavButtons))),
@@ -267,9 +243,7 @@ void main() {
     });
   });
 
-  testWidgets('the Home design palette is exposed as tokens', (
-    tester,
-  ) async {
+  testWidgets('the Home design palette is exposed as tokens', (tester) async {
     phoneSize(tester);
     await tester.pumpWidget(app(const SizedBox.shrink()));
     await tester.pumpAndSettle();
@@ -294,18 +268,17 @@ void main() {
       phoneSize(tester);
       await tester.pumpWidget(
         app(
-          const Center(
-            child: SizedBox(width: 360, child: HomeNavButtons()),
-          ),
+          const Center(child: SizedBox(width: 360, child: HomeNavButtons())),
           mode: ThemeMode.dark,
         ),
       );
       await tester.pumpAndSettle();
 
       // The dark canvas's own ink is the near-white brand step.
-      expect(HomeDesignTokens.accentOf(
-        tester.element(find.byType(HomeNavButtons)),
-      ), const Color(0xFFF5F5F5));
+      expect(
+        HomeDesignTokens.accentOf(tester.element(find.byType(HomeNavButtons))),
+        const Color(0xFFF5F5F5),
+      );
 
       final Finder tiles = find.descendant(
         of: find.byType(HomeNavButtons),
@@ -326,9 +299,7 @@ void main() {
       phoneSize(tester);
       await tester.pumpWidget(
         app(
-          const Center(
-            child: SizedBox(width: 360, child: HomeAiSearchField()),
-          ),
+          const Center(child: SizedBox(width: 360, child: HomeAiSearchField())),
           mode: ThemeMode.dark,
         ),
       );

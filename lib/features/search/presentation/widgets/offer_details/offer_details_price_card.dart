@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
@@ -38,6 +37,13 @@ class OfferDetailsPriceCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final stayInfo = stay;
     final perNight = stayInfo?.perNight;
+    final String amount = price.toStringAsFixed(2);
+    final String money = currency.isEmpty ? amount : '$currency $amount';
+    final String? perNightMoney = perNight == null
+        ? null
+        : (currency.isEmpty
+              ? perNight.toStringAsFixed(2)
+              : '$currency ${perNight.toStringAsFixed(2)}');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -69,7 +75,7 @@ class OfferDetailsPriceCard extends StatelessWidget {
                     // Exact provider amount, two decimals — the same rendering
                     // the booking funnel uses, so this screen, checkout and the
                     // confirmation never disagree about the price.
-                    '$currency ${price.toStringAsFixed(2)}',
+                    money,
                     style: typography.title.copyWith(
                       color: context.tokigoColors.textPrimary,
                     ),
@@ -83,7 +89,7 @@ class OfferDetailsPriceCard extends StatelessWidget {
               if (stayInfo != null && perNight != null) ...<Widget>[
                 const SizedBox(height: AppSpacing.xxs),
                 Text(
-                  '$currency ${perNight.toStringAsFixed(2)}'
+                  '$perNightMoney'
                   ' ${l10n.cardPerUnitLabel(l10n.unitNight)}'
                   ' · ${stayInfo.derived ? l10n.offerPerNightDerived(l10n.hotelNightsCount(stayInfo.nights)) : l10n.offerPerNightStated}',
                   style: typography.caption.copyWith(

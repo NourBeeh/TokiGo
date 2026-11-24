@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:tokigo/core/domain/models/offers/car_offer.dart';
 import 'package:tokigo/core/domain/models/offers/hotel_offer.dart';
 import 'package:tokigo/core/domain/models/offers/travel_package_offer.dart';
-import 'package:tokigo/core/theme/app_colors.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
@@ -23,7 +22,6 @@ class OfferDetailsSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tc = context.tokigoColors;
     final typography = AppTypography.forLight();
     final rows = _rowsFor(context, offer);
 
@@ -71,18 +69,20 @@ class OfferDetailsSummaryCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     return switch (offer) {
       HotelOffer o => <(String, String, IconData)>[
-        (
-          l10n.offerCheckIn,
-          // Check-in/out are calendar days in the provider payload (no clock
-          // time), so no fabricated "00:00" is appended.
-          localizedMediumDate(context, o.checkIn),
-          Icons.login_rounded,
-        ),
-        (
-          l10n.offerCheckOut,
-          localizedMediumDate(context, o.checkOut),
-          Icons.logout_rounded,
-        ),
+        if (o.checkIn != null)
+          (
+            l10n.offerCheckIn,
+            // Check-in/out are calendar days in the provider payload (no clock
+            // time), so no fabricated "00:00" is appended.
+            localizedMediumDate(context, o.checkIn!),
+            Icons.login_rounded,
+          ),
+        if (o.checkOut != null)
+          (
+            l10n.offerCheckOut,
+            localizedMediumDate(context, o.checkOut!),
+            Icons.logout_rounded,
+          ),
         if (o.roomType.isNotEmpty)
           (l10n.offerRoom, o.roomType, Icons.bed_rounded),
         // The guest score and the star class live in the identity block under

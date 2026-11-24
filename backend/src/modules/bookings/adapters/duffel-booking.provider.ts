@@ -5,8 +5,10 @@ import {
   CancelBookingInput,
   CreatedBooking,
   CreateBookingInput,
+  ProviderConfirmationState,
 } from '../../../common/providers/booking-provider.interface';
 import { ProviderResult } from '../../../common/providers/provider.result';
+import { bookingProviderTags } from '../../../common/providers/booking-confirmation';
 import { DuffelService } from '../../duffel/duffel.service';
 
 /**
@@ -110,6 +112,50 @@ function _duffelTitle(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const normalized = value.trim().toLowerCase();
   return DUFFEL_TITLES.has(normalized) ? normalized : null;
+}
+
+/**
+ * Use the provider's own amount string when the final revalidation supplied
+ * one and it denotes the same amount. Otherwise serialize the authoritative
+ * number — never a rounded/invented value.
+ */
+function _duffelPaymentAmount(
+  input: CreateBookingInput,
+  amount: number,
+): string {
+  const text =
+    typeof input.amountText === 'string' ? input.amountText.trim() : '';
+  if (text && Number.isFinite(Number(text))) {
+    if (Math.abs(Number(text) - amount) < 0.005) return text;
+  }
+  return String(amount);
+}
+
+/**
+ * Duffel confirms an instant order only when it has been PAID. `paid_at` and
+ * `awaiting_payment` are the documented payment-state evidence; an order that
+ * is merely created (hold/awaiting payment) is NOT a confirmed booking.
+ * `cancelled_at` is definitive. No `status` property is invented: Duffel's
+ * Order resource exposes payment_status, not a generic order status.
+ */
+function _duffelConfirmation(order: any): {
+  state: ProviderConfirmationState;
+  status: string;
+} {
+  if (order?.cancelled_at) {
+    return { state: 'failed', status: 'cancelled' };
+  }
+  const payment = order?.payment_status;
+  if (!payment || typeof payment.awaiting_payment !== 'boolean') {
+    return { state: 'unknown', status: 'unknown' };
+  }
+  if (payment.awaiting_payment === true) {
+    return { state: 'pending', status: 'pending_payment' };
+  }
+  if (!payment.paid_at) {
+    return { state: 'pending', status: 'payment_pending' };
+  }
+  return { state: 'confirmed', status: 'confirmed' };
 }
 
 /**
@@ -271,6 +317,11 @@ export class DuffelBookingProvider implements BookingProvider {
             ? data.supportedPassengerIdentityDocumentTypes
             : [],
         },
+        ...(data.terms ? { terms: data.terms } : {}),
+        ...(data.termsVersion ? { termsVersion: data.termsVersion } : {}),
+        ...(Array.isArray(data.changedTerms) && data.changedTerms.length > 0
+          ? { changedTerms: data.changedTerms }
+          : {}),
       },
       timestamp: result.timestamp,
     };
@@ -286,6 +337,7 @@ export class DuffelBookingProvider implements BookingProvider {
         providerId: this.providerId,
         providerName: this.providerName,
         error: 'Duffel booking requires at least one passenger',
+        failureKind: 'definitive',
         timestamp: new Date(),
       };
     }
@@ -303,6 +355,7 @@ export class DuffelBookingProvider implements BookingProvider {
           'Duffel booking is missing the offer passenger ids ' +
           '(offerSnapshot.duffelPassengers). They are captured when the offer ' +
           'is revalidated — revalidate the booking before confirming.',
+        failureKind: 'definitive',
         timestamp: new Date(),
       };
     }
@@ -444,18 +497,57 @@ export class DuffelBookingProvider implements BookingProvider {
         error:
           `Duffel booking has invalid passenger data (${details}). ` +
           'Collect it in the passenger form — no values are invented.',
+        failureKind: 'definitive',
         timestamp: new Date(),
       };
     }
+
+    // An instant order MUST carry a real payment. The amount/currency are the
+    // server-authoritative values from the final revalidation; without them no
+    // provider call is made. Balance is Duffel's official funding instrument
+    // (unlimited in test mode), so no card data is ever handled here.
+    const amount =
+      typeof input.amount === 'number' &&
+      Number.isFinite(input.amount) &&
+      input.amount > 0
+        ? input.amount
+        : null;
+    const currency =
+      typeof input.currency === 'string' &&
+      /^[A-Z]{3}$/.test(input.currency.trim().toUpperCase())
+        ? input.currency.trim().toUpperCase()
+        : null;
+    if (amount === null || !currency) {
+      return {
+        success: false,
+        providerId: this.providerId,
+        providerName: this.providerName,
+        error:
+          'Duffel instant booking requires the server-authoritative amount ' +
+          'and currency from the final revalidation',
+        failureKind: 'definitive',
+        timestamp: new Date(),
+      };
+    }
+    const payments = [
+      {
+        type: 'balance',
+        amount: _duffelPaymentAmount(input, amount),
+        currency,
+      },
+    ];
+    const metadata = bookingProviderTags(input);
 
     try {
       const order: any = await this.duffel.createOrder(
         input.offerId,
         passengers,
-        [],
+        payments,
+        metadata,
       );
       const reference =
         order?.booking_reference ?? order?.id ?? String(order?.id ?? '');
+      const confirmation = _duffelConfirmation(order);
       return {
         success: true,
         providerId: this.providerId,
@@ -463,9 +555,10 @@ export class DuffelBookingProvider implements BookingProvider {
         data: {
           reference: String(reference),
           providerBookingId: order?.id,
-          status: order?.status,
+          status: confirmation.status,
           amount: order?.total_amount ? Number(order.total_amount) : undefined,
           currency: order?.total_currency,
+          confirmationState: confirmation.state,
           raw: order,
         },
         timestamp: new Date(),
@@ -476,6 +569,11 @@ export class DuffelBookingProvider implements BookingProvider {
         providerId: this.providerId,
         providerName: this.providerName,
         error: (error as Error).message,
+        // Duffel's own SDK documentation warns that the HTTP status of a
+        // failed request does not prove whether the order was created (a
+        // gateway can fail while Duffel processes it). Never reopen the key
+        // from a provider-call failure without reconciliation.
+        failureKind: 'ambiguous',
         timestamp: new Date(),
       };
     }

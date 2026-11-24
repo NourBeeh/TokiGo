@@ -3,7 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { HomeCard } from '../../database/entities/home_card.entity';
 import { HomeSection } from '../../database/entities/home_section.entity';
-import { HomeCardDto, HomeSectionDto } from '../../common/dto/home.dto';
+import {
+  HomeCardDto,
+  HomeSectionDto,
+  sanitizeCardContent,
+} from '../../common/dto/home.dto';
 
 /**
  * Reads the home feed from the persisted entities.
@@ -80,10 +84,6 @@ export class HomeService {
     }));
   }
 
-  async refresh() {
-    // Invalidate cache
-    return { refreshed: true };
-  }
 }
 
 /**
@@ -109,7 +109,9 @@ function isLive(
 }
 
 function flattenCard(card: HomeCard): HomeCardDto {
-  const content: Record<string, unknown> = card.content ?? {};
+  // Defence in depth: a row written before the price rule existed (or by a
+  // script) must not leak a persisted price through the public feed.
+  const content: Record<string, unknown> = sanitizeCardContent(card.content);
   const action = content.actionLabel ?? content.action;
   return {
     id: card.id,
@@ -118,7 +120,6 @@ function flattenCard(card: HomeCard): HomeCardDto {
     subtitle: asString(content.subtitle),
     description: asString(content.description),
     imageUrl: asString(content.imageUrl),
-    price: asNumber(content.price),
     currency: asString(content.currency),
     rating: asNumber(content.rating),
     reviewCount: asNumber(content.reviewCount),
@@ -129,7 +130,6 @@ function flattenCard(card: HomeCard): HomeCardDto {
     // wire aliases so existing Flutter clients receive the same label.
     action: typeof action === 'string' ? action : undefined,
     actionLabel: typeof action === 'string' ? action : undefined,
-    rawPrice: asNumber(content.rawPrice),
     metadata: asRecord(content.metadata),
     expiration: card.expiresAt,
     visibility: card.isVisible,

@@ -2,6 +2,8 @@ import { Controller, Post, Body, Get, Param, UseGuards, Req } from '@nestjs/comm
 import { Request } from 'express';
 import { PaymentService } from './payment.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import {
   ConfirmPaymentDto,
   CreatePaymentDto,
@@ -40,10 +42,17 @@ export class PaymentsController {
     return this.service.confirmPayment(dto, (req.user as { id: string }).id);
   }
 
+  /**
+   * Refunds are an ADMIN action. The JWT identifies the operator; the role
+   * guard and the service both require `role === 'admin'`. A customer can
+   * never refund their own payment through this route.
+   */
   @Post('refund')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   async refund(@Body() dto: RefundDto, @Req() req: Request) {
-    return this.service.refundPayment(dto, (req.user as { id: string }).id);
+    const user = req.user as { id: string; role?: string };
+    return this.service.refundPayment(dto, user.id, user.role);
   }
 
   /** Gateway callback — signature-authenticated, never JWT. */

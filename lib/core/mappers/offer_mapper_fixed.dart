@@ -22,7 +22,93 @@ double _toD(dynamic v, [double def = 0]) {
   return double.tryParse(v.toString()) ?? def;
 }
 
-BaseOffer? mapOffer(Map<String, dynamic> j) {
+Map<String, dynamic> _mapOf(dynamic value) =>
+    value is Map ? Map<String, dynamic>.from(value) : const <String, dynamic>{};
+
+List<FlightBaggageAllowance> _mapFlightBaggage(dynamic raw) {
+  if (raw is! List) return const <FlightBaggageAllowance>[];
+  final allowances = <FlightBaggageAllowance>[];
+  for (final entry in raw.whereType<Map>()) {
+    final map = Map<String, dynamic>.from(entry);
+    final type = map['type']?.toString().trim() ?? '';
+    if (type.isEmpty) continue;
+    allowances.add(
+      FlightBaggageAllowance(
+        type: type,
+        quantity: int.tryParse(map['quantity']?.toString() ?? ''),
+        weightKg: double.tryParse(map['weightKg']?.toString() ?? ''),
+        description: map['description']?.toString(),
+        passengerType: map['passengerType']?.toString(),
+      ),
+    );
+  }
+  return List<FlightBaggageAllowance>.unmodifiable(allowances);
+}
+
+List<FlightSegment> _mapFlightSegments(dynamic raw) {
+  if (raw is! List) return const <FlightSegment>[];
+  final segments = <FlightSegment>[];
+  for (final entry in raw.whereType<Map>()) {
+    final j = Map<String, dynamic>.from(entry);
+    final origin = j['origin']?.toString() ?? '';
+    final destination = j['destination']?.toString() ?? '';
+    final departure = _parse(j['departureAt']);
+    final arrival = _parse(j['arrivalAt']);
+    // A segment without a provable route/time is not rendered: the offer's
+    // own top-level route/time still stands, but no invented segment is added.
+    if (origin.isEmpty ||
+        destination.isEmpty ||
+        departure == null ||
+        arrival == null) {
+      continue;
+    }
+    final marketing = _mapOf(j['marketingCarrier']);
+    final operating = _mapOf(j['operatingCarrier']);
+    segments.add(
+      FlightSegment(
+        origin: origin,
+        destination: destination,
+        departureAt: departure,
+        arrivalAt: arrival,
+        marketingCarrierCode: marketing['code']?.toString(),
+        marketingCarrierName: marketing['name']?.toString(),
+        operatingCarrierCode: operating['code']?.toString(),
+        operatingCarrierName: operating['name']?.toString(),
+        marketingFlightNumber: j['marketingFlightNumber']?.toString(),
+        operatingFlightNumber: j['operatingFlightNumber']?.toString(),
+        stopCount: int.tryParse(j['stopCount']?.toString() ?? ''),
+        cabinClass: j['cabinClass']?.toString(),
+        fareBasisCode: j['fareBasisCode']?.toString(),
+        aircraft: j['aircraft']?.toString(),
+        duration: j['duration']?.toString(),
+        sliceIndex: int.tryParse(j['sliceIndex']?.toString() ?? ''),
+        segmentKey: j['segmentKey']?.toString(),
+        baggage: _mapFlightBaggage(j['baggage']),
+      ),
+    );
+  }
+  return List<FlightSegment>.unmodifiable(segments);
+}
+
+FlightConditions? _mapFlightConditions(dynamic raw) {
+  if (raw is! Map) return null;
+  final map = Map<String, dynamic>.from(raw);
+  final refund = map['refundBeforeDeparture'];
+  final change = map['changeBeforeDeparture'];
+  if (refund is! Map && change is! Map) return null;
+  return FlightConditions(
+    refundBeforeDeparture: refund is Map
+        ? FlightCondition.fromJson(Map<String, dynamic>.from(refund))
+        : null,
+    changeBeforeDeparture: change is Map
+        ? FlightCondition.fromJson(Map<String, dynamic>.from(change))
+        : null,
+  );
+}
+
+BaseOffer? mapOffer(Map<String, dynamic> j) => _mapOffer(j, 0);
+
+BaseOffer? _mapOffer(Map<String, dynamic> j, int depth) {
   final t = (j['type'] ?? j['offerType'])?.toString().toLowerCase() ?? '';
   final id = j['id']?.toString() ?? '';
   final providerId = j['providerId']?.toString() ?? '';
@@ -32,7 +118,9 @@ BaseOffer? mapOffer(Map<String, dynamic> j) {
   final description = j['description']?.toString();
   final imageUrl = j['imageUrl']?.toString();
   final price = _toD(j['price']);
-  final currency = j['currency']?.toString() ?? 'USD';
+  // No currency is not USD: an absent code stays absent (`''`) instead of
+  // relabelling provider money.
+  final currency = j['currency']?.toString() ?? '';
   final availability = j['availability'];
   final validUntil = _parse(j['validUntil']);
   final rawMeta = j['metadata'];
@@ -46,7 +134,31 @@ BaseOffer? mapOffer(Map<String, dynamic> j) {
       ? CustomerPrice.fromJson(rawCustomerPrice)
       : null;
   switch (t) {
-    case 'flight':
+    case 'flight': {
+      final origin = j['origin']?.toString() ?? '';
+      final destination = j['destination']?.toString() ?? '';
+      final departure = _parse(j['departureTime']) ?? _parse(j['departure']);
+      final arrival = _parse(j['arrivalTime']) ?? _parse(j['arrival']);
+      // A flight without a usable price, currency, route or times cannot be
+      // shown or booked honestly. Dropping it is the only honest option: an
+      // invented USD/0 price or a "now" departure would be fake data.
+      if (price <= 0 ||
+          currency.isEmpty ||
+          origin.isEmpty ||
+          destination.isEmpty ||
+          departure == null ||
+          arrival == null) {
+        return null;
+      }
+      // Nested fare offers (Phase 2D). Parsed one level deep: the backend's
+      // grouped row carries every valid fare, each a complete offer.
+      final nested = depth == 0 && j['offers'] is List
+          ? (j['offers'] as List)
+                .whereType<Map>()
+                .map((e) => _mapOffer(Map<String, dynamic>.from(e), depth + 1))
+                .whereType<FlightOffer>()
+                .toList(growable: false)
+          : const <FlightOffer>[];
       return FlightOffer(
         id: id,
         providerId: providerId,
@@ -63,20 +175,31 @@ BaseOffer? mapOffer(Map<String, dynamic> j) {
         rating: rating == 0 ? null : rating,
         reviewCount: reviewCount,
         customerPrice: customerPrice,
-        origin: j['origin']?.toString() ?? '',
-        destination: j['destination']?.toString() ?? '',
-        departureTime:
-            _parse(j['departureTime']) ??
-            _parse(j['departure']) ??
-            DateTime.now(),
-        arrivalTime:
-            _parse(j['arrivalTime']) ?? _parse(j['arrival']) ?? DateTime.now(),
+        origin: origin,
+        destination: destination,
+        departureTime: departure,
+        arrivalTime: arrival,
         airline: j['airline']?.toString() ?? '',
         flightNumber: j['flightNumber']?.toString() ?? '',
         stops: int.tryParse(j['stops']?.toString() ?? ''),
         cabinClass: j['cabinClass']?.toString(),
+        segments: _mapFlightSegments(j['segments']),
+        offers: nested,
+        conditions: _mapFlightConditions(j['conditions']),
+        baggageAllowances: _mapFlightBaggage(j['baggageAllowances']),
       );
+    }
     case 'hotel':
+      // Nested room-type offers (Phase 2C). Parsed one level deep: the
+      // backend's grouped row carries every valid offer, each of which is a
+      // complete hotel offer in its own right.
+      final nested = depth == 0 && j['offers'] is List
+          ? (j['offers'] as List)
+                .whereType<Map>()
+                .map((e) => _mapOffer(Map<String, dynamic>.from(e), depth + 1))
+                .whereType<HotelOffer>()
+                .toList(growable: false)
+          : const <HotelOffer>[];
       return HotelOffer(
         id: id,
         providerId: providerId,
@@ -95,11 +218,13 @@ BaseOffer? mapOffer(Map<String, dynamic> j) {
         customerPrice: customerPrice,
         city: j['city']?.toString() ?? '',
         country: j['country']?.toString() ?? '',
-        checkIn: _parse(j['checkIn']) ?? DateTime.now(),
-        checkOut: _parse(j['checkOut']) ?? DateTime.now(),
+        // Absent dates stay null — never "now".
+        checkIn: _parse(j['checkIn']),
+        checkOut: _parse(j['checkOut']),
         roomType: j['roomType']?.toString() ?? '',
         amenities:
             (j['amenities'] as List?)?.map((e) => e.toString()).toList() ?? [],
+        offers: nested,
       );
     case 'car':
       return CarOffer(

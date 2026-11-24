@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:tokigo/core/domain/models/booking/booking.dart';
+import 'package:tokigo/features/booking/domain/price_change.dart';
 
 @immutable
 class BookingRecord {
@@ -21,6 +22,10 @@ class BookingRecord {
   final DateTime? expiration;
   final Map<String, dynamic> metadata;
 
+  /// Backend-owned price/terms confirmation state. Null for responses that do
+  /// not carry one (legacy records); never synthesized on the client.
+  final PriceChangeConfirmation? priceChange;
+
   const BookingRecord({
     required this.bookingId,
     required this.userId,
@@ -39,5 +44,35 @@ class BookingRecord {
     required this.updatedAt,
     this.expiration,
     this.metadata = const {},
+    this.priceChange,
   });
+
+  BookingRecord copyWith({
+    BookingStatus? status,
+    String? currency,
+    double? authoritativePrice,
+    DateTime? expiration,
+    PriceChangeConfirmation? priceChange,
+  }) {
+    return BookingRecord(
+      bookingId: bookingId,
+      userId: userId,
+      searchId: searchId,
+      offerId: offerId,
+      providerId: providerId,
+      providerName: providerName,
+      type: type,
+      status: status ?? this.status,
+      currency: currency ?? this.currency,
+      authoritativePrice: authoritativePrice ?? this.authoritativePrice,
+      priceBreakdown: priceBreakdown,
+      travelers: travelers,
+      bookingReference: bookingReference,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      expiration: expiration ?? this.expiration,
+      metadata: metadata,
+      priceChange: priceChange ?? this.priceChange,
+    );
+  }
 }

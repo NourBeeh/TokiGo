@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,7 +7,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tokigo/core/domain/models/booking/booking.dart';
-import 'package:tokigo/core/network/api_client.dart';
 import 'package:tokigo/core/network/api_error.dart';
 import 'package:tokigo/core/network/api_result.dart';
 import 'package:tokigo/core/repositories/contracts/booking_repository.dart';
@@ -15,22 +16,25 @@ import 'package:tokigo/features/booking/application/booking_controller.dart';
 import 'package:tokigo/features/booking/application/booking_providers.dart';
 import 'package:tokigo/features/booking/application/booking_state.dart';
 import 'package:tokigo/features/booking/application/confirm_booking_usecase.dart';
+import 'package:tokigo/features/booking/application/decide_price_change_usecase.dart';
 import 'package:tokigo/features/booking/application/prepare_booking_usecase.dart';
 import 'package:tokigo/features/booking/application/revalidate_booking_usecase.dart';
-import 'package:tokigo/features/booking/application/services/offer_revalidation_service.dart';
+import 'package:tokigo/features/booking/domain/booking_error.dart';
 import 'package:tokigo/features/booking/domain/booking_preparation.dart';
 import 'package:tokigo/features/booking/domain/booking_record.dart';
+import 'package:tokigo/features/booking/domain/price_change.dart';
 import 'package:tokigo/features/search/application/providers/offer_selection_provider.dart';
 import 'package:tokigo/features/search/presentation/pages/booking_review_page.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
-/// P3-D7 — the booking review page's pre-checkout offer revalidation.
+/// Phase 2E — the booking review page's single pre-checkout revalidation path.
 ///
-/// The review page used to hit `/offers/revalidate`, which had no Nuitee flight
-/// path and answered `UNAVAILABLE` for EVERY Nuitee flight offer — so Continue
-/// could never advance. These tests pin the Flutter side of the fixed flow:
-/// a supported provider advances, a price change needs explicit acceptance, a
-/// failure blocks the funnel, and a retry never duplicates booking state.
+/// The review page no longer calls the generic `/offers/revalidate` endpoint.
+/// It revalidates the exact prepared booking through `/bookings/revalidate`,
+/// which returns the backend-owned price/terms confirmation. A moved price or
+/// changed condition blocks the funnel until the customer explicitly taps
+/// "Update price"; a decline returns to offer selection; an unavailable or
+/// expired offer cannot be retried into a booking.
 
 SelectedOffer _offer(String providerId) => SelectedOffer(
   offerId: 'offer-1',
@@ -44,11 +48,46 @@ SelectedOffer _offer(String providerId) => SelectedOffer(
   subtitle: 'Cairo to Dubai',
 );
 
+PriceChangeConfirmation _change({
+  String providerId = 'nuitee-flight',
+  double previousPrice = 800,
+  double currentPrice = 950,
+  bool priceChanged = true,
+  bool termsChanged = false,
+  List<String> changedTerms = const <String>[],
+  bool requiresAcceptance = true,
+  bool accepted = false,
+  String? decision,
+}) {
+  final double difference = currentPrice - previousPrice;
+  return PriceChangeConfirmation(
+    providerId: providerId,
+    offerId: 'offer-1',
+    offerType: 'flight',
+    previousPrice: previousPrice,
+    currentPrice: currentPrice,
+    currency: 'USD',
+    priceDifference: difference,
+    priceChangePercent: previousPrice == 0
+        ? null
+        : (difference / previousPrice) * 100,
+    priceChanged: priceChanged,
+    termsChanged: termsChanged,
+    changedTerms: changedTerms,
+    termsVersion: 'terms-v1-review',
+    requiresAcceptance: requiresAcceptance,
+    accepted: accepted,
+    decision: decision,
+    checkedAt: DateTime.utc(2026, 1, 2),
+  );
+}
+
 BookingRecord _record({
   String providerId = 'nuitee-flight',
   String bookingId = 'bk-1',
   double price = 800,
   BookingStatus status = BookingStatus.pending,
+  PriceChangeConfirmation? priceChange,
 }) {
   return BookingRecord(
     bookingId: bookingId,
@@ -66,6 +105,7 @@ BookingRecord _record({
     bookingReference: '',
     createdAt: DateTime.utc(2026, 1, 1),
     updatedAt: DateTime.utc(2026, 1, 1),
+    priceChange: priceChange,
   );
 }
 
@@ -73,7 +113,12 @@ class _FakeRepository implements BookingRepository {
   int prepareCalls = 0;
   int revalidateCalls = 0;
   int createCalls = 0;
-  double reviewPrice = 800;
+
+  /// Result of the next `revalidateBooking` call. Null → an unchanged record.
+  ApiResult<BookingRecord>? revalidateResult;
+
+  /// Dynamic result, evaluated with the 1-based call number.
+  ApiResult<BookingRecord> Function(int call)? revalidateResponder;
 
   @override
   Future<ApiResult<BookingRecord>> prepareBooking(
@@ -82,15 +127,15 @@ class _FakeRepository implements BookingRepository {
     String searchId,
   ) async {
     prepareCalls++;
-    return ApiResult.success(
-      _record(providerId: providerId, price: 800),
-    );
+    return ApiResult.success(_record(providerId: providerId, price: 800));
   }
 
   @override
   Future<ApiResult<BookingRecord>> revalidateBooking(String bookingId) async {
     revalidateCalls++;
-    return ApiResult.success(_record(price: reviewPrice));
+    return revalidateResponder?.call(revalidateCalls) ??
+        revalidateResult ??
+        ApiResult.success(_record(price: 800));
   }
 
   @override
@@ -118,118 +163,44 @@ class _FakeRepository implements BookingRepository {
       const ApiResult<void>.success(null);
 }
 
-/// Fake `/offers/revalidate` transport. Only the offer check is exercised.
-class _FakeOfferClient implements ApiClient {
-  _FakeOfferClient(this._responder);
-
-  final ApiResult<Map<String, dynamic>> Function(String path) _responder;
-  final List<String> calls = <String>[];
-
-  @override
-  String get baseUrl => 'http://test.local';
+class _FakeDecisionRepository implements PriceChangeDecisionRepository {
+  int calls = 0;
+  String? decision;
+  double? expectedPrice;
+  String? expectedCurrency;
+  String? expectedTermsVersion;
+  ApiResult<BookingRecord> Function()? responder;
 
   @override
-  Duration get defaultTimeout => const Duration(seconds: 5);
-
-  @override
-  Map<String, String> get defaultHeaders => const <String, String>{};
-
-  @override
-  Future<ApiResult<T>> post<T>(
-    String path, {
-    Object? body,
-    Map<String, String>? headers,
-    Duration? timeout,
-    RequestToken? token,
+  Future<ApiResult<BookingRecord>> decidePriceChange(
+    String bookingId, {
+    required String decision,
+    double? expectedPrice,
+    String? expectedCurrency,
+    String? expectedTermsVersion,
   }) async {
-    calls.add(path);
-    return _responder(path) as ApiResult<T>;
+    calls++;
+    this.decision = decision;
+    this.expectedPrice = expectedPrice;
+    this.expectedCurrency = expectedCurrency;
+    this.expectedTermsVersion = expectedTermsVersion;
+    return responder?.call() ??
+        ApiResult.success(
+          _record(
+            price: 950,
+            priceChange: _change(
+              requiresAcceptance: false,
+              accepted: true,
+              decision: 'accepted',
+            ),
+          ),
+        );
   }
-
-  @override
-  Future<ApiResult<T>> get<T>(
-    String path, {
-    Map<String, String>? queryParameters,
-    Map<String, String>? headers,
-    Duration? timeout,
-    RequestToken? token,
-  }) async =>
-      throw UnimplementedError('get');
-
-  @override
-  Future<ApiResult<T>> put<T>(
-    String path, {
-    Object? body,
-    Map<String, String>? headers,
-    Duration? timeout,
-    RequestToken? token,
-  }) async =>
-      throw UnimplementedError('put');
-
-  @override
-  Future<ApiResult<T>> patch<T>(
-    String path, {
-    Object? body,
-    Map<String, String>? headers,
-    Duration? timeout,
-    RequestToken? token,
-  }) async =>
-      throw UnimplementedError('patch');
-
-  @override
-  Future<ApiResult<T>> delete<T>(
-    String path, {
-    Map<String, String>? headers,
-    Duration? timeout,
-    RequestToken? token,
-  }) async =>
-      throw UnimplementedError('delete');
-
-  @override
-  ApiResult<T> mapError<T>(Object error, {StackTrace? stackTrace}) =>
-      ApiResult.failure(ApiUnknownError(message: error.toString()));
 }
-
-ApiResult<Map<String, dynamic>> _ok() => ApiResult.success(
-  <String, dynamic>{
-    'status': 'OK',
-    'offerId': 'offer-1',
-    'price': 800,
-    'currency': 'USD',
-  },
-);
-
-ApiResult<Map<String, dynamic>> _priceChanged() => ApiResult.success(
-  <String, dynamic>{
-    'status': 'PRICE_CHANGED',
-    'offerId': 'offer-1',
-    'oldPrice': 800,
-    'newPrice': 950,
-    'currency': 'USD',
-  },
-);
-
-ApiResult<Map<String, dynamic>> _unavailable({String? reason}) =>
-    ApiResult.success(
-      <String, dynamic>{
-        'status': 'UNAVAILABLE',
-        'offerId': 'offer-1',
-        'reason': reason ?? 'This offer is no longer available.',
-      },
-    );
-
-ApiResult<Map<String, dynamic>> _expired() => ApiResult.success(
-  <String, dynamic>{
-    'status': 'UNAVAILABLE',
-    'offerId': 'offer-1',
-    'reason': 'offer expired',
-  },
-);
 
 Future<void> _pumpReview(
   WidgetTester tester, {
   required BookingController controller,
-  required ApiClient offerClient,
   required SelectedOffer offer,
 }) async {
   tester.view.physicalSize = const Size(800, 1600);
@@ -240,6 +211,11 @@ Future<void> _pumpReview(
   final GoRouter router = GoRouter(
     initialLocation: '/booking/review',
     routes: <RouteBase>[
+      GoRoute(
+        path: '/',
+        builder: (BuildContext context, GoRouterState state) =>
+            const Scaffold(body: Text('HOME')),
+      ),
       GoRoute(
         path: '/booking/review',
         builder: (BuildContext context, GoRouterState state) =>
@@ -259,9 +235,6 @@ Future<void> _pumpReview(
     ProviderScope(
       overrides: <Override>[
         bookingControllerProvider.overrideWith((ref) => controller),
-        offerRevalidationServiceProvider.overrideWithValue(
-          OfferRevalidationService(offerClient),
-        ),
         selectedOfferProvider.overrideWith((ref) => offer),
       ],
       child: MaterialApp.router(
@@ -288,12 +261,50 @@ Future<void> _settle(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 400));
 }
 
-BookingController _controller(BookingRepository repo) => BookingController(
+BookingController _controller(
+  BookingRepository repo, {
+  PriceChangeDecisionRepository? decisions,
+}) => BookingController(
   prepareUseCase: PrepareBookingUseCase(repo),
   revalidateUseCase: RevalidateBookingUseCase(repo),
   confirmUseCase: ConfirmBookingUseCase(repo),
+  decidePriceChangeUseCase: decisions == null
+      ? null
+      : DecidePriceChangeUseCase(decisions),
   bagController: BagController(),
 );
+
+BookingState _readyState({
+  String providerId = 'nuitee-flight',
+  BookingRecord? record,
+}) {
+  return BookingState(
+    phase: BookingPhase.readyToConfirm,
+    record: record ?? _record(providerId: providerId),
+    preparation: BookingPreparation(
+      request: const BookingRequest(
+        offerId: 'offer-1',
+        providerId: 'nuitee-flight',
+        searchId: 'search-1',
+      ),
+      revalidation: const PriceRevalidationResult(
+        authoritativePrice: 800,
+        currency: 'USD',
+        priceChanged: false,
+        available: true,
+      ),
+    ),
+  );
+}
+
+ApiResult<BookingRecord> _failure(String code, String message) {
+  return ApiResult<BookingRecord>.failure(
+    ApiClientError(
+      message: jsonEncode(<String, dynamic>{'code': code, 'message': message}),
+      statusCode: code == 'booking_expired' ? 409 : 503,
+    ),
+  );
+}
 
 void main() {
   testWidgets('P3-D7 a valid Nuitee revalidation enables Continue', (
@@ -301,122 +312,173 @@ void main() {
   ) async {
     final _FakeRepository repo = _FakeRepository();
     final BookingController controller = _controller(repo);
-    controller.state = BookingState(
-      phase: BookingPhase.readyToConfirm,
-      record: _record(),
-      preparation: BookingPreparation(
-        request: const BookingRequest(
-          offerId: 'offer-1',
-          providerId: 'nuitee-flight',
-          searchId: 'search-1',
-        ),
-        revalidation: const PriceRevalidationResult(
-          authoritativePrice: 800,
-          currency: 'USD',
-          priceChanged: false,
-          available: true,
-        ),
-      ),
-    );
 
     await _pumpReview(
       tester,
       controller: controller,
-      offerClient: _FakeOfferClient((_) => _ok()),
       offer: _offer('nuitee-flight'),
     );
+    controller.state = _readyState();
+    await tester.pump();
 
     expect(find.text('Continue'), findsOneWidget);
     await tester.tap(find.text('Continue'));
     await _settle(tester);
 
-    // The funnel advanced — the offer is no longer treated as UNAVAILABLE.
+    // The funnel advanced through the single booking revalidation path.
     expect(find.text('PASSENGERS'), findsOneWidget);
+    expect(repo.revalidateCalls, 1);
     expect(repo.prepareCalls, 0);
+    expect(repo.createCalls, 0);
   });
 
   testWidgets('P3-D7 a price change requires explicit acceptance', (
     tester,
   ) async {
-    final _FakeRepository repo = _FakeRepository()..reviewPrice = 950;
-    final BookingController controller = _controller(repo);
-    controller.state = BookingState(
-      phase: BookingPhase.readyToConfirm,
-      record: _record(),
-      preparation: BookingPreparation(
-        request: const BookingRequest(
-          offerId: 'offer-1',
-          providerId: 'nuitee-flight',
-          searchId: 'search-1',
-        ),
-        revalidation: const PriceRevalidationResult(
-          authoritativePrice: 800,
-          currency: 'USD',
-          priceChanged: false,
-          available: true,
-        ),
-      ),
+    final _FakeRepository repo = _FakeRepository()
+      ..revalidateResult = ApiResult.success(
+        _record(price: 950, priceChange: _change()),
+      );
+    final _FakeDecisionRepository decisions = _FakeDecisionRepository();
+    final BookingController controller = _controller(
+      repo,
+      decisions: decisions,
     );
 
-    final _FakeOfferClient client = _FakeOfferClient((_) => _priceChanged());
     await _pumpReview(
       tester,
       controller: controller,
-      offerClient: client,
       offer: _offer('nuitee-flight'),
     );
+    controller.state = _readyState();
+    await tester.pump();
 
     await tester.tap(find.text('Continue'));
     await _settle(tester);
 
-    // Blocked: the price-change banner is shown and the funnel did not move.
+    // Blocked: the shared price/terms banner is shown and nothing navigated.
     expect(find.text('PASSENGERS'), findsNothing);
+    expect(controller.state.phase, BookingPhase.priceChanged);
     expect(find.text('Price changed'), findsOneWidget);
-    expect(client.calls, <String>['/offers/revalidate']);
+    expect(find.text('Previous price: 800.00 USD'), findsOneWidget);
+    expect(find.text('Updated price: 950.00 USD'), findsOneWidget);
+    expect(find.text('Difference: +150.00 USD (+18.75%)'), findsOneWidget);
+    expect(
+      find.text('No booking has been made at the updated price.'),
+      findsOneWidget,
+    );
+    expect(find.text('Update price'), findsWidgets);
+    expect(find.text('Decline'), findsWidgets);
+    expect(decisions.calls, 0);
+    expect(repo.createCalls, 0);
 
-    // Explicit acceptance unblocks the funnel.
-    await tester.tap(find.text('Accept new price').last);
+    // Explicit acceptance is bound to the exact amount/currency/terms shown.
+    await tester.tap(find.text('Update price').last);
     await _settle(tester);
+
+    expect(decisions.calls, 1);
+    expect(decisions.decision, 'accept');
+    expect(decisions.expectedPrice, 950);
+    expect(decisions.expectedCurrency, 'USD');
+    expect(decisions.expectedTermsVersion, 'terms-v1-review');
     expect(controller.state.phase, BookingPhase.readyToConfirm);
     expect(controller.state.priceAccepted, isTrue);
-  });
 
-  testWidgets('P3-D7 a revalidation failure blocks Continue', (
-    tester,
-  ) async {
-    final _FakeRepository repo = _FakeRepository();
-    final BookingController controller = _controller(repo);
-    controller.state = BookingState(
-      phase: BookingPhase.readyToConfirm,
-      record: _record(),
-      preparation: BookingPreparation(
-        request: const BookingRequest(
-          offerId: 'offer-1',
-          providerId: 'nuitee-flight',
-          searchId: 'search-1',
-        ),
-        revalidation: const PriceRevalidationResult(
-          authoritativePrice: 800,
-          currency: 'USD',
-          priceChanged: false,
-          available: true,
+    // The next Continue revalidates again and, with the accepted state live,
+    // advances without another price decision.
+    repo.revalidateResult = ApiResult.success(
+      _record(
+        price: 950,
+        priceChange: _change(
+          requiresAcceptance: false,
+          accepted: true,
+          decision: 'accepted',
         ),
       ),
+    );
+    await tester.tap(find.text('Continue'));
+    await _settle(tester);
+    expect(find.text('PASSENGERS'), findsOneWidget);
+    expect(decisions.calls, 1);
+    expect(repo.createCalls, 0);
+  });
+
+  testWidgets('P3-D7 a terms-only change blocks Continue until accepted', (
+    tester,
+  ) async {
+    final _FakeRepository repo = _FakeRepository()
+      ..revalidateResult = ApiResult.success(
+        _record(
+          price: 800,
+          priceChange: _change(
+            currentPrice: 800,
+            priceChanged: false,
+            termsChanged: true,
+            changedTerms: const <String>[
+              'conditions',
+              'baggageAllowances',
+            ],
+          ),
+        ),
+      );
+    final _FakeDecisionRepository decisions = _FakeDecisionRepository();
+    final BookingController controller = _controller(
+      repo,
+      decisions: decisions,
     );
 
     await _pumpReview(
       tester,
       controller: controller,
-      offerClient: _FakeOfferClient((_) => _unavailable()),
       offer: _offer('nuitee-flight'),
     );
+    controller.state = _readyState();
+    await tester.pump();
+
+    await tester.tap(find.text('Continue'));
+    await _settle(tester);
+
+    expect(find.text('PASSENGERS'), findsNothing);
+    expect(controller.state.phase, BookingPhase.priceChanged);
+    expect(find.text('Conditions changed'), findsOneWidget);
+    expect(find.text('• Fare conditions'), findsOneWidget);
+    expect(find.text('• Baggage allowance'), findsOneWidget);
+    expect(find.textContaining('Difference:'), findsNothing);
+    expect(repo.createCalls, 0);
+
+    await tester.tap(find.text('Update price').last);
+    await _settle(tester);
+
+    expect(decisions.calls, 1);
+    expect(controller.state.phase, BookingPhase.readyToConfirm);
+  });
+
+  testWidgets('P3-D7 a revalidation failure blocks Continue', (tester) async {
+    final _FakeRepository repo = _FakeRepository()
+      ..revalidateResult = _failure(
+        'no_availability',
+        'This offer is no longer available. Please pick another.',
+      );
+    final BookingController controller = _controller(repo);
+
+    await _pumpReview(
+      tester,
+      controller: controller,
+      offer: _offer('nuitee-flight'),
+    );
+    controller.state = _readyState();
+    await tester.pump();
 
     await tester.tap(find.text('Continue'));
     await _settle(tester);
 
     expect(find.text('PASSENGERS'), findsNothing);
     expect(controller.state.phase, BookingPhase.unavailable);
-    // The booking record is untouched — a failed check never re-prepares.
+    expect(
+      find.text('This offer is no longer available. Please pick another.'),
+      findsOneWidget,
+    );
+    expect(find.text('Choose another offer'), findsWidgets);
     expect(repo.prepareCalls, 0);
     expect(repo.createCalls, 0);
   });
@@ -424,82 +486,54 @@ void main() {
   testWidgets('P3-D7 an expired offer is distinguishable and blocks Continue', (
     tester,
   ) async {
-    final _FakeRepository repo = _FakeRepository();
+    final _FakeRepository repo = _FakeRepository()
+      ..revalidateResult = _failure(
+        'booking_expired',
+        'This offer has expired. Please search again.',
+      );
     final BookingController controller = _controller(repo);
-    controller.state = BookingState(
-      phase: BookingPhase.readyToConfirm,
-      record: _record(),
-      preparation: BookingPreparation(
-        request: const BookingRequest(
-          offerId: 'offer-1',
-          providerId: 'nuitee-flight',
-          searchId: 'search-1',
-        ),
-        revalidation: const PriceRevalidationResult(
-          authoritativePrice: 800,
-          currency: 'USD',
-          priceChanged: false,
-          available: true,
-        ),
-      ),
-    );
 
     await _pumpReview(
       tester,
       controller: controller,
-      offerClient: _FakeOfferClient((_) => _expired()),
       offer: _offer('nuitee-flight'),
     );
+    controller.state = _readyState();
+    await tester.pump();
 
     await tester.tap(find.text('Continue'));
     await _settle(tester);
 
     expect(find.text('PASSENGERS'), findsNothing);
     expect(controller.state.phase, BookingPhase.expired);
-    expect(find.text('This offer has expired. Please search again.'),
-        findsOneWidget);
+    expect(
+      find.text('This offer has expired. Please search again.'),
+      findsOneWidget,
+    );
+    expect(find.text('Choose another offer'), findsWidgets);
+    expect(repo.createCalls, 0);
   });
 
   testWidgets('P3-D7 retry after a failure does not reset booking state', (
     tester,
   ) async {
-    final _FakeRepository repo = _FakeRepository();
+    final _FakeRepository repo = _FakeRepository()
+      ..revalidateResponder = (int call) => call == 1
+          ? _failure('provider_error', 'The provider is temporarily down.')
+          : ApiResult.success(_record(price: 800));
     final BookingController controller = _controller(repo);
-    controller.state = BookingState(
-      phase: BookingPhase.readyToConfirm,
-      record: _record(),
-      preparation: BookingPreparation(
-        request: const BookingRequest(
-          offerId: 'offer-1',
-          providerId: 'nuitee-flight',
-          searchId: 'search-1',
-        ),
-        revalidation: const PriceRevalidationResult(
-          authoritativePrice: 800,
-          currency: 'USD',
-          priceChanged: false,
-          available: true,
-        ),
-      ),
-    );
-
-    // First check fails, the retry succeeds.
-    int calls = 0;
-    final _FakeOfferClient client = _FakeOfferClient((_) {
-      calls++;
-      return calls == 1 ? _unavailable() : _ok();
-    });
 
     await _pumpReview(
       tester,
       controller: controller,
-      offerClient: client,
       offer: _offer('nuitee-flight'),
     );
+    controller.state = _readyState();
+    await tester.pump();
 
     await tester.tap(find.text('Continue'));
     await _settle(tester);
-    expect(controller.state.phase, BookingPhase.unavailable);
+    expect(controller.state.phase, BookingPhase.error);
 
     await tester.tap(find.text('Retry').last);
     await _settle(tester);
@@ -510,44 +544,215 @@ void main() {
     expect(find.text('PASSENGERS'), findsOneWidget);
 
     // The SAME booking record was reused — no duplicate prepare/create.
+    expect(repo.revalidateCalls, 3);
     expect(repo.prepareCalls, 0);
     expect(repo.createCalls, 0);
     expect(controller.state.record?.bookingId, 'bk-1');
   });
 
-  testWidgets('P3-D7 Duffel review behaviour is unchanged', (tester) async {
-    final _FakeRepository repo = _FakeRepository();
-    final BookingController controller = _controller(repo);
-    controller.state = BookingState(
-      phase: BookingPhase.readyToConfirm,
-      record: _record(providerId: 'duffel-flight'),
-      preparation: BookingPreparation(
-        request: const BookingRequest(
-          offerId: 'offer-1',
-          providerId: 'duffel-flight',
-          searchId: 'search-1',
+  testWidgets('P3-D7 declining the update returns to offer selection', (
+    tester,
+  ) async {
+    final _FakeRepository repo = _FakeRepository()
+      ..revalidateResult = ApiResult.success(
+        _record(price: 950, priceChange: _change()),
+      );
+    final _FakeDecisionRepository decisions = _FakeDecisionRepository()
+      ..responder = () => ApiResult.success(
+        _record(
+          price: 950,
+          priceChange: _change(
+            requiresAcceptance: false,
+            decision: 'declined',
+          ),
         ),
-        revalidation: const PriceRevalidationResult(
-          authoritativePrice: 800,
-          currency: 'USD',
-          priceChanged: false,
-          available: true,
-        ),
-      ),
+      );
+    final BookingController controller = _controller(
+      repo,
+      decisions: decisions,
     );
 
-    final _FakeOfferClient client = _FakeOfferClient((_) => _ok());
     await _pumpReview(
       tester,
       controller: controller,
-      offerClient: client,
+      offer: _offer('nuitee-flight'),
+    );
+    controller.state = _readyState();
+    await tester.pump();
+
+    await tester.tap(find.text('Continue'));
+    await _settle(tester);
+    expect(controller.state.phase, BookingPhase.priceChanged);
+
+    await tester.tap(find.text('Decline').last);
+    await _settle(tester);
+
+    expect(decisions.calls, 1);
+    expect(decisions.decision, 'decline');
+    expect(find.text('HOME'), findsOneWidget);
+    expect(find.text('PASSENGERS'), findsNothing);
+    expect(repo.createCalls, 0);
+  });
+
+  testWidgets('P3-D7 a stale acceptance shows the fresh change again', (
+    tester,
+  ) async {
+    final _FakeRepository repo = _FakeRepository()
+      ..revalidateResult = ApiResult.success(
+        _record(price: 950, priceChange: _change()),
+      );
+    final _FakeDecisionRepository decisions = _FakeDecisionRepository()
+      ..responder = () => ApiResult.failure(
+        ApiClientError(
+          message: jsonEncode(<String, dynamic>{
+            'code': 'price_changed',
+            'message': 'The offer changed again; please review the latest '
+                'price and conditions',
+            'details': <String, dynamic>{
+              'priceChange': <String, dynamic>{
+                'providerId': 'nuitee-flight',
+                'offerId': 'offer-1',
+                'offerType': 'flight',
+                'previousPrice': 800,
+                'currentPrice': 975,
+                'currency': 'USD',
+                'priceDifference': 175,
+                'priceChangePercent': 21.875,
+                'priceChanged': true,
+                'termsChanged': false,
+                'changedTerms': <String>[],
+                'termsVersion': 'terms-v1-review-2',
+                'requiresAcceptance': true,
+                'accepted': false,
+                'decision': null,
+                'checkedAt': '2026-01-02T00:00:00.000Z',
+              },
+            },
+          }),
+          statusCode: 409,
+        ),
+      );
+    final BookingController controller = _controller(
+      repo,
+      decisions: decisions,
+    );
+
+    await _pumpReview(
+      tester,
+      controller: controller,
+      offer: _offer('nuitee-flight'),
+    );
+    controller.state = _readyState();
+    await tester.pump();
+
+    await tester.tap(find.text('Continue'));
+    await _settle(tester);
+    await tester.tap(find.text('Update price').last);
+    await _settle(tester);
+
+    // The acceptance was rejected because the offer moved again. The fresh
+    // amount is displayed and a NEW acceptance is required.
+    expect(find.text('PASSENGERS'), findsNothing);
+    expect(controller.state.phase, BookingPhase.priceChanged);
+    expect(find.text('Updated price: 975.00 USD'), findsOneWidget);
+    expect(find.text('Difference: +175.00 USD (+21.88%)'), findsOneWidget);
+    expect(controller.state.record?.priceChange?.termsVersion,
+        'terms-v1-review-2');
+    expect(repo.createCalls, 0);
+  });
+
+  testWidgets('P3-D7 Duffel review behaviour is unchanged', (tester) async {
+    final _FakeRepository repo = _FakeRepository();
+    final BookingController controller = _controller(repo);
+
+    await _pumpReview(
+      tester,
+      controller: controller,
       offer: _offer('duffel-flight'),
     );
+    controller.state = _readyState(providerId: 'duffel-flight');
+    await tester.pump();
 
     await tester.tap(find.text('Continue'));
     await _settle(tester);
 
-    expect(client.calls, <String>['/offers/revalidate']);
     expect(find.text('PASSENGERS'), findsOneWidget);
+    expect(repo.revalidateCalls, 1);
+    expect(repo.createCalls, 0);
+    expect(controller.state.phase, BookingPhase.readyToConfirm);
   });
+
+  test('P3-D7 a confirm-time change is surfaced instead of a generic failure', () async {
+    final ApiResult<BookingRecord> createFailure = ApiResult.failure(
+      ApiClientError(
+        message: jsonEncode(<String, dynamic>{
+          'code': 'price_changed',
+          'message': 'The offer price changed before confirmation',
+          'details': <String, dynamic>{
+            'priceChange': <String, dynamic>{
+              'providerId': 'nuitee-flight',
+              'offerId': 'offer-1',
+              'offerType': 'flight',
+              'previousPrice': 800,
+              'currentPrice': 925,
+              'currency': 'USD',
+              'priceDifference': 125,
+              'priceChangePercent': 15.625,
+              'priceChanged': true,
+              'termsChanged': false,
+              'changedTerms': <String>[],
+              'termsVersion': 'terms-v1-review-3',
+              'requiresAcceptance': true,
+              'accepted': false,
+              'decision': null,
+              'checkedAt': '2026-01-02T00:00:00.000Z',
+            },
+          },
+        }),
+        statusCode: 409,
+      ),
+    );
+
+    // The repository's create result is replaced through a responder-like fake.
+    final _CreateFailingRepository failingRepo = _CreateFailingRepository(
+      createFailure,
+    );
+    final BookingController failingController = _controller(failingRepo);
+    addTearDown(failingController.dispose);
+    failingController.state = BookingState(
+      phase: BookingPhase.readyToConfirm,
+      record: _record(price: 800),
+      preparation: _readyState().preparation,
+      priceAccepted: true,
+    );
+
+    await failingController.confirm();
+
+    expect(failingController.state.phase, BookingPhase.priceChanged);
+    expect(failingController.state.errorCode, BookingErrorCode.priceChanged);
+    expect(
+      failingController.state.record?.priceChange?.currentPrice,
+      925,
+    );
+    expect(failingController.state.record?.priceChange?.termsVersion,
+        'terms-v1-review-3');
+  });
+}
+
+/// Repository whose create call reports a price change discovered at confirm
+/// time. Kept separate so the common fake stays simple.
+class _CreateFailingRepository extends _FakeRepository {
+  _CreateFailingRepository(this.result);
+
+  final ApiResult<BookingRecord> result;
+
+  @override
+  Future<ApiResult<BookingRecord>> createBooking(
+    String bookingId,
+    String idempotencyKey,
+    List<dynamic> travelers,
+  ) async {
+    createCalls++;
+    return result;
+  }
 }

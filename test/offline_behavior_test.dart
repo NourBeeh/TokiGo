@@ -1,174 +1,17 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:tokigo/core/network/api_client.dart';
-import 'package:tokigo/core/network/http_api_client.dart';
 import 'package:tokigo/core/network/api_error.dart';
 import 'package:tokigo/core/network/api_result.dart';
+import 'package:tokigo/core/network/http_api_client.dart';
 import 'package:tokigo/core/network/network_status.dart';
-import 'package:tokigo/core/repositories/contracts/home_repository.dart';
-import 'package:tokigo/core/domain/models/home/home_item.dart';
-import 'package:tokigo/core/domain/models/home/home_section.dart';
-import 'package:tokigo/core/domain/models/home/home_types.dart';
-import 'package:tokigo/features/home/presentation/home_controller.dart';
 
-/// Fake home sections for the offline cache tests.
-final _fakeSections = <HomeSection>[
-  HomeSection(
-    id: 'discover',
-    title: 'Discover',
-    layout: HomeSectionLayout.grid,
-    items: <HomeItem>[
-      HomeItem(
-        id: 'oslo',
-        type: HomeCardType.destination,
-        title: 'Oslo',
-        subtitle: 'Norway',
-        imageUrl: 'https://example.invalid/oslo.jpg',
-        price: 0,
-        currency: 'NOK',
-      ),
-      HomeItem(
-        id: 'hotel-1',
-        type: HomeCardType.hotel,
-        title: 'Hotel Cairo',
-        subtitle: 'Cairo, Egypt',
-        imageUrl: 'https://example.invalid/hotel.jpg',
-        price: 2400,
-        currency: 'EGP',
-        rating: 4.5,
-        reviewCount: 120,
-      ),
-    ],
-  ),
-];
-
-/// A repository whose first call succeeds and subsequent calls fail.
-class _CacheRepositoryWithFailingSecondCall extends _CacheRepository {
-  _CacheRepositoryWithFailingSecondCall(super.data) : _calls = 0;
-
-  int _calls;
-
-  @override
-  Future<ApiResult<List<HomeSection>>> getHomeSections() async {
-    _calls++;
-    if (_calls == 1) {
-      return super.getHomeSections();
-    }
-    return ApiResult.failure(
-      ApiNetworkError(message: 'simulated network failure'),
-    );
-  }
-}
-class _CacheRepository implements HomeRepository {
-  _CacheRepository(this._data);
-
-  final Map<String, dynamic> _data;
-
-  @override
-  Future<List<HomeSection>?> readHomeSnapshot({required String audience}) async =>
-      _data['sections'] as List<HomeSection>?;
-
-  @override
-  Future<void> clearHomeSnapshot({required String audience}) async {}
-
-  @override
-  Future<void> saveHomeSnapshot(List<HomeSection> sections, {required String audience}) async {}
-
-  @override
-  Future<ApiResult<List<HomeSection>>> getHomeSections() async =>
-      _resultFor('/home/sections');
-
-  @override
-  Future<ApiResult<List<HomeItem>>> getRecommendedHotels({
-    int limit = 6,
-    String? countryCode,
-    String languageCode = 'en',
-    String? currency,
-  }) async =>
-      const ApiResult<List<HomeItem>>.success(<HomeItem>[]);
-
-  @override
-  Future<ApiResult<void>> refresh() async => const ApiResult<void>.success(null);
-
-  @override
-  Future<SnapshotState> snapshotState({required String audience}) async {
-    // The mock stores only sections, never the v2 envelope with savedAt.
-    return SnapshotState.unavailable;
-  }
-
-  ApiResult<List<HomeSection>> _resultFor(String path) {
-    if (path == '/home/sections') {
-      return ApiResult.success(_data['sections'] as List<HomeSection>);
-    }
-    return const ApiResult<List<HomeSection>>.success(<HomeSection>[]);
-  }
-}
-
+/// Shared connectivity behaviour (NetworkStatus + HTTP client failure
+/// handling). The old Home snapshot/offline tests were removed with that
+/// system; these tests cover the shared infrastructure that remains.
 void main() {
-  group('Offline startup — cached Home content', () {
-    test('HomeController restores a persisted snapshot and shows it immediately', () async {
-      final repo = _CacheRepository(<String, dynamic>{
-        'sections': _fakeSections,
-      });
-      final controller = HomeController(repo, audience: 'anon');
-      // The snapshot content is published immediately by restoreFromSnapshot
-      // (before the background load). The UI never blocks on the network.
-      // The load() callback is async; give it a short moment to settle.
-      await Future.delayed(const Duration(milliseconds: 50));
-      expect(controller.state.status, HomeStatus.success);
-      // The controller publishes the snapshot content. The composer may wrap
-      // the sections with metadata tags, so compare by content rather than
-      // by reference.
-      expect(controller.state.sections, isNotEmpty);
-      expect(controller.state.sections!.length, _fakeSections.length);
-      expect(controller.state.sections!.single.id, _fakeSections.single.id);
-    });
-
-    test('a failing background load keeps cached content and does NOT error', () async {
-      // A repository whose first call succeeds and subsequent calls fail.
-      var callCount = 0;
-      final repo = _CacheRepositoryWithFailingSecondCall(<String, dynamic>{
-        'sections': _fakeSections,
-      });
-      final controller = HomeController(repo, audience: 'anon');
-      // The initial load succeeded; cached content is on screen.
-      await Future.delayed(const Duration(milliseconds: 50));
-      expect(controller.state.status, HomeStatus.success);
-      expect(controller.state.sections, isNotEmpty);
-      // A second load (simulating a failed refresh) — when it fails, the
-      // cached content stays and the page becomes partial, never error.
-      controller.load();
-      await Future.delayed(const Duration(milliseconds: 50));
-      expect(controller.state.status, HomeStatus.partial);
-      expect(controller.state.sections, isNotEmpty);
-    });
-  });
-
-  group('Online → offline transition (home UI)', () {
-    test('HomeController keeps cached sections when backend goes offline', () async {
-      final repo = _CacheRepositoryWithFailingSecondCall(
-        <String, dynamic>{'sections': _fakeSections},
-      );
-      final controller = HomeController(repo, audience: 'anon');
-      await Future.delayed(const Duration(milliseconds: 60));
-      expect(controller.state.status, HomeStatus.success);
-      expect(controller.state.sections, isNotEmpty);
-
-      final client = HttpClient();
-      NetworkStatus.instance.reportOffline();
-      final api = HttpApiClient(
-        client: client,
-        baseUrlOverride: 'http://127.0.0.1:1',
-      );
-
-      controller.load();
-      await Future.delayed(const Duration(milliseconds: 60));
-      expect(controller.state.status, HomeStatus.partial);
-      expect(controller.state.sections, isNotEmpty);
-    });
-  });
-
   group('NetworkStatus — backend reachability', () {
     test('reportOffline marks offline and reports announcedOffline', () {
       NetworkStatus.instance.reportOffline();

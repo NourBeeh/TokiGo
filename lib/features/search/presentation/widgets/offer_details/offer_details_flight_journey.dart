@@ -8,6 +8,7 @@ import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/localized_date.dart';
 import 'package:tokigo/features/search/domain/flight_duration.dart';
+import 'package:tokigo/features/search/presentation/widgets/flight_fare_facts.dart';
 import 'package:tokigo/features/search/presentation/widgets/flight_route_line.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
@@ -31,9 +32,19 @@ class OfferDetailsFlightJourney extends StatelessWidget {
     final duration = flightDurationBetween(departure, arrival);
     final stops = flight.stops ?? 0;
     final cabin = flight.cabinClass;
-    final baggage = flight.metadata['baggage'];
+    final baggage = flightBaggageSummary(l10n, flight);
     final aircraft = flight.metadata['aircraft']?.toString();
-    final fareFamily = flight.metadata['fareFamily']?.toString();
+    final fareBrand = flight.fareBrand;
+    final refundable = flight.refundable;
+    final codeshares = <String>{};
+    for (final segment in flight.segments) {
+      if (!segment.isCodeshare) continue;
+      final name =
+          segment.operatingCarrierName ?? segment.operatingCarrierCode ?? '';
+      final designator = segment.operatingDesignator;
+      if (name.isEmpty) continue;
+      codeshares.add(designator.isEmpty ? name : '$name ($designator)');
+    }
 
     final sameDay =
         departure.year == arrival.year &&
@@ -46,11 +57,11 @@ class OfferDetailsFlightJourney extends StatelessWidget {
 
     // Only the facts the provider actually sent become chips.
     final chips = <Widget>[
-      if (baggage != null && _baggageValue(baggage).isNotEmpty)
+      if (baggage != null)
         _FactChip(
           icon: Icons.luggage_rounded,
           label: l10n.offerBaggage,
-          value: _baggageValue(baggage),
+          value: baggage,
         ),
       if (cabin != null && cabin.isNotEmpty)
         _FactChip(
@@ -64,17 +75,20 @@ class OfferDetailsFlightJourney extends StatelessWidget {
           label: l10n.offerAircraft,
           value: aircraft,
         ),
-      if (fareFamily != null && fareFamily.isNotEmpty)
+      if (fareBrand != null && fareBrand.isNotEmpty)
         _FactChip(
           icon: Icons.sell_rounded,
           label: l10n.offerFare,
-          value: fareFamily,
+          value: fareBrand,
         ),
-      if (flight.metadata['refundable'] == true)
+      // Tri-state: a known "no" is stated; an unknown condition has no chip.
+      if (refundable != null)
         _FactChip(
           icon: Icons.task_alt_rounded,
           label: l10n.offerRefundable,
-          value: l10n.offerRefundableYes,
+          value: refundable
+              ? l10n.offerRefundableYes
+              : l10n.offerNonRefundable,
         ),
     ];
 
@@ -121,6 +135,15 @@ class OfferDetailsFlightJourney extends StatelessWidget {
               ),
             ],
           ),
+          if (codeshares.isNotEmpty) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              l10n.offerOperatedBy(codeshares.join(', ')),
+              style: typography.caption.copyWith(
+                color: context.tokigoColors.textTertiary,
+              ),
+            ),
+          ],
           if (chips.isNotEmpty) ...<Widget>[
             const SizedBox(height: AppSpacing.lg),
             Wrap(
@@ -132,21 +155,6 @@ class OfferDetailsFlightJourney extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  /// Provider baggage, verbatim: `{quantity, type}` → `1 × checked`. Nothing is
-  /// added when the provider sent nothing.
-  static String _baggageValue(dynamic baggage) {
-    if (baggage is Map) {
-      final quantity = baggage['quantity'];
-      final type = baggage['type']?.toString();
-      if (quantity != null && type != null && type.isNotEmpty) {
-        return '$quantity × $type';
-      }
-      if (quantity != null) return '$quantity';
-      return '';
-    }
-    return baggage.toString();
   }
 }
 

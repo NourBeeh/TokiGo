@@ -10,6 +10,7 @@ import {
   RefundInput,
   WebhookPayload,
 } from './payment.gateway';
+import { isProductionRuntime } from '../../common/runtime/runtime';
 
 /**
  * Deterministic mock Egyptian gateway (spec point 32) — plugs into the same
@@ -23,11 +24,60 @@ import {
  *    webhook completes it — mirroring async recovery flows, point O.9)
  */
 
-export function signMockWebhook(payload: Omit<WebhookPayload, 'signature'>): string {
-  const secret = process.env.WEBHOOK_SIGNING_KEY;
+/** Minimum signing-key length accepted in production. */
+const MIN_SIGNING_KEY_BYTES = 16;
+
+/** Values that must never be accepted as a production signing key. */
+const WEAK_SIGNING_KEYS = new Set([
+  'dev_only_signing_key',
+  'test-signing-key',
+  'p4-test-signing-key',
+  'changeme',
+  'secret',
+]);
+
+const isProduction = (): boolean => isProductionRuntime();
+
+/**
+ * Resolve and validate the webhook signing key.
+ *
+ * The key is mandatory in every environment: without it a webhook signature
+ * cannot be verified, so the gateway refuses to construct rather than run
+ * open. Production additionally rejects known development/test values and
+ * short keys — a predictable HMAC secret lets anyone forge a "successful"
+ * payment event.
+ */
+export function resolveWebhookSigningKey(config?: ConfigService): string {
+  const secret =
+    (config ? config.get<string>('WEBHOOK_SIGNING_KEY') : undefined) ??
+    process.env.WEBHOOK_SIGNING_KEY;
+
   if (!secret) {
-    throw new Error('WEBHOOK_SIGNING_KEY must be set to sign webhooks.');
+    throw new Error(
+      'WEBHOOK_SIGNING_KEY must be set. The payment gateway cannot verify ' +
+        'webhook signatures without it, so the backend refuses to start.',
+    );
   }
+
+  if (isProduction()) {
+    if (WEAK_SIGNING_KEYS.has(secret)) {
+      throw new Error(
+        'WEBHOOK_SIGNING_KEY is a known development/test value and must not ' +
+          'be used in production.',
+      );
+    }
+    if (Buffer.byteLength(secret, 'utf8') < MIN_SIGNING_KEY_BYTES) {
+      throw new Error(
+        `WEBHOOK_SIGNING_KEY must be at least ${MIN_SIGNING_KEY_BYTES} bytes.`,
+      );
+    }
+  }
+
+  return secret;
+}
+
+export function signMockWebhook(payload: Omit<WebhookPayload, 'signature'>): string {
+  const secret = resolveWebhookSigningKey();
   return crypto
     .createHmac('sha256', secret)
     .update(`${payload.id}:${payload.paymentId}`)
@@ -44,16 +94,25 @@ export class MockEgyptGateway implements PaymentGateway {
   private readonly idempotencyResults = new Map<string, PaymentIntent>();
 
   constructor(config?: ConfigService) {
-    const secret =
-      (config ? config.get<string>('WEBHOOK_SIGNING_KEY') : undefined) ??
-      process.env.WEBHOOK_SIGNING_KEY;
-    if (!secret) {
-      throw new Error('WEBHOOK_SIGNING_KEY must be set for MockEgyptGateway.');
+    this.assertTestOnly('constructor');
+    this.signingKey = resolveWebhookSigningKey(config);
+  }
+
+  /**
+   * Defense in depth: even if an instance is constructed before the runtime is
+   * classified, no financial operation may execute in production.
+   */
+  private assertTestOnly(operation: string): void {
+    if (isProductionRuntime()) {
+      throw new Error(
+        `MockEgyptGateway.${operation} is test-only and must never run in ` +
+          'production. No verified real payment provider is configured.',
+      );
     }
-    this.signingKey = secret;
   }
 
   async createPaymentIntent(input: CreatePaymentIntentInput): Promise<PaymentIntent> {
+    this.assertTestOnly('createPaymentIntent');
     const existing = this.idempotencyResults.get(`create:${input.idempotencyKey}`);
     if (existing) return existing;
 
@@ -76,6 +135,7 @@ export class MockEgyptGateway implements PaymentGateway {
   }
 
   async confirmPayment(input: ConfirmPaymentInput): Promise<PaymentIntent> {
+    this.assertTestOnly('confirmPayment');
     const existing = this.idempotencyResults.get(`confirm:${input.idempotencyKey}`);
     if (existing) return existing;
 
@@ -107,6 +167,7 @@ export class MockEgyptGateway implements PaymentGateway {
   }
 
   async refundPayment(input: RefundInput): Promise<PaymentIntent> {
+    this.assertTestOnly('refundPayment');
     const existing = this.idempotencyResults.get(`refund:${input.idempotencyKey}`);
     if (existing) return existing;
 
@@ -144,6 +205,7 @@ export class MockEgyptGateway implements PaymentGateway {
 
   /** Test/deterministic hook: complete a 3DS PENDING payment. */
   settlePending(paymentId: string): PaymentIntent | null {
+    this.assertTestOnly('settlePending');
     const intent = this.intents.get(paymentId);
     if (!intent || intent.status !== 'PENDING') return null;
     const updated: PaymentIntent = { ...intent, status: 'SUCCEEDED' };

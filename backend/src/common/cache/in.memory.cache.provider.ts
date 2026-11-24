@@ -23,8 +23,15 @@ export class InMemoryCacheProvider implements CacheProvider {
   }
 
   async invalidate(pattern: string): Promise<void> {
-    const regex = new RegExp(pattern.replace('*', '.*'));
-    for (const key of this.store.keys()) {
+    // `*` is the only wildcard callers use. Replace EVERY occurrence, and
+    // escape everything else so a literal `.` in a key never acts as a regex
+    // wildcard (which silently spared or deleted the wrong entries).
+    const source = pattern
+      .split('*')
+      .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      .join('.*');
+    const regex = new RegExp(`^${source}$`);
+    for (const key of [...this.store.keys()]) {
       if (regex.test(key)) this.store.delete(key);
     }
   }

@@ -6,6 +6,7 @@ import 'package:tokigo/features/booking/application/booking_state.dart';
 import 'package:tokigo/features/booking/application/prepare_booking_usecase.dart';
 import 'package:tokigo/features/booking/application/revalidate_booking_usecase.dart';
 import 'package:tokigo/features/booking/application/confirm_booking_usecase.dart';
+import 'package:tokigo/features/booking/application/decide_price_change_usecase.dart';
 import 'package:tokigo/features/booking/application/booking_controller.dart';
 import 'package:tokigo/features/bag/application/bag_controller.dart';
 
@@ -36,16 +37,23 @@ final confirmBookingUseCaseProvider = Provider((ref) {
   return ConfirmBookingUseCase(repo);
 });
 
+final decidePriceChangeUseCaseProvider = Provider((ref) {
+  final repo = ref.watch(bookingRepositoryProvider);
+  return DecidePriceChangeUseCase(repo);
+});
+
 final bookingControllerProvider =
     StateNotifierProvider<BookingController, BookingState>((ref) {
       final prepare = ref.watch(prepareBookingUseCaseProvider);
       final revalidate = ref.watch(revalidateBookingUseCaseProvider);
       final confirm = ref.watch(confirmBookingUseCaseProvider);
+      final decide = ref.watch(decidePriceChangeUseCaseProvider);
       final bag = ref.watch(bagControllerProvider.notifier);
       return BookingController(
         prepareUseCase: prepare,
         revalidateUseCase: revalidate,
         confirmUseCase: confirm,
+        decidePriceChangeUseCase: decide,
         bagController: bag,
       );
     });

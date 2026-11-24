@@ -9,6 +9,7 @@ import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
+import 'package:tokigo/core/ui/directional_icons.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
@@ -178,7 +179,7 @@ class _HeroSearchField extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Icon(
-                    Icons.arrow_forward_rounded,
+                    DirectionalIcons.forward(context),
                     size: 16,
                     color: context.tokigoColors.textPrimary,
                   ),

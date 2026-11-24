@@ -38,6 +38,10 @@ class OfferDetailsCtaBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final typography = AppTypography.forLight();
+    final String amount = price.toStringAsFixed(2);
+    // No currency code means the provider sent none: show the number alone
+    // rather than relabelling the money with a guessed currency.
+    final String money = currency.isEmpty ? amount : '$currency $amount';
     return StickyCtaBar(
       variant: StickyCtaBarVariant.dark,
       child: Row(
@@ -62,7 +66,7 @@ class OfferDetailsCtaBar extends StatelessWidget {
                     // Exact provider amount, two decimals — the same rendering
                     // the funnel uses. One line: the bar is a fixed 72pt slab,
                     // never a growing block.
-                    '$currency ${price.toStringAsFixed(2)}',
+                    money,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: typography.titleMedium.copyWith(

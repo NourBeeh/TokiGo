@@ -80,8 +80,7 @@ class DealCard extends StatelessWidget {
       item.title,
       if (item.subtitle != null && item.subtitle!.isNotEmpty) item.subtitle!,
       if (savingsPercent != null && savingsPercent > 0) 'Save $savingsPercent%',
-      if (price != null)
-        'Price ${price.toStringAsFixed(0)} ${item.currency ?? ''}',
+      if (price != null) 'Price ${price.toStringAsFixed(0)} ${item.currency ?? ''}',
     ];
 
     return _shell(

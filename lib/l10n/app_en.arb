@@ -3,7 +3,6 @@
   "appTitle": "TokiGo",
   "navHome": "Home",
   "navSearch": "Search",
-  "navGroups": "Groups",
   "navExplore": "Explore",
   "navAi": "AI Assistant",
   "bag": "My Trips",
@@ -133,11 +132,8 @@
   "searchCars": "Cars Rental",
   "searchPackages": "Holidays",
   "homeNavActivities": "Packages",
-  "homeNavGroups": "Groups",
   "homeNavTrips": "Trips",
   "searchTransfers": "Airport transfer",
-  "groupsTitle": "Groups",
-  "groupsSubtitle": "Groups",
   "viewAll": "View all",
   "continueAsGuest": "Continue as guest",
   "signIn": "Sign in",
@@ -346,6 +342,22 @@
   "bookingStepReady": "Ready to confirm",
   "bookingPriceChanged": "Price changed",
   "bookingAcceptNewPrice": "Accept new price",
+  "bookingUpdatePrice": "Update price",
+  "bookingDeclinePriceChange": "Decline",
+  "bookingChooseAnotherOffer": "Choose another offer",
+  "bookingPriceChangeDeclined": "You declined the updated price. Choose another offer to continue.",
+  "bookingPreviousPrice": "Previous price",
+  "bookingUpdatedPrice": "Updated price",
+  "bookingPriceDifference": "Difference",
+  "bookingConditionsChanged": "Conditions changed",
+  "bookingNoChargeYet": "No booking has been made at the updated price.",
+  "bookingTermFareConditions": "Fare conditions",
+  "bookingTermBaggage": "Baggage allowance",
+  "bookingTermFareBrand": "Fare brand",
+  "bookingTermCabin": "Cabin class",
+  "bookingTermItinerary": "Itinerary",
+  "bookingTermCancellation": "Cancellation policy",
+  "bookingTermBoard": "Meal plan",
   "bookingPrepare": "Prepare booking",
   "bookingValidating": "Validating…",
   "bookingValidatePrice": "Validate price",
@@ -392,12 +404,12 @@
   "bookingDocumentNumberLabel": "Document number",
   "bookingDocumentIssueCountryLabel": "Issuing country (ISO)",
   "bookingDocumentExpiryLabel": "Expiry (YYYY-MM-DD)",
-  "groupsCreateTrip": "Create a group trip",
-  "groupsPlanTogether": "Plan together, decide together",
   "carIdleBody": "Compare car rentals at pickup points worldwide",
   "carNoMatchesBody": "Try widening the price range or clearing filters",
   "carNoCarsBody": "Try a different location or dates",
   "offlineShowingCached": "You are offline — showing the last saved data",
+  "homePriceUnverified": "Price not verified",
+  "homePriceUpdateFailed": "Unable to update the price. Check your connection and try again.",
   "homeCompleteYourTrip": "Complete your trip",
   "homeFinishWhatYouStarted": "Finish what you started",
   "homeForYourTripTo": "For your trip to {destination}",
@@ -443,8 +455,6 @@
     }
   },
   "wishlistExploreStays": "Explore stays",
-  "groupsEmptyTitle": "Group trips are coming soon",
-  "groupsEmptyBody": "Creating a trip, inviting friends and splitting the plan will open here once the group trips backend is connected.",
   "exploreCitiesTitle": "Cities",
   "createNewTrip": "Create a new trip",
   "tripBuilderTitle": "Plan your trip",
@@ -471,6 +481,8 @@
   "paymentUnavailableBody": "Payment is not available right now, so nothing was booked. Please try again later.",
   "paymentPendingBody": "Your bank is still verifying this payment. The booking will be confirmed as soon as the payment completes.",
   "bookingConfirmFailedBody": "The payment was not completed, so the booking was not confirmed. Nothing was booked.",
+  "bookingOutcomePendingTitle": "Booking is being verified",
+  "bookingOutcomePendingBody": "The provider has not confirmed this booking yet. Do not retry the booking or make another payment. We are checking the final status; it will appear in My Trips only after it is confirmed.",
   "bookingConfirmLabel": "Confirm booking",
   "payAmount": "Pay {amount}",
   "@payAmount": {
@@ -728,6 +740,89 @@
   "offerRefundableYes": "Yes",
   "offerRevalidated": "Revalidated at booking",
   "offerRoom": "Room",
+  "offerChooseRoom": "Choose a room",
+  "offerChooseFare": "Choose a fare",
+  "offerFareOption": "Fare {number}",
+  "@offerFareOption": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "offerFareCount": "{count, plural, =1{1 fare} other{{count} fares}}",
+  "@offerFareCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offerBaggageCabin": "Carry-on",
+  "offerBaggageChecked": "Checked bag",
+  "offerBaggageEquipment": "Sports equipment",
+  "offerBaggageCabinCount": "{count, plural, =1{1 carry-on} other{{count} carry-ons}}",
+  "@offerBaggageCabinCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offerBaggageCheckedCount": "{count, plural, =1{1 checked bag} other{{count} checked bags}}",
+  "@offerBaggageCheckedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offerBaggageWeight": "{allowance} ({weight} kg)",
+  "@offerBaggageWeight": {
+    "placeholders": {
+      "allowance": {
+        "type": "String"
+      },
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "offerConditionsUnknown": "Fare conditions at booking",
+  "offerNotChangeable": "No changes",
+  "offerChanges": "Changes",
+  "offerChangeable": "Changes allowed",
+  "offerChangeableWithFee": "Changes allowed · fee {fee}",
+  "@offerChangeableWithFee": {
+    "placeholders": {
+      "fee": {
+        "type": "String"
+      }
+    }
+  },
+  "offerChangeableFeeOnRequest": "Changes allowed · fee on request",
+  "offerRefundableWithFee": "Refundable · fee {fee}",
+  "@offerRefundableWithFee": {
+    "placeholders": {
+      "fee": {
+        "type": "String"
+      }
+    }
+  },
+  "offerRefundableFeeOnRequest": "Refundable · fee on request",
+  "offerRestrictions": "Restrictions",
+  "offerOperatedBy": "Operated by {carrier}",
+  "@offerOperatedBy": {
+    "placeholders": {
+      "carrier": {
+        "type": "String"
+      }
+    }
+  },
+  "offerFreeCancellation": "Free cancellation",
+  "offerNonRefundable": "Non-refundable",
+  "offerCancellationUnknown": "Cancellation terms at booking",
+  "offerPerStay": "per stay",
   "offerSeats": "Seats",
   "offerStars": "Stars",
   "offerTaxesFees": "Taxes & fees",
@@ -862,10 +957,10 @@
   "locationPromptAllow": "Allow location",
   "locationPromptNotNow": "Not now",
   "locationPromptBlockedTitle": "Location is blocked",
-  "locationPromptBlockedBody": "Allow location for TokiGo in the system settings to suggest your departure airport.",
+  "locationPromptBlockedBody": "Allow location for TokiGo in the system settings to find your city and show stays near you.",
   "locationPromptOpenSettings": "Open settings",
   "locationPromptServiceOffTitle": "Location services are off",
-  "locationPromptServiceOffBody": "Turn on location services to suggest your departure airport.",
+  "locationPromptServiceOffBody": "Turn on location services to find your city and show stays near you.",
   "locationPromptLocationSettings": "Location settings",
   "locationChooseCountry": "Choose country manually",
   "locationCountrySaveFailed": "Couldn't save your country. Please try again.",
@@ -936,5 +1031,57 @@
   "offerLayoverLabel": "Layover",
   "flightCardShowDetails": "Flight details",
   "flightCardHideDetails": "Hide details",
-  "flightCardViewOffer": "View offer and book"
+  "flightCardViewOffer": "View offer and book",
+  "homeNearbyLocationTitle": "Enable location to see nearby stays",
+  "homeNearbyLocationBody": "We use your area to search hotels really around you. Your exact location is never stored.",
+  "homeNearbyEmptyTitle": "No nearby stays right now",
+  "homeNearbyEmptyBody": "Try again later or choose a different area.",
+  "homeNearbyErrorTitle": "Could not load nearby stays",
+  "homeNearbyPromotionalNote": "Promotional one-night price for the next 7 nights. The live price is shown after you pick dates.",
+  "homeNearbyRadius": "{radius} km search area",
+  "@homeNearbyRadius": {
+    "placeholders": {
+      "radius": { "type": "String" }
+    }
+  },
+  "nearbyHotelDistanceFromYou": "{distance} km from you",
+  "@nearbyHotelDistanceFromYou": {
+    "placeholders": {
+      "distance": { "type": "String" }
+    }
+  },
+  "nearbyHotelReviews": "{count} reviews",
+  "@nearbyHotelReviews": {
+    "placeholders": {
+      "count": { "type": "String" }
+    }
+  },
+  "nearbyHotelSelectDates": "Select dates",
+  "nearbyHotelCheckIn": "Check-in",
+  "nearbyHotelCheckOut": "Check-out",
+  "nearbyHotelAdults": "Adults",
+  "nearbyHotelRooms": "Rooms",
+  "nearbyHotelSearchAvailability": "Check availability",
+  "nearbyHotelLiveResults": "Live prices for your dates",
+  "nearbyHotelNoLiveOffer": "No live offer for this hotel on the selected dates.",
+  "nearbyHotelPromotionalCaption": "Promotional discovery price (not a live booking offer)",
+  "settingsCitySelection": "City Selection",
+  "settingsCityNotSet": "Choose a city",
+  "settingsCityLoading": "Loading…",
+  "settingsCityUnavailable": "Unavailable",
+  "cityPickerTitle": "Choose your city",
+  "cityPickerSearch": "Search cities or countries",
+  "cityPickerLoading": "Loading cities…",
+  "cityPickerUnavailableTitle": "Cities are unavailable",
+  "cityPickerUnavailableBody": "Check your connection and try again.",
+  "cityPickerRetry": "Try again",
+  "cityPickerEmptyTitle": "No cities found",
+  "cityPickerEmptyBody": "Try a different search.",
+  "cityPickerCurrent": "Current selection",
+  "locationCardTitle": "Enable location to discover hotels and stays near you",
+  "locationCardBody": "We use your area to show stays around you. Your exact location is never stored.",
+  "locationCardEnable": "Enable location",
+  "locationCardNotNow": "Not now",
+  "locationCardOpenSettings": "Open settings",
+  "locationCardServicesOff": "Turn on location services in your device settings."
 }

@@ -8,6 +8,7 @@ import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/theme/tokigo_gradients.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
+import 'package:tokigo/core/ui/directional_icons.dart';
 
 /// A compact "Ask your assistant" entry point for non-Home pages.
 ///
@@ -91,7 +92,7 @@ class AskAssistantCard extends StatelessWidget {
                   ),
                 ),
                 Icon(
-                  Icons.chevron_right_rounded,
+                  DirectionalIcons.chevron(context),
                   size: 20,
                   color: tc.brand,
                 ),

@@ -130,7 +130,19 @@ export class HotelDiscoveryService {
     city: string;
     country?: string;
     language?: string;
-  }): Promise<{ synced: number; indexed: number }> {
+  }): Promise<{
+    synced: number;
+    indexed: number;
+    fetched: number;
+    skipped: number;
+    complete: boolean;
+    /** Provider pages actually walked; 0 when the provider reported none. */
+    pagesFetched: number;
+    /** Page offsets that never arrived after retries. */
+    failedPages: number[];
+    /** Provider-reported inventory total, when it sent one. */
+    totalReported: number | null;
+  }> {
     const result = await this.nuitee.hotelContent(
       input.city,
       input.country,
@@ -141,9 +153,13 @@ export class HotelDiscoveryService {
     }
 
     const saved: Hotel[] = [];
+    let skipped = 0;
     for (const raw of result.data as any[]) {
       const mapped = mapProviderHotel(raw, 'nuitee', input.city, input.country);
-      if (!mapped) continue;
+      if (!mapped) {
+        skipped += 1;
+        continue;
+      }
       saved.push(await this.metadata.upsert(mapped));
     }
 
@@ -162,6 +178,27 @@ export class HotelDiscoveryService {
       }
     }
 
-    return { synced: saved.length, indexed };
+    const complete = result.metadata?.complete !== false;
+    const pagesFetched = result.metadata?.pagesFetched ?? 0;
+    const failedPages = result.metadata?.failedPages ?? [];
+    const totalReported = result.metadata?.totalReported ?? null;
+    // Audit line: a "successful" API response is not the same as complete
+    // inventory, so the fetched/mapped/skipped counts are always recorded.
+    this.logger.log(
+      `Hotel sync ${input.city}/${input.country ?? '?'}: ` +
+        `fetched=${result.data.length} synced=${saved.length} ` +
+        `skipped=${skipped} indexed=${indexed} complete=${complete} ` +
+        `pages=${pagesFetched} failed=${failedPages.length}`,
+    );
+    return {
+      synced: saved.length,
+      indexed,
+      fetched: result.data.length,
+      skipped,
+      complete,
+      pagesFetched,
+      failedPages,
+      totalReported,
+    };
   }
 }

@@ -37,6 +37,8 @@ describe('HotelSearchDto — 3A Flutter contract vs backend pipe (3B fix)', () =
         ...base,
         guests: 3,
         rooms: 2,
+        // Phase 2C: the provider needs one occupancy per room.
+        occupancies: [{ adults: 2 }, { adults: 1 }],
         minRating: 4.0,
         maxPrice: 300,
         minPrice: 100,
@@ -76,5 +78,76 @@ describe('HotelSearchDto — 3A Flutter contract vs backend pipe (3B fix)', () =
       Object.assign(new HotelSearchDto(), { ...base, rooms: 0, minRating: 9 }),
     );
     expect(errors.length).toBeGreaterThan(0);
+  });
+
+  describe('cross-field contract (Phase 2C)', () => {
+    const rich = {
+      ...base,
+      guests: 5,
+      rooms: 2,
+      occupancies: [
+        { adults: 2, children: [7] },
+        { adults: 2 },
+      ],
+    };
+
+    it('accepts one occupancy per room whose total equals guests', async () => {
+      const value = await pipe.transform(rich, {
+        type: 'body',
+        metatype: HotelSearchDto,
+        data: '',
+      });
+      expect(value.rooms).toBe(2);
+      expect(value.occupancies).toHaveLength(2);
+    });
+
+    it('rejects a check-out that is not after the check-in', async () => {
+      await expect(
+        pipe.transform(
+          { ...base, checkIn: base.checkOut, checkOut: base.checkIn },
+          { type: 'body', metatype: HotelSearchDto, data: '' },
+        ),
+      ).rejects.toThrow();
+    });
+
+    it('rejects rooms that disagree with the occupancy count', async () => {
+      await expect(
+        pipe.transform(
+          { ...rich, rooms: 3 },
+          { type: 'body', metatype: HotelSearchDto, data: '' },
+        ),
+      ).rejects.toThrow();
+    });
+
+    it('rejects a guest total that disagrees with the occupancies', async () => {
+      await expect(
+        pipe.transform(
+          { ...rich, guests: 4 },
+          { type: 'body', metatype: HotelSearchDto, data: '' },
+        ),
+      ).rejects.toThrow();
+    });
+
+    it('rejects a child age outside 0-17', async () => {
+      await expect(
+        pipe.transform(
+          {
+            ...base,
+            rooms: 1,
+            occupancies: [{ adults: 2, children: [18] }],
+          },
+          { type: 'body', metatype: HotelSearchDto, data: '' },
+        ),
+      ).rejects.toThrow();
+    });
+
+    it('rejects a multi-room request with no per-room occupancies', async () => {
+      await expect(
+        pipe.transform(
+          { ...base, rooms: 2, guests: 4 },
+          { type: 'body', metatype: HotelSearchDto, data: '' },
+        ),
+      ).rejects.toThrow();
+    });
   });
 });

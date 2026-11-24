@@ -88,7 +88,6 @@ describe('HomeService wire schema', () => {
             reviewCount: 120,
             action: 'View hotel',
             actionLabel: 'View hotel',
-            rawPrice: 300,
             metadata: { city: 'Cairo' },
             visibility: true,
           }),

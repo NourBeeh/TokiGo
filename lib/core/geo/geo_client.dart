@@ -20,6 +20,7 @@ class GeoClient {
   bool _attempted = false;
   GeoCountry? _resolved;
   Future<GeoCountry?>? _pending;
+  Future<GeoLocatedCity?>? _locatePending;
 
   /// The resolved country for this session (null until resolved / on total
   /// failure). Never throws.
@@ -76,6 +77,47 @@ class GeoClient {
   /// unavailable). Never prompts, never stores, never retries in a loop.
   Future<Position?> currentPosition() => _positionProvider();
 
+  /// City-level detection through `GET /geo/locate`.
+  ///
+  /// The device position is attached only when it is already available (the
+  /// position provider never prompts). The backend prefers GPS and falls back
+  /// to the caller's IP when GPS is absent or cannot resolve a supported city.
+  /// Returns null when nothing usable was resolved.
+  Future<GeoLocatedCity?> locate() async {
+    final Future<GeoLocatedCity?>? pending = _locatePending;
+    if (pending != null) return pending;
+    final future = _locate();
+    _locatePending = future;
+    try {
+      return await future;
+    } finally {
+      _locatePending = null;
+    }
+  }
+
+  Future<GeoLocatedCity?> _locate() async {
+    try {
+      final Position? position = await _positionProvider();
+      final result = await _client.get<Map<String, dynamic>>(
+        '/geo/locate',
+        queryParameters: <String, String>{
+          if (position != null) 'lat': position.latitude.toStringAsFixed(4),
+          if (position != null) 'lng': position.longitude.toStringAsFixed(4),
+        },
+      );
+      final GeoLocatedCity? city = result.when<GeoLocatedCity?>(
+        success: (Map<String, dynamic> data) {
+          if (data['found'] != true) return null;
+          return GeoLocatedCity.tryParse(data);
+        },
+        failure: (_) => null,
+      );
+      return city;
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// The default silent GPS attempt: only when permission is ALREADY granted.
   /// Permission-denied/service-off/anything-else → null (no prompt, no
   /// block, no retry loop).
@@ -113,4 +155,75 @@ class GeoCountry {
   final String? country;
   final String? confidence;
   final String? source;
+}
+
+/// City-level detection result (`GET /geo/locate`).
+///
+/// Coordinates are the canonical CITY-CENTRE values, never the raw device fix:
+/// the app stores a city, not a position.
+class GeoLocatedCity {
+  const GeoLocatedCity({
+    required this.cityId,
+    required this.city,
+    required this.countryCode,
+    required this.currency,
+    required this.latitude,
+    required this.longitude,
+    this.country,
+    this.source,
+    this.confidence,
+  });
+
+  final String cityId;
+  final String city;
+  final String countryCode;
+  final String currency;
+  final double latitude;
+  final double longitude;
+  final String? country;
+  final String? source;
+  final String? confidence;
+
+  /// True when the backend resolved the city from the device's GPS fix rather
+  /// than the IP fallback. Internal only.
+  bool get fromGps => source == 'gps';
+
+  static GeoLocatedCity? tryParse(Map<String, dynamic> data) {
+    final String cityId = data['cityId']?.toString().trim() ?? '';
+    final String city = data['city']?.toString().trim() ?? '';
+    final String countryCode =
+        data['countryCode']?.toString().trim().toUpperCase() ?? '';
+    final String currency = data['currency']?.toString().trim().toUpperCase() ?? '';
+    final double? latitude = _number(data['latitude']);
+    final double? longitude = _number(data['longitude']);
+    if (cityId.isEmpty ||
+        city.isEmpty ||
+        countryCode.length != 2 ||
+        currency.length != 3 ||
+        latitude == null ||
+        longitude == null ||
+        latitude < -90 ||
+        latitude > 90 ||
+        longitude < -180 ||
+        longitude > 180) {
+      return null;
+    }
+    return GeoLocatedCity(
+      cityId: cityId,
+      city: city,
+      countryCode: countryCode,
+      currency: currency,
+      latitude: latitude,
+      longitude: longitude,
+      country: data['country']?.toString(),
+      source: data['source']?.toString(),
+      confidence: data['confidence']?.toString(),
+    );
+  }
+
+  static double? _number(Object? value) {
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value.trim());
+    return null;
+  }
 }

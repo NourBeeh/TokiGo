@@ -152,9 +152,12 @@ class AppIconAction extends StatelessWidget {
                       ? BoxDecoration(
                           color: context.tokigoColors.onMediaFill,
                           shape: BoxShape.circle,
+                          // Flat in light theme (pressed OR resting): scale
+                          // provides the feedback, never a shadow burst.
                           boxShadow: pressed
                               ? null
-                              : AppElevation.shadow(
+                              : AppElevation.darkOnly(
+                                  context,
                                   background: context.tokigoColors.surface,
                                   level: AppElevation.lg,
                                 ),

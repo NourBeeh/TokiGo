@@ -6,6 +6,7 @@ import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/widgets/cards/base_card.dart';
 import 'package:tokigo/core/widgets/step_progress.dart';
+import 'package:tokigo/core/ui/directional_icons.dart';
 
 /// Card H — the booking status card (reference C-8).
 ///
@@ -86,7 +87,11 @@ class BookingStatusCard extends StatelessWidget {
                   const SizedBox(height: AppSpacing.sm),
                   Align(
                     alignment: AlignmentDirectional.centerStart,
-                    child: StatusChip.forTone(context: context, label: statusLabel!, tone: tone),
+                    child: StatusChip.forTone(
+                      context: context,
+                      label: statusLabel!,
+                      tone: tone,
+                    ),
                   ),
                 ],
                 if (reference != null) ...<Widget>[
@@ -107,7 +112,7 @@ class BookingStatusCard extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.sm),
           Icon(
-            Icons.chevron_right,
+            DirectionalIcons.chevronThin(context),
             size: 20,
             color: context.tokigoColors.textTertiary,
           ),

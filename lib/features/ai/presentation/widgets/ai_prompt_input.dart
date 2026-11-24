@@ -76,7 +76,8 @@ class _AiPromptInputState extends ConsumerState<AiPromptInput> {
           color: scheme.surface.withValues(alpha: 0.86),
           borderRadius: AppRadius.lgBorder,
           border: Border.all(color: scheme.outlineVariant),
-          boxShadow: AppElevation.shadow(
+          boxShadow: AppElevation.darkOnly(
+            context,
             background: scheme.surface,
             level: AppElevation.lg,
           ),

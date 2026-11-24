@@ -383,7 +383,9 @@ void main() {
     // The collapsed card already shows the cabin as a feature chip.
     expect(find.text('Business'), findsNWidgets(2));
     expect(find.text('Baggage'), findsOneWidget);
-    expect(find.text('2 × checked'), findsOneWidget);
+    // Typed fare facts format the provider's 2 checked bags; the collapsed
+    // card's feature chip states the same fact.
+    expect(find.text('2 checked bags'), findsNWidgets(2));
     expect(find.text('Aircraft'), findsOneWidget);
     expect(find.text('A350'), findsOneWidget);
     expect(find.text('Fare'), findsOneWidget);

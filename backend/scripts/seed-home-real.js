@@ -1,13 +1,12 @@
 /**
- * Publishes TWO real home sections from the provider's own live data.
+ * Publishes the real "Discover" section from the provider's own live data.
  *
- *   1. "Hotels recommended for you" — the stays `/home/recommended` really
- *      returns (card A: photo, rating, price, all the provider's own numbers).
- *   2. "Discover" — the cities those stays are in (card D: the small city
- *      tile), with the city's own Wikipedia/Commons photo (a hotel room photo
- *      is not a photo of the place the card names).
+ * The old "Hotels recommended for you" section was removed with the legacy
+ * Home system; Home now renders the bundled Explore catalog plus the
+ * promotional Nearby Stays rail, and the Explore Cities page merges the
+ * destination cards this script publishes.
  *
- * Nothing here is invented: every title, price, rating and count comes from the
+ * Nothing here is invented: every city and stay count comes from the
  * provider's response; the city photo comes from the city's own Wikidata image
  * with the attribution its licence requires. A city with no stays is simply not
  * published.
@@ -23,6 +22,12 @@ require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
 const { Client } = require('pg');
 const { countryCodeFor, countryNameFor } = require('./lib/countries');
 const { cityImageFor } = require('./lib/destination-image');
+const { sanitizeCardContent } = require('./lib/sanitize_card_content');
+
+/// P0-S4 / L2: card content is sanitized with the SAME policy as the admin API
+/// before it is written, so this direct-SQL seed cannot persist a live price
+/// (including one nested in `metadata`).
+const json = (content) => JSON.stringify(sanitizeCardContent(content));
 
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
@@ -35,13 +40,6 @@ const dbConfig = {
 const API = process.env.PUBLIC_API_URL || 'http://127.0.0.1:3000';
 
 const SECTIONS = {
-  stays: {
-    id: '00000000-0000-4000-8000-000000000001',
-    title: 'Hotels recommended for you',
-    subtitle: 'Hand-picked stays, live from the provider',
-    layout: 'horizontalPeek',
-    order: 1,
-  },
   discover: {
     id: '00000000-0000-4000-8000-000000000002',
     title: 'Explore',
@@ -55,10 +53,8 @@ const SECTIONS = {
 /// (and the two sections never share an id). Discover ids are offset by 100
 /// so they can never collide with the authored destination-city ids
 /// (20000000-…-011…017) that add-destination-cities.js owns.
-const uuidFor = (section, index) =>
-  `${section === 'stays' ? '10000000' : '20000000'}-0000-4000-8000-${String(
-    section === 'stays' ? index : 100 + index,
-  ).padStart(12, '0')}`;
+const uuidFor = (index) =>
+  `20000000-0000-4000-8000-${String(100 + index).padStart(12, '0')}`;
 
 /// The app's own destination list (lib/features/search/presentation/widgets/
 /// destination_picker_sheet.dart) — the same cities the traveller can pick.
@@ -110,34 +106,10 @@ async function searchCity(candidate) {
   }
 }
 
-async function fetchStays() {
-  const response = await fetch(`${API}/home/recommended?limit=12`);
-  if (!response.ok) {
-    throw new Error(`The API answered ${response.status} for /home/recommended`);
-  }
-  const payload = await response.json();
-  const hotels = Array.isArray(payload?.hotels) ? payload.hotels : [];
-  return hotels;
-}
-
 (async () => {
-  const stays = await fetchStays();
-  if (stays.length === 0) {
-    console.error(
-      'The provider returned no stays — nothing was published. ' +
-        'Start the backend and check that the hotel provider is live.',
-    );
-    process.exitCode = 1;
-    return;
-  }
-
-  // The cities the provider really has stays in: the recommended feed first,
-  // then the app's own destination list (a city with no stays is not
-  // published — the tile would be an empty promise).
-  //
-  // The feed answers with ISO codes ("EG") and the list above with names
-  // ("Egypt"); both resolve to ONE key, otherwise the same city would be
-  // published twice under two country spellings.
+  // The cities the provider really has stays in, from the app's own
+  // destination list (a city with no stays is not published — the tile would
+  // be an empty promise).
   const cities = new Map();
   const cityKey = (city, country) => {
     const code = countryCodeFor(country) ?? String(country ?? '').trim().toUpperCase();
@@ -161,20 +133,6 @@ async function fetchStays() {
     entry.count += 1;
     return entry;
   };
-
-  for (const stay of stays) {
-    const city = (
-      stay.city ||
-      (stay.subtitle ? String(stay.subtitle).split(' · ')[0] : '') ||
-      ''
-    ).trim();
-    if (!city) continue;
-    // The recommended feed carries no country; the app's own destination list
-    // does — so the two never publish the same city twice.
-    const known = CITIES.find((c) => c.name.toLowerCase() === city.toLowerCase());
-    const country = (stay.country || '').trim() || (known ? known.country : '');
-    remember(city, country);
-  }
 
   for (const candidate of CITIES) {
     const key = cityKey(candidate.name, candidate.country).key;
@@ -201,34 +159,12 @@ async function fetchStays() {
     // (20000000-…-011…017, owned by add-destination-cities.js) are NOT ours to
     // delete — re-seeding the recommended stays must not unpublish them.
     await client.query(
-      'DELETE FROM home_cards WHERE "sectionId" = $1',
-      [SECTIONS.stays.id],
-    );
-    await client.query(
       `DELETE FROM home_cards
         WHERE "sectionId" = $1
           AND id::text LIKE '20000000-0000-4000-8000-0000000001%'`,
       [SECTIONS.discover.id],
     );
 
-    await client.query(
-      `INSERT INTO home_sections (id, title, subtitle, layout, "order", "isVisible", status)
-       VALUES ($1,$2,$3,$4,$5,true,'published')
-       ON CONFLICT (id) DO UPDATE SET
-         title = EXCLUDED.title,
-         subtitle = EXCLUDED.subtitle,
-         layout = EXCLUDED.layout,
-         "order" = EXCLUDED."order",
-         "isVisible" = true,
-         status = 'published'`,
-      [
-        SECTIONS.stays.id,
-        SECTIONS.stays.title,
-        SECTIONS.stays.subtitle,
-        SECTIONS.stays.layout,
-        SECTIONS.stays.order,
-      ],
-    );
     await client.query(
       `INSERT INTO home_sections (id, title, subtitle, layout, "order", "isVisible", status)
        VALUES ($1,$2,$3,$4,$5,true,'published')
@@ -247,58 +183,6 @@ async function fetchStays() {
         SECTIONS.discover.order,
       ],
     );
-
-    // The stays (card A).
-    let index = 1;
-    for (const stay of stays) {
-      await client.query(
-        `INSERT INTO home_cards (id, "sectionId", "cardType", content, "order", "isVisible", status)
-         VALUES ($1,$2,'hotel',$3::jsonb,$4,true,'published')
-         ON CONFLICT (id) DO UPDATE SET
-           content = EXCLUDED.content,
-           "order" = EXCLUDED."order",
-           "isVisible" = true,
-           status = 'published'`,
-        [
-          uuidFor('stays', index),
-          SECTIONS.stays.id,
-          JSON.stringify({
-            title: stay.title || stay.name || '',
-            // The provider's own line ("Cairo · 4.8★") — nothing rewritten.
-            subtitle: stay.subtitle || null,
-            imageUrl: stay.imageUrl || null,
-            price: stay.price ?? null,
-            currency: stay.currency || null,
-            rating: stay.rating ?? null,
-            reviewCount: stay.reviewCount ?? null,
-            metadata: {
-              city: stay.city || null,
-              country: stay.country || null,
-              // `/home/recommended` nests the provider provenance under
-              // `metadata`; the card needs it to open the rate it shows.
-              providerId: stay.metadata?.providerId ?? null,
-              providerName: stay.metadata?.providerName ?? null,
-              // The rate's own window and nightly figure. `/home/recommended`
-              // prices ONE night (the cheapest the current month still sells),
-              // so `price` and `pricePerNight` agree — and the card opens the
-              // details page for the exact night it shows instead of guessing
-              // dates or falling back to a fresh city search.
-              checkIn: stay.checkIn || null,
-              checkOut: stay.checkOut || null,
-              pricePerNight: stay.pricePerNight ?? stay.price ?? null,
-              providerRateId: stay.metadata?.providerRateId ?? null,
-              providerOfferId: stay.metadata?.providerOfferId ?? null,
-              providerHotelId: stay.metadata?.providerHotelId ?? null,
-              // These ARE the recommended stays, so the Home must not also
-              // render its standalone list of the same stays.
-              semanticId: 'picked-for-you',
-            },
-          }),
-          index,
-        ],
-      );
-      index += 1;
-    }
 
     // The cities (card D) — a city tile carries no price of its own: the
     // card shows the city, its country and how many real stays are in it.
@@ -334,9 +218,9 @@ async function fetchStays() {
            "isVisible" = true,
            status = 'published'`,
         [
-          uuidFor('discover', index),
+          uuidFor(index),
           SECTIONS.discover.id,
-          JSON.stringify({
+          json({
             title: entry.city,
             subtitle: entry.country || null,
             imageUrl: entry.photo?.imageUrl ?? null,
@@ -362,7 +246,7 @@ async function fetchStays() {
 
     await client.query('COMMIT');
     console.log(
-      `Published 2 real sections: ${stays.length} stays and ${publishedCities} cities.`,
+      `Published the real Discover section: ${publishedCities} cities.`,
     );
   } catch (error) {
     await client.query('ROLLBACK');

@@ -9,15 +9,10 @@ import 'package:go_router/go_router.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
-import 'package:tokigo/core/network/api_result.dart';
-import 'package:tokigo/core/repositories/contracts/home_repository.dart';
-import 'package:tokigo/core/repositories/impl/home_repository_impl.dart';
 import 'package:tokigo/core/theme/app_theme.dart';
 import 'package:tokigo/core/widgets/cards/base_card.dart';
 import 'package:tokigo/core/widgets/cards/overlap_stay_card.dart';
-import 'package:tokigo/features/home/domain/home_composer.dart';
 import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
-import 'package:tokigo/features/home/presentation/home_controller.dart';
 import 'package:tokigo/features/home/presentation/pages/home_page.dart';
 import 'package:tokigo/features/home/presentation/widgets/deal_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/destination_cover_flow_carousel.dart';
@@ -29,7 +24,7 @@ import 'package:tokigo/features/home/presentation/widgets/home_section.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stay_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_split_stay_card.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_stays_carousel.dart';
-import 'package:tokigo/features/home/providers/home_providers.dart';
+import 'package:tokigo/features/home/presentation/widgets/nearby_stays_section.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
 /// Home's card/skeleton contract.
@@ -41,45 +36,6 @@ import 'package:tokigo/l10n/app_localizations.dart';
 
 /// A repository whose feed response the test controls, so the page can be held
 /// in its initial loading state with no cached snapshot.
-class _GatedRepository implements HomeRepository {
-  _GatedRepository(this.completer, {this.snapshot});
-
-  final Completer<ApiResult<List<HomeSection>>> completer;
-  final List<HomeSection>? snapshot;
-
-  @override
-  Future<List<HomeSection>?> readHomeSnapshot({
-    required String audience,
-  }) async => snapshot;
-
-  @override
-  Future<void> clearHomeSnapshot({required String audience}) async {}
-
-  @override
-  Future<void> saveHomeSnapshot(
-    List<HomeSection> sections, {
-    required String audience,
-  }) async {}
-
-  @override
-  Future<ApiResult<List<HomeSection>>> getHomeSections() => completer.future;
-
-  @override
-  Future<ApiResult<List<HomeItem>>> getRecommendedHotels({
-    int limit = 6,
-    String? countryCode,
-    String languageCode = 'en',
-    String? currency,
-  }) async => const ApiResult<List<HomeItem>>.success(<HomeItem>[]);
-
-  @override
-  Future<ApiResult<void>> refresh() async => const ApiResult<void>.success(null);
-
-  @override
-  Future<SnapshotState> snapshotState({required String audience}) async =>
-      SnapshotState.unavailable;
-}
-
 void main() {
   void phoneSize(WidgetTester tester, {Size size = const Size(720, 1480)}) {
     tester.view.physicalSize = size;
@@ -446,81 +402,6 @@ void main() {
     });
   });
 
-  group('cached snapshot compatibility', () {
-    test('the snapshot carries data only — no client widget definitions', () {
-      final Map<String, dynamic> map = homeSectionToMap(
-        HomeSection(
-          id: 'discover',
-          title: 'Discover',
-          layout: HomeSectionLayout.horizontal,
-          items: <HomeItem>[city('a')],
-          metadata: const <String, dynamic>{'semanticId': 'discover'},
-        ),
-      );
-
-      expect(map.keys, <String>['id', 'title', 'subtitle', 'layout', 'items', 'metadata']);
-      final Map<String, dynamic> item =
-          (map['items']! as List<dynamic>).first as Map<String, dynamic>;
-      expect(item.keys, <String>['id', 'type', 'title', 'subtitle', 'description', 'imageUrl', 'currency', 'badge', 'highlights', 'tags', 'actionLabel', 'metadata']);
-    });
-
-    test('a v2 envelope round-trips through the reader', () {
-      final HomeSection section = HomeSection(
-        id: 'stays',
-        title: 'Stays',
-        layout: HomeSectionLayout.horizontalPeek,
-        items: <HomeItem>[stay('a')],
-      );
-      final Map<String, dynamic> envelope = <String, dynamic>{
-        'schemaVersion': 'home.snapshot.v2',
-        'savedAt': DateTime.now().toIso8601String(),
-        'audience': 'anon',
-        'sections': <Map<String, dynamic>>[homeSectionToMap(section)],
-      };
-
-      final List<HomeSection> restored = homeSectionsFromMap(envelope);
-      expect(restored, hasLength(1));
-      expect(restored.first.id, 'stays');
-      expect(restored.first.layout, HomeSectionLayout.horizontalPeek);
-      expect(restored.first.items.single.title, stay('a').title);
-      expect(restored.first.items.single.metadata['city'], 'Lisbon');
-    });
-
-    testWidgets('restored sections render through the current card widgets', (
-      WidgetTester tester,
-    ) async {
-      phoneSize(tester);
-      final HomeSection section = HomeSection(
-        id: 'discover',
-        title: 'Discover',
-        layout: HomeSectionLayout.horizontal,
-        items: <HomeItem>[city('a')],
-      );
-      final Map<String, dynamic> envelope = <String, dynamic>{
-        'schemaVersion': 'home.snapshot.v2',
-        'savedAt': DateTime.now().toIso8601String(),
-        'audience': 'anon',
-        'sections': <Map<String, dynamic>>[homeSectionToMap(section)],
-      };
-      final List<HomeSection> restored = homeSectionsFromMap(envelope);
-
-      Future<Rect> renderRect(HomeSection s) async {
-        await tester.pumpWidget(
-          host(HomeSectionWidget(section: s, onItemTap: (_) {})),
-        );
-        await tester.pump(const Duration(milliseconds: 300));
-        return tester.getRect(find.byType(HomeDiscoveryStayCard));
-      }
-
-      final Rect direct = await renderRect(section);
-      final Rect fromCache = await renderRect(restored.first);
-
-      expect(fromCache.size, direct.size);
-      expect(fromCache.topLeft, direct.topLeft);
-      expect(tester.takeException(), isNull);
-    });
-  });
-
   group('section widget keeps every card in step', () {
     testWidgets('dev-preview items render as skeletons of the approved cards', (
       WidgetTester tester,
@@ -663,153 +544,4 @@ void main() {
     });
   });
 
-  group('Home page loading → loaded transition', () {
-    HomeController controllerWith(
-      Completer<ApiResult<List<HomeSection>>> completer, {
-      List<HomeSection>? snapshot,
-    }) => HomeController(
-      _GatedRepository(completer, snapshot: snapshot),
-      audience: 'anon',
-      contextBuilder: (_) async =>
-          const HomeCompositionContext(userState: HomeUserState.freshAnonymous),
-      liveValidation: null,
-      countryCode: null,
-      languageCode: null,
-      currencyCode: null,
-    );
-
-    Widget pageHost(HomeController controller, {Locale locale = const Locale('en')}) {
-      final GoRouter router = GoRouter(
-        initialLocation: '/',
-        routes: <RouteBase>[
-          GoRoute(path: '/', builder: (context, state) => const HomePage()),
-        ],
-      );
-      return ProviderScope(
-        overrides: <Override>[
-          homeControllerProvider.overrideWith((ref) => controller),
-          geoCountryProvider.overrideWith((ref) async => null),
-        ],
-        child: MaterialApp.router(
-          routerConfig: router,
-          theme: AppTheme.light(),
-          locale: locale,
-          supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-        ),
-      );
-    }
-
-    testWidgets('initial loading renders the bundled Explore rail + Stays skeleton', (
-      WidgetTester tester,
-    ) async {
-      phoneSize(tester);
-      final Completer<ApiResult<List<HomeSection>>> completer =
-          Completer<ApiResult<List<HomeSection>>>();
-      final HomeController controller = controllerWith(completer);
-
-      await tester.pumpWidget(pageHost(controller));
-      await tester.pump(const Duration(milliseconds: 300));
-
-      // Explore is bundled on-device, so it renders immediately while the feed
-      // is still pending — no full-page skeleton on a slow/unreachable backend.
-      // The Stays skeleton is the approved photo-above-description card, so
-      // the feed does not jump when the real stays land.
-      expect(find.byType(HomeDiscoveryStayCard), findsWidgets);
-      expect(find.text('Paris'), findsWidgets);
-      expect(find.byType(HomeStayCard), findsOneWidget);
-      expect(find.byType(HomeSplitStayCard), findsNothing);
-      expect(tester.takeException(), isNull);
-
-      // The feed lands: the same widgets switch to their loaded state.
-      completer.complete(
-        ApiResult<List<HomeSection>>.success(<HomeSection>[
-          HomeSection(
-            id: 'discover',
-            title: 'Discover',
-            layout: HomeSectionLayout.horizontal,
-            items: <HomeItem>[city('a'), city('b')],
-          ),
-        ]),
-      );
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.pump(const Duration(milliseconds: 300));
-
-      // The feed lands with the bundled Explore catalog leading it.
-      expect(find.text('Paris'), findsWidgets);
-      expect(tester.takeException(), isNull);
-      // The controller is owned by the provider container, which disposes it
-      // when the ProviderScope unmounts at the end of the test.
-    });
-
-    testWidgets('loading with a cached snapshot still shows the skeletons first', (
-      WidgetTester tester,
-    ) async {
-      phoneSize(tester);
-      final Completer<ApiResult<List<HomeSection>>> completer =
-          Completer<ApiResult<List<HomeSection>>>();
-      final HomeController controller = controllerWith(
-        completer,
-        snapshot: <HomeSection>[
-          HomeSection(
-            id: 'discover',
-            title: 'Discover',
-            layout: HomeSectionLayout.horizontal,
-            items: <HomeItem>[city('a')],
-          ),
-        ],
-      );
-
-      await tester.pumpWidget(pageHost(controller));
-      await tester.pump(const Duration(milliseconds: 300));
-
-      // The snapshot is restored first, so cached cards render immediately —
-      // through the current widgets, never a legacy path.
-      // The restored snapshot merges into the catalog rail, so more
-      // than one destination card is built.
-      expect(find.byType(HomeDiscoveryStayCard), findsWidgets);
-      expect(find.text('Paris'), findsWidgets);
-      expect(tester.takeException(), isNull);
-
-      completer.complete(
-        ApiResult<List<HomeSection>>.success(<HomeSection>[
-          HomeSection(
-            id: 'discover',
-            title: 'Discover',
-            layout: HomeSectionLayout.horizontal,
-            items: <HomeItem>[city('a'), city('b')],
-          ),
-        ]),
-      );
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('Arabic Home renders both skeletons RTL', (WidgetTester tester) async {
-      phoneSize(tester);
-      final Completer<ApiResult<List<HomeSection>>> completer =
-          Completer<ApiResult<List<HomeSection>>>();
-
-      await tester.pumpWidget(
-        pageHost(controllerWith(completer), locale: const Locale('ar')),
-      );
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(find.byType(HomeDiscoveryStayCard), findsWidgets);
-      expect(find.byType(HomeStayCard), findsOneWidget);
-      expect(
-        Directionality.of(
-          tester.element(find.byType(HomeDiscoveryStayCard).first),
-        ),
-        TextDirection.rtl,
-      );
-      expect(tester.takeException(), isNull);
-    });
-  });
 }

@@ -294,8 +294,7 @@ class FlightRecommendationCard extends StatelessWidget {
               FlightRouteLine(
                 departureTime:
                     depTime ?? DateTime.fromMillisecondsSinceEpoch(0),
-                arrivalTime:
-                    arrTime ?? DateTime.fromMillisecondsSinceEpoch(0),
+                arrivalTime: arrTime ?? DateTime.fromMillisecondsSinceEpoch(0),
                 origin: origin.isNotEmpty ? origin : '—',
                 destination: destination.isNotEmpty ? destination : '—',
                 stops: stops is int ? stops : 0,

@@ -8,20 +8,39 @@ import 'package:tokigo/core/repositories/impl/hotel_repository_impl.dart';
 
 void main() {
   group('display currency resolution', () {
-    test('auto follows the configured markets, else USD', () {
+    test('auto follows the selected country, else USD', () {
       expect(autoCurrencyFor('EG'), 'EGP');
       expect(autoCurrencyFor(' sa '), 'SAR');
       expect(autoCurrencyFor('AE'), 'AED');
-      // Owner decision (2026-11-03): outside EG/SA/AE the default is USD.
-      expect(autoCurrencyFor('GB'), 'USD');
-      expect(autoCurrencyFor('FR'), 'USD');
+      expect(autoCurrencyFor('GB'), 'GBP');
+      expect(autoCurrencyFor('FR'), 'EUR');
+      expect(autoCurrencyFor('US'), 'USD');
       expect(autoCurrencyFor(null), 'USD');
     });
 
     test('an explicit choice wins; unknown codes fall back to auto', () {
       expect(effectiveCurrency(chosen: 'EUR', countryCode: 'EG'), 'EUR');
       expect(effectiveCurrency(chosen: null, countryCode: 'AE'), 'AED');
-      expect(effectiveCurrency(chosen: 'ZZZ', countryCode: 'GB'), 'USD');
+      expect(effectiveCurrency(chosen: 'ZZZ', countryCode: 'GB'), 'GBP');
+    });
+
+    test('the city currency outranks the country and loses to a choice', () {
+      expect(
+        effectiveCurrency(cityCurrency: 'GBP', countryCode: 'US'),
+        'GBP',
+      );
+      expect(
+        effectiveCurrency(
+          chosen: 'EUR',
+          cityCurrency: 'GBP',
+          countryCode: 'GB',
+        ),
+        'EUR',
+      );
+      expect(
+        effectiveCurrency(cityCurrency: 'ZZZ', countryCode: 'FR'),
+        'EUR',
+      );
     });
   });
 

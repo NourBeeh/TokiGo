@@ -31,11 +31,13 @@ class StayPrice {
     // Night count from the offer's own dates. Rounded, not truncated: a stay
     // that crosses a DST boundary is 2 days 23 hours long, and `inDays` would
     // call that 2 nights — dividing the total by the wrong number and showing
-    // a per-night figure the provider never quoted.
-    final int minutes = offer.checkOut
-        .difference(offer.checkIn)
-        .inMinutes
-        .abs();
+    // a per-night figure the provider never quoted. Missing dates mean no
+    // night count at all (0) — never a made-up stay length.
+    final DateTime? checkIn = offer.checkIn;
+    final DateTime? checkOut = offer.checkOut;
+    final int minutes = (checkIn == null || checkOut == null)
+        ? 0
+        : checkOut.difference(checkIn).inMinutes.abs();
     final int nights = (minutes / (60 * 24)).round();
     final stated = _positive(offer.metadata['pricePerNight']);
     // The offer's own price IS the rate's stay total (the backend maps the

@@ -4,12 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import 'package:tokigo/app/config/app_config.dart';
 import 'package:tokigo/core/auth/auth_provider.dart';
+import 'package:tokigo/core/geo/city_catalog.dart';
+import 'package:tokigo/core/geo/city_selection.dart';
+import 'package:tokigo/core/geo/city_selection_sheet.dart';
 import 'package:tokigo/core/geo/country_options.dart';
-import 'package:tokigo/core/geo/country_selection_sheet.dart';
 import 'package:tokigo/core/geo/currency.dart';
-import 'package:tokigo/core/geo/location_permission_providers.dart';
-import 'package:tokigo/core/geo/location_permission_service.dart';
-import 'package:tokigo/core/geo/location_prompt.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -17,7 +16,6 @@ import 'package:tokigo/core/theme/tokigo_colors.dart';
 import 'package:tokigo/core/widgets/ai_entrance_animation.dart';
 import 'package:tokigo/core/widgets/page_header.dart';
 import 'package:tokigo/core/widgets/pressable.dart';
-import 'package:tokigo/features/home/providers/home_providers.dart';
 import 'package:tokigo/shared/providers/locale_provider.dart';
 import 'package:tokigo/shared/providers/theme_provider.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
@@ -54,15 +52,25 @@ class SettingsPage extends ConsumerWidget {
     final locale = ref.watch(localeProvider);
     final themeMode = ref.watch(themeModeProvider);
     final user = ref.watch(authUserProvider);
-    final country =
-        ref.watch(manualCountryCodeProvider) ??
-        ref.watch(geoCountryProvider).asData?.value?.countryCode;
+    final CitySelectionState selection = ref.watch(citySelectionProvider);
+    final CityOption? city = selection.effective?.city;
     final currency = effectiveCurrency(
       chosen: ref.watch(currencyProvider),
-      countryCode: country,
+      countryCode: city?.countryCode,
+      cityCurrency: city?.currency,
     );
-    final countryName =
-        countryNameForCode(country, locale) ?? l10n.settingsCountryNotSet;
+    final String? cityCountry = city == null
+        ? null
+        : countryNameForCode(city.countryCode, locale) ?? city.countryCode;
+    final String cityLabel = city == null
+        ? switch (selection.status) {
+            CitySelectionStatus.loading => l10n.settingsCityLoading,
+            CitySelectionStatus.unavailable => l10n.settingsCityUnavailable,
+            CitySelectionStatus.ready => l10n.settingsCityNotSet,
+          }
+        : cityCountry == null
+        ? city.name
+        : '${city.name} · $cityCountry';
 
     return Scaffold(
       backgroundColor: context.tokigoColors.background,
@@ -121,49 +129,17 @@ class SettingsPage extends ConsumerWidget {
                       _GroupCard(
                         children: <Widget>[
                           _SettingsRow(
-                            icon: Icons.public_rounded,
-                            label: l10n.settingsCountry,
+                            icon: Icons.location_city_rounded,
+                            label: l10n.settingsCitySelection,
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: <Widget>[
-                                _MutedValue(text: countryName),
+                                _MutedValue(text: cityLabel),
                                 const SizedBox(width: AppSpacing.xs),
                                 const _Chevron(),
                               ],
                             ),
-                            onTap: () async {
-                              final svc = ref.read(
-                                locationPermissionServiceProvider,
-                              );
-                              final access = await svc.request();
-                              if (!context.mounted) return;
-                              switch (access) {
-                                case LocationAccess.granted:
-                                  ref.read(geoRefreshProvider.notifier).state =
-                                      ref.read(geoRefreshProvider) + 1;
-                                  ref.invalidate(locationAccessProvider);
-                                case LocationAccess.deniedForever:
-                                  await showLocationSettingsPrompt(
-                                    context,
-                                    ref,
-                                    serviceOff: false,
-                                  );
-                                case LocationAccess.serviceDisabled:
-                                  await showLocationSettingsPrompt(
-                                    context,
-                                    ref,
-                                    serviceOff: true,
-                                  );
-                                case LocationAccess.denied:
-                                case LocationAccess.unavailable:
-                                  break;
-                              }
-                              // Manual selection is always available, whether or
-                              // not the OS permission was granted.
-                              if (context.mounted) {
-                                showCountrySelectionSheet(context, ref);
-                              }
-                            },
+                            onTap: () => showCitySelectionSheet(context, ref),
                           ),
                           const _GroupDivider(),
                           _SettingsRow(
@@ -294,12 +270,11 @@ class SettingsPage extends ConsumerWidget {
   /// The currency sheet: the real codes, the effective one checked.
   Future<void> _pickCurrency(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context)!;
-    final String? country =
-        ref.read(manualCountryCodeProvider) ??
-        ref.read(geoCountryProvider).asData?.value?.countryCode;
+    final CityOption? city = ref.read(citySelectionProvider).effective?.city;
     final String current = effectiveCurrency(
       chosen: ref.read(currencyProvider),
-      countryCode: country,
+      countryCode: city?.countryCode,
+      cityCurrency: city?.currency,
     );
     final String? chosen = await showModalBottomSheet<String>(
       context: context,

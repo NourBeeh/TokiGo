@@ -96,13 +96,14 @@ describeDb('Payment orchestration (mock EG gateway, PostgreSQL-backed)', () => {
       status: 'prepared',
       currency: 'EGP',
       authoritativePrice: 1000,
+      priceVersion: 'price-v1-orchestration',
       ...overrides,
     };
     const result = await ds.query(
       `INSERT INTO bookings (
          "userId", "offerId", "providerId", "providerName", type, status,
-         currency, "authoritativePrice"
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
+         currency, "authoritativePrice", "priceVersion"
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
       [
         row.userId,
         row.offerId,
@@ -112,6 +113,7 @@ describeDb('Payment orchestration (mock EG gateway, PostgreSQL-backed)', () => {
         row.status,
         row.currency,
         row.authoritativePrice,
+        row.priceVersion,
       ],
     );
     return result[0].id as string;
@@ -372,6 +374,7 @@ describeDb('Payment orchestration (mock EG gateway, PostgreSQL-backed)', () => {
         bookingId,
       },
       'user-1',
+      'admin',
     );
     expect(refund.status).toBe('OK');
 
@@ -432,12 +435,13 @@ describeDb('Ledger balance (spec point O.8)', () => {
       status: 'prepared',
       currency: 'EGP',
       authoritativePrice: 2000,
+      priceVersion: 'price-v1-orchestration',
     };
     const inserted = await ds.query(
       `INSERT INTO bookings (
          "userId", "offerId", "providerId", "providerName", type, status,
-         currency, "authoritativePrice"
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
+         currency, "authoritativePrice", "priceVersion"
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
       [
         row.userId,
         row.offerId,
@@ -447,6 +451,7 @@ describeDb('Ledger balance (spec point O.8)', () => {
         row.status,
         row.currency,
         row.authoritativePrice,
+        row.priceVersion,
       ],
     );
     const bookingId = inserted[0].id as string;
@@ -481,6 +486,7 @@ describeDb('Ledger balance (spec point O.8)', () => {
         bookingId,
       },
       'user-1',
+      'admin',
     );
 
     const balance = await ledger.bookingBalance(bookingId);

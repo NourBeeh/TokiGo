@@ -110,9 +110,6 @@ class HomeStayCard extends ConsumerWidget {
             offer?.customerPrice,
           );
     final String amountText = money == null ? '' : _wholeAmount(money.amount);
-    final String? unit = stayPrice?.perNight != null
-        ? (l10n?.unitNight ?? 'night')
-        : null;
 
     final int? starClass =
         offer?.starClass ??
@@ -145,6 +142,14 @@ class HomeStayCard extends ConsumerWidget {
     // A review average is shown ONLY when real review data backs it: a score
     // with no review count is never displayed (and never invented).
     final bool hasRealReviews = (item.reviewCount ?? 0) > 0;
+
+    // A promotional Nearby Stays price is an advertising/discovery figure, not
+    // a live quote: it is shown as a per-night amount and NEVER carries the
+    // live-price verification hint (there is no booking offer to verify).
+    final bool promotional = item.metadata['promotional'] == true;
+    final String? unit = promotional
+        ? (l10n?.unitNight ?? 'night')
+        : (stayPrice?.perNight != null ? (l10n?.unitNight ?? 'night') : null);
 
     final VoidCallback? openStay = _openStay(context, offer: offer, city: city);
     final ValueChanged<bool>? toggleFavorite = offer == null

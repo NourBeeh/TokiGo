@@ -9,6 +9,7 @@ import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/localized_date.dart';
 import 'package:tokigo/core/widgets/cards/card.dart';
 import 'package:tokigo/features/search/domain/flight_duration.dart';
+import 'package:tokigo/features/search/presentation/widgets/flight_fare_facts.dart';
 import 'package:tokigo/features/search/presentation/widgets/flight_route_line.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
@@ -105,13 +106,24 @@ class FlightSearchCard extends StatelessWidget {
   }
 
   List<String> _buildFeatures(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final features = <String>[];
     if (data.cabinClass != null && data.cabinClass!.isNotEmpty) {
       features.add(data.cabinClass!);
     }
-    final baggage = data.metadata['baggage']?.toString();
-    if (baggage != null && baggage.isNotEmpty) {
-      features.add(baggage);
+    if (l10n != null) {
+      final baggage = flightBaggageSummary(l10n, data);
+      if (baggage != null && baggage.isNotEmpty) features.add(baggage);
+      // A grouped row carries every valid fare for the SAME itinerary. The
+      // count tells the traveller the details page has more than the summary
+      // price to choose from.
+      final fareCount = data.selectableOffers.length;
+      if (fareCount > 1) features.add(l10n.offerFareCount(fareCount));
+    } else {
+      // No localizations (tests/bootstrapping): show the provider's legacy
+      // baggage shape verbatim rather than dropping the fact.
+      final baggage = data.metadata['baggage']?.toString();
+      if (baggage != null && baggage.isNotEmpty) features.add(baggage);
     }
     return features;
   }
@@ -731,12 +743,24 @@ class _FlightExpandedDetails extends StatelessWidget {
     final int stops = offer.stops ?? 0;
     final String? layover = offer.metadata['layoverDuration']?.toString();
     final String? aircraft = offer.metadata['aircraft']?.toString();
-    final String? fareFamily = offer.metadata['fareFamily']?.toString();
-    final bool refundable = offer.metadata['refundable'] == true;
-    final String? baggage = _baggageValue(offer.metadata['baggage']);
+    final String? fareBrand = offer.fareBrand;
+    final String? baggage = flightBaggageSummary(l10n, offer);
     final String? cabin = (offer.cabinClass ?? '').isEmpty
         ? null
         : offer.cabinClass;
+    final bool? refundable = offer.refundable;
+    final bool? changeable = offer.changeable;
+    final String? restrictions = flightRestrictionsLine(offer);
+    final List<FlightOffer> fares = offer.selectableOffers;
+    final Set<String> codeshares = <String>{};
+    for (final segment in offer.segments) {
+      if (!segment.isCodeshare) continue;
+      final name =
+          segment.operatingCarrierName ?? segment.operatingCarrierCode ?? '';
+      final designator = segment.operatingDesignator;
+      if (name.isEmpty) continue;
+      codeshares.add(designator.isEmpty ? name : '$name ($designator)');
+    }
 
     return Container(
       width: double.infinity,
@@ -786,13 +810,29 @@ class _FlightExpandedDetails extends StatelessWidget {
             _FactRow(label: l10n.offerBaggage, value: baggage),
           if (aircraft != null && aircraft.isNotEmpty)
             _FactRow(label: l10n.offerAircraft, value: aircraft),
-          if (fareFamily != null && fareFamily.isNotEmpty)
-            _FactRow(label: l10n.offerFare, value: fareFamily),
-          if (refundable)
+          if (fareBrand != null && fareBrand.isNotEmpty)
+            _FactRow(label: l10n.offerFare, value: fareBrand),
+          // Tri-state: a known status is stated; an unknown condition has no
+          // row rather than claiming "not allowed".
+          if (refundable != null)
             _FactRow(
               label: l10n.offerRefundable,
-              value: l10n.offerRefundableYes,
+              value: _refundValue(l10n, offer),
             ),
+          if (changeable != null)
+            _FactRow(
+              label: l10n.offerChanges,
+              value: _changeValue(l10n, offer),
+            ),
+          if (restrictions != null)
+            _FactRow(label: l10n.offerRestrictions, value: restrictions),
+          if (codeshares.isNotEmpty) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              l10n.offerOperatedBy(codeshares.join(', ')),
+              style: typography.caption.copyWith(color: tc.textTertiary),
+            ),
+          ],
           const SizedBox(height: AppSpacing.xs),
           Divider(height: 1, thickness: 1, color: tc.hairline),
           const SizedBox(height: AppSpacing.md),
@@ -832,6 +872,25 @@ class _FlightExpandedDetails extends StatelessWidget {
             l10n.offerPriceNote,
             style: typography.caption.copyWith(color: tc.textTertiary),
           ),
+          // Every fare the grouped row carries, listed verbatim. The details
+          // page owns selection; the card shows the traveller that the summary
+          // price is not the only choice before they tap through.
+          if (fares.length > 1) ...<Widget>[
+            const SizedBox(height: AppSpacing.md),
+            Divider(height: 1, thickness: 1, color: tc.hairline),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              l10n.offerFareCount(fares.length),
+              style: typography.captionSemibold.copyWith(
+                color: tc.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            for (int i = 0; i < fares.length; i++) ...<Widget>[
+              _FareLine(offer: fares[i], index: i),
+              if (i < fares.length - 1) const SizedBox(height: AppSpacing.xs),
+            ],
+          ],
           const SizedBox(height: AppSpacing.md),
           // A wrap, not a row: the two actions keep their full labels and move
           // to a second line on a narrow phone instead of overflowing.
@@ -879,20 +938,43 @@ class _FlightExpandedDetails extends StatelessWidget {
   static bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
-  /// Provider baggage, verbatim: `{quantity, type}` → `1 × checked`. Null
-  /// when the provider sent nothing usable.
-  static String? _baggageValue(dynamic baggage) {
-    if (baggage is Map) {
-      final quantity = baggage['quantity'];
-      final type = baggage['type']?.toString();
-      if (quantity != null && type != null && type.isNotEmpty) {
-        return '$quantity × $type';
-      }
-      if (quantity != null) return '$quantity';
-      return null;
+  /// The provider's refund status/fee for a KNOWN condition. `_refundValue` is
+  /// only called when `offer.refundable != null`, so an unknown never becomes
+  /// a fabricated "not allowed".
+  static String _refundValue(AppLocalizations l10n, FlightOffer offer) {
+    if (offer.refundable == false) return l10n.offerNonRefundable;
+    final condition = offer.conditions?.refundBeforeDeparture;
+    final amount = condition?.penaltyAmount;
+    if (amount != null) {
+      return l10n.offerRefundableWithFee(
+        _money(amount, condition?.penaltyCurrency ?? ''),
+      );
     }
-    final text = baggage?.toString() ?? '';
-    return text.isEmpty ? null : text;
+    if (condition?.feeApplies == true) {
+      return l10n.offerRefundableFeeOnRequest;
+    }
+    return l10n.offerRefundableYes;
+  }
+
+  /// The provider's change status/fee for a KNOWN condition.
+  static String _changeValue(AppLocalizations l10n, FlightOffer offer) {
+    if (offer.changeable == false) return l10n.offerNotChangeable;
+    final condition = offer.conditions?.changeBeforeDeparture;
+    final amount = condition?.penaltyAmount;
+    if (amount != null) {
+      return l10n.offerChangeableWithFee(
+        _money(amount, condition?.penaltyCurrency ?? ''),
+      );
+    }
+    if (condition?.feeApplies == true) {
+      return l10n.offerChangeableFeeOnRequest;
+    }
+    return l10n.offerChangeable;
+  }
+
+  static String _money(double amount, String currency) {
+    final text = amount.toStringAsFixed(2);
+    return currency.isEmpty ? text : '$currency $text';
   }
 }
 
@@ -933,6 +1015,55 @@ class _FactRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// One fare in the expanded card's inventory of the grouped row.
+///
+/// Selection happens on the details page; this list exists so the summary
+/// price is never mistaken for the itinerary's only fare.
+class _FareLine extends StatelessWidget {
+  const _FareLine({required this.offer, required this.index});
+
+  final FlightOffer offer;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = context.tokigoColors;
+    final typography = AppTypography.forLight();
+    final l10n = AppLocalizations.of(context)!;
+    final cabin = offer.cabinClass;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(
+                flightFareTitle(l10n, offer, index),
+                style: typography.bodyMedium.copyWith(color: tc.textPrimary),
+              ),
+              if (cabin != null && cabin.isNotEmpty)
+                Text(
+                  cabin,
+                  style: typography.caption.copyWith(color: tc.textSecondary),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Text(
+          formatCardPrice(price: offer.price, currency: offer.currency),
+          style: typography.bodyMedium.copyWith(
+            color: tc.textPrimary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
     );
   }
 }

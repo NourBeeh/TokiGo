@@ -69,49 +69,84 @@ bool budgetAppliesTo(Iterable<BaseOffer> offers, SearchFilters filters) {
   return offers.any((offer) => effectiveSortCurrency(offer) == currency);
 }
 
+/// Whether ONE fare offer satisfies the traveller's flight filters.
+///
+/// Filters evaluate individual fares, never only the row summary: a row may
+/// carry a cheap fare outside the price band and a second fare inside it.
+bool _flightFareMatches(
+  FlightOffer offer,
+  SearchFilters filters, {
+  required bool applyBudget,
+}) {
+  final amount = effectiveSortAmount(offer);
+  if (filters.priceMin != null && amount < filters.priceMin!) return false;
+  if (filters.priceMax != null && amount > filters.priceMax!) return false;
+  if (applyBudget) {
+    if (effectiveSortCurrency(offer) != filters.budgetCurrency) return false;
+    if (amount > filters.budgetMax!) return false;
+  }
+  if (filters.maxStops != null && (offer.stops ?? 0) > filters.maxStops!) {
+    return false;
+  }
+  // Direct-only is a post-filter on the provider's list: it never re-requests.
+  if (filters.directOnly && (offer.stops ?? 0) != 0) return false;
+  if (filters.airlines != null &&
+      filters.airlines!.isNotEmpty &&
+      !filters.airlines!.contains(offer.airline)) {
+    return false;
+  }
+  return true;
+}
+
+/// Deterministic cheapest-first order for the fares inside one itinerary row.
+int _compareFareAmount(FlightOffer a, FlightOffer b) {
+  final comparable = hasComparableCustomerTotals(<BaseOffer>[a, b]);
+  final av = comparable ? effectiveSortAmount(a) : _grouped(a);
+  final bv = comparable ? effectiveSortAmount(b) : _grouped(b);
+  final primary = av.compareTo(bv);
+  if (primary != 0) return primary;
+  final provider = a.providerId.compareTo(b.providerId);
+  if (provider != 0) return provider;
+  return a.id.compareTo(b.id);
+}
+
 /// Applies the shared filter set to flights — provider-safe: pure
 /// post-filtering of the returned list, nothing re-requested.
+///
+/// Phase 2D: one row is one itinerary carrying every fare offer. A row stays
+/// when at least ONE fare qualifies, and the row's summary fields are replaced
+/// with the lowest qualifying fare. Every fare stays in `offers`, so the
+/// details selector can still show the ones the filter did not highlight.
 List<FlightOffer> applyFlightFilters(
   List<FlightOffer> offers,
   SearchFilters filters,
 ) {
-  var items = offers;
-  if (filters.priceMin != null) {
-    items = items
-        .where((o) => effectiveSortAmount(o) >= filters.priceMin!)
-        .toList();
-  }
-  if (filters.priceMax != null) {
-    items = items
-        .where((o) => effectiveSortAmount(o) <= filters.priceMax!)
-        .toList();
-  }
   // Phase 4C: the traveller's budget cap, in ITS OWN currency only. It is
-  // applied only when at least one offer is priced in that currency — an
-  // empty list would misstate what the provider actually has.
-  if (filters.budgetMax != null && filters.budgetCurrency != null) {
-    final max = filters.budgetMax!;
-    final currency = filters.budgetCurrency!;
-    if (items.any((o) => effectiveSortCurrency(o) == currency)) {
-      items = items
-          .where(
-            (o) =>
-                effectiveSortCurrency(o) == currency &&
-                effectiveSortAmount(o) <= max,
-          )
-          .toList();
-    }
-  }
-  if (filters.maxStops != null) {
-    items = items.where((o) => (o.stops ?? 0) <= filters.maxStops!).toList();
-  }
-  // Direct-only is a post-filter on the provider's list: it never re-requests.
-  if (filters.directOnly) {
-    items = items.where((o) => (o.stops ?? 0) == 0).toList();
-  }
-  if (filters.airlines != null && filters.airlines!.isNotEmpty) {
-    final selected = filters.airlines!.toSet();
-    items = items.where((o) => selected.contains(o.airline)).toList();
+  // applied only when at least one individual fare is priced in that currency
+  // — an empty list would misstate what the provider actually has.
+  final applyBudget =
+      filters.budgetMax != null &&
+      filters.budgetCurrency != null &&
+      offers.any(
+        (row) => row.selectableOffers.any(
+          (fare) => effectiveSortCurrency(fare) == filters.budgetCurrency,
+        ),
+      );
+
+  final items = <FlightOffer>[];
+  for (final row in offers) {
+    final qualifying = row.selectableOffers
+        .where(
+          (fare) =>
+              _flightFareMatches(fare, filters, applyBudget: applyBudget),
+        )
+        .toList(growable: false);
+    if (qualifying.isEmpty) continue;
+    final sorted = List<FlightOffer>.from(qualifying)
+      ..sort(_compareFareAmount);
+    // Summary = the cheapest fare the traveller can actually see under the
+    // active filters; the full fare list remains available for selection.
+    items.add(row.withSummary(sorted.first));
   }
   return items;
 }

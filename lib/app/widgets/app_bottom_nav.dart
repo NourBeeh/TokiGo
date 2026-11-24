@@ -11,7 +11,6 @@ import 'package:tokigo/core/theme/app_spacing.dart';
 enum AppBottomNavDestination {
   home(Icons.home_outlined, Icons.home_rounded),
   search(Icons.search, Icons.search_rounded),
-  groups(Icons.groups_outlined, Icons.groups_rounded),
   explore(Icons.explore_outlined, Icons.explore_rounded);
 
   const AppBottomNavDestination(this.icon, this.selectedIcon);

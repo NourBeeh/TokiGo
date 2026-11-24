@@ -9,13 +9,14 @@ import 'package:go_router/go_router.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/domain/models/home/home_section.dart';
 import 'package:tokigo/core/domain/models/home/home_types.dart';
+import 'package:tokigo/core/network/api_error.dart';
 import 'package:tokigo/core/network/api_result.dart';
 import 'package:tokigo/core/repositories/contracts/home_repository.dart';
+import 'package:tokigo/features/home/domain/promotional_stay.dart';
+import 'package:tokigo/features/home/presentation/nearby_stays_controller.dart';
 import 'package:tokigo/core/theme/app_theme.dart';
 import 'package:tokigo/core/widgets/cards/card_favorite.dart';
-import 'package:tokigo/features/home/domain/home_composer.dart';
 import 'package:tokigo/features/home/presentation/home_card_dimensions.dart';
-import 'package:tokigo/features/home/presentation/home_controller.dart';
 import 'package:tokigo/features/home/presentation/pages/home_page.dart';
 import 'package:tokigo/features/home/presentation/widgets/cover_flow_carousel.dart';
 import 'package:tokigo/features/home/presentation/widgets/home_discovery_stay_card.dart';
@@ -134,94 +135,62 @@ List<Rect> _splitRegions(WidgetTester tester) {
 
 // ── Real Home page harness ─────────────────────────────────────────────────
 
-class _HomeRepo implements HomeRepository {
-  _HomeRepo({
-    this.sections = const <HomeSection>[],
-    this.hotels = const <HomeItem>[],
-  });
+class _NearbyRepo implements HomeRepository {
+  _NearbyRepo(this.response);
 
-  final List<HomeSection> sections;
-  final List<HomeItem> hotels;
+  final NearbyStaysResponse? response;
 
   @override
-  Future<List<HomeSection>?> readHomeSnapshot({
-    required String audience,
-  }) async => null;
+  Future<NearbyStaysResponse?> readCachedNearbyStays() async => response;
 
   @override
-  Future<void> clearHomeSnapshot({required String audience}) async {}
+  Future<void> writeCachedNearbyStays(NearbyStaysResponse response) async {}
 
   @override
-  Future<void> saveHomeSnapshot(
-    List<HomeSection> sections, {
-    required String audience,
-  }) async {}
-
-  @override
-  Future<ApiResult<List<HomeSection>>> getHomeSections() async =>
-      ApiResult<List<HomeSection>>.success(sections);
-
-  @override
-  Future<ApiResult<List<HomeItem>>> getRecommendedHotels({
-    int limit = 6,
-    String? countryCode,
+  Future<ApiResult<NearbyStaysResponse>> fetchNearbyStays({
+    double? latitude,
+    double? longitude,
+    double? accuracy,
+    String? cityId,
+    String? city,
+    String? country,
     String languageCode = 'en',
     String? currency,
-  }) async => ApiResult<List<HomeItem>>.success(hotels);
+  }) async => response == null
+      ? const ApiResult<NearbyStaysResponse>.failure(
+          ApiNetworkError(message: 'no nearby payload'),
+        )
+      : ApiResult<NearbyStaysResponse>.success(response!);
 
   @override
-  Future<ApiResult<void>> refresh() async =>
-      const ApiResult<void>.success(null);
-
-  @override
-  Future<SnapshotState> snapshotState({required String audience}) async =>
-      SnapshotState.unavailable;
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class _GatedHomeRepo implements HomeRepository {
-  _GatedHomeRepo(this.sectionsCompleter, {required this.hotels});
+PromotionalStay _promotionalStay(String id) => PromotionalStay(
+      hotelId: 'promo-$id',
+      hotelName: 'Riverside Grand Hotel $id',
+      city: 'Lisbon',
+      country: 'PT',
+      image: null,
+      latitude: 38.72,
+      longitude: -9.14,
+      distanceKm: 1.2,
+      rating: 4.8,
+      reviewCount: 48,
+      promotionalMinimumPrice: 186,
+      currency: 'USD',
+      searchedFromDate: '2026-11-21',
+      searchedToDate: '2026-11-28',
+      occupancy: 2,
+      nationality: 'EG',
+      provider: 'nuitee',
+      fetchedAt: DateTime.utc(2026, 11, 21),
+      locationConfidence: 'high',
+    );
 
-  final Completer<ApiResult<List<HomeSection>>> sectionsCompleter;
-  final List<HomeItem> hotels;
-
-  @override
-  Future<List<HomeSection>?> readHomeSnapshot({
-    required String audience,
-  }) async => null;
-
-  @override
-  Future<void> clearHomeSnapshot({required String audience}) async {}
-
-  @override
-  Future<void> saveHomeSnapshot(
-    List<HomeSection> sections, {
-    required String audience,
-  }) async {}
-
-  @override
-  Future<ApiResult<List<HomeSection>>> getHomeSections() =>
-      sectionsCompleter.future;
-
-  @override
-  Future<ApiResult<List<HomeItem>>> getRecommendedHotels({
-    int limit = 6,
-    String? countryCode,
-    String languageCode = 'en',
-    String? currency,
-  }) async => ApiResult<List<HomeItem>>.success(hotels);
-
-  @override
-  Future<ApiResult<void>> refresh() async =>
-      const ApiResult<void>.success(null);
-
-  @override
-  Future<SnapshotState> snapshotState({required String audience}) async =>
-      SnapshotState.unavailable;
-}
-
-Widget _pageHost(
-  HomeController controller, {
+Widget _pageHost({
   Locale locale = const Locale('en'),
+  List<PromotionalStay> nearbyStays = const <PromotionalStay>[],
 }) {
   final GoRouter router = GoRouter(
     initialLocation: '/',
@@ -229,9 +198,26 @@ Widget _pageHost(
       GoRoute(path: '/', builder: (context, state) => const HomePage()),
     ],
   );
+  final NearbyStaysResponse? nearbyResponse = nearbyStays.isEmpty
+      ? null
+      : NearbyStaysResponse(
+          stays: nearbyStays,
+          radiusKm: 10,
+          locationConfidence: 'high',
+          locationSource: 'gps',
+          locationRequired: false,
+          currency: 'USD',
+          occupancy: 2,
+          nationality: 'EG',
+          rankingVersion: 'nearby-ranking-v1',
+          partialFailure: false,
+          fetchedAt: DateTime.utc(2026, 11, 21),
+        );
   return ProviderScope(
     overrides: <Override>[
-      homeControllerProvider.overrideWith((ref) => controller),
+      nearbyStaysControllerProvider.overrideWith(
+        (ref) => NearbyStaysController(_NearbyRepo(nearbyResponse)),
+      ),
       geoCountryProvider.overrideWith((ref) async => null),
     ],
     child: MaterialApp.router(
@@ -249,22 +235,6 @@ Widget _pageHost(
   );
 }
 
-HomeController _homeController({
-  List<HomeSection> sections = const <HomeSection>[],
-  List<HomeItem> hotels = const <HomeItem>[],
-}) {
-  return HomeController(
-    _HomeRepo(sections: sections, hotels: hotels),
-    audience: 'anon',
-    contextBuilder: (_) async =>
-        const HomeCompositionContext(userState: HomeUserState.freshAnonymous),
-    liveValidation: null,
-    countryCode: null,
-    languageCode: null,
-    currencyCode: null,
-  );
-}
-
 void main() {
   group('Section 5 — split stay card geometry', () {
     testWidgets(
@@ -272,19 +242,11 @@ void main() {
       (tester) async {
         _setView(tester, _tallPhone);
 
-        final HomeController controller = _homeController(
-          sections: <HomeSection>[
-            HomeSection(
-              id: 'discover',
-              title: 'Discover',
-              layout: HomeSectionLayout.horizontal,
-              items: <HomeItem>[_city('a'), _city('b')],
-            ),
-          ],
-          hotels: <HomeItem>[_stay('a'), _stay('b')],
+        await tester.pumpWidget(
+          _pageHost(
+            nearbyStays: <PromotionalStay>[_promotionalStay('a'), _promotionalStay('b')],
+          ),
         );
-
-        await tester.pumpWidget(_pageHost(controller));
         // Let the controller's startup (snapshot → load → rail) settle.
         await tester.pump(const Duration(milliseconds: 300));
         await tester.pump(const Duration(milliseconds: 300));
@@ -326,49 +288,25 @@ void main() {
       },
     );
 
-    testWidgets('the Home skeleton card matches the loaded card box', (
+    testWidgets('the loaded Nearby stay card matches the city width', (
       tester,
     ) async {
       _setView(tester, _tallPhone);
-      final Completer<ApiResult<List<HomeSection>>> completer =
-          Completer<ApiResult<List<HomeSection>>>();
-      final HomeController controller = HomeController(
-        _GatedHomeRepo(completer, hotels: <HomeItem>[_stay('a'), _stay('b')]),
-        audience: 'anon',
-        contextBuilder: (_) async => const HomeCompositionContext(
-          userState: HomeUserState.freshAnonymous,
+      await tester.pumpWidget(
+        _pageHost(
+          nearbyStays: <PromotionalStay>[_promotionalStay('a'), _promotionalStay('b')],
         ),
-        liveValidation: null,
-        countryCode: null,
-        languageCode: null,
-        currencyCode: null,
-      );
-
-      await tester.pumpWidget(_pageHost(controller));
-      await tester.pump(const Duration(milliseconds: 300));
-
-      // The Home feed's OWN skeleton (not a hand-configured rail) must occupy
-      // the same box the loaded card will, or the feed jumps when the real
-      // stays land. The skeleton is the same photo-above-description card.
-      expect(find.byType(HomeStayCard), findsOneWidget);
-      expect(find.byType(HomeSplitStayCard), findsNothing);
-      final Rect skeleton = tester.getRect(find.byType(HomeStayCard));
-
-      completer.complete(
-        ApiResult<List<HomeSection>>.success(<HomeSection>[
-          HomeSection(
-            id: 'discover',
-            title: 'Discover',
-            layout: HomeSectionLayout.horizontal,
-            items: <HomeItem>[_city('a'), _city('b')],
-          ),
-        ]),
       );
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
+      // The promotional rail renders the same approved photo-above-description
+      // card, at the same page width as the Explore rail.
+      expect(find.byType(HomeStayCard), findsWidgets);
+      final Rect city = tester.getRect(find.byType(HomeDiscoveryStayCard).at(0));
       final Rect loaded = tester.getRect(find.byType(HomeStayCard).first);
-      expect(loaded.size, skeleton.size);
+      expect(loaded.width, closeTo(city.width, _tolerance));
+      expect(loaded.height, greaterThan(city.height + 100));
       expect(tester.takeException(), isNull);
     });
 

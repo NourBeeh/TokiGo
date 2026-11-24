@@ -139,16 +139,18 @@ void main() {
         decoration.color,
         mode == ThemeMode.dark ? const Color(0xFF1E1E1E) : Colors.white,
       );
-      // The pill floats, so its halo follows the active theme.
-      final BoxShadow halo = decoration.boxShadow!.single;
-      expect(halo.blurRadius, 20);
-      expect(halo.offset, const Offset(0, 4));
-      expect(
-        halo.color,
-        mode == ThemeMode.dark
-            ? const Color(0x59000000)
-            : const Color(0x1A111111),
-      );
+      // Task 3 — the pill is FLAT in light theme (its edge is the surface
+      // step, not a shadow) and keeps its halo on the dark canvas.
+      if (mode == ThemeMode.light) {
+        expect(decoration.boxShadow ?? const <BoxShadow>[], isEmpty);
+      } else {
+        // The dark canvas keeps a real halo (two stops, the first a contact
+        // stop). Its exact ladder belongs to AppElevation's own tests.
+        expect(decoration.boxShadow, isNotEmpty);
+        for (final BoxShadow stop in decoration.boxShadow!) {
+          expect(stop.blurRadius, greaterThan(0));
+        }
+      }
     }
   });
 
@@ -313,14 +315,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(Expanded), findsNWidgets(5));
+    expect(find.byType(Expanded), findsNWidgets(4));
     expect(find.text('Flights'), findsOneWidget);
     expect(find.text('Stays'), findsOneWidget);
     expect(find.text('Cars Rental'), findsOneWidget);
     expect(find.text('Packages'), findsOneWidget);
-    expect(find.text('Groups'), findsOneWidget);
+    expect(find.text('Groups'), findsNothing);
     // Trips left the quick-action bar (owner decision, 2026-11); My Trips is
-    // reached from Profile. Explore was never a Home tile.
+    // reached from Profile. Explore was never a Home tile. Groups was removed.
     expect(find.text('Trips'), findsNothing);
     expect(find.text('Explore'), findsNothing);
 
@@ -328,18 +330,15 @@ void main() {
     final Offset stays = tester.getCenter(find.text('Stays'));
     final Offset cars = tester.getCenter(find.text('Cars Rental'));
     final Offset activities = tester.getCenter(find.text('Packages'));
-    final Offset groups = tester.getCenter(find.text('Groups'));
-    // One row: the five labels share a baseline. Compared with a tolerance
+    // One row: the four labels share a baseline. Compared with a tolerance
     // because a label long enough to be scaled by the FittedBox lands on a
     // sub-pixel offset (the row itself is exact).
     expect(flights.dy, closeTo(stays.dy, 0.01));
     expect(stays.dy, closeTo(cars.dy, 0.01));
     expect(cars.dy, closeTo(activities.dy, 0.01));
-    expect(activities.dy, closeTo(groups.dy, 0.01));
     expect(flights.dx, lessThan(stays.dx));
     expect(stays.dx, lessThan(cars.dx));
     expect(cars.dx, lessThan(activities.dx));
-    expect(activities.dx, lessThan(groups.dx));
   });
 
   testWidgets('Cars tile opens its page', (WidgetTester tester) async {

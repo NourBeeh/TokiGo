@@ -63,14 +63,24 @@ PriceFacet? priceFacetOf(Iterable<BaseOffer> offers) {
   return facet.isUsable ? facet : null;
 }
 
+/// The price span across EVERY individual fare offer in each flight row.
+///
+/// A grouped row's own price is only its cheapest fare; the slider must still
+/// reach a dearer fare in the same itinerary, so the facet spans the nested
+/// offers rather than the row summaries.
+PriceFacet? flightPriceFacetOf(Iterable<FlightOffer> rows) =>
+    priceFacetOf(rows.expand((row) => row.selectableOffers));
+
 /// Airlines that appear in the current flight results, deduplicated and
 /// alphabetical. Empty values (a provider that sent no carrier) are not an
-/// option.
+/// option. Spans every fare in a grouped row, not only its summary.
 List<String> airlinesOf(Iterable<FlightOffer> offers) {
   final values = <String>{};
-  for (final offer in offers) {
-    final airline = offer.airline.trim();
-    if (airline.isNotEmpty) values.add(airline);
+  for (final row in offers) {
+    for (final offer in row.selectableOffers) {
+      final airline = offer.airline.trim();
+      if (airline.isNotEmpty) values.add(airline);
+    }
   }
   return values.toList()..sort();
 }

@@ -71,12 +71,21 @@ export class NuiteeClient {
       );
     }
     if (!response.ok) {
+      const providerCode =
+        body?.error?.code ??
+        body?.error?.errorCode ??
+        body?.code ??
+        body?.errorCode;
       const detail =
         body?.error?.message ??
         body?.message ??
         JSON.stringify(body).slice(0, 160);
+      const codeSuffix =
+        providerCode === undefined || providerCode === null
+          ? ''
+          : ` [${String(providerCode)}]`;
       throw new Error(
-        `Nuitee ${path} failed (${response.status}): ${String(detail)}`,
+        `Nuitee ${path} failed (${response.status})${codeSuffix}: ${String(detail)}`,
       );
     }
     return body;

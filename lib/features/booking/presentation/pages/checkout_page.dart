@@ -136,6 +136,13 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
   }
 
   Future<void> _pay() async {
+    // An unknown provider outcome must never lead to a second charge or
+    // booking. Send the customer to the pending-verification surface instead.
+    if (ref.read(bookingControllerProvider).phase ==
+        BookingPhase.reconciliationPending) {
+      context.go('/booking/review');
+      return;
+    }
     if (_failure != null) setState(() => _failure = null);
     final l10n = AppLocalizations.of(context)!;
     if (!_cardValid) {
@@ -168,6 +175,38 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     ref.read(checkoutPaymentMethodProvider.notifier).state = _method;
     setState(() => _processing = true);
 
+    // Phase 2E: revalidate the EXACT prepared booking immediately before any
+    // charge. The backend compares the live provider state with the exact
+    // price/terms the customer accepted; a move stops the charge here.
+    final bookingNotifier = ref.read(bookingControllerProvider.notifier);
+    await bookingNotifier.revalidate(bookingId: record.bookingId);
+    if (!mounted) return;
+    final checked = ref.read(bookingControllerProvider);
+    if (checked.phase == BookingPhase.priceChanged ||
+        checked.phase == BookingPhase.priceChangeDeclined) {
+      setState(() => _processing = false);
+      // The review page owns the explicit Update price / decline decision.
+      context.go('/booking/review');
+      return;
+    }
+    if (checked.phase == BookingPhase.unavailable ||
+        checked.phase == BookingPhase.expired) {
+      setState(() => _processing = false);
+      _fail(checked.errorMessage ?? l10n.bookingOfferUnavailable);
+      return;
+    }
+    if (checked.phase == BookingPhase.reconciliationPending) {
+      setState(() => _processing = false);
+      context.go('/booking/review');
+      return;
+    }
+    if (checked.phase != BookingPhase.readyToConfirm) {
+      setState(() => _processing = false);
+      _fail(checked.errorMessage ?? l10n.bookingRevalidationFailed);
+      return;
+    }
+    final liveRecord = checked.record ?? record;
+
     // Real backend payment orchestration (spec point 31): intent -> confirm
     // through the market-routed gateway; 3DS/pending and declined states
     // surface exactly like production flows.
@@ -176,20 +215,24 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         .fold<double>(0, (s, a) => s + a.total);
     // The provider's authoritative price is the only price that exists; the
     // backend sends no base/tax split, so no split is shown.
-    final total = record.authoritativePrice + addOnsTotal;
-    final currency = record.currency.isEmpty
+    final total = liveRecord.authoritativePrice + addOnsTotal;
+    final currency = liveRecord.currency.isEmpty
         ? ref.read(checkoutCurrencyProvider)
-        : record.currency;
+        : liveRecord.currency;
 
     final result = await ref
         .read(checkoutPaymentServiceProvider)
         .pay(
           // The real prepared booking, not a client invention.
-          bookingId: record.bookingId,
+          bookingId: liveRecord.bookingId,
           amount: total,
           currency: currency,
           market: 'EG',
-          idempotencyKey: 'pay-${record.bookingId}-${_method.name}',
+          // The amount/currency are part of the key: if the accepted price
+          // moves, a retry must create a NEW attempt instead of reusing a
+          // cheaper one that can no longer settle this booking.
+          idempotencyKey:
+              'pay-${liveRecord.bookingId}-${_method.name}-$currency-${total.toStringAsFixed(2)}',
           method: switch (_method) {
             PaymentMethod.wallet => 'wallet',
             // Not offered by the UI (the gateway has no such method); mapped
@@ -225,6 +268,17 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         if (ref.read(bookingControllerProvider).phase ==
             BookingPhase.confirmed) {
           context.go('/booking/review/confirmation');
+        } else if (ref.read(bookingControllerProvider).phase ==
+            BookingPhase.priceChanged) {
+          // The provider moved between the pre-charge revalidation and the
+          // final confirm. No booking was created at the changed price; return
+          // to the review page so the customer explicitly decides.
+          context.go('/booking/review');
+        } else if (ref.read(bookingControllerProvider).phase ==
+            BookingPhase.reconciliationPending) {
+          // Never leave the paid customer on a payable surface: the provider
+          // outcome is unknown, so a retry could book/charge twice.
+          context.go('/booking/review');
         } else {
           _fail(l10n.bookingConfirmFailedBody);
         }
@@ -266,7 +320,19 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
               'firstName': hotelTravelers[i]['firstName'],
               'lastName': hotelTravelers[i]['lastName'],
               'adult': hotelTravelers[i]['adult'] == true,
-              if (i == 0 && contact.email.isNotEmpty) 'email': contact.email,
+              // Nuitee needs the room assignment and a contact for each
+              // room's primary guest; the guest page collected both.
+              if (hotelTravelers[i]['occupancyNumber'] != null)
+                'occupancyNumber': hotelTravelers[i]['occupancyNumber'],
+              if (hotelTravelers[i]['isHolder'] == true) 'isHolder': true,
+              if ((hotelTravelers[i]['email'] as String?)?.isNotEmpty == true)
+                'email': hotelTravelers[i]['email']
+              else if (i == 0 && contact.email.isNotEmpty)
+                'email': contact.email,
+              if ((hotelTravelers[i]['phone'] as String?)?.isNotEmpty == true)
+                'phone': hotelTravelers[i]['phone']
+              else if (i == 0 && contact.phone.isNotEmpty)
+                'phone': contact.phone,
             },
         ];
       }
@@ -339,7 +405,8 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
   Widget build(BuildContext context) {
     final typography = _type(context);
     final l10n = AppLocalizations.of(context)!;
-    final record = ref.watch(bookingControllerProvider).record;
+    final bookingState = ref.watch(bookingControllerProvider);
+    final record = bookingState.record;
 
     // No prepared booking → nothing to pay for. Saying so (with a way back) is
     // the honest version of what v1 faked with a generated booking id.
@@ -491,9 +558,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                         const SizedBox(
                           width: 44,
                           height: 44,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 3,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 3),
                         ),
                         const SizedBox(height: AppSpacing.lg),
                         Text(
@@ -545,7 +610,12 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                       '$currency ${total.toStringAsFixed(2)}',
                     ),
                     leadingIcon: Icons.lock_rounded,
-                    onPressed: _processing ? null : _pay,
+                    onPressed:
+                        _processing ||
+                            bookingState.phase ==
+                                BookingPhase.reconciliationPending
+                        ? null
+                        : _pay,
                   ),
                 ),
               ],
@@ -601,11 +671,7 @@ class _MethodTile extends StatelessWidget {
             alignment: Alignment.center,
             child: Row(
               children: <Widget>[
-                Icon(
-                  icon,
-                  size: 22,
-                  color: context.tokigoColors.textSecondary,
-                ),
+                Icon(icon, size: 22, color: context.tokigoColors.textSecondary),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Text(
@@ -753,7 +819,10 @@ class _LabeledField extends StatelessWidget {
             controller: controller,
             keyboardType: keyboardType,
             obscureText: obscureText,
-            decoration: InputDecoration(errorText: errorText, hintText: hintText),
+            decoration: InputDecoration(
+              errorText: errorText,
+              hintText: hintText,
+            ),
           ),
         ],
       ),
@@ -818,7 +887,9 @@ class _PriceBreakdownCard extends StatelessWidget {
               ),
               Text(
                 '$currency ${total.toStringAsFixed(2)}',
-                style: typography.title.copyWith(color: context.tokigoColors.textPrimary),
+                style: typography.title.copyWith(
+                  color: context.tokigoColors.textPrimary,
+                ),
               ),
             ],
           ),
@@ -849,12 +920,16 @@ class _Row extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: typography.body.copyWith(color: context.tokigoColors.textSecondary),
+              style: typography.body.copyWith(
+                color: context.tokigoColors.textSecondary,
+              ),
             ),
           ),
           Text(
             '$currency ${value.toStringAsFixed(2)}',
-            style: typography.bodyMedium.copyWith(color: context.tokigoColors.textPrimary),
+            style: typography.bodyMedium.copyWith(
+              color: context.tokigoColors.textPrimary,
+            ),
           ),
         ],
       ),

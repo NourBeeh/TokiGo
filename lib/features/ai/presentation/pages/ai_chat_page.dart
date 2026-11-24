@@ -246,8 +246,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
               ),
             Expanded(
               child:
-                  aiState.messages.isEmpty &&
-                      aiState.status != AiStatus.loading
+                  aiState.messages.isEmpty && aiState.status != AiStatus.loading
                   ? _buildWelcome(context)
                   : _buildThread(aiState),
             ),
@@ -358,7 +357,11 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     if (showTyping) {
       children.add(
         Align(
-          alignment: Alignment.centerLeft,
+          // The assistant's typing indicator sits at the turn's START edge,
+          // so it mirrors with the reading direction like the turns do.
+          alignment: Directionality.of(context) == TextDirection.rtl
+              ? Alignment.centerRight
+              : Alignment.centerLeft,
           child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.lg,
@@ -366,10 +369,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
             ),
             // The assistant's identity is present while it is working, not only
             // once the reply lands.
-            child: const _AssistantTurn(
-              animate: true,
-              child: TypingDots(),
-            ),
+            child: const _AssistantTurn(animate: true, child: TypingDots()),
           ),
         ),
       );
@@ -405,7 +405,8 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
           color: scheme.surface.withValues(alpha: 0.86),
           borderRadius: AppRadius.lgBorder,
           border: Border.all(color: scheme.outlineVariant),
-          boxShadow: AppElevation.shadow(
+          boxShadow: AppElevation.darkOnly(
+            context,
             background: scheme.surface,
             level: AppElevation.lg,
           ),
@@ -667,7 +668,11 @@ class ChatBubble extends StatelessWidget {
             if (!isUser && message.fromCache) ...[
               const SizedBox(width: AppSpacing.xs),
               // A quiet marker, not a hue: the palette owns no accent.
-              Icon(Icons.bolt, size: 13, color: context.tokigoColors.textSecondary),
+              Icon(
+                Icons.bolt,
+                size: 13,
+                color: context.tokigoColors.textSecondary,
+              ),
             ],
           ],
         ),
@@ -723,8 +728,14 @@ class ChatBubble extends StatelessWidget {
         ? bubble
         : _AssistantTurn(robotSize: 32, child: bubble);
 
+    // The user's turn sits on the reading direction's END (right in English,
+    // left in Arabic); the assistant's on the START. A physical right/left
+    // here would put the traveller's own words on the wrong side in Arabic.
+    final bool rtl = Directionality.of(context) == TextDirection.rtl;
     return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: isUser
+          ? (rtl ? Alignment.centerLeft : Alignment.centerRight)
+          : (rtl ? Alignment.centerRight : Alignment.centerLeft),
       child: TweenAnimationBuilder<double>(
         tween: Tween(begin: 0, end: 1),
         duration: const Duration(milliseconds: 250),

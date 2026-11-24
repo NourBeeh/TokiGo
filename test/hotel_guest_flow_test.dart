@@ -139,6 +139,25 @@ Future<void> _tapContinue(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+/// Fills the contact card the Nuitee booking contract requires: the holder's
+/// email/phone and one guest email per room. Names stay at their own indices,
+/// because the contact card is rendered after the room cards.
+Future<void> _fillContact(
+  WidgetTester tester, {
+  String email = 'holder@example.com',
+  String phone = '+201000000000',
+  int rooms = 1,
+}) async {
+  await tester.enterText(find.byKey(const Key('hotel-holder-email')), email);
+  await tester.enterText(find.byKey(const Key('hotel-holder-phone')), phone);
+  for (int r = 0; r < rooms; r++) {
+    await tester.enterText(
+      find.byKey(Key('hotel-room-email-$r')),
+      'room${r + 1}@example.com',
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Checkout fakes
 // ---------------------------------------------------------------------------
@@ -434,7 +453,12 @@ void main() {
         occupancies: <HotelRoomOccupancy>[_room(adults: 1)],
       );
 
-      expect(_fieldLabels(tester), <String>['Adult 1 name']);
+      expect(_fieldLabels(tester), <String>[
+        'Adult 1 name',
+        'Booking email',
+        'Booking phone',
+        'Guest email for Room 1',
+      ]);
       expect(find.text('Room 1: 1 adults, 0 children'), findsOneWidget);
     });
 
@@ -450,6 +474,9 @@ void main() {
         'Adult 1 name',
         'Adult 2 name',
         'Adult 3 name',
+        'Booking email',
+        'Booking phone',
+        'Guest email for Room 1',
       ]);
     });
 
@@ -470,6 +497,9 @@ void main() {
         'Adult 2 name',
         'Child 1 (age 5) name',
         'Child 2 (age 8) name',
+        'Booking email',
+        'Booking phone',
+        'Guest email for Room 1',
       ]);
       expect(find.text('Room 1: 2 adults, 2 children'), findsOneWidget);
     });
@@ -492,6 +522,10 @@ void main() {
         'Adult 2 name',
         'Adult 1 name',
         'Child 1 (age 4) name',
+        'Booking email',
+        'Booking phone',
+        'Guest email for Room 1',
+        'Guest email for Room 2',
       ]);
       expect(find.text('Room 1: 2 adults, 0 children'), findsOneWidget);
       expect(find.text('Room 2: 1 adults, 1 children'), findsOneWidget);
@@ -575,6 +609,60 @@ void main() {
         ),
         <dynamic>['Nour', 'Mona'],
       );
+    });
+
+    testWidgets('F1b the room assignment and per-room contacts reach the backend', (
+      tester,
+    ) async {
+      const List<HotelRoomOccupancy> twoRooms = <HotelRoomOccupancy>[
+        HotelRoomOccupancy(adults: 1),
+        HotelRoomOccupancy(adults: 1),
+      ];
+      final harness = await _CheckoutHarness.pump(
+        tester,
+        hotelGuests: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'firstName': 'Nour',
+            'lastName': 'Adel',
+            'adult': true,
+            'occupancyNumber': 1,
+            'email': 'room1@example.com',
+            'phone': '+201000000000',
+            'isHolder': true,
+          },
+          <String, dynamic>{
+            'firstName': 'Hassan',
+            'lastName': 'Adel',
+            'adult': true,
+            'occupancyNumber': 2,
+            'email': 'room2@example.com',
+          },
+        ],
+        selectedOffer: _hotelOffer(),
+        occupancies: twoRooms,
+        ownerKey: hotelGuestOwnershipKey(_hotelOffer(), twoRooms),
+      );
+
+      await harness.pay(tester);
+
+      expect(harness.repo.travelersCalls.single, <Map<String, dynamic>>[
+        <String, dynamic>{
+          'firstName': 'Nour',
+          'lastName': 'Adel',
+          'adult': true,
+          'occupancyNumber': 1,
+          'isHolder': true,
+          'email': 'room1@example.com',
+          'phone': '+201000000000',
+        },
+        <String, dynamic>{
+          'firstName': 'Hassan',
+          'lastName': 'Adel',
+          'adult': true,
+          'occupancyNumber': 2,
+          'email': 'room2@example.com',
+        },
+      ]);
     });
 
     testWidgets('F2 a different selected offer cannot reuse old guests', (
@@ -665,6 +753,7 @@ void main() {
         await _pumpGuestPage(tester, router: router, container: container);
         await _fillField(tester, 0, 'Nour Adel');
         await _fillField(tester, 1, 'Mona Adel');
+        await _fillContact(tester);
         await _tapContinue(tester);
 
         expect(
@@ -940,7 +1029,9 @@ void main() {
 
       await _tapContinue(tester);
 
-      expect(find.text('Required'), findsOneWidget);
+      // The guest name and the holder phone are both required; the empty
+      // email reports its own "Enter a valid email" message.
+      expect(find.text('Required'), findsNWidgets(2));
       expect(router.state.matchedLocation, '/booking/hotel-guests');
     });
 
@@ -955,7 +1046,8 @@ void main() {
       await _fillField(tester, 0, 'Nour Adel');
       await _tapContinue(tester);
 
-      expect(find.text('Required'), findsOneWidget);
+      // The second adult name and the holder phone are missing.
+      expect(find.text('Required'), findsNWidgets(2));
       expect(router.state.matchedLocation, '/booking/hotel-guests');
     });
 
@@ -971,6 +1063,7 @@ void main() {
 
       await _fillField(tester, 0, 'Nour Adel');
       await _fillField(tester, 1, 'Mona Adel');
+      await _fillContact(tester);
       await _tapContinue(tester);
 
       expect(find.text('Required'), findsNothing);
@@ -989,10 +1082,19 @@ void main() {
       );
 
       await _fillField(tester, 0, 'Nour Adel');
+      await _fillContact(tester);
       await _tapContinue(tester);
 
       expect(container.read(hotelGuestTravelersProvider), <Map<String, dynamic>>[
-        <String, dynamic>{'firstName': 'Nour', 'lastName': 'Adel', 'adult': true},
+        <String, dynamic>{
+          'firstName': 'Nour',
+          'lastName': 'Adel',
+          'adult': true,
+          'occupancyNumber': 1,
+          'email': 'holder@example.com',
+          'phone': '+201000000000',
+          'isHolder': true,
+        },
       ]);
     });
 
@@ -1011,6 +1113,7 @@ void main() {
       await _fillField(tester, 0, 'Nour Adel');
       await _fillField(tester, 1, 'Mona Adel');
       await _fillField(tester, 2, 'Youssef Adel');
+      await _fillContact(tester);
       await _tapContinue(tester);
 
       final travelers = container.read(hotelGuestTravelersProvider);
@@ -1023,6 +1126,11 @@ void main() {
         travelers.map((Map<String, dynamic> t) => t['firstName']),
         <dynamic>['Nour', 'Mona', 'Youssef'],
       );
+      expect(
+        travelers.map((Map<String, dynamic> t) => t['occupancyNumber']),
+        <dynamic>[1, 1, 1],
+      );
+      expect(travelers[0]['email'], 'holder@example.com');
     });
 
     testWidgets('C3 multiple rooms map room by room without leftovers', (
@@ -1042,15 +1150,40 @@ void main() {
       await _fillField(tester, 1, 'Mona Adel');
       await _fillField(tester, 2, 'Hassan Adel');
       await _fillField(tester, 3, 'Youssef Adel');
+      await _fillContact(tester, rooms: 2);
       await _tapContinue(tester);
 
       expect(
         container.read(hotelGuestTravelersProvider),
         <Map<String, dynamic>>[
-          <String, dynamic>{'firstName': 'Nour', 'lastName': 'Adel', 'adult': true},
-          <String, dynamic>{'firstName': 'Mona', 'lastName': 'Adel', 'adult': true},
-          <String, dynamic>{'firstName': 'Hassan', 'lastName': 'Adel', 'adult': true},
-          <String, dynamic>{'firstName': 'Youssef', 'lastName': 'Adel', 'adult': false},
+          <String, dynamic>{
+            'firstName': 'Nour',
+            'lastName': 'Adel',
+            'adult': true,
+            'occupancyNumber': 1,
+            'email': 'holder@example.com',
+            'phone': '+201000000000',
+            'isHolder': true,
+          },
+          <String, dynamic>{
+            'firstName': 'Mona',
+            'lastName': 'Adel',
+            'adult': true,
+            'occupancyNumber': 1,
+          },
+          <String, dynamic>{
+            'firstName': 'Hassan',
+            'lastName': 'Adel',
+            'adult': true,
+            'occupancyNumber': 2,
+            'email': 'room2@example.com',
+          },
+          <String, dynamic>{
+            'firstName': 'Youssef',
+            'lastName': 'Adel',
+            'adult': false,
+            'occupancyNumber': 2,
+          },
         ],
       );
     });
@@ -1066,6 +1199,7 @@ void main() {
       );
 
       await _fillField(tester, 0, 'Nour Mohamed Adel');
+      await _fillContact(tester);
       await _tapContinue(tester);
 
       expect(container.read(hotelGuestTravelersProvider), <Map<String, dynamic>>[
@@ -1073,6 +1207,10 @@ void main() {
           'firstName': 'Nour',
           'lastName': 'Mohamed Adel',
           'adult': true,
+          'occupancyNumber': 1,
+          'email': 'holder@example.com',
+          'phone': '+201000000000',
+          'isHolder': true,
         },
       ]);
     });
@@ -1088,10 +1226,19 @@ void main() {
       );
 
       await _fillField(tester, 0, '  Nour   Adel  ');
+      await _fillContact(tester);
       await _tapContinue(tester);
 
       expect(container.read(hotelGuestTravelersProvider), <Map<String, dynamic>>[
-        <String, dynamic>{'firstName': 'Nour', 'lastName': 'Adel', 'adult': true},
+        <String, dynamic>{
+          'firstName': 'Nour',
+          'lastName': 'Adel',
+          'adult': true,
+          'occupancyNumber': 1,
+          'email': 'holder@example.com',
+          'phone': '+201000000000',
+          'isHolder': true,
+        },
       ]);
     });
   });
@@ -1121,6 +1268,7 @@ void main() {
             'lastName': 'Adel',
             'adult': true,
             'email': 'nour@example.com',
+            'phone': '+201000000000',
           },
           <String, dynamic>{'firstName': 'Mona', 'lastName': 'Adel', 'adult': true},
           <String, dynamic>{'firstName': 'Youssef', 'lastName': 'Adel', 'adult': false},
@@ -1234,6 +1382,7 @@ void main() {
         final GoRouter firstRouter = _guestRouter();
         await _pumpGuestPage(tester, router: firstRouter, container: container);
         await _fillField(tester, 0, 'Nour Adel');
+        await _fillContact(tester);
         await _tapContinue(tester);
         expect(container.read(hotelGuestTravelersProvider), hasLength(1));
 
@@ -1245,10 +1394,17 @@ void main() {
         await _pumpGuestPage(tester, router: secondRouter, container: container);
 
         // The new guest collection reflects the new occupancy.
-        expect(_fieldLabels(tester), <String>['Adult 1 name', 'Adult 2 name']);
+        expect(_fieldLabels(tester), <String>[
+          'Adult 1 name',
+          'Adult 2 name',
+          'Booking email',
+          'Booking phone',
+          'Guest email for Room 1',
+        ]);
 
         await _fillField(tester, 0, 'Mona Adel');
         await _fillField(tester, 1, 'Hassan Adel');
+        await _fillContact(tester);
         await _tapContinue(tester);
 
         // The old guest is gone: only the new party is in the provider.

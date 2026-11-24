@@ -7,7 +7,6 @@ enum HomeAction {
   hotels,
   cars,
   activities,
-  groups,
   trips;
 
   /// Stable key used by tests and by the routed selected state.
@@ -16,7 +15,6 @@ enum HomeAction {
     HomeAction.hotels => 'hotels',
     HomeAction.cars => 'cars',
     HomeAction.activities => 'activities',
-    HomeAction.groups => 'groups',
     HomeAction.trips => 'trips',
   };
 
@@ -30,7 +28,6 @@ enum HomeAction {
     '/hotels' => HomeAction.hotels,
     '/cars' => HomeAction.cars,
     '/packages' => HomeAction.activities,
-    '/groups' => HomeAction.groups,
     '/bag' => HomeAction.trips,
     _ => null,
   };

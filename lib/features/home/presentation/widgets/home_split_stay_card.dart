@@ -9,6 +9,7 @@ import 'package:tokigo/core/widgets/cards/card_favorite.dart';
 import 'package:tokigo/core/widgets/cards/card_skeleton.dart';
 import 'package:tokigo/core/widgets/cards/overlap_stay_card.dart';
 import 'package:tokigo/core/widgets/cards/travel_card_style.dart';
+import 'package:tokigo/l10n/app_localizations.dart';
 
 /// Home's horizontal-split stay card (owner decision, 2026-11).
 ///
@@ -136,7 +137,7 @@ class HomeSplitStayCard extends StatelessWidget {
           AppSpacing.md,
         );
     final String semanticsLabel =
-        this.semanticsLabel ?? (loading ? 'Loading' : _autoSemantics);
+        this.semanticsLabel ?? (loading ? 'Loading' : _autoSemantics(context));
 
     return BaseCard(
       onTap: loading ? null : onTap,
@@ -151,7 +152,11 @@ class HomeSplitStayCard extends StatelessWidget {
       semanticsLabel: semanticsLabel,
       child: loading
           ? cardLoadingSemantics(
-              _SplitBody(loading: true, imageFlex: imageFlex, infoFlex: infoFlex),
+              _SplitBody(
+                loading: true,
+                imageFlex: imageFlex,
+                infoFlex: infoFlex,
+              ),
               label: semanticsLabel,
             )
           : _SplitBody(
@@ -176,7 +181,7 @@ class HomeSplitStayCard extends StatelessWidget {
     );
   }
 
-  String get _autoSemantics {
+  String _autoSemantics(BuildContext context) {
     final List<String> parts = <String>[title];
     if (starClass != null) parts.add('$starClass-star hotel');
     if (rating != null) parts.add(rating!.toStringAsFixed(1));
@@ -230,6 +235,7 @@ class _SplitBody extends StatelessWidget {
   final String amountText;
   final String currency;
   final String? unit;
+
 
   @override
   Widget build(BuildContext context) {
