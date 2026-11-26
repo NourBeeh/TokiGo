@@ -8,7 +8,11 @@ import 'package:tokigo/features/home/domain/home_action.dart';
 import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
 import 'package:tokigo/l10n/app_localizations.dart';
 
-Widget _app(Widget child, {Locale locale = const Locale('en'), double width = 320}) {
+Widget _app(
+  Widget child, {
+  Locale locale = const Locale('en'),
+  double width = 320,
+}) {
   return MaterialApp(
     theme: AppTheme.light(),
     locale: locale,
@@ -20,7 +24,9 @@ Widget _app(Widget child, {Locale locale = const Locale('en'), double width = 32
       GlobalCupertinoLocalizations.delegate,
     ],
     home: Scaffold(
-      body: Center(child: SizedBox(width: width, child: child)),
+      body: Center(
+        child: SizedBox(width: width, child: child),
+      ),
     ),
   );
 }
@@ -86,28 +92,34 @@ void main() {
       expect(border.top.color, HomeDesignTokens.border);
       expect(border.top.width, 1);
 
-      final Icon icon = tester.widget<Icon>(
-        find.descendant(of: tile, matching: find.byType(Icon)).first,
-      );
-      expect(icon.icon, icons[i]);
-      expect(icon.size, 24);
-      expect(icon.color, HomeDesignTokens.accent);
+      final Finder glyph = find
+          .descendant(
+            of: tile,
+            matching: i == 3 ? find.byType(Image) : find.byType(Icon),
+          )
+          .first;
+      if (i == 3) {
+        expect(tester.widget<Image>(glyph).width, 24);
+      } else {
+        final Icon icon = tester.widget<Icon>(glyph);
+        expect(icon.icon, icons[i]);
+        expect(icon.size, 24);
+        expect(icon.color, HomeDesignTokens.accent);
+      }
 
       final Text label = tester.widget<Text>(find.text(labels[i]));
       expect(label.style?.fontSize, 12);
       expect(label.style?.fontWeight, FontWeight.w600);
       expect(label.style?.color, HomeDesignTokens.accent);
 
-      final double iconBottom = tester
-          .getRect(find.descendant(of: tile, matching: find.byType(Icon)).first)
-          .bottom;
+      final double iconBottom = tester.getRect(glyph).bottom;
       final double labelTop = tester.getRect(find.text(labels[i])).top;
       expect(labelTop - iconBottom, closeTo(4, 0.01));
     }
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('scrolls horizontally and bleeds to the screen edges', (
+  testWidgets('centres all four cards with equal outer spacing', (
     tester,
   ) async {
     _phoneSize(tester);
@@ -115,19 +127,24 @@ void main() {
     await tester.pumpAndSettle();
 
     final Finder bar = find.byKey(const ValueKey<String>('home-action-bar'));
-    final ListView list = tester.widget<ListView>(bar);
-    expect(list.scrollDirection, Axis.horizontal);
-
-    final ScrollableState scrollable = tester.state<ScrollableState>(
-      find.descendant(of: bar, matching: find.byType(Scrollable)),
+    final Finder tiles = find.descendant(
+      of: find.byType(HomeActionBar),
+      matching: find.byType(AnimatedContainer),
     );
-    await tester.drag(bar, const Offset(-220, 0));
-    await tester.pumpAndSettle();
-
-    expect(scrollable.position.pixels, greaterThanOrEqualTo(0));
-    // The rail never renders the old overflow fades — it rides the edges.
-    expect(find.byKey(const ValueKey<String>('home-action-bar-overflow')), findsNothing);
-    expect(find.byKey(const ValueKey<String>('home-action-bar-overflow-start')), findsNothing);
+    expect(tiles, findsNWidgets(4));
+    final Rect bounds = tester.getRect(bar);
+    final List<Rect> tileRects = <Rect>[
+      for (final Element element in tester.elementList(tiles))
+        tester.getRect(find.byWidget(element.widget)),
+    ];
+    final double leftGap =
+        tileRects.map((rect) => rect.left).reduce((a, b) => a < b ? a : b) -
+        bounds.left;
+    final double rightGap =
+        bounds.right -
+        tileRects.map((rect) => rect.right).reduce((a, b) => a > b ? a : b);
+    expect(leftGap, closeTo(rightGap, 0.01));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('the rail reaches both screen edges when unconstrained', (
@@ -224,12 +241,10 @@ void main() {
       isNot(contains(HomeAction.trips)),
     );
 
-    final ListView list = tester.widget<ListView>(
+    final Row row = tester.widget<Row>(
       find.byKey(const ValueKey<String>('home-action-bar')),
     );
-    final SliverChildBuilderDelegate delegate =
-        list.childrenDelegate as SliverChildBuilderDelegate;
-    expect(delegate.estimatedChildCount, definitions.length);
+    expect(row.children.length, definitions.length * 2 - 1);
 
     await tester.tap(
       find.byKey(const ValueKey<String>('home-action-hotels')),
@@ -239,40 +254,34 @@ void main() {
     expect(selected, HomeAction.hotels);
   });
 
-  testWidgets('Arabic mirrors the bar and scrolls toward the later cards', (
-    tester,
-  ) async {
+  testWidgets('Arabic keeps the four cards centred in RTL', (tester) async {
     _phoneSize(tester);
     await tester.pumpWidget(
       _app(HomeActionBar(onActionSelected: (_) {}), locale: const Locale('ar')),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('طيران'), findsOneWidget);
-    expect(find.text('إقامات'), findsOneWidget);
-    expect(find.text('الباقات'), findsOneWidget);
     expect(
       Directionality.of(tester.element(find.byType(HomeActionBar))),
       TextDirection.rtl,
     );
-
     final Finder bar = find.byKey(const ValueKey<String>('home-action-bar'));
     final Finder tiles = find.descendant(
       of: find.byType(HomeActionBar),
       matching: find.byType(AnimatedContainer),
     );
-    // RTL starts at the right: Flights is the right-most card.
-    expect(
-      tester.getRect(tiles.at(0)).right,
-      greaterThan(tester.getRect(tiles.at(1)).right),
-    );
-
-    final ScrollableState scrollable = tester.state<ScrollableState>(
-      find.descendant(of: bar, matching: find.byType(Scrollable)),
-    );
-    await tester.drag(bar, const Offset(220, 0));
-    await tester.pumpAndSettle();
-    expect(scrollable.position.pixels, greaterThanOrEqualTo(0));
+    final Rect bounds = tester.getRect(bar);
+    final List<Rect> tileRects = <Rect>[
+      for (final Element element in tester.elementList(tiles))
+        tester.getRect(find.byWidget(element.widget)),
+    ];
+    final double leftGap =
+        tileRects.map((rect) => rect.left).reduce((a, b) => a < b ? a : b) -
+        bounds.left;
+    final double rightGap =
+        bounds.right -
+        tileRects.map((rect) => rect.right).reduce((a, b) => a > b ? a : b);
+    expect(leftGap, closeTo(rightGap, 0.01));
     expect(tester.takeException(), isNull);
   });
 }

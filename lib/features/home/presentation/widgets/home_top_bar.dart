@@ -22,9 +22,9 @@ class HomeTopBar extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        // Reserve space for the 32pt parasol mark, its gap, the wordmark,
-        // notification action and profile avatar on narrow phones.
-        final double wordmarkWidth = (constraints.maxWidth - 150).clamp(
+        // Reserve space for the wordmark, notification action and profile
+        // avatar on narrow phones.
+        final double wordmarkWidth = (constraints.maxWidth - 112).clamp(
           0.0,
           172.0,
         );
@@ -39,31 +39,17 @@ class HomeTopBar extends StatelessWidget {
                 label: 'TokiGo',
                 container: true,
                 child: ExcludeSemantics(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Image.asset(
-                        context.isDark
-                            ? 'assets/icon/app_icon_adaptive_dark_foreground_1024.png'
-                            : 'assets/icon/app_icon_adaptive_foreground_1024.png',
-                        width: 32,
-                        height: 32,
-                        fit: BoxFit.contain,
+                  child: SizedBox(
+                    width: wordmarkWidth,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerStart,
+                      child: AppWordmark(
+                        base: typography.title,
+                        inkColor: context.tokigoColors.textPrimary,
+                        goColor: context.tokigoColors.textPrimary,
                       ),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        width: wordmarkWidth,
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: AlignmentDirectional.centerStart,
-                          child: AppWordmark(
-                            base: typography.title,
-                            inkColor: context.tokigoColors.textPrimary,
-                            goColor: context.tokigoColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),

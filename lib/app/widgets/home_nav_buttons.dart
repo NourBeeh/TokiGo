@@ -131,12 +131,10 @@ class HomeNavButtons extends StatelessWidget {
 
 /// The Home bottom action bar.
 ///
-/// The same [HomeActionTile] cards sit in a horizontal, lazily built
-/// [ListView.builder] directly above the persistent AI composer. The row
-/// extends edge-to-edge — it bleeds off both screen edges like a rail that
-/// comes out of the phone — and there are no edge fades: the rail simply
-/// continues past the screen edge. Card width is fixed so the row extends
-/// naturally when a service is added.
+/// The same [HomeActionTile] cards sit in a single, centred row directly
+/// above the persistent AI composer. The four cards keep equal widths and
+/// equal gaps, with matching outer space on both sides. On narrow screens the
+/// cards shrink evenly rather than overflowing the viewport.
 class HomeActionBar extends StatelessWidget {
   const HomeActionBar({
     super.key,
@@ -146,11 +144,11 @@ class HomeActionBar extends StatelessWidget {
     this.definitions,
   });
 
-  /// Fixed tile width: square with [HomeActionTile.height], matching the
-  /// tile's own proportions.
+  /// Maximum tile width: square with [HomeActionTile.height], matching the
+  /// tile's own proportions. The row may shrink tiles evenly on narrow screens.
   static const double cardWidth = HomeActionTile.height;
 
-  /// Space between two cards.
+  /// Equal space between adjacent cards.
   static const double gap = AppSpacing.sm;
 
   /// The travel context handed to a legacy (non-switching) destination.
@@ -174,28 +172,31 @@ class HomeActionBar extends StatelessWidget {
 
     return SizedBox(
       height: HomeActionTile.height,
-      child: ListView.builder(
-        key: const ValueKey<String>('home-action-bar'),
-        scrollDirection: Axis.horizontal,
-        // Edge-to-edge: the rail starts flush at the screen edge like a strip
-        // that comes out of the phone; tiles scroll off both edges.
-        padding: EdgeInsets.zero,
-        itemCount: items.length,
-        itemBuilder: (BuildContext context, int index) {
-          final HomeActionDefinition definition = items[index];
-          return Padding(
-            padding: EdgeInsetsDirectional.only(
-              end: index == items.length - 1 ? 0 : HomeActionBar.gap,
-            ),
-            child: SizedBox(
-              width: HomeActionBar.cardWidth,
-              child: HomeActionTile(
-                definition: definition,
-                searchContext: searchContext,
-                selected: selectedAction == definition.action,
-                onActionSelected: onActionSelected,
-              ),
-            ),
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final double availableTileWidth =
+              (constraints.maxWidth - HomeActionBar.gap * (items.length - 1)) /
+              items.length;
+          final double tileWidth = availableTileWidth
+              .clamp(0.0, HomeActionBar.cardWidth)
+              .toDouble();
+          return Row(
+            key: const ValueKey<String>('home-action-bar'),
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              for (int index = 0; index < items.length; index++) ...<Widget>[
+                if (index > 0) const SizedBox(width: HomeActionBar.gap),
+                SizedBox(
+                  width: tileWidth,
+                  child: HomeActionTile(
+                    definition: items[index],
+                    searchContext: searchContext,
+                    selected: selectedAction == items[index].action,
+                    onActionSelected: onActionSelected,
+                  ),
+                ),
+              ],
+            ],
           );
         },
       ),
@@ -295,11 +296,21 @@ class _HomeActionTileState extends State<HomeActionTile> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                Icon(
-                  definition.icon,
-                  size: HomeActionTile.iconSize,
-                  color: accent,
-                ),
+                if (definition.action == HomeAction.activities)
+                  Image.asset(
+                    Theme.of(context).brightness == Brightness.dark
+                        ? 'assets/icon/app_icon_adaptive_dark_foreground_1024.png'
+                        : 'assets/icon/app_icon_adaptive_foreground_1024.png',
+                    width: HomeActionTile.iconSize,
+                    height: HomeActionTile.iconSize,
+                    fit: BoxFit.contain,
+                  )
+                else
+                  Icon(
+                    definition.icon,
+                    size: HomeActionTile.iconSize,
+                    color: accent,
+                  ),
                 const SizedBox(height: HomeActionTile.iconLabelGap),
                 Padding(
                   padding: const EdgeInsets.symmetric(

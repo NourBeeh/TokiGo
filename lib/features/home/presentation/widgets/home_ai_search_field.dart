@@ -180,11 +180,8 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           child: Row(
             children: <Widget>[
-              // The spec's leading search glyph, in the Home accent.
-              Icon(Icons.search_rounded, size: 22, color: ink),
-              const SizedBox(width: AppSpacing.sm),
               // The editable field with a static, localized hint. The trailing
-              // send action submits the current query.
+              // search action submits the current query.
               Expanded(
                 child: TextField(
                   key: ValueKey<String>(
@@ -264,11 +261,8 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                     ),
                   ),
                 ),
-                // Send is the composer's primary action. It uses the send glyph
-                // (not a second magnifier) because the job here is to submit the
-                // typed message to the AI, not to open a picker. The fill is the
-                // Home ink — near-black on the light canvas, near-white on the
-                // dark one — with the glyph inverted so it always clears AA.
+                // The magnifier is the composer's primary search action. The fill
+                // is the Home ink, with an inverted glyph for clear contrast.
                 Semantics(
                   button: true,
                   label: l10n.aiSend,
@@ -295,7 +289,7 @@ class _HomeAiSearchFieldState extends State<HomeAiSearchField> {
                             height: 34,
                             child: Center(
                               child: Icon(
-                                Icons.send_rounded,
+                                Icons.search_rounded,
                                 size: 20,
                                 color: ink.computeLuminance() > 0.5
                                     ? Colors.black

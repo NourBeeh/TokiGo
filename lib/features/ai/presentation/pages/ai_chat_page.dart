@@ -499,7 +499,7 @@ class _SendButton extends StatelessWidget {
                 color: enabled ? tc.primary : tc.surfaceTertiary,
               ),
               child: Icon(
-                Icons.send_rounded,
+                Icons.search_rounded,
                 size: 24,
                 color: enabled ? tc.onPrimary : tc.textTertiary,
               ),
