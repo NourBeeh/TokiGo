@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Night launcher icon: black field, white parasol. The light
-         values/colors.xml is #FFFFFF with a black parasol. -->
+    <!-- Night launcher icon: the wordmark is FIXED in both appearances —
+         black field, white "Toki" + brand-red "Go" (same as values/colors.xml). -->
     <color name="ic_launcher_background">#000000</color>
     <!-- Modern Dark canvas (#0B1220), not pure black: the window behind the
          Flutter surface must match the app so a keyboard resize never exposes

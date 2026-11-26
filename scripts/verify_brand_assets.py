@@ -9,11 +9,11 @@ Three checks, cheapest first:
                   dominant red, so the token is checked against the ARTIFACT
                   rather than against a claim.
   red census   — every image in the repo, distinct saturated reds only.
-  mark present — each final icon asset must carry a real white parasol: a
-                  connected white component covering a meaningful share of the
-                  canvas, with no white pixel touching the outer edge (a
-                  clipped mark reads as a missing one). Assets that paint a
-                  background must paint it in the brand red.
+  mark present — each final launcher asset must carry the Home wordmark: a
+                  brand-red "Go" on the right plus a white (or dark, on light
+                  masters) "Toki" on the left, neither clipped by the outer
+                  edge. This is the OUTSIDE icon; the in-app parasol is a
+                  different asset set and is not checked here.
 
 Exit code is non-zero if any check fails.
 """
@@ -37,18 +37,22 @@ EXPECTED_BRAND_RED = (255, 45, 45)  # #FF2D2D, the "Go" of the wordmark
 SKIP_DIRS = {"node_modules", ".git", "build", ".dart_tool", ".gradle"}
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif"}
 
+# (asset, themed-monochrome?) — Android tints the monochrome layer, so its
+# "Go" is white there instead of brand red.
 FINAL_ASSETS = (
-    "assets/icon/app_icon_1024.png",
-    "assets/icon/app_icon_adaptive_foreground_1024.png",
-    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png",
-    "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
-    "android/app/src/main/res/drawable-xxxhdpi/ic_launcher_foreground.png",
-    "android/app/src/main/res/drawable-xxxhdpi/ic_launcher_monochrome.png",
+    ("assets/icon/launcher_wordmark_dark_1024.png", False),
+    ("assets/icon/launcher_wordmark_adaptive_dark_foreground_1024.png", False),
+    ("assets/icon/launcher_wordmark_adaptive_monochrome_1024.png", True),
+    ("ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png", False),
+    ("android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png", False),
+    ("android/app/src/main/res/drawable-xxxhdpi/ic_launcher_foreground.png", False),
+    ("android/app/src/main/res/drawable-xxxhdpi/ic_launcher_monochrome.png", True),
 )
 
-# The parasol must cover at least this share of the canvas to read as the
-# brand mark rather than a speck.
-MIN_MARK_COVERAGE = 0.02
+# Each half must cover at least this share of the canvas to read as a name
+# rather than a speck. The "Go" is shorter than "Toki", hence a lower floor.
+MIN_TOKI_COVERAGE = 0.015
+MIN_GO_COVERAGE = 0.008
 
 
 class Checker:
@@ -124,8 +128,16 @@ def red_census(repo: Path) -> None:
         print(f"  #{r:02X}{g:02X}{b:02X}  x{n}")
 
 
-def white_components(im: Image.Image) -> list[tuple[int, tuple[int, int, int, int]]]:
-    """4-connected white components, largest first: (pixel count, bbox)."""
+def is_dark(pixel) -> bool:
+    r, g, b = pixel[:3]
+    a = pixel[3] if len(pixel) > 3 else 255
+    return a > 200 and r < 60 and g < 60 and b < 60
+
+
+def ink_components(
+    im: Image.Image, predicate
+) -> list[tuple[int, tuple[int, int, int, int]]]:
+    """4-connected components matching `predicate`, largest first."""
     im = im.convert("RGBA")
     w, h = im.size
     px = im.load()
@@ -133,7 +145,7 @@ def white_components(im: Image.Image) -> list[tuple[int, tuple[int, int, int, in
     components: list[tuple[int, tuple[int, int, int, int]]] = []
     for y in range(h):
         for x in range(w):
-            if not is_white(px[x, y]) or seen[y][x]:
+            if not predicate(px[x, y]) or seen[y][x]:
                 continue
             queue = deque([(x, y)])
             seen[y][x] = True
@@ -152,7 +164,7 @@ def white_components(im: Image.Image) -> list[tuple[int, tuple[int, int, int, in
                     if (
                         0 <= nx < w
                         and 0 <= ny < h
-                        and is_white(px[nx, ny])
+                        and predicate(px[nx, ny])
                         and not seen[ny][nx]
                     ):
                         seen[ny][nx] = True
@@ -162,13 +174,13 @@ def white_components(im: Image.Image) -> list[tuple[int, tuple[int, int, int, in
     return components
 
 
-def edge_white(im: Image.Image) -> int:
+def edge_ink(im: Image.Image, predicate) -> int:
     im = im.convert("RGBA")
     w, h = im.size
     px = im.load()
     return (
-        sum(1 for x in range(w) if is_white(px[x, 0]) or is_white(px[x, h - 1]))
-        + sum(1 for y in range(h) if is_white(px[0, y]) or is_white(px[w - 1, y]))
+        sum(1 for x in range(w) if predicate(px[x, 0]) or predicate(px[x, h - 1]))
+        + sum(1 for y in range(h) if predicate(px[0, y]) or predicate(px[w - 1, y]))
     )
 
 
@@ -187,45 +199,65 @@ def dominant_red(im: Image.Image) -> tuple[int, int, int] | None:
     return counts.most_common(1)[0][0] if counts else None
 
 
-def check_asset(path: Path, checker: Checker) -> None:
+def check_asset(path: Path, checker: Checker, *, mono: bool = False) -> None:
     if not path.exists():
         checker.fail(f"{path}: missing")
         return
-    im = Image.open(path)
+    im = Image.open(path).convert("RGBA")
     label = f"{path} ({im.size[0]}x{im.size[1]})"
+    w, h = im.size
+    total = w * h
 
-    components = white_components(im)
-    if not components:
-        checker.fail(f"{label}: no white parasol found")
+    if mono:
+        # Android 13+ tints the whole layer, so the "Go" is white too.
+        white = sum(n for n, _ in ink_components(im, is_white))
+        coverage = white / total
+        if coverage < MIN_TOKI_COVERAGE:
+            checker.fail(f"{label}: monochrome wordmark covers only {coverage:.1%}")
+            return
+        edge = edge_ink(im, is_white)
+        if edge:
+            checker.fail(f"{label}: {edge} white pixels touch the outer edge (clipped)")
+            return
+        print(f"  OK {label}: monochrome wordmark covers {coverage:.1%}")
         return
-    area, (min_x, min_y, max_x, max_y) = components[0]
-    coverage = area / (im.size[0] * im.size[1])
-    if coverage < MIN_MARK_COVERAGE:
+
+    # A light master paints a white field, so its "Toki" is the dark ink;
+    # every launcher master in use is the dark one (white "Toki" on black or
+    # on transparency).
+    toki_pred = is_dark if is_white(im.getpixel((0, 0))) else is_white
+    toki_parts = ink_components(im, toki_pred)
+    go_parts = ink_components(im, is_red)
+    toki_ink = sum(n for n, box in toki_parts if (box[0] + box[2]) / 2 < w / 2)
+    go_ink = sum(n for n, box in go_parts if (box[0] + box[2]) / 2 >= w / 2)
+    if toki_ink / total < MIN_TOKI_COVERAGE:
         checker.fail(
-            f"{label}: the white mark covers only {coverage:.1%} of the canvas "
-            f"(minimum {MIN_MARK_COVERAGE:.0%})"
+            f"{label}: the 'Toki' half covers only {toki_ink / total:.1%} "
+            f"(minimum {MIN_TOKI_COVERAGE:.0%})"
         )
         return
-
-    edge = edge_white(im)
+    if go_ink / total < MIN_GO_COVERAGE:
+        checker.fail(
+            f"{label}: the brand-red 'Go' half covers only {go_ink / total:.1%} "
+            f"(minimum {MIN_GO_COVERAGE:.0%})"
+        )
+        return
+    edge = edge_ink(im, toki_pred) + edge_ink(im, is_red)
     if edge:
-        checker.fail(f"{label}: {edge} white pixels touch the outer edge (clipped)")
+        checker.fail(f"{label}: {edge} mark pixels touch the outer edge (clipped)")
         return
 
-    # A painted background must be the brand red, not a near-miss.
     red = dominant_red(im)
     if red is not None and red != EXPECTED_BRAND_RED:
         checker.fail(
-            f"{label}: background red is "
-            f"#{red[0]:02X}{red[1]:02X}{red[2]:02X}, expected "
-            f"#{EXPECTED_BRAND_RED[0]:02X}{EXPECTED_BRAND_RED[1]:02X}"
-            f"{EXPECTED_BRAND_RED[2]:02X}"
+            f"{label}: wordmark red is #{red[0]:02X}{red[1]:02X}{red[2]:02X}, "
+            f"expected #{EXPECTED_BRAND_RED[0]:02X}"
+            f"{EXPECTED_BRAND_RED[1]:02X}{EXPECTED_BRAND_RED[2]:02X}"
         )
         return
 
     print(
-        f"  OK {label}: parasol covers {coverage:.1%}, "
-        f"bbox {max_x - min_x}x{max_y - min_y} at ({min_x},{min_y})"
+        f"  OK {label}: Toki {toki_ink / total:.1%} + Go {go_ink / total:.1%}"
     )
 
 
@@ -272,8 +304,8 @@ def main() -> int:
 
     print()
     print("final assets:")
-    for asset in FINAL_ASSETS:
-        check_asset(args.repo / asset, checker)
+    for asset, mono in FINAL_ASSETS:
+        check_asset(args.repo / asset, checker, mono=mono)
 
     if args.apk:
         print()

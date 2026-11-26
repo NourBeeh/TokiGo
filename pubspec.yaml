@@ -84,19 +84,19 @@ flutter_launcher_icons:
   ios: true
   # iOS masks the icon itself: the master must be a full-bleed opaque square.
   remove_alpha_ios: true
-  # Owner decision (2026-11): the DARK mark (black field, white parasol) is the
-  # FIXED launcher icon — it is generated for BOTH appearances, so the icon
-  # never changes with the system mode. The light masters stay in assets/icon/
-  # as the brand source, but they are no longer the default.
-  image_path: assets/icon/app_icon_dark_1024.png
+  # Owner decision (2026-11): the OUTSIDE icon is the TokiGo wordmark — like
+  # the Home header — not the in-app parasol. The dark master (black field,
+  # white "Toki", red "Go") is FIXED for BOTH appearances. The in-app parasol
+  # assets in assets/icon/app_icon_* stay untouched for Home, AI and splash.
+  image_path: assets/icon/launcher_wordmark_dark_1024.png
   # iOS 18 dark appearance: transparent master, iOS supplies the dark field.
-  image_path_ios_dark_transparent: assets/icon/app_icon_ios_dark_1024.png
+  image_path_ios_dark_transparent: assets/icon/launcher_wordmark_ios_dark_1024.png
   adaptive_icon_background: "#000000"
-  # The foreground master is already drawn inside the 66% safe zone, so the
-  # default 16% inset would shrink the parasol twice.
+  # The wordmark is already drawn inside the 66% safe zone, so the default 16%
+  # inset would shrink it twice.
   adaptive_icon_foreground_inset: 0
-  adaptive_icon_foreground: assets/icon/app_icon_adaptive_dark_foreground_1024.png
-  adaptive_icon_monochrome: assets/icon/app_icon_adaptive_monochrome_1024.png
+  adaptive_icon_foreground: assets/icon/launcher_wordmark_adaptive_dark_foreground_1024.png
+  adaptive_icon_monochrome: assets/icon/launcher_wordmark_adaptive_monochrome_1024.png
 
 # The splash shows the app icon with the wordmark below it. The composed
 # masters are rendered by tool/branding/generate_splash.py from the app icon

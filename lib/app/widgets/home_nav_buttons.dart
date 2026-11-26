@@ -114,7 +114,7 @@ class HomeNavButtons extends StatelessWidget {
     return Row(
       children: <Widget>[
         for (int i = 0; i < items.length; i++) ...<Widget>[
-          if (i > 0) const SizedBox(width: AppSpacing.sm),
+          if (i > 0) const SizedBox(width: AppSpacing.lg),
           Expanded(
             child: HomeActionTile(
               definition: items[i],
@@ -149,7 +149,7 @@ class HomeActionBar extends StatelessWidget {
   static const double cardWidth = HomeActionTile.height;
 
   /// Equal space between adjacent cards.
-  static const double gap = AppSpacing.sm;
+  static const double gap = AppSpacing.lg;
 
   /// The travel context handed to a legacy (non-switching) destination.
   final SearchContext? searchContext;
@@ -224,6 +224,12 @@ class HomeActionTile extends StatefulWidget {
   /// Glyph size — the 24px step on the icon scale.
   static const double iconSize = 24;
 
+  /// Every tile reserves the same glyph slot. The parasol asset is drawn at
+  /// 36dp because its adaptive safe-zone padding is transparent; Material
+  /// glyphs keep their 24dp size and sit on the slot's baseline so all four
+  /// labels share one row.
+  static const double iconSlotHeight = iconSize * 1.5;
+
   /// Gap between the glyph and its label.
   static const double iconLabelGap = AppSpacing.xs;
 
@@ -296,21 +302,31 @@ class _HomeActionTileState extends State<HomeActionTile> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                if (definition.action == HomeAction.activities)
-                  Image.asset(
-                    Theme.of(context).brightness == Brightness.dark
-                        ? 'assets/icon/app_icon_adaptive_dark_foreground_1024.png'
-                        : 'assets/icon/app_icon_adaptive_foreground_1024.png',
-                    width: HomeActionTile.iconSize,
-                    height: HomeActionTile.iconSize,
-                    fit: BoxFit.contain,
-                  )
-                else
-                  Icon(
-                    definition.icon,
-                    size: HomeActionTile.iconSize,
-                    color: accent,
-                  ),
+                SizedBox(
+                  height: HomeActionTile.iconSlotHeight,
+                  child: definition.action == HomeAction.activities
+                      ? Image.asset(
+                          Theme.of(context).brightness == Brightness.dark
+                              ? 'assets/icon/app_icon_adaptive_dark_foreground_1024.png'
+                              : 'assets/icon/app_icon_adaptive_foreground_1024.png',
+                          // The adaptive foreground has transparent safe-zone
+                          // padding; 36dp gives the umbrella the same visible
+                          // size as the 24dp Material glyphs beside it.
+                          width: HomeActionTile.iconSlotHeight,
+                          height: HomeActionTile.iconSlotHeight,
+                          fit: BoxFit.contain,
+                        )
+                      : Align(
+                          // Bottom-align the shorter Material glyph with the
+                          // parasol's baseline: the labels then share a row.
+                          alignment: Alignment.bottomCenter,
+                          child: Icon(
+                            definition.icon,
+                            size: HomeActionTile.iconSize,
+                            color: accent,
+                          ),
+                        ),
+                ),
                 const SizedBox(height: HomeActionTile.iconLabelGap),
                 Padding(
                   padding: const EdgeInsets.symmetric(

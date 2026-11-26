@@ -55,10 +55,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       title: l10n.onboardingHeroTitle,
       body: l10n.onboardingHeroBody,
       icons: const <IconData>[
-        Icons.flight_takeoff_rounded,
-        Icons.house_rounded,
+        Icons.flight_rounded,
+        Icons.home_rounded,
         Icons.directions_car_rounded,
-        Icons.card_travel_rounded,
+        Icons.beach_access_rounded,
       ],
     ),
     _Slide(
@@ -345,6 +345,11 @@ class _BrandComposition extends StatelessWidget {
     if (icons.length == 1) {
       return _ServicePlate(icon: icons.single, size: 128);
     }
+    // The parasol is an in-app mark: light plate -> black asset, dark plate ->
+    // white asset, exactly as the Home nav tile does.
+    final String parasol = Theme.of(context).brightness == Brightness.dark
+        ? 'assets/icon/app_icon_adaptive_dark_foreground_1024.png'
+        : 'assets/icon/app_icon_adaptive_foreground_1024.png';
     return Column(
       children: <Widget>[
         Row(
@@ -352,7 +357,11 @@ class _BrandComposition extends StatelessWidget {
           children: <Widget>[
             for (int i = 0; i < icons.length; i++) ...<Widget>[
               if (i > 0) const SizedBox(width: AppSpacing.sm),
-              _ServicePlate(icon: icons[i], size: 56),
+              _ServicePlate(
+                icon: icons[i],
+                size: 56,
+                assetPath: i == 3 ? parasol : null,
+              ),
             ],
           ],
         ),
@@ -367,10 +376,11 @@ class _BrandComposition extends StatelessWidget {
 /// of the Home nav tiles, so the first screen a user ever sees already speaks
 /// the app's surface language.
 class _ServicePlate extends StatelessWidget {
-  const _ServicePlate({required this.icon, required this.size});
+  const _ServicePlate({required this.icon, required this.size, this.assetPath});
 
   final IconData icon;
   final double size;
+  final String? assetPath;
 
   @override
   Widget build(BuildContext context) {
@@ -392,11 +402,18 @@ class _ServicePlate extends StatelessWidget {
           ),
         ],
       ),
-      child: Icon(
-        icon,
-        size: size > 100 ? 56 : 26,
-        color: context.tokigoColors.brand,
-      ),
+      child: assetPath == null
+          ? Icon(
+              icon,
+              size: size > 100 ? 56 : 26,
+              color: context.tokigoColors.brand,
+            )
+          : Image.asset(
+              assetPath!,
+              width: size > 100 ? 84 : 40,
+              height: size > 100 ? 84 : 40,
+              fit: BoxFit.contain,
+            ),
     );
   }
 }

@@ -33,7 +33,7 @@ const resvg = new Resvg(svg, {
   fitTo: { mode: 'width', value: Number(sizeArg) },
   background: 'rgba(0,0,0,0)',
 });
-const png = resvg.render().asPng();
+const rendered = resvg.render();
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
-fs.writeFileSync(outPath, png);
-console.log(`rendered ${outPath} (${resvg.width}x${resvg.height})`);
+fs.writeFileSync(outPath, rendered.asPng());
+console.log(`rendered ${outPath} (${rendered.width}x${rendered.height})`);

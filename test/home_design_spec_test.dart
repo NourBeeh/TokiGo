@@ -187,7 +187,7 @@ void main() {
             )
             .first;
         if (i == 3) {
-          expect(tester.widget<Image>(glyph).width, 24);
+          expect(tester.widget<Image>(glyph).width, 36);
         } else {
           final Icon icon = tester.widget<Icon>(glyph);
           expect(icon.icon, icons[i]);
