@@ -6,7 +6,7 @@ wordmark launcher icon in both appearances, so the night set is an exact copy of
 the light set rather than a second resize (a different resampler would leave
 one-pixel differences on the letter edges):
 
-  mipmap-night-*/ic_launcher.png              black field, white "Toki" + red "Go"
+  mipmap-night-*/ic_launcher.png              black field, white TokiGo wordmark
   drawable-night-*/ic_launcher_foreground.png transparent, same wordmark
 
 `values-night/colors.xml` also has to override `ic_launcher_background` with

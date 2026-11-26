@@ -84,10 +84,11 @@ flutter_launcher_icons:
   ios: true
   # iOS masks the icon itself: the master must be a full-bleed opaque square.
   remove_alpha_ios: true
-  # Owner decision (2026-11): the OUTSIDE icon is the TokiGo wordmark — like
-  # the Home header — not the in-app parasol. The dark master (black field,
-  # white "Toki", red "Go") is FIXED for BOTH appearances. The in-app parasol
-  # assets in assets/icon/app_icon_* stay untouched for Home, AI and splash.
+  # Owner decision (2026-11): the OUTSIDE icon is the TokiGo wordmark — the
+  # Home header's letterforms in one colour, not the in-app parasol. The dark
+  # master (black field, white TokiGo, no red) is FIXED for BOTH appearances.
+  # The in-app parasol assets in assets/icon/app_icon_* stay untouched for
+  # Home, AI and splash.
   image_path: assets/icon/launcher_wordmark_dark_1024.png
   # iOS 18 dark appearance: transparent master, iOS supplies the dark field.
   image_path_ios_dark_transparent: assets/icon/launcher_wordmark_ios_dark_1024.png

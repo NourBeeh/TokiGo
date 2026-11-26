@@ -129,8 +129,9 @@ general decoration. There is no dark theme.
   color, and AI controls. Pressed actions deepen to **Black — `#000000`**.
 - **Charcoal — `#141414`:** pinned CTA bars and dark action surfaces; pair
   with white primary content and muted secondary copy.
-- **Wordmark Red — `#FF2D2D`:** only the “Go” part of the TokiGo wordmark.
-  Do not use it as a general CTA or page accent.
+- **Wordmark Red — `#FF2D2D`:** only the “Go” part of the in-app TokiGo
+  wordmark. The launcher icon uses one white wordmark with no red. Do not use
+  it as a general CTA or page accent.
 - **Mood accents —** Shopping `#A75F32`, Beach `#168392`, Snow `#527B9B`,
   Nature `#60866B`, and City `#67559A`. Keep these local to mood identity
   and mood-specific content; global service navigation remains monochrome.
@@ -298,8 +299,8 @@ provider-backed facts, and no decorative color in the global navigation.
 Use **Paper White `#FFFFFF`** for the canvas, **Action Ink `#111111`** for
 primary controls, **Primary Ink `#1A1A1A`** for content, and **Secondary Grey
 `#6E6E6E`** for supporting copy. Reserve **Wordmark Red `#FF2D2D`** for the
-logo; apply semantic colors only to their status meanings and mood hues only
-to mood identity.
+in-app logo only (not the launcher icon); apply semantic colors only to their
+status meanings and mood hues only to mood identity.
 
 ### Component Prompts
 

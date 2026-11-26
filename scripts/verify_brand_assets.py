@@ -5,15 +5,15 @@ Three checks, cheapest first:
   python scripts/verify_brand_assets.py
   python scripts/verify_brand_assets.py --apk build/app/outputs/flutter-apk/app-debug.apk
 
-1. brand red   — samples the pixels of the wordmark's "Go" and prints the
-                  dominant red, so the token is checked against the ARTIFACT
-                  rather than against a claim.
+1. brand red   — samples the Home wordmark's "Go" and prints the dominant red,
+                  so the in-app token is checked against the ARTIFACT rather
+                  than against a claim.
   red census   — every image in the repo, distinct saturated reds only.
-  mark present — each final launcher asset must carry the Home wordmark: a
-                  brand-red "Go" on the right plus a white (or dark, on light
-                  masters) "Toki" on the left, neither clipped by the outer
-                  edge. This is the OUTSIDE icon; the in-app parasol is a
-                  different asset set and is not checked here.
+  mark present — each final launcher asset must carry the TokiGo wordmark in a
+                  single ink colour: a white "Toki" on the left and a white
+                  "Go" on the right, neither clipped by the outer edge. The
+                  launcher has NO brand red; the Home header keeps its red
+                  "Go", and the in-app parasol is a different asset set.
 
 Exit code is non-zero if any check fails.
 """
@@ -37,16 +37,14 @@ EXPECTED_BRAND_RED = (255, 45, 45)  # #FF2D2D, the "Go" of the wordmark
 SKIP_DIRS = {"node_modules", ".git", "build", ".dart_tool", ".gradle"}
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif"}
 
-# (asset, themed-monochrome?) — Android tints the monochrome layer, so its
-# "Go" is white there instead of brand red.
 FINAL_ASSETS = (
-    ("assets/icon/launcher_wordmark_dark_1024.png", False),
-    ("assets/icon/launcher_wordmark_adaptive_dark_foreground_1024.png", False),
-    ("assets/icon/launcher_wordmark_adaptive_monochrome_1024.png", True),
-    ("ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png", False),
-    ("android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png", False),
-    ("android/app/src/main/res/drawable-xxxhdpi/ic_launcher_foreground.png", False),
-    ("android/app/src/main/res/drawable-xxxhdpi/ic_launcher_monochrome.png", True),
+    "assets/icon/launcher_wordmark_dark_1024.png",
+    "assets/icon/launcher_wordmark_adaptive_dark_foreground_1024.png",
+    "assets/icon/launcher_wordmark_adaptive_monochrome_1024.png",
+    "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png",
+    "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+    "android/app/src/main/res/drawable-xxxhdpi/ic_launcher_foreground.png",
+    "android/app/src/main/res/drawable-xxxhdpi/ic_launcher_monochrome.png",
 )
 
 # Each half must cover at least this share of the canvas to read as a name
@@ -128,12 +126,6 @@ def red_census(repo: Path) -> None:
         print(f"  #{r:02X}{g:02X}{b:02X}  x{n}")
 
 
-def is_dark(pixel) -> bool:
-    r, g, b = pixel[:3]
-    a = pixel[3] if len(pixel) > 3 else 255
-    return a > 200 and r < 60 and g < 60 and b < 60
-
-
 def ink_components(
     im: Image.Image, predicate
 ) -> list[tuple[int, tuple[int, int, int, int]]]:
@@ -184,22 +176,7 @@ def edge_ink(im: Image.Image, predicate) -> int:
     )
 
 
-def dominant_red(im: Image.Image) -> tuple[int, int, int] | None:
-    """Most common saturated red in the image, if any."""
-    im = im.convert("RGBA")
-    im.thumbnail((512, 512))
-    px = im.load()
-    w, h = im.size
-    counts: Counter = Counter()
-    for y in range(h):
-        for x in range(w):
-            pixel = px[x, y]
-            if is_red(pixel):
-                counts[pixel[:3]] += 1
-    return counts.most_common(1)[0][0] if counts else None
-
-
-def check_asset(path: Path, checker: Checker, *, mono: bool = False) -> None:
+def check_asset(path: Path, checker: Checker) -> None:
     if not path.exists():
         checker.fail(f"{path}: missing")
         return
@@ -208,28 +185,11 @@ def check_asset(path: Path, checker: Checker, *, mono: bool = False) -> None:
     w, h = im.size
     total = w * h
 
-    if mono:
-        # Android 13+ tints the whole layer, so the "Go" is white too.
-        white = sum(n for n, _ in ink_components(im, is_white))
-        coverage = white / total
-        if coverage < MIN_TOKI_COVERAGE:
-            checker.fail(f"{label}: monochrome wordmark covers only {coverage:.1%}")
-            return
-        edge = edge_ink(im, is_white)
-        if edge:
-            checker.fail(f"{label}: {edge} white pixels touch the outer edge (clipped)")
-            return
-        print(f"  OK {label}: monochrome wordmark covers {coverage:.1%}")
-        return
-
-    # A light master paints a white field, so its "Toki" is the dark ink;
-    # every launcher master in use is the dark one (white "Toki" on black or
-    # on transparency).
-    toki_pred = is_dark if is_white(im.getpixel((0, 0))) else is_white
-    toki_parts = ink_components(im, toki_pred)
-    go_parts = ink_components(im, is_red)
-    toki_ink = sum(n for n, box in toki_parts if (box[0] + box[2]) / 2 < w / 2)
-    go_ink = sum(n for n, box in go_parts if (box[0] + box[2]) / 2 >= w / 2)
+    # Every launcher master in use is light ink: white on black, white on
+    # transparency, or the all-white themed layer. Both halves share it.
+    parts = ink_components(im, is_white)
+    toki_ink = sum(n for n, box in parts if (box[0] + box[2]) / 2 < w / 2)
+    go_ink = sum(n for n, box in parts if (box[0] + box[2]) / 2 >= w / 2)
     if toki_ink / total < MIN_TOKI_COVERAGE:
         checker.fail(
             f"{label}: the 'Toki' half covers only {toki_ink / total:.1%} "
@@ -238,26 +198,27 @@ def check_asset(path: Path, checker: Checker, *, mono: bool = False) -> None:
         return
     if go_ink / total < MIN_GO_COVERAGE:
         checker.fail(
-            f"{label}: the brand-red 'Go' half covers only {go_ink / total:.1%} "
+            f"{label}: the 'Go' half covers only {go_ink / total:.1%} "
             f"(minimum {MIN_GO_COVERAGE:.0%})"
         )
         return
-    edge = edge_ink(im, toki_pred) + edge_ink(im, is_red)
+
+    edge = edge_ink(im, is_white)
     if edge:
-        checker.fail(f"{label}: {edge} mark pixels touch the outer edge (clipped)")
+        checker.fail(f"{label}: {edge} white pixels touch the outer edge (clipped)")
         return
 
-    red = dominant_red(im)
-    if red is not None and red != EXPECTED_BRAND_RED:
-        checker.fail(
-            f"{label}: wordmark red is #{red[0]:02X}{red[1]:02X}{red[2]:02X}, "
-            f"expected #{EXPECTED_BRAND_RED[0]:02X}"
-            f"{EXPECTED_BRAND_RED[1]:02X}{EXPECTED_BRAND_RED[2]:02X}"
-        )
+    px = im.load()
+    red = sum(
+        1 for y in range(h) for x in range(w) if is_red(px[x, y])
+    )
+    if red:
+        checker.fail(f"{label}: {red} brand-red pixels remain in the launcher icon")
         return
 
     print(
-        f"  OK {label}: Toki {toki_ink / total:.1%} + Go {go_ink / total:.1%}"
+        f"  OK {label}: white Toki {toki_ink / total:.1%} + "
+        f"Go {go_ink / total:.1%}, no red"
     )
 
 
@@ -285,7 +246,7 @@ def main() -> int:
 
     checker = Checker()
 
-    print("brand red (sampled from the wordmark's 'Go'):")
+    print("brand red (Home wordmark's 'Go' - the launcher has none):")
     sampled = brand_red(args.repo / "assets/branding/logo_wordmark.png")
     if sampled is None:
         checker.fail("assets/branding/logo_wordmark.png: no red pixels found")
@@ -304,8 +265,8 @@ def main() -> int:
 
     print()
     print("final assets:")
-    for asset, mono in FINAL_ASSETS:
-        check_asset(args.repo / asset, checker, mono=mono)
+    for asset in FINAL_ASSETS:
+        check_asset(args.repo / asset, checker)
 
     if args.apk:
         print()
