@@ -75,6 +75,56 @@ List<HomeActionDefinition> homeActionDefinitions(AppLocalizations l10n) {
   ];
 }
 
+/// The one glyph recipe shared by every Home service surface.
+///
+/// The parasol is an in-app asset with transparent adaptive safe-zone padding;
+/// drawing it at [HomeActionTile.iconSlotHeight] makes its visible mark match
+/// the 24dp Material icons beside it. Material glyphs share the slot's baseline
+/// so labels on a row of four tiles stay aligned.
+///
+/// Onboarding renders this same widget from [homeActionDefinitions], so the
+/// first screen a traveller sees cannot drift from the Home buttons.
+class HomeActionGlyph extends StatelessWidget {
+  const HomeActionGlyph({
+    super.key,
+    required this.definition,
+    required this.color,
+    this.slotHeight = HomeActionTile.iconSlotHeight,
+    this.glyphSize = HomeActionTile.iconSize,
+  });
+
+  /// Parasol asset used by the Activities/Packages service, by brightness.
+  static String parasolAsset(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? 'assets/icon/app_icon_adaptive_dark_foreground_1024.png'
+      : 'assets/icon/app_icon_adaptive_foreground_1024.png';
+
+  final HomeActionDefinition definition;
+  final Color color;
+  final double slotHeight;
+  final double glyphSize;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: slotHeight,
+      child: definition.action == HomeAction.activities
+          ? Image.asset(
+              parasolAsset(context),
+              width: slotHeight,
+              height: slotHeight,
+              fit: BoxFit.contain,
+            )
+          : Align(
+              // Bottom-align the shorter Material glyph with the parasol's
+              // baseline: labels then share one row.
+              alignment: Alignment.bottomCenter,
+              child: Icon(definition.icon, size: glyphSize, color: color),
+            ),
+    );
+  }
+}
+
 /// Home shortcuts for travel services — the owner's spec: a horizontal row of
 /// equal white tiles (Flights, Stays, Cars, Packages), each a 68dp white tile
 /// with 18dp corners ([AppRadius.lg]), a hairline border, a 24px accent glyph
@@ -302,31 +352,7 @@ class _HomeActionTileState extends State<HomeActionTile> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                SizedBox(
-                  height: HomeActionTile.iconSlotHeight,
-                  child: definition.action == HomeAction.activities
-                      ? Image.asset(
-                          Theme.of(context).brightness == Brightness.dark
-                              ? 'assets/icon/app_icon_adaptive_dark_foreground_1024.png'
-                              : 'assets/icon/app_icon_adaptive_foreground_1024.png',
-                          // The adaptive foreground has transparent safe-zone
-                          // padding; 36dp gives the umbrella the same visible
-                          // size as the 24dp Material glyphs beside it.
-                          width: HomeActionTile.iconSlotHeight,
-                          height: HomeActionTile.iconSlotHeight,
-                          fit: BoxFit.contain,
-                        )
-                      : Align(
-                          // Bottom-align the shorter Material glyph with the
-                          // parasol's baseline: the labels then share a row.
-                          alignment: Alignment.bottomCenter,
-                          child: Icon(
-                            definition.icon,
-                            size: HomeActionTile.iconSize,
-                            color: accent,
-                          ),
-                        ),
-                ),
+                HomeActionGlyph(definition: definition, color: accent),
                 const SizedBox(height: HomeActionTile.iconLabelGap),
                 Padding(
                   padding: const EdgeInsets.symmetric(

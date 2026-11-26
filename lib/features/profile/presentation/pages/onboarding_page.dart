@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:tokigo/app/widgets/home_nav_buttons.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
+import 'package:tokigo/features/home/presentation/home_design_tokens.dart';
 import 'package:tokigo/core/theme/app_radius.dart';
 import 'package:tokigo/core/theme/app_spacing.dart';
 import 'package:tokigo/core/theme/app_typography.dart';
@@ -20,10 +22,12 @@ import 'package:tokigo/core/ui/directional_icons.dart';
 ///
 /// **No photography, by owner decision (2026-10-18):** the app never shows a
 /// fabricated image, so the welcome is a brand composition instead of the
-/// reference's destination photo — the TokiGo wordmark over the four service
-/// plates that already speak the Home identity (a white hairline plate, one
-/// neutral shadow, one brand-blue glyph). Nothing here pretends to be
-/// inventory: it is the product explaining itself.
+/// reference's destination photo — the TokiGo wordmark over the SAME four
+/// service buttons as Home, built from [homeActionDefinitions] and
+/// [HomeActionGlyph]. Their 68dp tiles, 16dp gaps and glyph recipe come from
+/// Home's action bar, so the first screen a traveller sees cannot drift from
+/// the buttons inside the app. Nothing here pretends to be inventory: it is
+/// the product explaining itself.
 ///
 /// The reference copy is honoured where it maps onto a real flow: "Get started"
 /// advances the intro, and "Already have an account? Log in" opens the EXISTING
@@ -54,12 +58,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     _Slide(
       title: l10n.onboardingHeroTitle,
       body: l10n.onboardingHeroBody,
-      icons: const <IconData>[
-        Icons.flight_rounded,
-        Icons.home_rounded,
-        Icons.directions_car_rounded,
-        Icons.beach_access_rounded,
-      ],
+      // One source of truth: these are the exact definitions Home renders.
+      actions: homeActionDefinitions(l10n),
     ),
     _Slide(
       title: l10n.onboardingAiTitle,
@@ -297,7 +297,7 @@ class _SlideView extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  _BrandComposition(icons: slide.icons),
+                  _BrandComposition(actions: slide.actions, icons: slide.icons),
                   const SizedBox(height: AppSpacing.xl),
                   // Doc 22 §3.2 — the title is `display` 36/800, the body
                   // `body` 15/400, both centred.
@@ -333,86 +333,130 @@ class _SlideView extends StatelessWidget {
 /// The intro's visual language: the app's own service plates, never a
 /// photograph.
 ///
-/// The hero carries the four verticals (in the Home nav strip's tile recipe)
-/// over the wordmark; a value slide carries one plate for its single idea.
+/// The hero reuses Home's action definitions, [HomeActionBar.gap] and
+/// [HomeActionTile.height] so its four buttons are literally the same size,
+/// spacing and glyphs as the buttons inside the app. Value slides keep the
+/// same plate recipe for their single idea.
 class _BrandComposition extends StatelessWidget {
-  const _BrandComposition({required this.icons});
+  const _BrandComposition({required this.actions, required this.icons});
 
+  /// Home's four service definitions — empty on the value slides.
+  final List<HomeActionDefinition> actions;
+
+  /// Standalone glyphs for the AI, bag and permission slides.
   final List<IconData> icons;
 
   @override
   Widget build(BuildContext context) {
+    if (actions.isNotEmpty) {
+      return Column(
+        children: <Widget>[
+          _HomeServiceRow(actions: actions),
+          const SizedBox(height: AppSpacing.xl),
+          AppWordmark(base: AppTypography.forLight().display),
+        ],
+      );
+    }
     if (icons.length == 1) {
       return _ServicePlate(icon: icons.single, size: 128);
     }
-    // The parasol is an in-app mark: light plate -> black asset, dark plate ->
-    // white asset, exactly as the Home nav tile does.
-    final String parasol = Theme.of(context).brightness == Brightness.dark
-        ? 'assets/icon/app_icon_adaptive_dark_foreground_1024.png'
-        : 'assets/icon/app_icon_adaptive_foreground_1024.png';
-    return Column(
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            for (int i = 0; i < icons.length; i++) ...<Widget>[
-              if (i > 0) const SizedBox(width: AppSpacing.sm),
-              _ServicePlate(
-                icon: icons[i],
-                size: 56,
-                assetPath: i == 3 ? parasol : null,
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: AppSpacing.xl),
-        AppWordmark(base: AppTypography.forLight().display),
+        for (int i = 0; i < icons.length; i++) ...<Widget>[
+          if (i > 0) const SizedBox(width: HomeActionBar.gap),
+          _ServicePlate(icon: icons[i], size: HomeActionTile.height),
+        ],
       ],
     );
   }
 }
 
-/// A white hairline plate holding a brand-blue rounded glyph — the exact recipe
-/// of the Home nav tiles, so the first screen a user ever sees already speaks
-/// the app's surface language.
-class _ServicePlate extends StatelessWidget {
-  const _ServicePlate({required this.icon, required this.size, this.assetPath});
+/// The first screen's four-up, using Home's exact tile geometry: 68dp squares
+/// capped at [HomeActionTile.height], separated by [HomeActionBar.gap]. Narrow
+/// phones shrink the tiles evenly instead of clipping; wider ones centre the
+/// 320dp strip (4 × 68 + 3 × 16).
+class _HomeServiceRow extends StatelessWidget {
+  const _HomeServiceRow({required this.actions});
 
-  final IconData icon;
-  final double size;
-  final String? assetPath;
+  final List<HomeActionDefinition> actions;
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double gap = HomeActionBar.gap;
+        final double tileWidth =
+            ((constraints.maxWidth - gap * (actions.length - 1)) /
+                    actions.length)
+                .clamp(0.0, HomeActionTile.height)
+                .toDouble();
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            for (int i = 0; i < actions.length; i++) ...<Widget>[
+              if (i > 0) SizedBox(width: gap),
+              _ServicePlate(
+                key: ValueKey<String>(
+                  'onboarding-service-${actions[i].action.id}',
+                ),
+                definition: actions[i],
+                size: tileWidth,
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// A flat hairline plate holding the same glyph Home renders.
+///
+/// [HomeActionGlyph] owns the parasol asset and the Material icon sizes, so
+/// onboarding cannot fall back to a stale copy of the service icons.
+class _ServicePlate extends StatelessWidget {
+  const _ServicePlate({
+    super.key,
+    this.icon,
+    this.definition,
+    required this.size,
+  });
+
+  final IconData? icon;
+  final HomeActionDefinition? definition;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool large = size > 100;
     return Container(
+      key: key,
       width: size,
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: context.tokigoColors.surface,
-        borderRadius: BorderRadius.circular(
-          size > 100 ? AppRadius.xl : AppRadius.lg,
-        ),
-        border: Border.all(color: context.tokigoColors.hairline),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: context.tokigoColors.textPrimary.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: HomeDesignTokens.surfaceOf(context),
+        borderRadius: large ? AppRadius.xlBorder : AppRadius.lgBorder,
+        border: Border.all(color: HomeDesignTokens.borderOf(context)),
+        // Home's quick-action tiles are flat; no second shadow language here.
+        boxShadow: const <BoxShadow>[],
       ),
-      child: assetPath == null
-          ? Icon(
-              icon,
-              size: size > 100 ? 56 : 26,
-              color: context.tokigoColors.brand,
+      child: definition != null
+          ? HomeActionGlyph(
+              definition: definition!,
+              color: HomeDesignTokens.accentOf(context),
             )
-          : Image.asset(
-              assetPath!,
-              width: size > 100 ? 84 : 40,
-              height: size > 100 ? 84 : 40,
-              fit: BoxFit.contain,
+          : SizedBox(
+              height: HomeActionTile.iconSlotHeight,
+              child: Align(
+                alignment: large ? Alignment.center : Alignment.bottomCenter,
+                child: Icon(
+                  icon,
+                  size: large ? 56 : HomeActionTile.iconSize,
+                  color: HomeDesignTokens.accentOf(context),
+                ),
+              ),
             ),
     );
   }
@@ -420,11 +464,19 @@ class _ServicePlate extends StatelessWidget {
 
 /// One intro page's content (already localized).
 class _Slide {
-  const _Slide({required this.title, required this.body, required this.icons});
+  const _Slide({
+    required this.title,
+    required this.body,
+    this.actions = const <HomeActionDefinition>[],
+    this.icons = const <IconData>[],
+  });
 
   final String title;
   final String body;
 
-  /// One glyph = a value slide; several = the hero's vertical strip.
+  /// Home's service definitions — only the hero slide carries four.
+  final List<HomeActionDefinition> actions;
+
+  /// Standalone glyphs for the value slides.
   final List<IconData> icons;
 }
