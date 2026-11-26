@@ -11,12 +11,18 @@ abstract interface class HomeRepository {
   /// Backend-published destination sections (Explore Cities page).
   Future<ApiResult<List<HomeSection>>> getHomeSections();
 
-  /// Promotional Nearby Stays (R5). Returns null when no cached payload
-  /// exists. Implementations must not throw.
-  Future<NearbyStaysResponse?> readCachedNearbyStays();
+  /// Promotional Nearby Stays (R5). Returns null when no fresh payload for
+  /// [scope] exists. An empty scope means "last known area" and is only used
+  /// before a city/GPS centre has been resolved. Implementations must not
+  /// throw.
+  Future<NearbyStaysResponse?> readCachedNearbyStays({String? scope});
 
-  /// Replaces the promotional Nearby Stays cache (best-effort; never throws).
-  Future<void> writeCachedNearbyStays(NearbyStaysResponse response);
+  /// Replaces the promotional Nearby Stays cache for [scope] (best-effort;
+  /// never throws).
+  Future<void> writeCachedNearbyStays(
+    NearbyStaysResponse response, {
+    String? scope,
+  });
 
   /// Fetches fresh promotional Nearby Stays from the backend. A null
   /// latitude/longitude/city means "no usable center": the backend answers

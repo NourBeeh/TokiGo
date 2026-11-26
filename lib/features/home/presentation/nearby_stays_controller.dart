@@ -79,6 +79,42 @@ class NearbyStaysState {
   }
 }
 
+/// Identity of one Nearby Stays cache entry.
+///
+/// The same scope is used to read AND write Hive, so a result fetched for one
+/// city (or one coarse GPS cell) can never be presented as "near you" after the
+/// traveller moves. An empty scope means no usable centre was available.
+String nearbyStaysCacheScope({
+  String languageCode = 'en',
+  String? currency,
+  CityOption? city,
+  UserLocation? location,
+}) {
+  final String center;
+  if (city != null) {
+    center = 'city:${city.id}';
+  } else if (location != null) {
+    // ~1km cells: close enough to reuse a fix, far enough to avoid serving a
+    // different district as "nearby".
+    center =
+        'geo:${location.latitude.toStringAsFixed(2)},${location.longitude.toStringAsFixed(2)}';
+  } else {
+    return '';
+  }
+  final String market = currency != null && currency.length == 3
+      ? currency.toUpperCase()
+      : '';
+  return '$center|${languageCode == 'ar' ? 'ar' : 'en'}|$market';
+}
+
+bool _nearbyStaysStillFresh(DateTime? fetchedAt) {
+  if (fetchedAt == null) return false;
+  // A small clock skew in the server's favour is harmless: it only makes the
+  // payload look newer, never older than the freshness window.
+  return DateTime.now().toUtc().difference(fetchedAt.toUtc()) <=
+      nearbyStaysFreshnessTtl;
+}
+
 /// Owns the promotional Nearby Stays cache and refresh (R5).
 ///
 /// Contract:
@@ -95,12 +131,12 @@ class NearbyStaysController extends StateNotifier<NearbyStaysState> {
     CityOption? Function()? automaticCity,
     String Function()? languageCode,
     String? Function()? currencyCode,
-  })  : _location = location,
-        _manualCity = manualCity,
-        _automaticCity = automaticCity,
-        _languageCode = languageCode,
-        _currencyCode = currencyCode,
-        super(const NearbyStaysState()) {
+  }) : _location = location,
+       _manualCity = manualCity,
+       _automaticCity = automaticCity,
+       _languageCode = languageCode,
+       _currencyCode = currencyCode,
+       super(const NearbyStaysState()) {
     _start();
   }
 
@@ -117,81 +153,112 @@ class NearbyStaysController extends StateNotifier<NearbyStaysState> {
   /// a newer one must not overwrite the newer state.
   int _requestId = 0;
 
+  /// The scope of the cards currently on screen. When it changes (the
+  /// traveller picked another city, or GPS replaced the IP guess) the old
+  /// cards are no longer "near you" and must not linger behind the placeholder.
+  String? _publishedScope;
+
   Future<void> _start() async {
     if (_started) return;
     _started = true;
-    // 1. Cached promotional cards render immediately — no skeleton wait.
-    try {
-      final NearbyStaysResponse? cached = await repository.readCachedNearbyStays();
-      if (cached != null && cached.stays.isNotEmpty) {
-        state = state.copyWith(
-          status: NearbyStaysStatus.success,
-          stays: cached.stays,
-          radiusKm: cached.radiusKm,
-          locationConfidence: cached.locationConfidence,
-          locationSource: cached.locationSource,
-          partialFailure: cached.partialFailure,
-          fetchedAt: cached.fetchedAt,
-          isRefreshing: true,
-        );
-      }
-    } catch (_) {
-      // Storage failure must never block Home.
-    }
-    // 2. Background refresh; the cache stays on screen no matter what.
     await refresh();
   }
 
-  /// Fetches fresh promotional stays. Never throws; never clears cached cards.
+  /// Resolves the one centre used for BOTH the cache lookup and the request.
+  ///
+  /// Precedence:
+  ///  1. an explicit manual city (canonical id) — never asks for GPS;
+  ///  2. a live GPS fix when no manual city exists;
+  ///  3. the last automatic (IP / cached) city;
+  ///  4. nothing — the backend answers `locationRequired`.
+  Future<({CityOption? city, UserLocation? location})> _resolveCenter() async {
+    final CityOption? manual = _manualCity?.call();
+    final CityOption? automatic = _automaticCity?.call();
+    UserLocation? location;
+    if (manual == null) {
+      try {
+        location = await _location?.call();
+      } catch (_) {
+        // A platform GPS failure means "no fix", not "no request": the
+        // automatic (IP) city below must still be used.
+        location = null;
+      }
+    }
+    final CityOption? city = manual ?? (location == null ? automatic : null);
+    return (city: city, location: location);
+  }
+
+  /// Fetches fresh promotional stays and replaces the scoped Hive entry.
+  /// Never throws; a failed refresh preserves cached cards for the SAME scope.
   Future<void> refresh() async {
     final int requestId = ++_requestId;
-    if (state.status == NearbyStaysStatus.loading) {
-      state = state.copyWith(isRefreshing: true);
-    }
     try {
-      // Precedence:
-      //  1. an explicit manual city (canonical id) — never asks for GPS;
-      //  2. a live GPS fix when no manual city exists;
-      //  3. the last automatic (IP / cached) city;
-      //  4. nothing — the backend answers `locationRequired`.
-      final CityOption? manual = _manualCity?.call();
-      final CityOption? automatic = _automaticCity?.call();
-      UserLocation? location;
-      if (manual == null) {
+      final String language = _languageCode?.call() ?? 'en';
+      final String? currency = _currencyCode?.call();
+      final ({CityOption? city, UserLocation? location}) center =
+          await _resolveCenter();
+      if (requestId != _requestId) return;
+
+      final String scope = nearbyStaysCacheScope(
+        languageCode: language,
+        currency: currency,
+        city: center.city,
+        location: center.location,
+      );
+      if (_publishedScope != null && _publishedScope != scope) {
+        // A different area (or market) is being shown: discard the previous
+        // rail instead of rendering another city's hotels as "near you".
+        _publishedScope = null;
+        state = const NearbyStaysState(
+          status: NearbyStaysStatus.loading,
+          isRefreshing: true,
+        );
+      } else if (state.status == NearbyStaysStatus.loading) {
+        state = state.copyWith(isRefreshing: true);
+      }
+
+      // 1. Fresh cached cards render before the network settles. The repository
+      //    enforces the TTL and rejects entries written for another centre.
+      if (state.stays.isEmpty) {
         try {
-          location = await _location?.call();
+          final NearbyStaysResponse? cached = await repository
+              .readCachedNearbyStays(scope: scope);
+          if (requestId != _requestId) return;
+          if (cached != null && cached.stays.isNotEmpty) {
+            _publishedScope = scope;
+            state = state.copyWith(
+              status: NearbyStaysStatus.success,
+              stays: cached.stays,
+              radiusKm: cached.radiusKm,
+              locationConfidence: cached.locationConfidence,
+              locationSource: cached.locationSource,
+              partialFailure: cached.partialFailure,
+              fetchedAt: cached.fetchedAt,
+              isRefreshing: true,
+            );
+          }
         } catch (_) {
-          // A platform GPS failure means "no fix", not "no request": the
-          // automatic (IP) city below must still be used.
-          location = null;
+          // Storage failure must never block Home.
         }
       }
 
-      CityOption? selected;
-      if (manual != null) {
-        selected = manual;
-      } else if (location == null && automatic != null) {
-        selected = automatic;
-      }
-
-      final String language = _languageCode?.call() ?? 'en';
-      final String? currency = _currencyCode?.call();
-
+      // 2. Background refresh; the cache stays on screen no matter what.
       final result = await repository.fetchNearbyStays(
-        latitude: location?.latitude,
-        longitude: location?.longitude,
-        accuracy: location?.accuracy,
-        cityId: selected?.id,
-        city: selected?.name,
-        country: selected?.countryCode,
+        latitude: center.location?.latitude,
+        longitude: center.location?.longitude,
+        accuracy: center.location?.accuracy,
+        cityId: center.city?.id,
+        city: center.city?.name,
+        country: center.city?.countryCode,
         languageCode: language == 'ar' ? 'ar' : 'en',
         currency: (currency != null && currency.length == 3) ? currency : null,
       );
 
-      result.when(
+      await result.when<Future<void>>(
         success: (NearbyStaysResponse response) async {
           if (requestId != _requestId) return;
           if (response.stays.isNotEmpty) {
+            _publishedScope = scope;
             state = state.copyWith(
               status: NearbyStaysStatus.success,
               stays: response.stays,
@@ -203,15 +270,16 @@ class NearbyStaysController extends StateNotifier<NearbyStaysState> {
               isRefreshing: false,
               fetchedAt: response.fetchedAt,
             );
-            await repository.writeCachedNearbyStays(response);
+            await repository.writeCachedNearbyStays(response, scope: scope);
             return;
           }
-          // Empty result: keep whatever is already on screen.
-          if (state.stays.isEmpty) {
+          // Empty result: keep whatever is still fresh on screen.
+          if (state.stays.isEmpty || !_nearbyStaysStillFresh(state.fetchedAt)) {
             state = state.copyWith(
               status: response.locationRequired
                   ? NearbyStaysStatus.locationRequired
                   : NearbyStaysStatus.empty,
+              stays: const <PromotionalStay>[],
               radiusKm: response.radiusKm,
               locationConfidence: response.locationConfidence,
               locationSource: response.locationSource,
@@ -225,12 +293,16 @@ class NearbyStaysController extends StateNotifier<NearbyStaysState> {
             state = state.copyWith(isRefreshing: false);
           }
         },
-        failure: (Object _) {
+        failure: (Object _) async {
           if (requestId != _requestId) return;
-          // Preserve cached promotional content. Only an empty screen becomes
-          // an error state — and even then no stale-price warning is shown.
-          if (state.stays.isEmpty) {
-            state = state.copyWith(status: NearbyStaysStatus.error, isRefreshing: false);
+          // Preserve fresh promotional content while offline. A rail older than
+          // the freshness window is no longer "nearby now" and is dropped.
+          if (state.stays.isEmpty || !_nearbyStaysStillFresh(state.fetchedAt)) {
+            state = state.copyWith(
+              status: NearbyStaysStatus.error,
+              stays: const <PromotionalStay>[],
+              isRefreshing: false,
+            );
           } else {
             state = state.copyWith(isRefreshing: false);
           }
@@ -239,8 +311,12 @@ class NearbyStaysController extends StateNotifier<NearbyStaysState> {
     } catch (_) {
       if (requestId != _requestId) return;
       // A broken repository/storage implementation must never crash Home.
-      if (state.stays.isEmpty) {
-        state = state.copyWith(status: NearbyStaysStatus.error, isRefreshing: false);
+      if (state.stays.isEmpty || !_nearbyStaysStillFresh(state.fetchedAt)) {
+        state = state.copyWith(
+          status: NearbyStaysStatus.error,
+          stays: const <PromotionalStay>[],
+          isRefreshing: false,
+        );
       } else {
         state = state.copyWith(isRefreshing: false);
       }

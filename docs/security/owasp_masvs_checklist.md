@@ -10,8 +10,8 @@ Status: STRUCTURE CREATED (audit execution deferred until 9A).
 - [ ] Market context (`MarketContextService`) does NOT select provider (separate routing layer).
 
 ### 2. Data Storage (MASVS-STORAGE)
-- [ ] Hive boxes (`wishlist`, `settings`, `trip`) never store secrets.
-- [ ] JWT access token stored in secure storage (`flutter_secure_storage`) — verified.
+- [ ] Hive boxes (`tokigo_offline`, `tokigo_settings`) are unencrypted: only non-secret envelopes belong there (wishlist/profile/AI data are keys, not boxes).
+- [ ] JWT access/refresh tokens stored in secure storage (`flutter_secure_storage`) — verified.
 - [ ] No `.env` or provider keys in Flutter source.
 
 ### 3. Cryptography (MASVS-CRYPTO)

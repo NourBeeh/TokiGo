@@ -56,10 +56,23 @@ class HomeRepositoryImpl implements HomeRepository {
   final ApiClient apiClient;
   final OfflineCache? _offlineCache;
 
-  /// Promotional Nearby Stays cache (R5). One key, one box: the shared
-  /// OfflineCache (Hive) is used for preferences and images too, so this entry
-  /// is namespaced and never clears the box.
-  static const String promotionalStaysCacheKey = 'home:promotional-stays:v1';
+  /// Promotional Nearby Stays cache. The shared OfflineCache (Hive) also holds
+  /// preferences and images, so every entry is namespaced and never clears the
+  /// box. Entries are additionally scoped to the centre/locale/currency that
+  /// produced them, so a result for Cairo can never be shown as "near you"
+  /// after the traveller switches to London.
+  static const String promotionalStaysCachePrefix = 'home:promotional-stays:v2';
+  static const String legacyPromotionalStaysCacheKey =
+      'home:promotional-stays:v1';
+  static const String lastKnownPromotionalStaysScope = 'last-known';
+
+  /// Promotional discovery prices are re-queried every launch, but a cached
+  /// card may be shown while the app is offline. A day is the longest window
+  /// that can still honestly be described as the current seven-night promo.
+  static const Duration promotionalStaysCacheTtl = nearbyStaysFreshnessTtl;
+
+  static String _cacheKey(String scope) =>
+      '$promotionalStaysCachePrefix:$scope';
 
   @override
   Future<ApiResult<List<HomeSection>>> getHomeSections() async {
@@ -127,24 +140,72 @@ class HomeRepositoryImpl implements HomeRepository {
   }
 
   @override
-  Future<NearbyStaysResponse?> readCachedNearbyStays() async {
+  Future<NearbyStaysResponse?> readCachedNearbyStays({String? scope}) async {
     final cache = _offlineCache;
     if (cache == null) return null;
+    final String resolvedScope = (scope != null && scope.trim().isNotEmpty)
+        ? scope.trim()
+        : lastKnownPromotionalStaysScope;
     try {
-      final map = await cache.read(promotionalStaysCacheKey);
-      if (map == null) return null;
-      return NearbyStaysResponse.tryParse(map);
+      // One-time migration: the old single-key payload had no centre or
+      // freshness metadata, so it can never be proven to be "near you".
+      await cache.delete(legacyPromotionalStaysCacheKey);
+      final Map<String, dynamic>? envelope = await cache.read(
+        _cacheKey(resolvedScope),
+      );
+      if (envelope == null) return null;
+      if (envelope['scope']?.toString() != resolvedScope) {
+        await cache.delete(_cacheKey(resolvedScope));
+        return null;
+      }
+      final Object? raw = envelope['response'];
+      if (raw is! Map) {
+        await cache.delete(_cacheKey(resolvedScope));
+        return null;
+      }
+      final NearbyStaysResponse? response = NearbyStaysResponse.tryParse(
+        Map<String, dynamic>.from(
+          raw.map((Object? k, Object? v) => MapEntry(k.toString(), v)),
+        ),
+      );
+      if (response == null) {
+        await cache.delete(_cacheKey(resolvedScope));
+        return null;
+      }
+      final DateTime storedAt =
+          DateTime.tryParse(envelope['cachedAt']?.toString() ?? '') ??
+          response.fetchedAt;
+      final DateTime dataAt = response.fetchedAt.isBefore(storedAt)
+          ? response.fetchedAt
+          : storedAt;
+      if (DateTime.now().toUtc().difference(dataAt.toUtc()) >
+          promotionalStaysCacheTtl) {
+        await cache.delete(_cacheKey(resolvedScope));
+        return null;
+      }
+      return response;
     } catch (_) {
       return null;
     }
   }
 
   @override
-  Future<void> writeCachedNearbyStays(NearbyStaysResponse response) async {
+  Future<void> writeCachedNearbyStays(
+    NearbyStaysResponse response, {
+    String? scope,
+  }) async {
     final cache = _offlineCache;
     if (cache == null) return;
+    final String resolvedScope = (scope != null && scope.trim().isNotEmpty)
+        ? scope.trim()
+        : lastKnownPromotionalStaysScope;
     try {
-      await cache.write(promotionalStaysCacheKey, response.toMap());
+      await cache.delete(legacyPromotionalStaysCacheKey);
+      await cache.write(_cacheKey(resolvedScope), <String, dynamic>{
+        'scope': resolvedScope,
+        'cachedAt': DateTime.now().toUtc().toIso8601String(),
+        'response': response.toMap(),
+      });
     } catch (_) {
       // Best-effort; never crash the UI on storage failure.
     }
@@ -191,7 +252,9 @@ class HomeRepositoryImpl implements HomeRepository {
     );
     return result.when(
       success: (data) {
-        final NearbyStaysResponse? response = NearbyStaysResponse.tryParse(data);
+        final NearbyStaysResponse? response = NearbyStaysResponse.tryParse(
+          data,
+        );
         if (response == null) {
           return ApiResult<NearbyStaysResponse>.failure(
             const ApiParseError(message: 'Invalid nearby stays payload'),
@@ -199,7 +262,8 @@ class HomeRepositoryImpl implements HomeRepository {
         }
         return ApiResult<NearbyStaysResponse>.success(response);
       },
-      failure: (ApiError error) => ApiResult<NearbyStaysResponse>.failure(error),
+      failure: (ApiError error) =>
+          ApiResult<NearbyStaysResponse>.failure(error),
     );
   }
 }

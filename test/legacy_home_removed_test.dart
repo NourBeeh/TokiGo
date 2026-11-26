@@ -51,7 +51,10 @@ void main() {
     expect(providers.contains('HomeLiveValidationService'), isFalse);
     expect(providers.contains('HomeComposer'), isFalse);
     expect(providers.contains('RecommendationService'), isFalse);
-    expect(providers.contains('homePersonalizationOrchestratorProvider'), isFalse);
+    expect(
+      providers.contains('homePersonalizationOrchestratorProvider'),
+      isFalse,
+    );
     expect(providers.contains('exploreFeedControllerProvider'), isTrue);
   });
 
@@ -133,10 +136,14 @@ class _RecordingRepo implements HomeRepository {
   }
 
   @override
-  Future<NearbyStaysResponse?> readCachedNearbyStays() async => null;
+  Future<NearbyStaysResponse?> readCachedNearbyStays({String? scope}) async =>
+      null;
 
   @override
-  Future<void> writeCachedNearbyStays(NearbyStaysResponse response) async {}
+  Future<void> writeCachedNearbyStays(
+    NearbyStaysResponse response, {
+    String? scope,
+  }) async {}
 
   @override
   Future<ApiResult<NearbyStaysResponse>> fetchNearbyStays({

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:tokigo/core/geo/city_catalog.dart';
 import 'package:tokigo/core/geo/user_location.dart';
 import 'package:tokigo/core/domain/models/home/home_item.dart';
 import 'package:tokigo/core/network/api_error.dart';
@@ -18,6 +19,7 @@ PromotionalStay _stay({
   double? rating = 4.6,
   int? reviewCount = 320,
   String currency = 'USD',
+  DateTime? fetchedAt,
 }) {
   return PromotionalStay(
     hotelId: id,
@@ -37,7 +39,7 @@ PromotionalStay _stay({
     occupancy: 2,
     nationality: 'EG',
     provider: 'nuitee',
-    fetchedAt: DateTime.utc(2026, 11, 21),
+    fetchedAt: fetchedAt ?? DateTime.now().toUtc(),
     locationConfidence: 'high',
   );
 }
@@ -46,6 +48,7 @@ NearbyStaysResponse _response(
   List<PromotionalStay> stays, {
   bool locationRequired = false,
   String? reason,
+  DateTime? fetchedAt,
 }) {
   return NearbyStaysResponse(
     stays: stays,
@@ -59,7 +62,7 @@ NearbyStaysResponse _response(
     nationality: 'EG',
     rankingVersion: 'nearby-ranking-v1',
     partialFailure: false,
-    fetchedAt: DateTime.utc(2026, 11, 21),
+    fetchedAt: fetchedAt ?? DateTime.now().toUtc(),
   );
 }
 
@@ -71,6 +74,8 @@ class _FakeRepo implements HomeRepository {
   Completer<ApiResult<NearbyStaysResponse>>? fetchGate;
   int writeCalls = 0;
   NearbyStaysResponse? written;
+  String? lastReadScope;
+  String? lastWriteScope;
   int fetchCalls = 0;
   double? lastLatitude;
   double? lastLongitude;
@@ -78,12 +83,19 @@ class _FakeRepo implements HomeRepository {
   String? lastCurrency;
 
   @override
-  Future<NearbyStaysResponse?> readCachedNearbyStays() async => cached;
+  Future<NearbyStaysResponse?> readCachedNearbyStays({String? scope}) async {
+    lastReadScope = scope;
+    return cached;
+  }
 
   @override
-  Future<void> writeCachedNearbyStays(NearbyStaysResponse response) async {
+  Future<void> writeCachedNearbyStays(
+    NearbyStaysResponse response, {
+    String? scope,
+  }) async {
     writeCalls += 1;
     written = response;
+    lastWriteScope = scope;
   }
 
   @override
@@ -181,47 +193,53 @@ void main() {
     expect(map.containsKey('priceVerified'), isFalse);
   });
 
-  test('promotionalStayToHomeItem marks the card promotional and keeps facts',
-      () {
-    final HomeItem item = promotionalStayToHomeItem(_stay());
-    expect(item.metadata['promotional'], isTrue);
-    expect(item.metadata['distanceToCenter'], 2.5);
-    expect(item.metadata['latitude'], 30.05);
-    expect(item.price, 120);
-    expect(item.rating, 4.6);
-    expect(item.reviewCount, 320);
-  });
+  test(
+    'promotionalStayToHomeItem marks the card promotional and keeps facts',
+    () {
+      final HomeItem item = promotionalStayToHomeItem(_stay());
+      expect(item.metadata['promotional'], isTrue);
+      expect(item.metadata['distanceToCenter'], 2.5);
+      expect(item.metadata['latitude'], 30.05);
+      expect(item.price, 120);
+      expect(item.rating, 4.6);
+      expect(item.reviewCount, 320);
+    },
+  );
 
-  test('cached promotional cards are published immediately, then refreshed',
-      () async {
-    final _FakeRepo repo = _FakeRepo(cached: _response(<PromotionalStay>[_stay()]));
-    final Completer<ApiResult<NearbyStaysResponse>> gate =
-        Completer<ApiResult<NearbyStaysResponse>>();
-    repo.fetchGate = gate;
-    final NearbyStaysController controller = NearbyStaysController(
-      repo,
-      location: () async => null,
-    );
-    // Let the cache read publish before the (gated) fetch settles.
-    await Future<void>.delayed(Duration.zero);
-    await Future<void>.delayed(Duration.zero);
-    expect(controller.state.status, NearbyStaysStatus.success);
-    expect(controller.state.stays, hasLength(1));
-    expect(controller.state.isRefreshing, isTrue);
+  test(
+    'cached promotional cards are published immediately, then refreshed',
+    () async {
+      final _FakeRepo repo = _FakeRepo(
+        cached: _response(<PromotionalStay>[_stay()]),
+      );
+      final Completer<ApiResult<NearbyStaysResponse>> gate =
+          Completer<ApiResult<NearbyStaysResponse>>();
+      repo.fetchGate = gate;
+      final NearbyStaysController controller = NearbyStaysController(
+        repo,
+        location: () async => null,
+      );
+      // Let the cache read publish before the (gated) fetch settles.
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.state.status, NearbyStaysStatus.success);
+      expect(controller.state.stays, hasLength(1));
+      expect(controller.state.isRefreshing, isTrue);
 
-    // A successful refresh replaces the cached content.
-    gate.complete(
-      ApiResult<NearbyStaysResponse>.success(
-        _response(<PromotionalStay>[_stay(id: 'h2', price: 90)]),
-      ),
-    );
-    await Future<void>.delayed(Duration.zero);
-    await Future<void>.delayed(Duration.zero);
-    expect(controller.state.stays.first.hotelId, 'h2');
-    expect(repo.writeCalls, 1);
-    expect(repo.written!.stays.first.hotelId, 'h2');
-    controller.dispose();
-  });
+      // A successful refresh replaces the cached content.
+      gate.complete(
+        ApiResult<NearbyStaysResponse>.success(
+          _response(<PromotionalStay>[_stay(id: 'h2', price: 90)]),
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.state.stays.first.hotelId, 'h2');
+      expect(repo.writeCalls, 1);
+      expect(repo.written!.stays.first.hotelId, 'h2');
+      controller.dispose();
+    },
+  );
 
   test('a failed refresh preserves the cached promotional content', () async {
     final _FakeRepo repo = _FakeRepo(
@@ -239,30 +257,55 @@ void main() {
     controller.dispose();
   });
 
-  test('no usable location yields locationRequired, never a nationwide list',
-      () async {
-    final _FakeRepo repo = _FakeRepo(
-      fetch: ApiResult<NearbyStaysResponse>.success(
-        _response(const <PromotionalStay>[], locationRequired: true, reason: 'no_location'),
-      ),
-    );
-    final NearbyStaysController controller = NearbyStaysController(repo);
-    await Future<void>.delayed(Duration.zero);
-    await Future<void>.delayed(Duration.zero);
-    expect(controller.state.status, NearbyStaysStatus.locationRequired);
-    expect(controller.state.stays, isEmpty);
-    controller.dispose();
-  });
+  test(
+    'a rail older than the freshness window is not preserved offline',
+    () async {
+      final DateTime staleAt = DateTime.now().toUtc().subtract(
+        nearbyStaysFreshnessTtl + const Duration(hours: 1),
+      );
+      final _FakeRepo repo = _FakeRepo(
+        cached: _response(<PromotionalStay>[_stay()], fetchedAt: staleAt),
+        fetch: const ApiResult<NearbyStaysResponse>.failure(
+          ApiNetworkError(message: 'offline'),
+        ),
+      );
+      final NearbyStaysController controller = NearbyStaysController(repo);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(controller.state.stays, isEmpty);
+      expect(controller.state.status, NearbyStaysStatus.error);
+      controller.dispose();
+    },
+  );
+
+  test(
+    'no usable location yields locationRequired, never a nationwide list',
+    () async {
+      final _FakeRepo repo = _FakeRepo(
+        fetch: ApiResult<NearbyStaysResponse>.success(
+          _response(
+            const <PromotionalStay>[],
+            locationRequired: true,
+            reason: 'no_location',
+          ),
+        ),
+      );
+      final NearbyStaysController controller = NearbyStaysController(repo);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.state.status, NearbyStaysStatus.locationRequired);
+      expect(controller.state.stays, isEmpty);
+      controller.dispose();
+    },
+  );
 
   test('location, accuracy and currency are sent with the request', () async {
     final _FakeRepo repo = _FakeRepo();
     final NearbyStaysController controller = NearbyStaysController(
       repo,
-      location: () async => const UserLocation(
-        latitude: 30.05,
-        longitude: 31.24,
-        accuracy: 2500,
-      ),
+      location: () async =>
+          const UserLocation(latitude: 30.05, longitude: 31.24, accuracy: 2500),
       currencyCode: () => 'EGP',
     );
     await Future<void>.delayed(Duration.zero);
@@ -273,4 +316,57 @@ void main() {
     expect(repo.lastCurrency, 'EGP');
     controller.dispose();
   });
+
+  test(
+    'changing city drops the old scope before the fresh cards arrive',
+    () async {
+      final _FakeRepo repo = _FakeRepo(
+        cached: _response(<PromotionalStay>[_stay()]),
+      );
+      CityOption? manualCity;
+      final NearbyStaysController controller = NearbyStaysController(
+        repo,
+        manualCity: () => manualCity,
+        languageCode: () => 'en',
+        currencyCode: () => 'USD',
+      );
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.state.stays.single.hotelId, 'h1');
+      expect(repo.lastReadScope, isEmpty);
+
+      final Completer<ApiResult<NearbyStaysResponse>> gate =
+          Completer<ApiResult<NearbyStaysResponse>>();
+      repo.fetchGate = gate;
+      repo.cached = null;
+      manualCity = const CityOption(
+        id: 'london',
+        name: 'London',
+        countryCode: 'GB',
+        currency: 'GBP',
+        latitude: 51.5,
+        longitude: -0.12,
+      );
+      // Do not await: the gated fetch is deliberately still in flight.
+      controller.refresh();
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      // The Cairo cards cannot linger under a London scope.
+      expect(controller.state.stays, isEmpty);
+      expect(controller.state.status, NearbyStaysStatus.loading);
+      expect(repo.lastReadScope, 'city:london|en|USD');
+
+      gate.complete(
+        ApiResult<NearbyStaysResponse>.success(
+          _response(<PromotionalStay>[_stay(id: 'h2')]),
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.state.stays.single.hotelId, 'h2');
+      expect(repo.lastWriteScope, 'city:london|en|USD');
+      controller.dispose();
+    },
+  );
 }

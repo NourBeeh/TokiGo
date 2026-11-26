@@ -8,9 +8,10 @@ import 'storage_bootstrap.dart';
 
 /// Hive-backed [OfflineCache] for the Phase 16 offline support foundation.
 ///
-/// Hive is a pure-Dart key-value store with AES-256 encryption and no native
-/// dependencies, so it works identically on mobile, desktop and web. Values
-/// are stored as `Map` entries (boxes are `Box<Map>`), which keeps the domain
+/// Hive is a pure-Dart key-value store with no native dependencies, so it works
+/// identically on mobile, desktop and web. This box is NOT encrypted: only
+/// non-secret envelopes belong here; credentials live in secure storage.
+/// Values are stored as `Map` entries (boxes are `Box<Map>`), which keeps the domain
 /// serializers in `offline_cache_serializers.dart` the single source of shape
 /// knowledge.
 ///

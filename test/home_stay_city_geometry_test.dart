@@ -141,10 +141,14 @@ class _NearbyRepo implements HomeRepository {
   final NearbyStaysResponse? response;
 
   @override
-  Future<NearbyStaysResponse?> readCachedNearbyStays() async => response;
+  Future<NearbyStaysResponse?> readCachedNearbyStays({String? scope}) async =>
+      response;
 
   @override
-  Future<void> writeCachedNearbyStays(NearbyStaysResponse response) async {}
+  Future<void> writeCachedNearbyStays(
+    NearbyStaysResponse response, {
+    String? scope,
+  }) async {}
 
   @override
   Future<ApiResult<NearbyStaysResponse>> fetchNearbyStays({
@@ -167,26 +171,26 @@ class _NearbyRepo implements HomeRepository {
 }
 
 PromotionalStay _promotionalStay(String id) => PromotionalStay(
-      hotelId: 'promo-$id',
-      hotelName: 'Riverside Grand Hotel $id',
-      city: 'Lisbon',
-      country: 'PT',
-      image: null,
-      latitude: 38.72,
-      longitude: -9.14,
-      distanceKm: 1.2,
-      rating: 4.8,
-      reviewCount: 48,
-      promotionalMinimumPrice: 186,
-      currency: 'USD',
-      searchedFromDate: '2026-11-21',
-      searchedToDate: '2026-11-28',
-      occupancy: 2,
-      nationality: 'EG',
-      provider: 'nuitee',
-      fetchedAt: DateTime.utc(2026, 11, 21),
-      locationConfidence: 'high',
-    );
+  hotelId: 'promo-$id',
+  hotelName: 'Riverside Grand Hotel $id',
+  city: 'Lisbon',
+  country: 'PT',
+  image: null,
+  latitude: 38.72,
+  longitude: -9.14,
+  distanceKm: 1.2,
+  rating: 4.8,
+  reviewCount: 48,
+  promotionalMinimumPrice: 186,
+  currency: 'USD',
+  searchedFromDate: '2026-11-21',
+  searchedToDate: '2026-11-28',
+  occupancy: 2,
+  nationality: 'EG',
+  provider: 'nuitee',
+  fetchedAt: DateTime.utc(2026, 11, 21),
+  locationConfidence: 'high',
+);
 
 Widget _pageHost({
   Locale locale = const Locale('en'),
@@ -244,7 +248,10 @@ void main() {
 
         await tester.pumpWidget(
           _pageHost(
-            nearbyStays: <PromotionalStay>[_promotionalStay('a'), _promotionalStay('b')],
+            nearbyStays: <PromotionalStay>[
+              _promotionalStay('a'),
+              _promotionalStay('b'),
+            ],
           ),
         );
         // Let the controller's startup (snapshot → load → rail) settle.
@@ -294,7 +301,10 @@ void main() {
       _setView(tester, _tallPhone);
       await tester.pumpWidget(
         _pageHost(
-          nearbyStays: <PromotionalStay>[_promotionalStay('a'), _promotionalStay('b')],
+          nearbyStays: <PromotionalStay>[
+            _promotionalStay('a'),
+            _promotionalStay('b'),
+          ],
         ),
       );
       await tester.pump(const Duration(milliseconds: 300));
@@ -303,7 +313,9 @@ void main() {
       // The promotional rail renders the same approved photo-above-description
       // card, at the same page width as the Explore rail.
       expect(find.byType(HomeStayCard), findsWidgets);
-      final Rect city = tester.getRect(find.byType(HomeDiscoveryStayCard).at(0));
+      final Rect city = tester.getRect(
+        find.byType(HomeDiscoveryStayCard).at(0),
+      );
       final Rect loaded = tester.getRect(find.byType(HomeStayCard).first);
       expect(loaded.width, closeTo(city.width, _tolerance));
       expect(loaded.height, greaterThan(city.height + 100));

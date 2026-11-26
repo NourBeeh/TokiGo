@@ -58,10 +58,14 @@ class _RecordingRepository implements HomeRepository {
       const ApiResult<List<HomeSection>>.success(<HomeSection>[]);
 
   @override
-  Future<NearbyStaysResponse?> readCachedNearbyStays() async => null;
+  Future<NearbyStaysResponse?> readCachedNearbyStays({String? scope}) async =>
+      null;
 
   @override
-  Future<void> writeCachedNearbyStays(NearbyStaysResponse response) async {}
+  Future<void> writeCachedNearbyStays(
+    NearbyStaysResponse response, {
+    String? scope,
+  }) async {}
 
   @override
   Future<ApiResult<NearbyStaysResponse>> fetchNearbyStays({
@@ -297,10 +301,14 @@ class _ControlledRepository implements HomeRepository {
       const ApiResult<List<HomeSection>>.success(<HomeSection>[]);
 
   @override
-  Future<NearbyStaysResponse?> readCachedNearbyStays() async => null;
+  Future<NearbyStaysResponse?> readCachedNearbyStays({String? scope}) async =>
+      null;
 
   @override
-  Future<void> writeCachedNearbyStays(NearbyStaysResponse response) async {}
+  Future<void> writeCachedNearbyStays(
+    NearbyStaysResponse response, {
+    String? scope,
+  }) async {}
 
   @override
   Future<ApiResult<NearbyStaysResponse>> fetchNearbyStays({
@@ -331,10 +339,14 @@ class _SequencedRepository implements HomeRepository {
       const ApiResult<List<HomeSection>>.success(<HomeSection>[]);
 
   @override
-  Future<NearbyStaysResponse?> readCachedNearbyStays() async => null;
+  Future<NearbyStaysResponse?> readCachedNearbyStays({String? scope}) async =>
+      null;
 
   @override
-  Future<void> writeCachedNearbyStays(NearbyStaysResponse response) async {}
+  Future<void> writeCachedNearbyStays(
+    NearbyStaysResponse response, {
+    String? scope,
+  }) async {}
 
   @override
   Future<ApiResult<NearbyStaysResponse>> fetchNearbyStays({

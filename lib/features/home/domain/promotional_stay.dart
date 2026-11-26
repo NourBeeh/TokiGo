@@ -1,5 +1,10 @@
 import 'package:flutter/foundation.dart';
 
+/// A cached Nearby Stays payload may be shown while the network settles, but
+/// once it passes this age it is no longer "the latest nearby hotels" and must
+/// be discarded instead of presented as current.
+const Duration nearbyStaysFreshnessTtl = Duration(hours: 24);
+
 /// A promotional Nearby Stays card (R3/R5).
 ///
 /// This is DISCOVERY information, not a bookable offer. It never carries a
@@ -54,38 +59,43 @@ class PromotionalStay {
   bool get hasRealReviews => (reviewCount ?? 0) > 0 && rating != null;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'hotelId': hotelId,
-        'hotelName': hotelName,
-        'city': city,
-        'country': country,
-        'image': image,
-        'latitude': latitude,
-        'longitude': longitude,
-        'distanceKm': distanceKm,
-        'rating': rating,
-        'reviewCount': reviewCount,
-        'promotionalMinimumPrice': promotionalMinimumPrice,
-        'currency': currency,
-        'searchedFromDate': searchedFromDate,
-        'searchedToDate': searchedToDate,
-        'occupancy': occupancy,
-        'nationality': nationality,
-        'provider': provider,
-        'fetchedAt': fetchedAt.toIso8601String(),
-        'locationConfidence': locationConfidence,
-      };
+    'hotelId': hotelId,
+    'hotelName': hotelName,
+    'city': city,
+    'country': country,
+    'image': image,
+    'latitude': latitude,
+    'longitude': longitude,
+    'distanceKm': distanceKm,
+    'rating': rating,
+    'reviewCount': reviewCount,
+    'promotionalMinimumPrice': promotionalMinimumPrice,
+    'currency': currency,
+    'searchedFromDate': searchedFromDate,
+    'searchedToDate': searchedToDate,
+    'occupancy': occupancy,
+    'nationality': nationality,
+    'provider': provider,
+    'fetchedAt': fetchedAt.toIso8601String(),
+    'locationConfidence': locationConfidence,
+  };
 
   /// Parses one card. Returns null for a malformed record — a cached or
   /// network payload is never allowed to crash Home.
   static PromotionalStay? tryParse(Map<String, dynamic> map) {
     final String hotelId = map['hotelId']?.toString().trim() ?? '';
-    final String hotelName = map['hotelName']?.toString().trim() ??
+    final String hotelName =
+        map['hotelName']?.toString().trim() ??
         map['name']?.toString().trim() ??
         '';
     final double? latitude = _number(map['latitude'] ?? map['lat']);
-    final double? longitude = _number(map['longitude'] ?? map['lng'] ?? map['long']);
+    final double? longitude = _number(
+      map['longitude'] ?? map['lng'] ?? map['long'],
+    );
     final double? distanceKm = _number(map['distanceKm']);
-    final double? price = _number(map['promotionalMinimumPrice'] ?? map['price']);
+    final double? price = _number(
+      map['promotionalMinimumPrice'] ?? map['price'],
+    );
     final String currency = map['currency']?.toString().trim() ?? '';
     if (hotelId.isEmpty ||
         hotelName.isEmpty ||
@@ -118,7 +128,8 @@ class PromotionalStay {
       occupancy: _integer(map['occupancy']) ?? 2,
       nationality: map['nationality']?.toString() ?? 'EG',
       provider: map['provider']?.toString() ?? 'nuitee',
-      fetchedAt: DateTime.tryParse(map['fetchedAt']?.toString() ?? '') ??
+      fetchedAt:
+          DateTime.tryParse(map['fetchedAt']?.toString() ?? '') ??
           DateTime.now().toUtc(),
       locationConfidence: map['locationConfidence']?.toString() ?? 'medium',
     );
@@ -185,21 +196,21 @@ class NearbyStaysResponse {
   final DateTime fetchedAt;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'stays': stays.map((PromotionalStay stay) => stay.toMap()).toList(),
-        'radiusKm': radiusKm,
-        'locationConfidence': locationConfidence,
-        'locationSource': locationSource,
-        'locationRequired': locationRequired,
-        'reason': reason,
-        'searchedFromDate': searchedFromDate,
-        'searchedToDate': searchedToDate,
-        'currency': currency,
-        'occupancy': occupancy,
-        'nationality': nationality,
-        'rankingVersion': rankingVersion,
-        'partialFailure': partialFailure,
-        'fetchedAt': fetchedAt.toIso8601String(),
-      };
+    'stays': stays.map((PromotionalStay stay) => stay.toMap()).toList(),
+    'radiusKm': radiusKm,
+    'locationConfidence': locationConfidence,
+    'locationSource': locationSource,
+    'locationRequired': locationRequired,
+    'reason': reason,
+    'searchedFromDate': searchedFromDate,
+    'searchedToDate': searchedToDate,
+    'currency': currency,
+    'occupancy': occupancy,
+    'nationality': nationality,
+    'rankingVersion': rankingVersion,
+    'partialFailure': partialFailure,
+    'fetchedAt': fetchedAt.toIso8601String(),
+  };
 
   static NearbyStaysResponse? tryParse(Map<String, dynamic> map) {
     final rawStays = map['stays'];
@@ -208,7 +219,9 @@ class NearbyStaysResponse {
     for (final Object? raw in rawStays) {
       if (raw is! Map) continue;
       final PromotionalStay? stay = PromotionalStay.tryParse(
-        Map<String, dynamic>.from(raw.map((Object? k, Object? v) => MapEntry(k.toString(), v))),
+        Map<String, dynamic>.from(
+          raw.map((Object? k, Object? v) => MapEntry(k.toString(), v)),
+        ),
       );
       if (stay != null) stays.add(stay);
     }
@@ -228,7 +241,8 @@ class NearbyStaysResponse {
       nationality: map['nationality']?.toString() ?? 'EG',
       rankingVersion: map['rankingVersion']?.toString() ?? '',
       partialFailure: map['partialFailure'] == true,
-      fetchedAt: DateTime.tryParse(map['fetchedAt']?.toString() ?? '') ??
+      fetchedAt:
+          DateTime.tryParse(map['fetchedAt']?.toString() ?? '') ??
           DateTime.now().toUtc(),
     );
   }
