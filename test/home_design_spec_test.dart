@@ -90,22 +90,22 @@ void main() {
       expect(decoration.border, isNull);
       expect(decoration.borderRadius, equals(BorderRadius.circular(24)));
 
-      // Leading search glyph in the accent, on the leading edge of the field.
-      final Icon leading = tester.widget<Icon>(
+      // The old leading magnifier is gone; search is the trailing action.
+      expect(
         find.byWidgetPredicate(
           (Widget w) =>
               w is Icon && w.icon == Icons.search_rounded && w.size == 22,
         ),
+        findsNothing,
       );
-      expect(leading.color, accent);
-      final Rect glyph = tester.getRect(
-        find.byWidgetPredicate(
-          (Widget w) =>
-              w is Icon && w.icon == Icons.search_rounded && w.size == 22,
-        ),
+      final Finder searchAction = find.byKey(
+        const ValueKey<String>('home-ai-composer-send'),
       );
-      final Rect textField = tester.getRect(find.byType(TextField));
-      expect(glyph.right, lessThanOrEqualTo(textField.left));
+      final Icon searchGlyph = tester.widget<Icon>(
+        find.descendant(of: searchAction, matching: find.byType(Icon)).first,
+      );
+      expect(searchGlyph.icon, Icons.search_rounded);
+      expect(searchGlyph.color, Colors.white);
 
       // The localized hint, in the spec's hint colour.
       final Text hintText = tester.widget<Text>(
@@ -180,12 +180,20 @@ void main() {
         expect(boxBorder.top.color, border);
         expect(boxBorder.top.width, 1);
 
-        final Icon icon = tester.widget<Icon>(
-          find.descendant(of: tileFinder, matching: find.byType(Icon)).first,
-        );
-        expect(icon.icon, icons[i]);
-        expect(icon.size, 24);
-        expect(icon.color, accent);
+        final Finder glyph = find
+            .descendant(
+              of: tileFinder,
+              matching: i == 3 ? find.byType(Image) : find.byType(Icon),
+            )
+            .first;
+        if (i == 3) {
+          expect(tester.widget<Image>(glyph).width, 24);
+        } else {
+          final Icon icon = tester.widget<Icon>(glyph);
+          expect(icon.icon, icons[i]);
+          expect(icon.size, 24);
+          expect(icon.color, accent);
+        }
 
         final Text label = tester.widget<Text>(find.text(labels[i]));
         expect(label.style?.fontSize, 12);
@@ -193,13 +201,7 @@ void main() {
         expect(label.style?.color, accent);
 
         // The 6dp glyph-to-label gap.
-        final double iconBottom = tester
-            .getRect(
-              find
-                  .descendant(of: tileFinder, matching: find.byType(Icon))
-                  .first,
-            )
-            .bottom;
+        final double iconBottom = tester.getRect(glyph).bottom;
         final double labelTop = tester.getRect(find.text(labels[i])).top;
         expect(labelTop - iconBottom, closeTo(4, 0.01));
 
@@ -293,7 +295,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('the AI composer send disc is white with a black glyph', (
+    testWidgets('the AI composer search disc is white with a black glyph', (
       tester,
     ) async {
       phoneSize(tester);
@@ -310,7 +312,7 @@ void main() {
       );
       expect(HomeDesignTokens.accentOf(context), const Color(0xFFF5F5F5));
 
-      // The send disc is a DecoratedBox with the Home ink as its fill.
+      // The search disc is a DecoratedBox with the Home ink as its fill.
       final Finder send = find.byKey(
         const ValueKey<String>('home-ai-composer-send'),
       );

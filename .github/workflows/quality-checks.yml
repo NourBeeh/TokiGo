@@ -1,0 +1,73 @@
+name: TokiGo Quality Checks
+
+on:
+  push:
+    branches: [Main]
+  pull_request:
+    branches: [Main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend build and tests (PostgreSQL 16)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: tokigo_test
+          POSTGRES_PASSWORD: tokigo_test
+          POSTGRES_DB: tokigo_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tokigo_test -d tokigo_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      P4_TEST_DB_URL: postgresql://tokigo_test:tokigo_test@127.0.0.1:5432/tokigo_test
+      NUITEE_LIVE_SMOKE: '0'
+      NODE_ENV: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Install backend dependencies
+        run: npm ci
+      - name: Compile production TypeScript
+        run: npm run build
+      - name: Run complete backend suite including PostgreSQL-gated tests
+        run: npm test -- --runInBand
+
+  flutter:
+    name: Flutter analyze and tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.50.0'
+          channel: stable
+          cache: true
+      - name: Install Flutter dependencies
+        run: flutter pub get
+      - name: Regenerate localization sources
+        run: flutter gen-l10n
+      - name: Analyze
+        run: flutter analyze
+      - name: Run Flutter tests
+        run: flutter test --reporter expanded

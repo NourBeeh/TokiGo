@@ -446,7 +446,7 @@ void main() {
     testWidgets('shows pending verification with no retry and no confirmation',
         (tester) async {
       final controller = _controller(_FakeRepository());
-      addTearDown(controller.dispose);
+      // ProviderScope owns and disposes this controller override.
       controller.state = BookingState(
         phase: BookingPhase.reconciliationPending,
         record: _record(),
