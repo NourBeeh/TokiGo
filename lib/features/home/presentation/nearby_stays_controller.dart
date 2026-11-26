@@ -107,20 +107,13 @@ String nearbyStaysCacheScope({
   return '$center|${languageCode == 'ar' ? 'ar' : 'en'}|$market';
 }
 
-bool _nearbyStaysStillFresh(DateTime? fetchedAt) {
-  if (fetchedAt == null) return false;
-  // A small clock skew in the server's favour is harmless: it only makes the
-  // payload look newer, never older than the freshness window.
-  return DateTime.now().toUtc().difference(fetchedAt.toUtc()) <=
-      nearbyStaysFreshnessTtl;
-}
-
 /// Owns the promotional Nearby Stays cache and refresh (R5).
 ///
 /// Contract:
 ///  * the Hive payload is published IMMEDIATELY, before any network call;
 ///  * a successful refresh replaces it;
-///  * a failed refresh preserves it (offline included);
+///  * a failed refresh preserves it (offline included, regardless of age);
+///  * the global offline banner is the only "this is cached" signal;
 ///  * promotional prices are never labelled live, and no stale-price warning
 ///    is ever shown.
 class NearbyStaysController extends StateNotifier<NearbyStaysState> {
@@ -217,8 +210,9 @@ class NearbyStaysController extends StateNotifier<NearbyStaysState> {
         state = state.copyWith(isRefreshing: true);
       }
 
-      // 1. Fresh cached cards render before the network settles. The repository
-      //    enforces the TTL and rejects entries written for another centre.
+      // 1. The last stored payload renders before the network settles. The
+      //    repository rejects entries written for another centre, but never
+      //    evicts a payload just because it is old.
       if (state.stays.isEmpty) {
         try {
           final NearbyStaysResponse? cached = await repository
@@ -273,13 +267,12 @@ class NearbyStaysController extends StateNotifier<NearbyStaysState> {
             await repository.writeCachedNearbyStays(response, scope: scope);
             return;
           }
-          // Empty result: keep whatever is still fresh on screen.
-          if (state.stays.isEmpty || !_nearbyStaysStillFresh(state.fetchedAt)) {
+          // Empty result: keep whatever is already on screen.
+          if (state.stays.isEmpty) {
             state = state.copyWith(
               status: response.locationRequired
                   ? NearbyStaysStatus.locationRequired
                   : NearbyStaysStatus.empty,
-              stays: const <PromotionalStay>[],
               radiusKm: response.radiusKm,
               locationConfidence: response.locationConfidence,
               locationSource: response.locationSource,
@@ -295,12 +288,11 @@ class NearbyStaysController extends StateNotifier<NearbyStaysState> {
         },
         failure: (Object _) async {
           if (requestId != _requestId) return;
-          // Preserve fresh promotional content while offline. A rail older than
-          // the freshness window is no longer "nearby now" and is dropped.
-          if (state.stays.isEmpty || !_nearbyStaysStillFresh(state.fetchedAt)) {
+          // Preserve the last stored payload while offline, however old it is.
+          // The global offline banner tells the traveller it is cached.
+          if (state.stays.isEmpty) {
             state = state.copyWith(
               status: NearbyStaysStatus.error,
-              stays: const <PromotionalStay>[],
               isRefreshing: false,
             );
           } else {
@@ -311,10 +303,9 @@ class NearbyStaysController extends StateNotifier<NearbyStaysState> {
     } catch (_) {
       if (requestId != _requestId) return;
       // A broken repository/storage implementation must never crash Home.
-      if (state.stays.isEmpty || !_nearbyStaysStillFresh(state.fetchedAt)) {
+      if (state.stays.isEmpty) {
         state = state.copyWith(
           status: NearbyStaysStatus.error,
-          stays: const <PromotionalStay>[],
           isRefreshing: false,
         );
       } else {

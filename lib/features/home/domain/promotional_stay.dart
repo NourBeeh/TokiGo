@@ -1,10 +1,5 @@
 import 'package:flutter/foundation.dart';
 
-/// A cached Nearby Stays payload may be shown while the network settles, but
-/// once it passes this age it is no longer "the latest nearby hotels" and must
-/// be discarded instead of presented as current.
-const Duration nearbyStaysFreshnessTtl = Duration(hours: 24);
-
 /// A promotional Nearby Stays card (R3/R5).
 ///
 /// This is DISCOVERY information, not a bookable offer. It never carries a

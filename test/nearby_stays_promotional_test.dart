@@ -257,27 +257,25 @@ void main() {
     controller.dispose();
   });
 
-  test(
-    'a rail older than the freshness window is not preserved offline',
-    () async {
-      final DateTime staleAt = DateTime.now().toUtc().subtract(
-        nearbyStaysFreshnessTtl + const Duration(hours: 1),
-      );
-      final _FakeRepo repo = _FakeRepo(
-        cached: _response(<PromotionalStay>[_stay()], fetchedAt: staleAt),
-        fetch: const ApiResult<NearbyStaysResponse>.failure(
-          ApiNetworkError(message: 'offline'),
-        ),
-      );
-      final NearbyStaysController controller = NearbyStaysController(repo);
-      await Future<void>.delayed(Duration.zero);
-      await Future<void>.delayed(Duration.zero);
+  test('an old cached rail is still shown while offline', () async {
+    final DateTime oldAt = DateTime.now().toUtc().subtract(
+      const Duration(days: 30),
+    );
+    final _FakeRepo repo = _FakeRepo(
+      cached: _response(<PromotionalStay>[_stay()], fetchedAt: oldAt),
+      fetch: const ApiResult<NearbyStaysResponse>.failure(
+        ApiNetworkError(message: 'offline'),
+      ),
+    );
+    final NearbyStaysController controller = NearbyStaysController(repo);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
 
-      expect(controller.state.stays, isEmpty);
-      expect(controller.state.status, NearbyStaysStatus.error);
-      controller.dispose();
-    },
-  );
+    expect(controller.state.stays.single.hotelId, 'h1');
+    expect(controller.state.status, NearbyStaysStatus.success);
+    expect(controller.state.isRefreshing, isFalse);
+    controller.dispose();
+  });
 
   test(
     'no usable location yields locationRequired, never a nationwide list',

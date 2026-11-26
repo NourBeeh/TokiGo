@@ -81,23 +81,31 @@ void main() {
     expect(await cache.contains('home:promotional-stays:v2:$scope'), isTrue);
   });
 
-  test('a day-old entry is discarded instead of shown as current', () async {
+  test('the last stored entry is kept however old it is', () async {
     final MemoryOfflineCache cache = MemoryOfflineCache();
     final HomeRepositoryImpl repo = HomeRepositoryImpl(
       _NoApiClient(),
       offlineCache: cache,
     );
     final DateTime old = DateTime.now().toUtc().subtract(
-      HomeRepositoryImpl.promotionalStaysCacheTtl + const Duration(hours: 1),
+      const Duration(days: 30),
     );
 
-    await repo.writeCachedNearbyStays(_response(fetchedAt: old), scope: scope);
+    // Write the envelope directly so BOTH the stored timestamp and the payload
+    // timestamp are old: neither may evict the last known nearby hotels.
+    await cache.write('home:promotional-stays:v2:$scope', <String, dynamic>{
+      'scope': scope,
+      'cachedAt': old.toIso8601String(),
+      'response': _response(fetchedAt: old).toMap(),
+    });
+
     final NearbyStaysResponse? cached = await repo.readCachedNearbyStays(
       scope: scope,
     );
 
-    expect(cached, isNull);
-    expect(await cache.contains('home:promotional-stays:v2:$scope'), isFalse);
+    expect(cached, isNotNull);
+    expect(cached!.stays.single.hotelId, 'h1');
+    expect(await cache.contains('home:promotional-stays:v2:$scope'), isTrue);
   });
 
   test('the legacy unscoped payload is dropped on first read', () async {

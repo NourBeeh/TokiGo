@@ -66,11 +66,10 @@ class HomeRepositoryImpl implements HomeRepository {
       'home:promotional-stays:v1';
   static const String lastKnownPromotionalStaysScope = 'last-known';
 
-  /// Promotional discovery prices are re-queried every launch, but a cached
-  /// card may be shown while the app is offline. A day is the longest window
-  /// that can still honestly be described as the current seven-night promo.
-  static const Duration promotionalStaysCacheTtl = nearbyStaysFreshnessTtl;
-
+  /// The last payload for each scope is kept until a newer successful refresh
+  /// replaces it. There is no time-based eviction: while the backend is
+  /// unreachable the traveller still sees the last known nearby hotels, and
+  /// the global offline banner makes it clear the content is cached.
   static String _cacheKey(String scope) =>
       '$promotionalStaysCachePrefix:$scope';
 
@@ -147,8 +146,8 @@ class HomeRepositoryImpl implements HomeRepository {
         ? scope.trim()
         : lastKnownPromotionalStaysScope;
     try {
-      // One-time migration: the old single-key payload had no centre or
-      // freshness metadata, so it can never be proven to be "near you".
+      // One-time migration: the old single-key payload had no centre metadata,
+      // so it can never be proven to be "near you".
       await cache.delete(legacyPromotionalStaysCacheKey);
       final Map<String, dynamic>? envelope = await cache.read(
         _cacheKey(resolvedScope),
@@ -172,17 +171,8 @@ class HomeRepositoryImpl implements HomeRepository {
         await cache.delete(_cacheKey(resolvedScope));
         return null;
       }
-      final DateTime storedAt =
-          DateTime.tryParse(envelope['cachedAt']?.toString() ?? '') ??
-          response.fetchedAt;
-      final DateTime dataAt = response.fetchedAt.isBefore(storedAt)
-          ? response.fetchedAt
-          : storedAt;
-      if (DateTime.now().toUtc().difference(dataAt.toUtc()) >
-          promotionalStaysCacheTtl) {
-        await cache.delete(_cacheKey(resolvedScope));
-        return null;
-      }
+      // `cachedAt` is kept for diagnostics, never used to discard the payload:
+      // the newest stored copy is exactly what the offline UI must show.
       return response;
     } catch (_) {
       return null;
