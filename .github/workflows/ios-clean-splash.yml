@@ -72,23 +72,28 @@ jobs:
           xcrun simctl install booted build/ios/iphonesimulator/Runner.app
           xcrun simctl launch booted com.tokigo.tokigo
 
-      - name: Capture and check splash frames
+      - name: Capture splash frames
         run: |
           xcrun simctl screenshot booted splash-0.png
           sleep 1
           xcrun simctl screenshot booted splash-1.png
           sleep 1
           xcrun simctl screenshot booted splash-2.png
-          python scripts/check_splash_screenshot.py splash-0.png splash-1.png splash-2.png
+
+      # Only the first frame is the native launch screen. Later frames may
+      # already be the app UI, whose map/status colours are not brand splash.
+      - name: Check launch frame
+        run: python scripts/check_splash_screenshot.py splash-0.png
 
       - name: Package the simulator app
         run: zip -r Runner.app.zip build/ios/iphonesimulator/Runner.app
 
       - name: Upload build and screenshots
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ios-clean-splash-${{ github.event.inputs.ref }}
           path: |
             Runner.app.zip
             splash-*.png
-          if-no-files-found: error
+          if-no-files-found: warn
