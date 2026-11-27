@@ -25,15 +25,20 @@ jobs:
           ref: ${{ github.event.inputs.ref }}
           fetch-depth: 0
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify splash source assets
+        run: |
+          python -m pip install pillow
+          python scripts/verify_brand_assets.py
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-
-      - name: Verify splash source assets
-        run: |
-          python3 -m pip install --user pillow
-          python3 scripts/verify_brand_assets.py
 
       - name: Clean every cached build input
         run: |
@@ -74,7 +79,7 @@ jobs:
           xcrun simctl screenshot booted splash-1.png
           sleep 1
           xcrun simctl screenshot booted splash-2.png
-          python3 scripts/check_splash_screenshot.py splash-0.png splash-1.png splash-2.png
+          python scripts/check_splash_screenshot.py splash-0.png splash-1.png splash-2.png
 
       - name: Package the simulator app
         run: zip -r Runner.app.zip build/ios/iphonesimulator/Runner.app
