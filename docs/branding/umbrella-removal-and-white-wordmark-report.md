@@ -57,7 +57,7 @@
 - `dart format --output=none --set-exit-if-changed` على ملفات Dart المعدّلة → `0 changed`.
 - `flutter analyze` → لا `error`، و478 ملاحظة/تحذيراً متبقية من قبل (deprecations وunused imports في ملفات أخرى)؛ لا ملاحظة جديدة في الملفات المعدّلة. خرج التحليل برمز 1 بسبب هذه التحذيرات القديمة.
 - `flutter test` → **686 اختباراً ناجحاً**، صفر فشل (بما فيها اختبار الإقلاع بلا Onboarding، وتوسيط المجموعة، والحجم البصري `24dp` للمظلة).
-- `.github/workflows/ios-clean-splash.yml` → بناء نظيف على ماك من `main`، تثبيت على محاكي، التقاط 3 صور للسبلاش، وفحصها بـ`scripts/check_splash_screenshot.py`؛ أي بكسل أحمر قديم يُفشل الـjob. جرّب الفاحص على صورة المالك فأبلغ `2983 retired red pixels`.
+- `.github/workflows/ios-clean-splash.yml` → بناء نظيف على `macos-15` من `Main` (لأن `macos-14` أُعزل في 2026-11-02)، تثبيت على محاكي، التقاط 3 صور للسبلاش، وفحصها بـ`scripts/check_splash_screenshot.py`؛ أي بكسل أحمر قديم يُفشل الـjob. جرّب الفاحص على صورة المالك فأبلغ `2983 retired red pixels`.
 - `git diff --check` → نظيف (أُزيلت مسافات زائدة أنشأها مولّد الويب في `web/index.html` عبر سكربت التطبيع).
 
 التحقق بصري مباشر على جهاز فعلي **لم يُجرَ**؛ حلّلت صورة أرسلها المالك بكسلياً، وبقية الفحوص بكسلية وعبر widget tests فقط. إن ظهر السبلاش القديم على جهاز موجود، يلزم إعادة تثبيت نظيفة (Uninstall ثم Install) قبل الحكم على النتيجة.

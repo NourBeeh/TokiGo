@@ -13,11 +13,11 @@ on:
       ref:
         description: Commit, tag or branch to build
         required: true
-        default: main
+        default: Main
 
 jobs:
   build:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - name: Checkout pinned commit
         uses: actions/checkout@v4
