@@ -413,8 +413,8 @@ class _HomeServiceRow extends StatelessWidget {
 
 /// A flat hairline plate holding the same glyph Home renders.
 ///
-/// [HomeActionGlyph] owns the parasol asset and the Material icon sizes, so
-/// onboarding cannot fall back to a stale copy of the service icons.
+/// [HomeActionGlyph] owns the compact white wordmark and the Material icon
+/// sizes, so onboarding cannot fall back to a stale copy of the service icons.
 class _ServicePlate extends StatelessWidget {
   const _ServicePlate({
     super.key,

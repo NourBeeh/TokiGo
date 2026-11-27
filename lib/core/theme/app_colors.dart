@@ -11,8 +11,9 @@ import 'package:flutter/material.dart';
 /// primary action fill, selection states, focus rings, chips, FAB-style discs and
 /// progress indicators all resolve to the active canvas's own ink
 /// ([brand] — near-black on the light canvas, near-white on the dark one). The
-/// wordmark keeps its own tokens ([brandRed], [wordmarkInk]) — the logo is not
-/// chrome — and every remaining hue is semantic and carries status only
+/// TokiGo wordmark is monochrome: theme text ink in-app, white on the fixed
+/// #111111 launch artwork. The legacy [brandRed] token now serves only the
+/// favourite heart; every remaining hue is semantic and carries status only
 /// (success / warning / danger / info).
 ///
 /// This is a design primitive. Consumers should reference these tokens and
@@ -22,8 +23,8 @@ abstract final class AppColors {
   // ---------------------------------------------------------------------------
   // Action — the neutral ink family.
   //
-  // The wordmark keeps its own tokens ([brandRed], [wordmarkInk]) — the logo is
-  // not chrome.
+  // The wordmark is monochrome; [brandRed] is retained only for the favourite
+  // heart, not for the logo.
   // ---------------------------------------------------------------------------
 
   /// The primary action fill: the active canvas's own ink.

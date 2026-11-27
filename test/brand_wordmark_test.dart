@@ -8,9 +8,9 @@ import 'package:tokigo/core/theme/app_typography.dart';
 import 'package:tokigo/core/ui/app_wordmark.dart';
 
 /// The brand mark is a fixed shape, so it is pinned here rather than left to
-/// each surface: one font, one weight, one tracking, one gap, one colour pair —
-/// and the same numbers inside `tool/branding/generate_wordmark.py`, which
-/// renders the splash raster the native splash screen shows.
+/// each surface: one font, one weight, one tracking, one gap and one monochrome
+/// colour. The same shape drives `tool/branding/generate_wordmark.py`, which
+/// renders the fixed white splash artwork the native splash screen shows.
 ///
 /// A drift in any of these is a logo that differs between the splash and the
 /// app, which is exactly the defect these tests exist to prevent.
@@ -38,15 +38,17 @@ void main() {
   }
 
   group('AppWordmark', () {
-    testWidgets('uses the brand colours for the two halves', (
+    testWidgets('uses one monochrome colour — no retired red Go', (
       WidgetTester tester,
     ) async {
       await pumpMark(tester);
 
-      expect(styleOf(tester, 'Toki').color, AppColors.wordmarkInk);
-      expect(styleOf(tester, 'Go').color, AppColors.brandRed);
-      expect(AppColors.wordmarkInk, const Color(0xFF111111));
-      expect(AppColors.brandRed, const Color(0xFFFF2D2D));
+      final Color toki = styleOf(tester, 'Toki').color!;
+      final Color go = styleOf(tester, 'Go').color!;
+      expect(toki, go);
+      expect(go, isNot(AppColors.brandRed));
+      expect(go, isNot(const Color(0xFFFF2D2D)));
+      expect(go, isNot(const Color(0xFFFF5C5C)));
     });
 
     testWidgets('is Manrope ExtraBold, whatever typography step it is given', (
@@ -71,10 +73,11 @@ void main() {
         base: const TextStyle(fontSize: size, fontFamily: 'Cairo'),
       );
 
-      expect(styleOf(tester, 'Toki').letterSpacing, size * AppWordmark.trackingEm);
-      final SizedBox gap = tester.widget<SizedBox>(
-        find.byType(SizedBox).first,
+      expect(
+        styleOf(tester, 'Toki').letterSpacing,
+        size * AppWordmark.trackingEm,
       );
+      final SizedBox gap = tester.widget<SizedBox>(find.byType(SizedBox).first);
       expect(gap.width, size * AppWordmark.gapEm);
       // The regression that started this: the header's 25px mark kept its
       // -0.3px tracking when it was re-drawn at 36px.
@@ -137,12 +140,11 @@ void main() {
       expect(constant('FONT_PATH'), contains(AppWordmark.fontFamily));
     });
 
-    test('mirrors the brand colours', () {
+    test('the launch artwork is white only — no red Go', () {
       Color parseRgbTuple(String value) {
-        final List<String> parts = RegExp(r'0x([0-9A-Fa-f]{2})')
-            .allMatches(value)
-            .map((RegExpMatch m) => m.group(1)!)
-            .toList();
+        final List<String> parts = RegExp(
+          r'0x([0-9A-Fa-f]{2})',
+        ).allMatches(value).map((RegExpMatch m) => m.group(1)!).toList();
         expect(parts.length, 3, reason: 'expected an (r, g, b) tuple: $value');
         return Color.fromARGB(
           0xFF,
@@ -152,8 +154,10 @@ void main() {
         );
       }
 
-      expect(parseRgbTuple(constant('INK')), AppColors.wordmarkInk);
-      expect(parseRgbTuple(constant('GO')), AppColors.brandRed);
+      expect(parseRgbTuple(constant('INK')), const Color(0xFFFFFFFF));
+      expect(parseRgbTuple(constant('GO')), const Color(0xFFFFFFFF));
+      expect(generator, isNot(contains('0xFF, 0x2D, 0x2D')));
+      expect(generator, isNot(contains('0xFF, 0x5C, 0x5C')));
     });
   });
 }

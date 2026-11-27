@@ -91,13 +91,14 @@ void main() {
       expect(icon.size, HomeActionTile.iconSize);
     }
 
-    // The fourth Home action is the in-app parasol, not a beach glyph.
-    final Finder parasol = find.descendant(
+    // Owner follow-up: the fourth Home action keeps the parasol — this tile
+    // is the only exception to the white-wordmark brand.
+    final Finder mark = find.descendant(
       of: _servicePlates.at(3),
       matching: find.byType(Image),
     );
-    expect(parasol, findsOneWidget);
-    final Image image = tester.widget<Image>(parasol);
+    expect(mark, findsOneWidget);
+    final Image image = tester.widget<Image>(mark);
     expect(image.width, HomeActionTile.iconSlotHeight);
     expect(
       (image.image as AssetImage).assetName,
@@ -130,14 +131,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final Finder parasol = find.descendant(
+    final Finder mark = find.descendant(
       of: _servicePlates.at(3),
       matching: find.byType(Image),
     );
-    final Image image = tester.widget<Image>(parasol);
+    final Image image = tester.widget<Image>(mark);
     expect(
       (image.image as AssetImage).assetName,
-      'assets/icon/app_icon_adaptive_dark_foreground_1024.png',
+      'assets/icon/packages_parasol_dark_1024.png',
     );
   });
 }

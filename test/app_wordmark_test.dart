@@ -20,7 +20,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       tester.widget<Text>(find.text('Toki')).style?.color,
-      TokiGoColors.light().wordmarkInk,
+      TokiGoColors.light().textPrimary,
+    );
+    expect(
+      tester.widget<Text>(find.text('Go')).style?.color,
+      TokiGoColors.light().textPrimary,
     );
 
     await tester.pumpWidget(
@@ -32,7 +36,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       tester.widget<Text>(find.text('Toki')).style?.color,
-      TokiGoColors.dark().wordmarkInk,
+      TokiGoColors.dark().textPrimary,
+    );
+    expect(
+      tester.widget<Text>(find.text('Go')).style?.color,
+      TokiGoColors.dark().textPrimary,
     );
   });
 }

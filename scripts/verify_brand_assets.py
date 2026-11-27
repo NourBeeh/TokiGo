@@ -5,15 +5,13 @@ Three checks, cheapest first:
   python scripts/verify_brand_assets.py
   python scripts/verify_brand_assets.py --apk build/app/outputs/flutter-apk/app-debug.apk
 
-1. brand red   — samples the Home wordmark's "Go" and prints the dominant red,
-                  so the in-app token is checked against the ARTIFACT rather
-                  than against a claim.
+1. white master — the branding wordmark must carry white ink in both halves
+                  and zero saturated red: the old red "Go" is retired.
   red census   — every image in the repo, distinct saturated reds only.
-  mark present — each final launcher asset must carry the TokiGo wordmark in a
-                  single ink colour: a white "Toki" on the left and a white
-                  "Go" on the right, neither clipped by the outer edge. The
-                  launcher has NO brand red; the Home header keeps its red
-                  "Go", and the in-app parasol is a different asset set.
+  mark present — every final launcher/splash asset must carry the TokiGo
+                  wordmark in a single white ink: a white "Toki" on the left
+                  and a white "Go" on the right, neither clipped by the edge.
+                  The parasol is gone from every branding asset.
 
 Exit code is non-zero if any check fails.
 """
@@ -32,7 +30,6 @@ from PIL import Image
 CANVAS = 1024
 # Android adaptive icons guarantee only the central 66% is visible.
 SAFE_FRACTION = 0.66
-EXPECTED_BRAND_RED = (255, 45, 45)  # #FF2D2D, the "Go" of the wordmark
 
 SKIP_DIRS = {"node_modules", ".git", "build", ".dart_tool", ".gradle"}
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif"}
@@ -45,6 +42,10 @@ FINAL_ASSETS = (
     "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
     "android/app/src/main/res/drawable-xxxhdpi/ic_launcher_foreground.png",
     "android/app/src/main/res/drawable-xxxhdpi/ic_launcher_monochrome.png",
+    "assets/branding/logo_splash_dark.png",
+    "assets/branding/logo_branding_dark.png",
+    "android/app/src/main/res/drawable-xxxhdpi/splash.png",
+    "android/app/src/main/res/drawable-xxxhdpi/android12splash.png",
 )
 
 # Each half must cover at least this share of the canvas to read as a name
@@ -82,20 +83,32 @@ def is_red(pixel) -> bool:
     return a > 200 and r > 120 and r - max(g, b) > 50
 
 
-def brand_red(wordmark: Path) -> tuple[int, int, int] | None:
-    """Dominant red in the RIGHT half of the wordmark — that is the "Go"."""
+def check_wordmark_master(wordmark: Path, checker: Checker) -> None:
+    """The wide master is white on both halves, with no retired red ink."""
     if not wordmark.exists():
-        return None
+        checker.fail(f"{wordmark}: missing")
+        return
     im = Image.open(wordmark).convert("RGBA")
     w, h = im.size
     px = im.load()
-    counts: Counter = Counter()
+    left = right = red = 0
     for y in range(h):
-        for x in range(w // 2, w):
+        for x in range(w):
             pixel = px[x, y]
             if is_red(pixel):
-                counts[pixel[:3]] += 1
-    return counts.most_common(1)[0][0] if counts else None
+                red += 1
+            if is_white(pixel):
+                if x < w // 2:
+                    left += 1
+                else:
+                    right += 1
+    label = f"{wordmark} ({w}x{h})"
+    if red:
+        checker.fail(f"{label}: {red} saturated-red pixels remain in the master")
+    if left == 0 or right == 0:
+        checker.fail(f"{label}: white wordmark halves missing ({left}/{right})")
+    if not red and left and right:
+        print(f"  OK {label}: white Toki {left}px + Go {right}px, no red")
 
 
 def red_census(repo: Path) -> None:
@@ -246,19 +259,10 @@ def main() -> int:
 
     checker = Checker()
 
-    print("brand red (Home wordmark's 'Go' - the launcher has none):")
-    sampled = brand_red(args.repo / "assets/branding/logo_wordmark.png")
-    if sampled is None:
-        checker.fail("assets/branding/logo_wordmark.png: no red pixels found")
-    else:
-        hexs = "#%02X%02X%02X" % sampled
-        print(f"  {hexs}")
-        if sampled != EXPECTED_BRAND_RED:
-            checker.fail(
-                f"logo 'Go' is {hexs}, expected "
-                f"#{EXPECTED_BRAND_RED[0]:02X}{EXPECTED_BRAND_RED[1]:02X}"
-                f"{EXPECTED_BRAND_RED[2]:02X}"
-            )
+    print("branding master (white TokiGo only, no red Go):")
+    check_wordmark_master(
+        args.repo / "assets/branding/logo_wordmark.png", checker
+    )
 
     print()
     red_census(args.repo)

@@ -12,11 +12,12 @@ import 'package:flutter_test/flutter_test.dart';
 /// `drawable-night-*`) resources must be pixel-identical, and the mark must be
 /// the pinned wordmark (black field, white TokiGo, no red "Go"). Without this
 /// guard a routine `dart run flutter_launcher_icons` can silently restore the
-/// retired artwork. The splash keeps the in-app parasol by design.
+/// retired artwork. Since 2026-11-27 the splash shows the white wordmark only:
+/// the parasol and the red "Go" are gone from every launch asset.
 void main() {
   const String res = 'android/app/src/main/res';
 
-  final List<(String, String)> _pairs = <(String, String)>[
+  final List<(String, String)> pairs = <(String, String)>[
     ('mipmap-xxxhdpi/ic_launcher.png', 'mipmap-night-xxxhdpi/ic_launcher.png'),
     (
       'drawable-xxxhdpi/ic_launcher_foreground.png',
@@ -34,7 +35,7 @@ void main() {
     ('drawable/background.png', 'drawable-night/background.png'),
   ];
 
-  Future<ui.Image> _decode(String path) async {
+  Future<ui.Image> decodeImage(String path) async {
     final ui.Codec codec = await ui.instantiateImageCodec(
       File(path).readAsBytesSync(),
     );
@@ -42,7 +43,7 @@ void main() {
     return frame.image;
   }
 
-  Future<Uint8List> _rgba(ui.Image image) async {
+  Future<Uint8List> rgbaBytes(ui.Image image) async {
     final ByteData? data = await image.toByteData(
       format: ui.ImageByteFormat.rawRgba,
     );
@@ -50,14 +51,14 @@ void main() {
   }
 
   test('the icon and the splash are identical in light and dark', () async {
-    for (final (String light, String night) in _pairs) {
-      final ui.Image a = await _decode('$res/$light');
-      final ui.Image b = await _decode('$res/$night');
+    for (final (String light, String night) in pairs) {
+      final ui.Image a = await decodeImage('$res/$light');
+      final ui.Image b = await decodeImage('$res/$night');
       expect(a.width, b.width, reason: '$light vs $night: width');
       expect(a.height, b.height, reason: '$light vs $night: height');
       expect(
-        await _rgba(a),
-        await _rgba(b),
+        await rgbaBytes(a),
+        await rgbaBytes(b),
         reason:
             '$light and $night diverged — the dark assets must be fixed '
             'in BOTH appearances',
@@ -68,10 +69,10 @@ void main() {
   test(
     'the launcher icon is the all-white wordmark (no brand-red Go)',
     () async {
-      final ui.Image icon = await _decode(
+      final ui.Image icon = await decodeImage(
         '$res/mipmap-xxxhdpi/ic_launcher.png',
       );
-      final Uint8List pixels = await _rgba(icon);
+      final Uint8List pixels = await rgbaBytes(icon);
 
       int rgbAt(int x, int y) {
         final int i = (y * icon.width + x) * 4;
@@ -128,7 +129,9 @@ void main() {
   );
 
   test('the splash field is the dark #111111', () async {
-    final ui.Image background = await _decode('$res/drawable/background.png');
+    final ui.Image background = await decodeImage(
+      '$res/drawable/background.png',
+    );
     final ByteData? data = await background.toByteData(
       format: ui.ImageByteFormat.rawRgba,
     );
@@ -136,5 +139,32 @@ void main() {
     expect(pixels[0], 0x11, reason: 'the splash field is not #111111');
     expect(pixels[1], 0x11);
     expect(pixels[2], 0x11);
+  });
+
+  test('the launch artwork is white TokiGo with no red Go', () async {
+    for (final String path in <String>[
+      '$res/drawable-xxxhdpi/splash.png',
+      '$res/drawable-xxxhdpi/android12splash.png',
+    ]) {
+      final ui.Image image = await decodeImage(path);
+      final Uint8List pixels = await rgbaBytes(image);
+      int white = 0;
+      int red = 0;
+      for (int i = 0; i < pixels.length; i += 4) {
+        if (pixels[i + 3] <= 200) continue;
+        if (pixels[i] > 240 && pixels[i + 1] > 240 && pixels[i + 2] > 240) {
+          white++;
+        }
+        if (pixels[i] > 200 && pixels[i + 1] < 100 && pixels[i + 2] < 100) {
+          red++;
+        }
+      }
+      expect(
+        white,
+        greaterThan(500),
+        reason: '$path must show the white wordmark',
+      );
+      expect(red, 0, reason: '$path still carries the retired red Go');
+    }
   });
 }

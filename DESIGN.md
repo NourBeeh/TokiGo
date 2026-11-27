@@ -9,7 +9,7 @@ colors:
   text-primary: '#1A1A1A'
   text-secondary: '#6E6E6E'
   text-tertiary: '#9B9B9B'
-  brand-red: '#FF2D2D'
+  brand-white: '#FFFFFF'
   danger: '#E11D48'
   success: '#16A34A'
   warning: '#D97706'
@@ -104,9 +104,11 @@ confident editorial headings, uncluttered sections, and clear actions.
 The system is deliberately near-monochrome. Black and ink carry primary
 actions, navigation glyphs, ratings, and AI affordances; soft hairlines and a
 two-layer shadow halo separate white surfaces without tinting the page.
-Semantic colors communicate status, the red wordmark is reserved for the
-brand mark, and mood hues are scoped to the mood selector rather than used as
-general decoration. There is no dark theme.
+The TokiGo wordmark is monochrome in-app, and its launch artwork is white on
+the fixed #111111 field. The red “Go” was retired everywhere in 2026-11, and
+the parasol was retired from identity surfaces; by owner follow-up it survives
+only on the Packages quick tile. Mood hues stay scoped to the mood selector
+rather than general decoration.
 
 ## 2. Color Palette & Roles
 
@@ -129,9 +131,10 @@ general decoration. There is no dark theme.
   color, and AI controls. Pressed actions deepen to **Black — `#000000`**.
 - **Charcoal — `#141414`:** pinned CTA bars and dark action surfaces; pair
   with white primary content and muted secondary copy.
-- **Wordmark Red — `#FF2D2D`:** only the “Go” part of the in-app TokiGo
-  wordmark. The launcher icon uses one white wordmark with no red. Do not use
-  it as a general CTA or page accent.
+- **Brand White — `#FFFFFF`:** the only ink in the launch wordmark and the
+  compact mark that replaced the parasol. On light in-app surfaces the same
+  mark sits on a `#111111` plate so the white letterforms stay readable; the
+  in-app text wordmark follows Primary Ink instead. No red “Go” remains.
 - **Mood accents —** Shopping `#A75F32`, Beach `#168392`, Snow `#527B9B`,
   Nature `#60866B`, and City `#67559A`. Keep these local to mood identity
   and mood-specific content; global service navigation remains monochrome.
@@ -222,12 +225,14 @@ avoid inventing details in loading states.
 
 ### Navigation
 
-The Home header pairs the TokiGo wordmark with compact notification and profile
-actions. Service shortcuts form a simple horizontal row of white rounded
-tiles with black glyphs and clear labels. Mood navigation may use its scoped
-hue, but flight, hotel, car, package, and Explore chrome remain monochrome.
-Use visible back controls on pushed pages and preserve platform-native system
-Back behavior; do not add custom edge-swipe dismissal.
+The Home header pairs the monochrome TokiGo wordmark with compact notification
+and profile actions. Service shortcuts form a single scrollable row of white
+rounded tiles with 26dp glyphs and clear labels. By owner follow-up, Packages
+alone keeps the original parasol glyph; the launcher, splash and AI identity
+remain the white TokiGo wordmark. There is no floating bottom bar. Mood
+navigation may use its scoped hue, but flight, hotel, car, package, and Explore
+chrome remain monochrome. Use visible back controls on pushed pages and preserve
+platform-native system Back behavior; do not add custom edge-swipe dismissal.
 
 ### Inputs & Forms
 
@@ -298,9 +303,10 @@ provider-backed facts, and no decorative color in the global navigation.
 
 Use **Paper White `#FFFFFF`** for the canvas, **Action Ink `#111111`** for
 primary controls, **Primary Ink `#1A1A1A`** for content, and **Secondary Grey
-`#6E6E6E`** for supporting copy. Reserve **Wordmark Red `#FF2D2D`** for the
-in-app logo only (not the launcher icon); apply semantic colors only to their
-status meanings and mood hues only to mood identity.
+`#6E6E6E`** for supporting copy. The wordmark is monochrome — theme text ink in
+the app, **Brand White `#FFFFFF`** on the launcher and splash — with no red
+“Go”; apply semantic colors only to their status meanings and mood hues only to
+mood identity.
 
 ### Component Prompts
 

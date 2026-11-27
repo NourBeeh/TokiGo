@@ -50,6 +50,11 @@ List<AnimatedContainer> _tiles(WidgetTester tester) {
 }
 
 void main() {
+  test('the quick-action glyph scale is the owner-approved 26/39', () {
+    expect(HomeActionTile.iconSize, 26);
+    expect(HomeActionTile.iconSlotHeight, 39);
+  });
+
   testWidgets('keeps the original card design at a fixed size', (tester) async {
     _phoneSize(tester);
     // Wide enough to lay out all five tiles at once (the real Home row is a
@@ -100,11 +105,18 @@ void main() {
           )
           .first;
       if (i == 3) {
-        expect(tester.widget<Image>(glyph).width, 36);
+        // Owner follow-up: the parasol is back on this tile only.
+        final Image mark = tester.widget<Image>(glyph);
+        expect(mark.width, HomeActionTile.iconSlotHeight);
+        expect(mark.height, HomeActionTile.iconSlotHeight);
+        expect(
+          (mark.image as AssetImage).assetName,
+          HomeActionGlyph.parasolAsset(tester.element(tile)),
+        );
       } else {
         final Icon icon = tester.widget<Icon>(glyph);
         expect(icon.icon, icons[i]);
-        expect(icon.size, 24);
+        expect(icon.size, HomeActionTile.iconSize);
         expect(icon.color, HomeDesignTokens.accent);
       }
 

@@ -187,11 +187,15 @@ void main() {
             )
             .first;
         if (i == 3) {
-          expect(tester.widget<Image>(glyph).width, 36);
+          // Owner decision (2026-11-27): the compact white wordmark replaced
+          // the parasol, at the same enlarged glyph slot as Home's other icons.
+          final Image mark = tester.widget<Image>(glyph);
+          expect(mark.width, HomeActionTile.iconSlotHeight);
+          expect(mark.height, HomeActionTile.iconSlotHeight);
         } else {
           final Icon icon = tester.widget<Icon>(glyph);
           expect(icon.icon, icons[i]);
-          expect(icon.size, 24);
+          expect(icon.size, HomeActionTile.iconSize);
           expect(icon.color, accent);
         }
 

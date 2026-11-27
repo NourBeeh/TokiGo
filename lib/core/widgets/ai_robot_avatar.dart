@@ -5,12 +5,11 @@ import 'package:tokigo/core/theme/tokigo_colors.dart';
 
 /// The ONE brand identity for every AI surface.
 ///
-/// A small, transparent TokiGo brand mark drawn beside each assistant turn,
-/// inside the thinking indicator and in the welcome hero — so the assistant
-/// has the same face everywhere it speaks. The artwork is the EXISTING brand
-/// mark (`assets/icon/app_icon_adaptive_foreground_1024.png`, with its dark
-/// counterpart for dark surfaces); no new logo is drawn, recoloured or
-/// redrawn, and the source assets are left untouched.
+/// A small, compact **white TokiGo wordmark** drawn beside each assistant turn
+/// and inside the thinking indicator — so the assistant has the same face
+/// everywhere it speaks. It replaces the retired parasol and uses the shared
+/// branding rasters (`assets/icon/app_icon_adaptive_foreground_1024.png`, with
+/// its dark counterpart); no new logo is drawn or recoloured here.
 ///
 /// While the assistant is thinking or loading, [animate] adds a gentle
 /// breathing pulse (a slow scale + a soft ink halo) — quiet motion, no
@@ -30,11 +29,11 @@ class AiRobotAvatar extends StatefulWidget {
   /// Whether the breathing pulse is running (thinking / loading).
   final bool animate;
 
-  /// The brand mark for LIGHT surfaces (transparent black parasol).
+  /// The compact white wordmark used on light surfaces.
   static const String lightAssetName =
       'assets/icon/app_icon_adaptive_foreground_1024.png';
 
-  /// The brand mark for DARK surfaces (transparent white parasol).
+  /// The compact white wordmark used on dark surfaces.
   static const String darkAssetName =
       'assets/icon/app_icon_adaptive_dark_foreground_1024.png';
 
@@ -132,11 +131,8 @@ class _AiRobotAvatarState extends State<AiRobotAvatar>
       height: widget.size,
       fit: BoxFit.contain,
       excludeFromSemantics: true,
-      errorBuilder: (context, _, _) => Icon(
-        Icons.beach_access_rounded,
-        size: widget.size * 0.7,
-        color: ink,
-      ),
+      errorBuilder: (context, _, _) =>
+          Icon(Icons.beach_access_rounded, size: widget.size * 0.7, color: ink),
     );
   }
 }

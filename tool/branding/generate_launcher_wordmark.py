@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Generate the OUTSIDE-app icon: the TokiGo wordmark, not the parasol.
 
-The parasol assets in `assets/icon/app_icon_*` are the in-app brand mark (Home
-action tiles, AI avatar) and the splash artwork. They are deliberately left
-untouched. This script owns a separate set of launcher-only masters, consumed by
+The `assets/icon/app_icon_*` rasters now carry the compact white wordmark and
+are shared by AI and the Android 12 splash (the parasol was retired from the
+identity surfaces on 2026-11-27). The owner later restored it only on the Home
+Packages tile, using separate `assets/icon/packages_parasol*` files. This script
+owns a separate set of launcher-only masters, consumed by
 `flutter_launcher_icons` through `pubspec.yaml`:
 
     Android  legacy launcher   -> black field + white TokiGo wordmark
@@ -13,13 +15,12 @@ untouched. This script owns a separate set of launcher-only masters, consumed by
     iOS 18   dark appearance    -> transparent master, same white wordmark
 
 The two alternate icon catalogs registered in Info.plist are refreshed from the
-same dark master, so switching alternates cannot resurrect the old parasol.
+same dark master, so switching alternates cannot resurrect the retired parasol.
 
 The letterforms come straight from the Home header's spec, mirrored from
 `lib/core/ui/app_wordmark.dart` via `generate_wordmark.py`: Manrope Variable at
-weight 800, -1.2% tracking, 0.16em gap. The launcher deliberately drops the
-Home header's brand red — "Toki" and "Go" share one ink colour — while the
-in-app wordmark keeps its red "Go". The glyph outlines are lifted from the
+weight 800, -1.2% tracking, 0.16em gap. Both halves share one white ink; the
+red "Go" was removed from the wordmark everywhere. The glyph outlines are lifted from the
 bundled font with fontTools so the SVG masters stay vector.
 
 Three canvases are emitted because the platforms have different safe areas:
@@ -225,7 +226,7 @@ def sync_ios_alternates() -> None:
     `flutter_launcher_icons` only writes AppIcon.appiconset. Info.plist also
     registers `app_icon` / `app_icon_dark`, so render their listed sizes from
     the same fixed dark master — otherwise an alternate switch reveals the
-    retired parasol.
+    retired parasol artwork.
     """
     catalogs = Path("ios/Runner/Assets.xcassets")
     for name in ("app_icon", "app_icon_dark"):

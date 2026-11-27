@@ -84,11 +84,12 @@ flutter_launcher_icons:
   ios: true
   # iOS masks the icon itself: the master must be a full-bleed opaque square.
   remove_alpha_ios: true
-  # Owner decision (2026-11): the OUTSIDE icon is the TokiGo wordmark — the
-  # Home header's letterforms in one colour, not the in-app parasol. The dark
+  # Owner decision (2026-11, updated 2026-11-27): the OUTSIDE icon is the
+  # TokiGo wordmark — the Home header's letterforms in one colour. The dark
   # master (black field, white TokiGo, no red) is FIXED for BOTH appearances.
-  # The in-app parasol assets in assets/icon/app_icon_* stay untouched for
-  # Home, AI and splash.
+  # The identity assets assets/icon/app_icon_* now hold the compact white
+  # wordmark used by AI and the Android 12 splash. Owner follow-up keeps the
+  # parasol only on the Packages quick tile via packages_parasol* files.
   image_path: assets/icon/launcher_wordmark_dark_1024.png
   # iOS 18 dark appearance: transparent master, iOS supplies the dark field.
   image_path_ios_dark_transparent: assets/icon/launcher_wordmark_ios_dark_1024.png
@@ -99,10 +100,11 @@ flutter_launcher_icons:
   adaptive_icon_foreground: assets/icon/launcher_wordmark_adaptive_dark_foreground_1024.png
   adaptive_icon_monochrome: assets/icon/launcher_wordmark_adaptive_monochrome_1024.png
 
-# The splash shows the app icon with the wordmark below it. The composed
-# masters are rendered by tool/branding/generate_splash.py from the app icon
-# and the wordmark. Regenerate them there, then run
-# `dart run flutter_native_splash:create`.
+# The splash shows the white TokiGo wordmark only: no parasol and no old red
+# "Go" in the launch artwork (owner decision 2026-11-27). The parasol exception
+# is confined to the Packages quick tile and is not referenced here. The composed masters are rendered by
+# tool/branding/generate_splash.py from the white wordmark masters. Regenerate
+# them there, then run `dart run flutter_native_splash:create`.
 #
 # Owner decision (2026-11): the DARK splash (#111111 field, white artwork) is
 # the FIXED splash — it is generated for BOTH appearances, so the launch screen
@@ -115,9 +117,9 @@ flutter_native_splash:
   android_gravity: center
   fullscreen: true
   android_12:
-    # Android 12+ masks the outer third of the icon, so it takes the adaptive
-    # foreground (already inside the safe circle). The system splash cannot
-    # place a name under the icon, so the wordmark goes in the branding slot.
+    # Android 12+ masks the outer third of the icon. The adaptive foreground
+    # now carries the compact white wordmark (no parasol), centred inside the
+    # safe circle. The branding slot repeats the same white name below it.
     color: "#111111"
     image: assets/icon/app_icon_adaptive_dark_foreground_1024.png
     color_dark: "#111111"
@@ -145,12 +147,15 @@ flutter:
     # so a city card renders on a first offline launch with no download.
     - assets/explore/cities/
     - assets/explore/manifest.json
-    # The EXISTING TokiGo brand mark, reused as the AI assistant identity and
-    # the chat watermark. Both masters are transparent (black mark for light
-    # surfaces, white for dark); no new logo is drawn and the source assets in
-    # assets/icon/ are left untouched.
+    # The compact white TokiGo wordmark is the AI assistant identity; the
+    # adaptive master also feeds the Android 12 splash. No parasol here.
     - assets/icon/app_icon_adaptive_foreground_1024.png
     - assets/icon/app_icon_adaptive_dark_foreground_1024.png
+    # Owner follow-up (2026-11-27): the parasol is restored ONLY on the Home /
+    # Onboarding Packages quick action. These dedicated files keep it out of
+    # the splash, launcher and AI surfaces.
+    - assets/icon/packages_parasol_1024.png
+    - assets/icon/packages_parasol_dark_1024.png
 
   # Premium type system: Manrope (Latin) + Cairo (Arabic), variable fonts.
   fonts:

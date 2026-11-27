@@ -11,7 +11,9 @@ double _contrastRatio(Color a, Color b) {
   double luminance(Color c) {
     double channel(double v) {
       final double s = v / 255.0;
-      return s <= 0.04045 ? s / 12.92 : math.pow((s + 0.055) / 1.055, 2.4).toDouble();
+      return s <= 0.04045
+          ? s / 12.92
+          : math.pow((s + 0.055) / 1.055, 2.4).toDouble();
     }
 
     return 0.2126 * channel(c.red.toDouble()) +
@@ -42,13 +44,25 @@ void main() {
     });
 
     test('primary text clears AA on its own canvas in both themes', () {
-      expect(_contrastRatio(light.textPrimary, light.background), greaterThan(4.5));
-      expect(_contrastRatio(dark.textPrimary, dark.background), greaterThan(4.5));
+      expect(
+        _contrastRatio(light.textPrimary, light.background),
+        greaterThan(4.5),
+      );
+      expect(
+        _contrastRatio(dark.textPrimary, dark.background),
+        greaterThan(4.5),
+      );
     });
 
     test('secondary text clears AA on its own canvas in both themes', () {
-      expect(_contrastRatio(light.textSecondary, light.background), greaterThan(4.5));
-      expect(_contrastRatio(dark.textSecondary, dark.background), greaterThan(4.5));
+      expect(
+        _contrastRatio(light.textSecondary, light.background),
+        greaterThan(4.5),
+      );
+      expect(
+        _contrastRatio(dark.textSecondary, dark.background),
+        greaterThan(4.5),
+      );
     });
 
     test('the primary action fill clears AA for its on-primary label', () {
@@ -56,12 +70,15 @@ void main() {
       expect(_contrastRatio(dark.onBrand, dark.brand), greaterThan(4.5));
     });
 
-    test('the dark canvas is genuinely dark and the light canvas genuinely light', () {
-      final double lightLuma = _contrastRatio(light.background, Colors.black);
-      final double darkLuma = _contrastRatio(dark.background, Colors.white);
-      expect(lightLuma, greaterThan(10));
-      expect(darkLuma, greaterThan(10));
-    });
+    test(
+      'the dark canvas is genuinely dark and the light canvas genuinely light',
+      () {
+        final double lightLuma = _contrastRatio(light.background, Colors.black);
+        final double darkLuma = _contrastRatio(dark.background, Colors.white);
+        expect(lightLuma, greaterThan(10));
+        expect(darkLuma, greaterThan(10));
+      },
+    );
 
     test('the accent is NEUTRAL in both themes — no brand hue remains', () {
       // Owner decision (2026-11): the blue #0064E0 accent is retired. The
@@ -84,8 +101,9 @@ void main() {
   });
 
   group('Phase 3.2 monochrome policy', () {
-    // Owner decision: the UI is strictly black/white/grey. The only red left in
-    // the product is the TokiGo wordmark (brandRed / wordmarkOnMedia).
+    // Owner decision: the UI is strictly black/white/grey. The brandRed token
+    // remains for the favourite heart and status surfaces only — the wordmark
+    // itself is monochrome (white on the launch artwork).
     bool isNeutral(Color c) {
       final int argb = c.toARGB32();
       final int r = (argb >> 16) & 0xFF;
@@ -95,25 +113,25 @@ void main() {
     }
 
     Map<String, Color> uiRoles(TokiGoColors c) => <String, Color>{
-          'primary': c.primary,
-          'onPrimary': c.onPrimary,
-          'primaryContainer': c.primaryContainer,
-          'onPrimaryContainer': c.onPrimaryContainer,
-          'onDangerContainer': c.onDangerContainer,
-          'danger': c.danger,
-          'dangerContainer': c.dangerContainer,
-          'heart': c.heart,
-          'success': c.success,
-          'successContainer': c.successContainer,
-          'onSuccessContainer': c.onSuccessContainer,
-          'successStrong': c.successStrong,
-          'warning': c.warning,
-          'warningContainer': c.warningContainer,
-          'onWarningContainer': c.onWarningContainer,
-          'warningInk': c.warningInk,
-          'info': c.info,
-          'infoContainer': c.infoContainer,
-        };
+      'primary': c.primary,
+      'onPrimary': c.onPrimary,
+      'primaryContainer': c.primaryContainer,
+      'onPrimaryContainer': c.onPrimaryContainer,
+      'onDangerContainer': c.onDangerContainer,
+      'danger': c.danger,
+      'dangerContainer': c.dangerContainer,
+      'heart': c.heart,
+      'success': c.success,
+      'successContainer': c.successContainer,
+      'onSuccessContainer': c.onSuccessContainer,
+      'successStrong': c.successStrong,
+      'warning': c.warning,
+      'warningContainer': c.warningContainer,
+      'onWarningContainer': c.onWarningContainer,
+      'warningInk': c.warningInk,
+      'info': c.info,
+      'infoContainer': c.infoContainer,
+    };
 
     test('every UI semantic role is neutral in both themes', () {
       for (final TokiGoColors c in <TokiGoColors>[light, dark]) {
@@ -123,10 +141,13 @@ void main() {
       }
     });
 
-    test('the wordmark keeps its red — the single permitted exception', () {
+    test('the legacy red tokens are kept but never used by the wordmark', () {
+      // Owner decision (2026-11-27): TokiGo is monochrome. brandRed now serves
+      // only the favourite heart; the wordmark no longer reads it.
       expect(light.brandRed, const Color(0xFFFF2D2D));
       expect(dark.brandRed, const Color(0xFFFF5C5C));
       expect(light.brandRed.toARGB32() >> 16, greaterThan(0));
+      expect(light.wordmarkInk, isNot(light.brandRed));
       expect(light.wordmarkOnMedia, const Color(0xFFFFC9C9));
     });
 

@@ -77,10 +77,15 @@ List<HomeActionDefinition> homeActionDefinitions(AppLocalizations l10n) {
 
 /// The one glyph recipe shared by every Home service surface.
 ///
+/// Owner follow-up (2026-11-27): the parasol is restored **only** on the
+/// Activities/Packages quick-action tile. Every other surface (launcher,
+/// splash, AI avatar, the in-app wordmark) keeps the white TokiGo brand with
+/// no parasol, so the two assets live in separate files and cannot drift.
+///
 /// The parasol is an in-app asset with transparent adaptive safe-zone padding;
 /// drawing it at [HomeActionTile.iconSlotHeight] makes its visible mark match
-/// the 24dp Material icons beside it. Material glyphs share the slot's baseline
-/// so labels on a row of four tiles stay aligned.
+/// the enlarged Material icons beside it. Material glyphs share the slot's
+/// baseline so labels on a row of four tiles stay aligned.
 ///
 /// Onboarding renders this same widget from [homeActionDefinitions], so the
 /// first screen a traveller sees cannot drift from the Home buttons.
@@ -93,11 +98,14 @@ class HomeActionGlyph extends StatelessWidget {
     this.glyphSize = HomeActionTile.iconSize,
   });
 
-  /// Parasol asset used by the Activities/Packages service, by brightness.
+  /// Parasol asset used **only** by the Activities/Packages quick action.
+  ///
+  /// Kept in dedicated files so restoring the mascot here cannot put it back
+  /// on the splash, launcher or AI avatar (those use the white wordmark).
   static String parasolAsset(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
-      ? 'assets/icon/app_icon_adaptive_dark_foreground_1024.png'
-      : 'assets/icon/app_icon_adaptive_foreground_1024.png';
+      ? 'assets/icon/packages_parasol_dark_1024.png'
+      : 'assets/icon/packages_parasol_1024.png';
 
   final HomeActionDefinition definition;
   final Color color;
@@ -127,8 +135,9 @@ class HomeActionGlyph extends StatelessWidget {
 
 /// Home shortcuts for travel services — the owner's spec: a horizontal row of
 /// equal white tiles (Flights, Stays, Cars, Packages), each a 68dp white tile
-/// with 18dp corners ([AppRadius.lg]), a hairline border, a 24px accent glyph
-/// and a 12/600 accent label 4dp below it ([AppSpacing.xs]). No shadows.
+/// with 18dp corners ([AppRadius.lg]), a hairline border, a 26px accent glyph
+/// (the parasol for Packages, by owner exception) and a 12/600 accent label
+/// 4dp below it ([AppSpacing.xs]). No shadows.
 ///
 /// On Home these tiles are a CONTENT SWITCHER, not navigation: when
 /// [onActionSelected] is supplied the tile reports the tapped [HomeAction] and
@@ -271,13 +280,12 @@ class HomeActionTile extends StatefulWidget {
   /// card) while staying far above the 44dp minimum tap target.
   static const double height = 68;
 
-  /// Glyph size — the 24px step on the icon scale.
-  static const double iconSize = 24;
+  /// Glyph size — enlarged from 24px to 26px by owner request (2026-11-27).
+  static const double iconSize = 26;
 
-  /// Every tile reserves the same glyph slot. The parasol asset is drawn at
-  /// 36dp because its adaptive safe-zone padding is transparent; Material
-  /// glyphs keep their 24dp size and sit on the slot's baseline so all four
-  /// labels share one row.
+  /// Every tile reserves the same glyph slot. The compact white wordmark is
+  /// drawn at 39dp (26 × 1.5); Material glyphs keep their 26dp size and sit on
+  /// the slot's baseline so all four labels share one row.
   static const double iconSlotHeight = iconSize * 1.5;
 
   /// Gap between the glyph and its label.

@@ -6,6 +6,7 @@ import 'package:tokigo/core/theme/app_theme.dart';
 import 'package:tokigo/core/widgets/ai_robot_avatar.dart';
 import 'package:tokigo/features/ai/domain/ai_chat_message.dart';
 import 'package:tokigo/features/ai/presentation/pages/ai_chat_page.dart';
+
 // ignore: unused_import
 
 /// The assistant's brand identity (owner decision, 2026-11).
@@ -162,7 +163,7 @@ void main() {
 
     // The page's welcome column is reproduced here (the real page needs the AI
     // providers and localizations). Owner decision: it carries the welcome
-    // message only — the umbrella/brand mark is gone from the welcome state.
+    // message only — the retired umbrella mark is gone from the welcome state.
     await tester.pumpWidget(
       host(
         const Column(
@@ -175,10 +176,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(AiRobotAvatar), findsNothing);
-    expect(find.text('Hi! Ask me about flights, hotels, and more…'), findsOneWidget);
+    expect(
+      find.text('Hi! Ask me about flights, hotels, and more…'),
+      findsOneWidget,
+    );
   });
 
-  test('the shared asset is the existing TokiGo brand mark', () {
+  test('the shared asset is the white TokiGo wordmark mark', () {
     expect(
       AiRobotAvatar.lightAssetName,
       'assets/icon/app_icon_adaptive_foreground_1024.png',
