@@ -80,6 +80,17 @@ void main() {
     );
   }
 
+  Rect glyphBoxRect(WidgetTester tester, Finder glyph, bool isParasol) {
+    final Rect visible = visibleGlyphRect(tester, glyph, isParasol);
+    if (!isParasol) return visible;
+    return Rect.fromLTRB(
+      visible.left,
+      visible.center.dy - HomeActionTile.iconSize / 2,
+      visible.right,
+      visible.center.dy + HomeActionTile.iconSize / 2,
+    );
+  }
+
   group('search bar', () {
     testWidgets('matches the spec geometry and palette', (tester) async {
       phoneSize(tester);
@@ -227,11 +238,7 @@ void main() {
         expect(label.style?.color, accent);
 
         // The 4dp visible glyph-to-label gap.
-        final double iconBottom = visibleGlyphRect(
-          tester,
-          glyph,
-          i == 3,
-        ).bottom;
+        final double iconBottom = glyphBoxRect(tester, glyph, i == 3).bottom;
         final double labelTop = tester.getRect(labelSlot(tileFinder)).top;
         expect(labelTop - iconBottom, closeTo(4, 0.5));
 

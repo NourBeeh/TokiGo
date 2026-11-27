@@ -73,11 +73,32 @@ Rect _visibleGlyphRect(WidgetTester tester, Finder glyph, bool isParasol) {
   );
 }
 
+/// Layout contract: every glyph owns a 28dp box, even though the parasol's
+/// painted mark is intentionally smaller to match Material's internal padding.
+Rect _glyphBoxRect(WidgetTester tester, Finder glyph, bool isParasol) {
+  final Rect visible = _visibleGlyphRect(tester, glyph, isParasol);
+  if (!isParasol) return visible;
+  return Rect.fromLTRB(
+    visible.left,
+    visible.center.dy - HomeActionTile.iconSize / 2,
+    visible.right,
+    visible.center.dy + HomeActionTile.iconSize / 2,
+  );
+}
+
 void main() {
   test('the quick-action glyph scale is the owner-approved 28/42', () {
     expect(HomeActionTile.iconSize, 28);
     expect(HomeActionTile.iconSlotHeight, 42);
     expect(HomeActionTile.labelSlotHeight, 16);
+    expect(HomeActionGlyph.parasolVisibleSize, 24);
+    final double fraction =
+        HomeActionGlyph.parasolVisibleBottomFraction -
+        HomeActionGlyph.parasolVisibleTopFraction;
+    expect(
+      HomeActionGlyph.parasolRenderSize,
+      closeTo(HomeActionGlyph.parasolVisibleSize / fraction, 0.01),
+    );
   });
 
   testWidgets('centres the visible icon+label group in every tile', (
@@ -108,7 +129,7 @@ void main() {
             matching: i == 3 ? find.byType(Image) : find.byType(Icon),
           )
           .first;
-      final Rect mark = _visibleGlyphRect(tester, glyph, i == 3);
+      final Rect mark = _glyphBoxRect(tester, glyph, i == 3);
       final Rect label = tester.getRect(_labelSlot(tile));
       final Rect card = tester.getRect(tile);
 
@@ -132,6 +153,32 @@ void main() {
       );
     }
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('the parasol is optically smaller than the 28dp icon box', (
+    tester,
+  ) async {
+    _phoneSize(tester);
+    await tester.pumpWidget(
+      _app(HomeActionBar(onActionSelected: (_) {}), width: 640),
+    );
+    await tester.pumpAndSettle();
+
+    final Finder tile = find
+        .descendant(
+          of: find.byType(HomeActionBar),
+          matching: find.byType(AnimatedContainer),
+        )
+        .at(3);
+    final Finder glyph = find
+        .descendant(of: tile, matching: find.byType(Image))
+        .first;
+    final Rect visible = _visibleGlyphRect(tester, glyph, true);
+    final Rect box = _glyphBoxRect(tester, glyph, true);
+
+    expect(visible.height, closeTo(HomeActionGlyph.parasolVisibleSize, 0.5));
+    expect(visible.center.dy, closeTo(box.center.dy, 0.5));
+    expect(box.height, closeTo(HomeActionTile.iconSize, 0.5));
   });
 
   testWidgets('keeps the original card design at a fixed size', (tester) async {
@@ -204,7 +251,7 @@ void main() {
       expect(label.style?.fontWeight, FontWeight.w600);
       expect(label.style?.color, HomeDesignTokens.accent);
 
-      final double iconBottom = _visibleGlyphRect(tester, glyph, i == 3).bottom;
+      final double iconBottom = _glyphBoxRect(tester, glyph, i == 3).bottom;
       final double labelTop = tester.getRect(_labelSlot(tile)).top;
       expect(labelTop - iconBottom, closeTo(4, 0.5));
     }

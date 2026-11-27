@@ -1,0 +1,89 @@
+name: iOS clean splash build
+
+# Manual run: Actions -> iOS clean splash build -> Run workflow.
+# The ref input defaults to Main so the build includes the latest splash and
+# quick-action fixes; change it to any other SHA/ref to diagnose an old build.
+# The job wipes DerivedData and the simulator, rebuilds from scratch, installs
+# the app, screenshots the launch, and fails if the retired umbrella/red-Go
+# artwork is still painted.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Commit, tag or branch to build
+        required: true
+        default: main
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout pinned commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref }}
+          fetch-depth: 0
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Verify splash source assets
+        run: |
+          python3 -m pip install --user pillow
+          python3 scripts/verify_brand_assets.py
+
+      - name: Clean every cached build input
+        run: |
+          flutter clean
+          flutter pub get
+          rm -rf "$HOME/Library/Developer/Xcode/DerivedData/Runner-"*
+
+      - name: Install CocoaPods only when the project uses them
+        run: |
+          if [ -f ios/Podfile ]; then
+            (cd ios && pod install --repo-update)
+          else
+            echo "No ios/Podfile: this project uses Flutter Swift Package Manager; flutter pub get regenerates the local package."
+          fi
+
+      - name: Reset and boot a clean simulator
+        run: |
+          xcrun simctl shutdown all || true
+          xcrun simctl erase all || true
+          UDID=$(xcrun simctl list devices available | grep -m1 'iPhone' | sed -E 's/.*\(([0-9A-F-]{36})\).*/\1/')
+          if [ -z "$UDID" ]; then
+            echo "No available iPhone simulator on this runner" >&2
+            exit 1
+          fi
+          echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+
+      - name: Build and install the fresh app
+        run: |
+          flutter build ios --simulator --debug
+          xcrun simctl install booted build/ios/iphonesimulator/Runner.app
+          xcrun simctl launch booted com.tokigo.tokigo
+
+      - name: Capture and check splash frames
+        run: |
+          xcrun simctl screenshot booted splash-0.png
+          sleep 1
+          xcrun simctl screenshot booted splash-1.png
+          sleep 1
+          xcrun simctl screenshot booted splash-2.png
+          python3 scripts/check_splash_screenshot.py splash-0.png splash-1.png splash-2.png
+
+      - name: Package the simulator app
+        run: zip -r Runner.app.zip build/ios/iphonesimulator/Runner.app
+
+      - name: Upload build and screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-clean-splash-${{ github.event.inputs.ref }}
+          path: |
+            Runner.app.zip
+            splash-*.png
+          if-no-files-found: error

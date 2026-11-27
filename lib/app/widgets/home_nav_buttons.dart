@@ -84,10 +84,12 @@ List<HomeActionDefinition> homeActionDefinitions(AppLocalizations l10n) {
 ///
 /// The parasol asset keeps transparent adaptive safe-zone padding, so it is
 /// drawn larger than the slot: its opaque pixels occupy only the middle 510 of
-/// 1024 rows, which makes the visible mark 28dp tall like the Material glyphs.
-/// Every glyph is centred in [HomeActionTile.iconSlotHeight], and the label is
-/// lifted by the resulting top offset, so the whole icon+label group — not just
-/// its layout box — is centred in the 68dp tile while the gap stays 4dp.
+/// 1024 rows. Material icons keep internal padding inside their 28dp box, so
+/// the parasol's painted mark is matched to 24dp — not the full box — to avoid
+/// looking oversized beside them. Every glyph box is centred in
+/// [HomeActionTile.iconSlotHeight], and the label is lifted by the resulting
+/// top offset, so the whole icon+label group — not just its layout box — is
+/// centred in the 68dp tile while the 4dp gap stays on the shared box.
 ///
 /// The old onboarding page also renders this same widget; it is no longer a
 /// startup route, but sharing the recipe keeps any future host identical to
@@ -115,9 +117,16 @@ class HomeActionGlyph extends StatelessWidget {
   static const double parasolVisibleTopFraction = 257 / 1024;
   static const double parasolVisibleBottomFraction = 767 / 1024;
 
-  /// Canvas size needed for the visible parasol to match [glyphSize].
+  /// Painted height of the parasol.
+  ///
+  /// A 28dp Material icon box still has internal padding, so its visible mark
+  /// is optically smaller. Owner follow-up: match that optical size, not the
+  /// nominal box, so Packages does not read as the largest tile.
+  static const double parasolVisibleSize = 24;
+
+  /// Canvas size needed for the opaque parasol to be [parasolVisibleSize].
   static const double parasolRenderSize =
-      HomeActionTile.iconSize /
+      parasolVisibleSize /
       (parasolVisibleBottomFraction - parasolVisibleTopFraction);
 
   final HomeActionDefinition definition;
@@ -135,8 +144,8 @@ class HomeActionGlyph extends StatelessWidget {
         child: definition.action == HomeAction.activities
             ? Transform.scale(
                 // The asset stays 42dp in layout; only its painted pixels grow
-                // until the opaque mark matches the 28dp Material glyphs.
-                scale: glyphSize / (visibleFraction * slotHeight),
+                // to the 24dp optical size of the 28dp Material glyph boxes.
+                scale: parasolVisibleSize / (visibleFraction * slotHeight),
                 child: Image.asset(
                   parasolAsset(context),
                   width: slotHeight,
@@ -300,9 +309,9 @@ class HomeActionTile extends StatefulWidget {
   /// Glyph size — enlarged to 28px by owner request (2026-11-27).
   static const double iconSize = 28;
 
-  /// Every tile reserves the same glyph slot. The parasol canvas is enlarged
-  /// so its opaque mark is 28dp; Material glyphs are 28dp. Both are centred in
-  /// this slot.
+  /// Every tile reserves the same glyph slot. Material glyphs use the 28dp
+  /// box; the parasol's opaque mark is 24dp to match their optical weight.
+  /// Both glyph boxes are centred in this slot.
   static const double iconSlotHeight = iconSize * 1.5;
 
   /// Gap between the visible glyph and its label.
