@@ -235,6 +235,56 @@ def check_asset(path: Path, checker: Checker) -> None:
     )
 
 
+LAUNCH_GLOBS = (
+    "android/app/src/main/res/drawable*/splash.png",
+    "android/app/src/main/res/drawable*/android12splash.png",
+    "android/app/src/main/res/drawable*/android12branding.png",
+    "ios/Runner/Assets.xcassets/LaunchImage.imageset/*.png",
+    "ios/Runner/Assets.xcassets/LaunchBackground.imageset/*.png",
+    "web/splash/img/*.png",
+)
+
+
+def check_launch_assets(repo: Path, checker: Checker) -> None:
+    """Every launch density on every platform: no retired red, white name present.
+
+    The launch screen is baked per density (Android mdpi..xxxhdpi plus night
+    variants, iOS 1x/2x/3x light and dark, web 1x..4x), so checking one file
+    proves nothing about the asset that actually ships on a device. iOS also
+    keeps its own launch snapshot, which is why a stale red mark can survive a
+    rebuild on that platform.
+    """
+    seen: list[Path] = []
+    for pattern in LAUNCH_GLOBS:
+        seen.extend(sorted(repo.glob(pattern)))
+    if not seen:
+        checker.fail("no launch assets found to verify")
+        return
+    for path in seen:
+        try:
+            im = Image.open(path).convert("RGBA")
+        except Exception as exc:  # pragma: no cover - corrupt asset
+            checker.fail(f"{path}: unreadable ({exc})")
+            continue
+        original = im.size
+        im.thumbnail((512, 512))
+        w, h = im.size
+        px = im.load()
+        red = sum(1 for y in range(h) for x in range(w) if is_red(px[x, y]))
+        if red:
+            checker.fail(f"{path} ({original[0]}x{original[1]}): {red} saturated-red pixels")
+            continue
+        # A launch image that is meant to carry the name must actually have
+        # white ink; the plain background field legitimately has none.
+        if "LaunchBackground" not in path.parent.name:
+            white = sum(1 for y in range(h) for x in range(w) if is_white(px[x, y]))
+            if white == 0:
+                checker.fail(f"{path} ({original[0]}x{original[1]}): no white wordmark ink")
+                continue
+        print(f"  OK {path} ({original[0]}x{original[1]}): no red")
+    print(f"  checked {len(seen)} launch images")
+
+
 def check_apk(apk: Path, checker: Checker) -> None:
     if not apk.exists():
         checker.fail(f"{apk}: missing")
@@ -271,6 +321,10 @@ def main() -> int:
     print("final assets:")
     for asset in FINAL_ASSETS:
         check_asset(args.repo / asset, checker)
+
+    print()
+    print("launch images (all platforms, all densities):")
+    check_launch_assets(args.repo, checker)
 
     if args.apk:
         print()

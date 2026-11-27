@@ -50,9 +50,9 @@ List<AnimatedContainer> _tiles(WidgetTester tester) {
 }
 
 void main() {
-  test('the quick-action glyph scale is the owner-approved 26/39', () {
-    expect(HomeActionTile.iconSize, 26);
-    expect(HomeActionTile.iconSlotHeight, 39);
+  test('the quick-action glyph scale is the owner-approved 28/42', () {
+    expect(HomeActionTile.iconSize, 28);
+    expect(HomeActionTile.iconSlotHeight, 42);
   });
 
   testWidgets('keeps the original card design at a fixed size', (tester) async {

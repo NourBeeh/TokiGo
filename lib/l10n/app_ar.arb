@@ -1015,7 +1015,8 @@
   "homeNearbyLocationBody": "بنستخدم منطقتك ندور على فنادق قريبة منك فعلًا. موقعك الدقيق لا يتم تخزينه أبدًا.",
   "homeNearbyEmptyTitle": "لا توجد إقامات قريبة الآن",
   "homeNearbyEmptyBody": "حاول تاني بعد قوي أو اختر منطقة مختلفة.",
-  "homeNearbyErrorTitle": "تعذر تحميل الإقامات القريبة",
+  "homeNearbyErrorTitle": "تعذر التحميل",
+  "homeNearbyErrorBody": "يرجى التحقق من اتصالك بالإنترنت.",
   "homeNearbyPromotionalNote": "سعر ترويجي لليلة الواحدة خلال الـ 7 ليالي الجاية. السعر الفعلي يظهر بعد ما تختار التواريخ.",
   "homeNearbyRadius": "نطاق البحث {radius} كم",
   "@homeNearbyRadius": {

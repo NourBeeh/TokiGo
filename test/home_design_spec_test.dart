@@ -187,8 +187,8 @@ void main() {
             )
             .first;
         if (i == 3) {
-          // Owner decision (2026-11-27): the compact white wordmark replaced
-          // the parasol, at the same enlarged glyph slot as Home's other icons.
+          // Owner follow-up (2026-11-27): the parasol is back on this tile
+          // only, at the same enlarged glyph slot as Home's other icons.
           final Image mark = tester.widget<Image>(glyph);
           expect(mark.width, HomeActionTile.iconSlotHeight);
           expect(mark.height, HomeActionTile.iconSlotHeight);

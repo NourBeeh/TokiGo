@@ -135,7 +135,7 @@ class HomeActionGlyph extends StatelessWidget {
 
 /// Home shortcuts for travel services — the owner's spec: a horizontal row of
 /// equal white tiles (Flights, Stays, Cars, Packages), each a 68dp white tile
-/// with 18dp corners ([AppRadius.lg]), a hairline border, a 26px accent glyph
+/// with 18dp corners ([AppRadius.lg]), a hairline border, a 28px accent glyph
 /// (the parasol for Packages, by owner exception) and a 12/600 accent label
 /// 4dp below it ([AppSpacing.xs]). No shadows.
 ///
@@ -280,12 +280,12 @@ class HomeActionTile extends StatefulWidget {
   /// card) while staying far above the 44dp minimum tap target.
   static const double height = 68;
 
-  /// Glyph size — enlarged from 24px to 26px by owner request (2026-11-27).
-  static const double iconSize = 26;
+  /// Glyph size — enlarged to 28px by owner request (2026-11-27).
+  static const double iconSize = 28;
 
-  /// Every tile reserves the same glyph slot. The compact white wordmark is
-  /// drawn at 39dp (26 × 1.5); Material glyphs keep their 26dp size and sit on
-  /// the slot's baseline so all four labels share one row.
+  /// Every tile reserves the same glyph slot. The parasol is drawn at 42dp
+  /// (28 × 1.5); Material glyphs keep their 28dp size and sit on the slot's
+  /// baseline so all four labels share one row.
   static const double iconSlotHeight = iconSize * 1.5;
 
   /// Gap between the glyph and its label.

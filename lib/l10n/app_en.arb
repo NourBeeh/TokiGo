@@ -1036,7 +1036,8 @@
   "homeNearbyLocationBody": "We use your area to search hotels really around you. Your exact location is never stored.",
   "homeNearbyEmptyTitle": "No nearby stays right now",
   "homeNearbyEmptyBody": "Try again later or choose a different area.",
-  "homeNearbyErrorTitle": "Could not load nearby stays",
+  "homeNearbyErrorTitle": "Could not load",
+  "homeNearbyErrorBody": "Please check your connection.",
   "homeNearbyPromotionalNote": "Promotional one-night price for the next 7 nights. The live price is shown after you pick dates.",
   "homeNearbyRadius": "{radius} km search area",
   "@homeNearbyRadius": {

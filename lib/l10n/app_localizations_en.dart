@@ -2287,7 +2287,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeNearbyEmptyBody => 'Try again later or choose a different area.';
 
   @override
-  String get homeNearbyErrorTitle => 'Could not load nearby stays';
+  String get homeNearbyErrorTitle => 'Could not load';
+
+  @override
+  String get homeNearbyErrorBody => 'Please check your connection.';
 
   @override
   String get homeNearbyPromotionalNote => 'Promotional one-night price for the next 7 nights. The live price is shown after you pick dates.';

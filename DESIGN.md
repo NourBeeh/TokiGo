@@ -227,7 +227,7 @@ avoid inventing details in loading states.
 
 The Home header pairs the monochrome TokiGo wordmark with compact notification
 and profile actions. Service shortcuts form a single scrollable row of white
-rounded tiles with 26dp glyphs and clear labels. By owner follow-up, Packages
+rounded tiles with 28dp glyphs and clear labels. By owner follow-up, Packages
 alone keeps the original parasol glyph; the launcher, splash and AI identity
 remain the white TokiGo wordmark. There is no floating bottom bar. Mood
 navigation may use its scoped hue, but flight, hotel, car, package, and Explore

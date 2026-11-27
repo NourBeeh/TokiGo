@@ -4,9 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/network/network_status.dart';
 import '../core/theme/app_theme.dart';
-import '../core/widgets/offline_banner.dart';
 import '../l10n/app_localizations.dart';
 import 'config/app_config.dart';
 import 'router/go_router_config.dart';
@@ -44,34 +42,9 @@ class TokiGoApp extends ConsumerWidget {
           value: Theme.of(context).brightness == Brightness.dark
               ? AppTheme.systemOverlayDark
               : AppTheme.systemOverlay,
-          child: ListenableBuilder(
-            listenable: NetworkStatus.instance,
-            builder: (BuildContext context, Widget? _) {
-              final MediaQueryData media = MediaQuery.of(context);
-              final bool offline = !NetworkStatus.instance.online;
-              return ColoredBox(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                child: Column(
-                  children: <Widget>[
-                    if (offline)
-                      const SafeArea(bottom: false, child: OfflineBanner()),
-                    Expanded(
-                      child: MediaQuery(
-                        data: media.copyWith(
-                          padding: media.padding.copyWith(
-                            top: offline ? 0 : media.padding.top,
-                          ),
-                        ),
-                        child: ScrollConfiguration(
-                          behavior: const _SmoothScrollBehavior(),
-                          child: child ?? const SizedBox.shrink(),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
+          child: ScrollConfiguration(
+            behavior: const _SmoothScrollBehavior(),
+            child: child ?? const SizedBox.shrink(),
           ),
         );
       },

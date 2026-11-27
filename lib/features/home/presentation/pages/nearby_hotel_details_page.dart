@@ -303,7 +303,14 @@ class _NearbyHotelDetailsPageState
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsetsDirectional.all(AppSpacing.lg),
-                  child: Text(l10n.homeNearbyErrorTitle),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(l10n.homeNearbyErrorTitle),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(l10n.homeNearbyErrorBody),
+                    ],
+                  ),
                 ),
               ),
             SliverToBoxAdapter(

@@ -2490,7 +2490,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeNearbyEmptyBody => 'حاول تاني بعد قوي أو اختر منطقة مختلفة.';
 
   @override
-  String get homeNearbyErrorTitle => 'تعذر تحميل الإقامات القريبة';
+  String get homeNearbyErrorTitle => 'تعذر التحميل';
+
+  @override
+  String get homeNearbyErrorBody => 'يرجى التحقق من اتصالك بالإنترنت.';
 
   @override
   String get homeNearbyPromotionalNote => 'سعر ترويجي لليلة الواحدة خلال الـ 7 ليالي الجاية. السعر الفعلي يظهر بعد ما تختار التواريخ.';

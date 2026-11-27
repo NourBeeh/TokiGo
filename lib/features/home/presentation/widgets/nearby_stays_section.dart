@@ -46,7 +46,7 @@ class NearbyStaysSection extends StatelessWidget {
           return _NearbyStaysMessage(
             icon: Icons.wifi_off_rounded,
             title: l10n.homeNearbyErrorTitle,
-            body: l10n.homeNearbyEmptyBody,
+            body: l10n.homeNearbyErrorBody,
           );
         case NearbyStaysStatus.success:
           return const SizedBox.shrink();
@@ -74,8 +74,8 @@ class NearbyStaysSection extends StatelessWidget {
                 Text(
                   l10n.homeNearbyRadius(state.radiusKm!.round().toString()),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
             ],
           ),
@@ -111,8 +111,8 @@ class NearbyStaysSection extends StatelessWidget {
           child: Text(
             l10n.homeNearbyPromotionalNote,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.md),
@@ -131,7 +131,10 @@ HomeItem promotionalStayToHomeItem(PromotionalStay stay) {
     id: stay.hotelId,
     type: HomeCardType.hotel,
     title: stay.hotelName,
-    subtitle: <String>[stay.city, stay.country].where((String part) => part.isNotEmpty).join(', '),
+    subtitle: <String>[
+      stay.city,
+      stay.country,
+    ].where((String part) => part.isNotEmpty).join(', '),
     imageUrl: stay.image,
     price: stay.promotionalMinimumPrice,
     currency: stay.currency,
@@ -190,7 +193,9 @@ class _NearbyStaysSkeleton extends StatelessWidget {
       height: HomeStaysCarousel.railHeight(context),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
       ),
     );

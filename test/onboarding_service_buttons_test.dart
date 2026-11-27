@@ -124,6 +124,23 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('hero slides use the enlarged 64dp standalone glyph', (
+    tester,
+  ) async {
+    _phoneSize(tester);
+    await tester.pumpWidget(_app(const OnboardingPage()));
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.byType(PageView), const Offset(-400, 0));
+    await tester.pumpAndSettle();
+
+    final Icon icon = tester.widget<Icon>(
+      find.byIcon(Icons.auto_awesome_rounded),
+    );
+    expect(icon.size, 64);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('dark mode uses Home dark parasol asset', (tester) async {
     _phoneSize(tester);
     await tester.pumpWidget(

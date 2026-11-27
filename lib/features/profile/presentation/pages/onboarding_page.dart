@@ -413,8 +413,8 @@ class _HomeServiceRow extends StatelessWidget {
 
 /// A flat hairline plate holding the same glyph Home renders.
 ///
-/// [HomeActionGlyph] owns the compact white wordmark and the Material icon
-/// sizes, so onboarding cannot fall back to a stale copy of the service icons.
+/// [HomeActionGlyph] owns the parasol/wordmark and the Material icon sizes, so
+/// onboarding cannot fall back to a stale copy of the service icons.
 class _ServicePlate extends StatelessWidget {
   const _ServicePlate({
     super.key,
@@ -423,6 +423,10 @@ class _ServicePlate extends StatelessWidget {
     required this.size,
   });
 
+  /// The hero slides use a 128dp plate; a 64dp glyph is half the plate and is
+  /// no longer capped by the 42dp Home slot.
+  static const double _largeIconSize = 64;
+
   final IconData? icon;
   final HomeActionDefinition? definition;
   final double size;
@@ -430,6 +434,7 @@ class _ServicePlate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool large = size > 100;
+    final double iconSize = large ? _largeIconSize : HomeActionTile.iconSize;
     return Container(
       key: key,
       width: size,
@@ -448,12 +453,12 @@ class _ServicePlate extends StatelessWidget {
               color: HomeDesignTokens.accentOf(context),
             )
           : SizedBox(
-              height: HomeActionTile.iconSlotHeight,
+              height: large ? _largeIconSize : HomeActionTile.iconSlotHeight,
               child: Align(
                 alignment: large ? Alignment.center : Alignment.bottomCenter,
                 child: Icon(
                   icon,
-                  size: large ? 56 : HomeActionTile.iconSize,
+                  size: iconSize,
                   color: HomeDesignTokens.accentOf(context),
                 ),
               ),

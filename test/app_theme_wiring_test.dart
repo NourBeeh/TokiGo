@@ -4,9 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:tokigo/app/app.dart';
 import 'package:tokigo/core/auth/auth_provider.dart';
+import 'package:tokigo/core/network/network_status.dart';
 import 'package:tokigo/core/storage/offline_cache.dart';
 import 'package:tokigo/core/storage/offline_cache_providers.dart';
 import 'package:tokigo/core/theme/tokigo_colors.dart';
+import 'package:tokigo/core/widgets/offline_banner.dart';
 import 'package:tokigo/features/home/providers/home_providers.dart';
 import 'package:tokigo/features/profile/presentation/pages/settings_page.dart';
 import 'package:tokigo/shared/providers/last_route_provider.dart';
@@ -40,6 +42,16 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets('offline state no longer renders the top strip', (tester) async {
+    NetworkStatus.instance.reportOffline();
+    addTearDown(NetworkStatus.instance.reportOnline);
+
+    await pumpApp(tester);
+
+    // Owner decision (2026-11-27): remove the global "You are offline" bar.
+    expect(find.byType(OfflineBanner), findsNothing);
+  });
+
   testWidgets('System mode follows the platform brightness', (tester) async {
     tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
     addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
@@ -63,7 +75,9 @@ void main() {
     expect(context.tokigoColors.background, TokiGoColors.light().background);
   });
 
-  testWidgets('a manual Light selection overrides the platform', (tester) async {
+  testWidgets('a manual Light selection overrides the platform', (
+    tester,
+  ) async {
     tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
     addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 

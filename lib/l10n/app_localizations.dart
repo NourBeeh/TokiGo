@@ -4220,8 +4220,14 @@ abstract class AppLocalizations {
   /// No description provided for @homeNearbyErrorTitle.
   ///
   /// In en, this message translates to:
-  /// **'Could not load nearby stays'**
+  /// **'Could not load'**
   String get homeNearbyErrorTitle;
+
+  /// No description provided for @homeNearbyErrorBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Please check your connection.'**
+  String get homeNearbyErrorBody;
 
   /// No description provided for @homeNearbyPromotionalNote.
   ///
