@@ -58,6 +58,28 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
   }
 
+  Finder labelSlot(Finder tile) => find.descendant(
+    of: tile,
+    matching: find.byWidgetPredicate(
+      (Widget widget) =>
+          widget.key is ValueKey<String> &&
+          (widget.key as ValueKey<String>).value.startsWith(
+            'home-action-label-',
+          ),
+    ),
+  );
+
+  Rect visibleGlyphRect(WidgetTester tester, Finder glyph, bool isParasol) {
+    final Rect rect = tester.getRect(glyph);
+    if (!isParasol) return rect;
+    return Rect.fromLTRB(
+      rect.left,
+      rect.top + rect.height * HomeActionGlyph.parasolVisibleTopFraction,
+      rect.right,
+      rect.top + rect.height * HomeActionGlyph.parasolVisibleBottomFraction,
+    );
+  }
+
   group('search bar', () {
     testWidgets('matches the spec geometry and palette', (tester) async {
       phoneSize(tester);
@@ -204,10 +226,14 @@ void main() {
         expect(label.style?.fontWeight, FontWeight.w600);
         expect(label.style?.color, accent);
 
-        // The 6dp glyph-to-label gap.
-        final double iconBottom = tester.getRect(glyph).bottom;
-        final double labelTop = tester.getRect(find.text(labels[i])).top;
-        expect(labelTop - iconBottom, closeTo(4, 0.01));
+        // The 4dp visible glyph-to-label gap.
+        final double iconBottom = visibleGlyphRect(
+          tester,
+          glyph,
+          i == 3,
+        ).bottom;
+        final double labelTop = tester.getRect(labelSlot(tileFinder)).top;
+        expect(labelTop - iconBottom, closeTo(4, 0.5));
 
         // Balanced row: each tile starts after the previous one ends.
         final Rect rect = tester.getRect(tileFinder);

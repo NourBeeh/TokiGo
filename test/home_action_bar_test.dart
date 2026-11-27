@@ -49,10 +49,89 @@ List<AnimatedContainer> _tiles(WidgetTester tester) {
       .toList();
 }
 
+/// The fixed label row is the geometry contract; the text inside it may be
+/// scaled by `FittedBox`, so only this box gives a comparable 4dp gap.
+Finder _labelSlot(Finder tile) => find.descendant(
+  of: tile,
+  matching: find.byWidgetPredicate(
+    (Widget widget) =>
+        widget.key is ValueKey<String> &&
+        (widget.key as ValueKey<String>).value.startsWith('home-action-label-'),
+  ),
+);
+
+/// The parasol image canvas is deliberately larger than its opaque mark, so
+/// geometry must be measured on the visible pixels — not the transparent box.
+Rect _visibleGlyphRect(WidgetTester tester, Finder glyph, bool isParasol) {
+  final Rect rect = tester.getRect(glyph);
+  if (!isParasol) return rect;
+  return Rect.fromLTRB(
+    rect.left,
+    rect.top + rect.height * HomeActionGlyph.parasolVisibleTopFraction,
+    rect.right,
+    rect.top + rect.height * HomeActionGlyph.parasolVisibleBottomFraction,
+  );
+}
+
 void main() {
   test('the quick-action glyph scale is the owner-approved 28/42', () {
     expect(HomeActionTile.iconSize, 28);
     expect(HomeActionTile.iconSlotHeight, 42);
+    expect(HomeActionTile.labelSlotHeight, 16);
+  });
+
+  testWidgets('centres the visible icon+label group in every tile', (
+    tester,
+  ) async {
+    _phoneSize(tester);
+    await tester.pumpWidget(
+      _app(HomeActionBar(onActionSelected: (_) {}), width: 640),
+    );
+    await tester.pumpAndSettle();
+
+    final Finder tiles = find.descendant(
+      of: find.byType(HomeActionBar),
+      matching: find.byType(AnimatedContainer),
+    );
+    final List<String> labels = <String>[
+      'Flights',
+      'Stays',
+      'Cars Rental',
+      'Packages',
+    ];
+    double? sharedGlyphCenter;
+    for (int i = 0; i < 4; i++) {
+      final Finder tile = tiles.at(i);
+      final Finder glyph = find
+          .descendant(
+            of: tile,
+            matching: i == 3 ? find.byType(Image) : find.byType(Icon),
+          )
+          .first;
+      final Rect mark = _visibleGlyphRect(tester, glyph, i == 3);
+      final Rect label = tester.getRect(_labelSlot(tile));
+      final Rect card = tester.getRect(tile);
+
+      // The parasol's transparent canvas and the Material icons all share one
+      // visible centre line, and the lifted label makes the whole group share
+      // the tile's centre.
+      sharedGlyphCenter ??= mark.center.dy;
+      expect(
+        mark.center.dy,
+        closeTo(sharedGlyphCenter, 0.6),
+        reason: labels[i],
+      );
+      final double groupTop = mark.top < label.top ? mark.top : label.top;
+      final double groupBottom = mark.bottom > label.bottom
+          ? mark.bottom
+          : label.bottom;
+      expect(
+        (groupTop + groupBottom) / 2,
+        closeTo(card.center.dy, 0.6),
+        reason: labels[i],
+      );
+    }
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('keeps the original card design at a fixed size', (tester) async {
@@ -125,9 +204,9 @@ void main() {
       expect(label.style?.fontWeight, FontWeight.w600);
       expect(label.style?.color, HomeDesignTokens.accent);
 
-      final double iconBottom = tester.getRect(glyph).bottom;
-      final double labelTop = tester.getRect(find.text(labels[i])).top;
-      expect(labelTop - iconBottom, closeTo(4, 0.01));
+      final double iconBottom = _visibleGlyphRect(tester, glyph, i == 3).bottom;
+      final double labelTop = tester.getRect(_labelSlot(tile)).top;
+      expect(labelTop - iconBottom, closeTo(4, 0.5));
     }
     expect(tester.takeException(), isNull);
   });

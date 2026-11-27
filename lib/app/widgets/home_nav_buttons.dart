@@ -82,14 +82,16 @@ List<HomeActionDefinition> homeActionDefinitions(AppLocalizations l10n) {
 /// splash, AI avatar, the in-app wordmark) keeps the white TokiGo brand with
 /// no parasol, so the two assets live in separate files and cannot drift.
 ///
-/// The parasol is an in-app asset with transparent adaptive safe-zone padding;
-/// drawing it at [HomeActionTile.iconSlotHeight] makes its visible mark match
-/// the enlarged Material icons beside it. Material glyphs are centred in the
-/// same slot, so every icon/label group sits on the tile's centre line and the
-/// four labels stay on one row.
+/// The parasol asset keeps transparent adaptive safe-zone padding, so it is
+/// drawn larger than the slot: its opaque pixels occupy only the middle 510 of
+/// 1024 rows, which makes the visible mark 28dp tall like the Material glyphs.
+/// Every glyph is centred in [HomeActionTile.iconSlotHeight], and the label is
+/// lifted by the resulting top offset, so the whole icon+label group — not just
+/// its layout box — is centred in the 68dp tile while the gap stays 4dp.
 ///
-/// Onboarding renders this same widget from [homeActionDefinitions], so the
-/// first screen a traveller sees cannot drift from the Home buttons.
+/// The old onboarding page also renders this same widget; it is no longer a
+/// startup route, but sharing the recipe keeps any future host identical to
+/// Home.
 class HomeActionGlyph extends StatelessWidget {
   const HomeActionGlyph({
     super.key,
@@ -108,6 +110,16 @@ class HomeActionGlyph extends StatelessWidget {
       ? 'assets/icon/packages_parasol_dark_1024.png'
       : 'assets/icon/packages_parasol_1024.png';
 
+  /// Opaque pixel bounds of the parasol master inside its 1024dp canvas.
+  /// Centring the canvas therefore centres the visible mark too.
+  static const double parasolVisibleTopFraction = 257 / 1024;
+  static const double parasolVisibleBottomFraction = 767 / 1024;
+
+  /// Canvas size needed for the visible parasol to match [glyphSize].
+  static const double parasolRenderSize =
+      HomeActionTile.iconSize /
+      (parasolVisibleBottomFraction - parasolVisibleTopFraction);
+
   final HomeActionDefinition definition;
   final Color color;
   final double slotHeight;
@@ -115,21 +127,25 @@ class HomeActionGlyph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double visibleFraction =
+        parasolVisibleBottomFraction - parasolVisibleTopFraction;
     return SizedBox(
       height: slotHeight,
-      child: definition.action == HomeAction.activities
-          ? Image.asset(
-              parasolAsset(context),
-              width: slotHeight,
-              height: slotHeight,
-              fit: BoxFit.contain,
-            )
-          : Align(
-              // Bottom-align the shorter Material glyph with the parasol's
-              // baseline: labels then share one row.
-              alignment: Alignment.bottomCenter,
-              child: Icon(definition.icon, size: glyphSize, color: color),
-            ),
+      child: Center(
+        child: definition.action == HomeAction.activities
+            ? Transform.scale(
+                // The asset stays 42dp in layout; only its painted pixels grow
+                // until the opaque mark matches the 28dp Material glyphs.
+                scale: glyphSize / (visibleFraction * slotHeight),
+                child: Image.asset(
+                  parasolAsset(context),
+                  width: slotHeight,
+                  height: slotHeight,
+                  fit: BoxFit.contain,
+                ),
+              )
+            : Icon(definition.icon, size: glyphSize, color: color),
+      ),
     );
   }
 }
@@ -284,16 +300,26 @@ class HomeActionTile extends StatefulWidget {
   /// Glyph size — enlarged to 28px by owner request (2026-11-27).
   static const double iconSize = 28;
 
-  /// Every tile reserves the same glyph slot. The parasol is drawn at 42dp
-  /// (28 × 1.5); Material glyphs keep their 28dp size and sit on the slot's
-  /// baseline so all four labels share one row.
+  /// Every tile reserves the same glyph slot. The parasol canvas is enlarged
+  /// so its opaque mark is 28dp; Material glyphs are 28dp. Both are centred in
+  /// this slot.
   static const double iconSlotHeight = iconSize * 1.5;
 
-  /// Gap between the glyph and its label.
+  /// Gap between the visible glyph and its label.
   static const double iconLabelGap = AppSpacing.xs;
+
+  /// Centring a 28dp glyph in a 42dp slot leaves 7dp above it. Lifting the
+  /// label by that amount keeps the 4dp visible gap and centres the full
+  /// icon+label group in the tile.
+  static const double labelLift = (iconSlotHeight - iconSize) / 2;
 
   /// Label size from the spec (weight w600 comes from `captionSemibold`).
   static const double labelSize = 12;
+
+  /// Fixed label row. Without it, `FittedBox` scales "Cars Rental" down more
+  /// than "Stays", changing each tile's column height and pushing the four
+  /// glyphs onto different centre lines.
+  static const double labelSlotHeight = 16;
 
   final HomeActionDefinition definition;
 
@@ -363,20 +389,33 @@ class _HomeActionTileState extends State<HomeActionTile> {
               children: <Widget>[
                 HomeActionGlyph(definition: definition, color: accent),
                 const SizedBox(height: HomeActionTile.iconLabelGap),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xs,
-                  ),
-                  child: ExcludeSemantics(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        definition.label,
-                        maxLines: 1,
-                        textAlign: TextAlign.center,
-                        style: typography.captionSemibold.copyWith(
-                          fontSize: HomeActionTile.labelSize,
-                          color: accent,
+                Transform.translate(
+                  offset: const Offset(0, -HomeActionTile.labelLift),
+                  child: SizedBox(
+                    key: ValueKey<String>(
+                      'home-action-label-${definition.action.id}',
+                    ),
+                    height: HomeActionTile.labelSlotHeight,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xs,
+                      ),
+                      // Centring inside the fixed slot keeps every label on
+                      // one row even when FittedBox shrinks a long one.
+                      child: Center(
+                        child: ExcludeSemantics(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              definition.label,
+                              maxLines: 1,
+                              textAlign: TextAlign.center,
+                              style: typography.captionSemibold.copyWith(
+                                fontSize: HomeActionTile.labelSize,
+                                color: accent,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),

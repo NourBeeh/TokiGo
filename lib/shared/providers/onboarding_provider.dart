@@ -4,10 +4,12 @@ import 'package:hive/hive.dart';
 
 import '../../core/storage/storage_bootstrap.dart';
 
-/// Whether the first-launch onboarding has already been seen.
+/// Legacy onboarding flag.
 ///
-/// Backed by a lightweight Hive settings box so the intro shows exactly once
-/// across launches.
+/// OWNER DECISION (2026-11-27): the app has no startup/onboarding gate; the
+/// router launches straight into Home. This provider is kept only so the
+/// orphaned onboarding page and its existing widget tests still compile — it
+/// must never be wired back into the router as a launch redirect.
 class OnboardingState {
   const OnboardingState({this.seen = false, this.ready = false});
 
@@ -22,8 +24,8 @@ class OnboardingController extends StateNotifier<OnboardingState> {
 
   /// A controller that starts from [initial] and never touches the disk.
   ///
-  /// Tests use it to pin the onboarding gate deterministically, without a Hive
-  /// round trip (and without the asynchronous load racing the assertion).
+  /// Legacy tests use it to pin the stored flag deterministically, without a
+  /// Hive round trip (and without the asynchronous load racing the assertion).
   @visibleForTesting
   OnboardingController.pinned(OnboardingState initial) : super(initial);
 

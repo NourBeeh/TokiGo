@@ -104,7 +104,9 @@ flutter_launcher_icons:
 # "Go" in the launch artwork (owner decision 2026-11-27). The parasol exception
 # is confined to the Packages quick tile and is not referenced here. The composed masters are rendered by
 # tool/branding/generate_splash.py from the white wordmark masters. Regenerate
-# them there, then run `dart run flutter_native_splash:create`.
+# them there, then run `dart run flutter_native_splash:create` followed by
+# `python scripts/normalize_ios_launch_screen.py` (the generator rewrites the
+# iOS storyboard background and emits trailing spaces in web/index.html).
 #
 # Owner decision (2026-11): the DARK splash (#111111 field, white artwork) is
 # the FIXED splash — it is generated for BOTH appearances, so the launch screen
@@ -115,17 +117,18 @@ flutter_native_splash:
   color_dark: "#111111"
   image_dark: assets/branding/logo_splash_dark.png
   android_gravity: center
+  # The composed wordmark image carries the dark field; fit it instead of
+  # centring its intrinsic bitmap, which cropped it on tall iPhones.
+  ios_content_mode: scaleAspectFit
   fullscreen: true
   android_12:
-    # Android 12+ masks the outer third of the icon. The adaptive foreground
-    # now carries the compact white wordmark (no parasol), centred inside the
-    # safe circle. The branding slot repeats the same white name below it.
+    # Android 12+ masks the outer third of the icon. One compact white
+    # wordmark in the icon slot is the whole splash: no second branding
+    # raster underneath it, which used to read as a duplicated old splash.
     color: "#111111"
     image: assets/icon/app_icon_adaptive_dark_foreground_1024.png
     color_dark: "#111111"
     image_dark: assets/icon/app_icon_adaptive_dark_foreground_1024.png
-    branding: assets/branding/logo_branding_dark.png
-    branding_dark: assets/branding/logo_branding_dark.png
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

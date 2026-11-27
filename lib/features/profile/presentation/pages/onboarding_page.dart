@@ -108,16 +108,16 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     } catch (_) {}
   }
 
-  /// Leaves the intro for Home and remembers it, so the first-launch gate
-  /// never shows the intro twice.
+  /// Leaves the legacy intro for Home and remembers it. The router no longer
+  /// gates startup on this flag; the page is kept only for its widget tests.
   void _finish() {
     ref.read(onboardingProvider.notifier).markSeen();
     context.go('/');
   }
 
-  /// "Already have an account? Log in" — the gate redirects an unseen intro
-  /// straight back to `/onboarding`, so the flag is set before navigating:
-  /// choosing to sign in IS leaving the intro.
+  /// "Already have an account? Log in" — the intro is no longer a startup
+  /// route, but marking it seen keeps the legacy page's own state consistent
+  /// before pushing `/auth`.
   void _logIn() {
     ref.read(onboardingProvider.notifier).markSeen();
     context.push('/auth');

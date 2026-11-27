@@ -28,10 +28,6 @@ void main() {
       'drawable-xxxhdpi/android12splash.png',
       'drawable-night-xxxhdpi/android12splash.png',
     ),
-    (
-      'drawable-xxxhdpi-v31/android12branding.png',
-      'drawable-night-xxxhdpi-v31/android12branding.png',
-    ),
     ('drawable/background.png', 'drawable-night/background.png'),
   ];
 
@@ -127,6 +123,14 @@ void main() {
       );
     },
   );
+
+  test('Android 12 has one splash layer, no duplicate branding raster', () {
+    expect(
+      File('$res/drawable-xxxhdpi-v31/android12branding.png').existsSync(),
+      isFalse,
+      reason: 'the second wordmark under the splash icon was removed',
+    );
+  });
 
   test('the splash field is the dark #111111', () async {
     final ui.Image background = await decodeImage(

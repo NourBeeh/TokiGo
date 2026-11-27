@@ -30,7 +30,6 @@ import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/home/presentation/pages/trip_builder_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/profile/presentation/pages/auth_page.dart';
-import '../../features/profile/presentation/pages/onboarding_page.dart';
 import '../../features/profile/presentation/pages/edit_profile_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/settings_page.dart';
@@ -43,7 +42,6 @@ import '../../features/search/presentation/pages/offer_details_page.dart';
 import '../../features/search/presentation/pages/packages_search_page.dart';
 import '../../features/search/presentation/pages/search_hub_page.dart';
 import '../../shared/widgets/placeholder_page.dart';
-import '../../shared/providers/onboarding_provider.dart';
 import '../../shared/providers/last_route_provider.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -61,24 +59,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   // stack to `initialLocation` (Home) and yanks the traveller off the page
   // they were on (e.g. Profile) right after signing in. Auth is only read
   // inside the redirect below, which does not need a subscription.
-  final onboarding = ref.watch(onboardingProvider);
-  // The app always launches on Today. Tests may override this provider to
-  // start on a specific route.
+  // The app always launches directly on Today — there is no startup/onboarding
+  // gate. Tests may override this provider to start on a specific route.
   final initialLocation = ref.watch(lastInitialRouteProvider);
 
   final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: initialLocation,
     redirect: (context, state) {
-      // First-launch onboarding gate: show the intro exactly once, before
-      // any other destination is reachable.
-      final isOnboarding = state.matchedLocation == '/onboarding';
-      if (onboarding.ready && !onboarding.seen && !isOnboarding) {
-        return '/onboarding';
-      }
-      if (onboarding.seen && isOnboarding) {
-        return '/';
-      }
       if (!_authRedirectEnabled) {
         return null;
       }
@@ -154,7 +142,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               restorationId: state.pageKey.value,
               name: 'nearby-hotel',
               child: SwipeFromRightToPop(
-                child: NearbyHotelDetailsPage(stay: state.extra! as PromotionalStay),
+                child: NearbyHotelDetailsPage(
+                  stay: state.extra! as PromotionalStay,
+                ),
               ),
             ),
           ),
@@ -406,18 +396,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           restorationId: state.pageKey.value,
           name: 'notifications',
           child: const SwipeFromRightToPop(child: NotificationsPage()),
-        ),
-      ),
-      // First-launch onboarding — shown when the Hive flag is unset.
-      GoRoute(
-        path: '/onboarding',
-        name: 'onboarding',
-        parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) => slideFromRightPage(
-          key: state.pageKey,
-          restorationId: state.pageKey.value,
-          name: 'onboarding',
-          child: const OnboardingPage(),
         ),
       ),
       // Full-screen AI chat — a root route so Today's chrome does not render
