@@ -84,8 +84,9 @@ List<HomeActionDefinition> homeActionDefinitions(AppLocalizations l10n) {
 ///
 /// The parasol is an in-app asset with transparent adaptive safe-zone padding;
 /// drawing it at [HomeActionTile.iconSlotHeight] makes its visible mark match
-/// the enlarged Material icons beside it. Material glyphs share the slot's
-/// baseline so labels on a row of four tiles stay aligned.
+/// the enlarged Material icons beside it. Material glyphs are centred in the
+/// same slot, so every icon/label group sits on the tile's centre line and the
+/// four labels stay on one row.
 ///
 /// Onboarding renders this same widget from [homeActionDefinitions], so the
 /// first screen a traveller sees cannot drift from the Home buttons.
