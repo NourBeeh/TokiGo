@@ -20,13 +20,13 @@ jobs:
     runs-on: macos-15
     steps:
       - name: Checkout pinned commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.inputs.ref }}
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -65,20 +65,21 @@ jobs:
           fi
           echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
           xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
 
       - name: Build and install the fresh app
         run: |
           flutter build ios --simulator --debug
-          xcrun simctl install booted build/ios/iphonesimulator/Runner.app
-          xcrun simctl launch booted com.tokigo.tokigo
+          xcrun simctl install "$SIM_UDID" build/ios/iphonesimulator/Runner.app
+          xcrun simctl launch "$SIM_UDID" com.tokigo.tokigo
 
       - name: Capture splash frames
         run: |
-          xcrun simctl screenshot booted splash-0.png
+          xcrun simctl io "$SIM_UDID" screenshot splash-0.png
           sleep 1
-          xcrun simctl screenshot booted splash-1.png
+          xcrun simctl io "$SIM_UDID" screenshot splash-1.png
           sleep 1
-          xcrun simctl screenshot booted splash-2.png
+          xcrun simctl io "$SIM_UDID" screenshot splash-2.png
 
       # Only the first frame is the native launch screen. Later frames may
       # already be the app UI, whose map/status colours are not brand splash.
@@ -90,7 +91,7 @@ jobs:
 
       - name: Upload build and screenshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ios-clean-splash-${{ github.event.inputs.ref }}
           path: |
